@@ -256,13 +256,57 @@ h1, h2, h3, .logo {
     color: #666;
 }
 
+.carousel-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.carousel-btn {
+    background-color: white;
+    color: var(--primary-orange);
+    border: 2px solid var(--primary-orange);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    position: absolute;
+    z-index: 10;
+    top: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.carousel-btn:hover {
+    background-color: var(--primary-orange);
+    color: white;
+}
+
+.prev-btn {
+    left: -20px;
+}
+
+.next-btn {
+    right: -20px;
+}
+
 .categories-box {
     background-color: var(--light-teal);
     padding: 2rem;
     border-radius: 30px;
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    display: flex;
     gap: 1.5rem;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none; /* Firefox */
+}
+
+.categories-box::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
 }
 
 .category-card {
@@ -276,6 +320,8 @@ h1, h2, h3, .logo {
     align-items: center;
     justify-content: center;
     aspect-ratio: 3 / 4;
+    min-width: 220px;
+    flex: 0 0 auto;
 }
 
 .category-card img {
