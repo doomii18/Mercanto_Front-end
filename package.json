@@ -1,0 +1,26 @@
+{
+  "name": "mercanto_front-end",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/doomii18/Mercanto_Front-end.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/doomii18/Mercanto_Front-end/issues"
+  },
+  "homepage": "https://github.com/doomii18/Mercanto_Front-end#readme",
+  "devDependencies": {
+    "vite": "^8.1.4"
+  }
+}
