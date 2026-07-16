@@ -10,15 +10,11 @@ export class LocalStorageTokenProvider implements TokenProvider {
   private accessToken: string | null = null;
 
   getAccessToken(): string | null {
-    if (this.accessToken == null) {
-      this.accessToken = localStorage.getItem('accessToken');
-    }
-    return  this.accessToken
+    return this.accessToken;
   }
 
   setAccessToken(accessToken: string | null): void {
     this.accessToken = accessToken;
-    localStorage.setItem('accessToken', accessToken ?? '');
   }
 
   getRefreshToken(): string | null {
@@ -30,6 +26,10 @@ export class LocalStorageTokenProvider implements TokenProvider {
 
   setRefreshToken(refreshToken: string | null): void {
     this.refreshToken = refreshToken;
-    localStorage.setItem('refreshToken', refreshToken ?? '');
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    } else {
+      localStorage.removeItem('refreshToken');
+    }
   }
 }

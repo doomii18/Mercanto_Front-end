@@ -1,5 +1,6 @@
 import { ApiClient } from "./client";
 import { CartService } from "./services/cart";
+import { CategoryService } from "./services/category";
 import { HealthService } from "./services/health";
 import { IdentityService } from "./services/identity";
 import { LocalStorageTokenProvider } from "./token";
@@ -21,3 +22,19 @@ export const apiClient = new ApiClient(apiConfig, tokenProvider);
 export const identityApi = new IdentityService(apiClient, tokenProvider);
 export const healthApi = new HealthService(apiClient);
 export const cartApi = new CartService(apiClient);
+export const categoryApi = new CategoryService(apiClient);
+
+export async function bootstrapSession(): Promise<void> {
+  const currentRefresh = tokenProvider.getRefreshToken();
+  if (!currentRefresh) {
+    return;
+  }
+
+  try {
+    await identityApi.refresh({ refresh_token: currentRefresh });
+  } catch (error) {
+    console.error("Session bootstrap failed. Purging credentials.");
+    tokenProvider.setRefreshToken(null);
+    window.location.assign('/login.html');
+  }
+}
