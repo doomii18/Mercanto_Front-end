@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Dev and env
+**/.env
+**/.env.prod
+**/repomix-output.xml
