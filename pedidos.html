@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Mis Pedidos - Mercanto</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+    </head>
+    <body>
+        <header class="header">
+            <div class="logo">
+                <img src="./src/assets/logo.png" alt="Mercanto" style="height: 45px" />
+            </div>
+        </header>
+
+        <div class="dashboard-container">
+            <aside class="sidebar">
+                <nav class="sidebar-menu">
+                    <a href="perfil.html" class="menu-item"
+                        ><i class="fa-regular fa-user"></i> Mi Perfil</a
+                    >
+                    <a href="pedidos.html" class="menu-item active"
+                        ><i class="fa-solid fa-bag-shopping"></i> Pedidos</a
+                    >
+                    <a href="#" class="menu-item"
+                        ><i class="fa-solid fa-cart-shopping"></i> Favoritos</a
+                    >
+                    <a href="#" class="menu-item"
+                        ><i class="fa-regular fa-comment-dots"></i> Mensajes</a
+                    >
+                    <a href="#" class="menu-item"
+                        ><i class="fa-solid fa-magnifying-glass"></i> Búsqueda
+                        Inteligente</a
+                    >
+                    <a href="#" class="menu-item"
+                        ><i class="fa-solid fa-gear"></i> Configuración</a
+                    >
+                    <a href="#" class="menu-item"
+                        ><i class="fa-regular fa-circle-question"></i> Ayuda</a
+                    >
+                </nav>
+                <a href="home.html" class="logout"
+                    ><i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar
+                    sesión</a
+                >
+            </aside>
+
+            <main class="content">
+                <div class="pedidos-header">
+                    <div>
+                        <h2 class="pedidos-title">Mis Pedidos</h2>
+                        <p class="pedidos-subtitle">
+                            Consulta y monitorea tus pedidos realizados
+                        </p>
+                    </div>
+                    <div class="search-bar">
+                        <input
+                            type="text"
+                            placeholder="Busca tu pedido o proveedor"
+                        />
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </div>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab-btn active">Todos</button>
+                    <button class="tab-btn">Pendientes</button>
+                    <button class="tab-btn">En proceso</button>
+                    <button class="tab-btn">Recibidos</button>
+                </div>
+
+                <div class="orders-list">
+                    <!-- Order 1 -->
+                    <div class="order-card">
+                        <div class="order-details">
+                            <h4>Pedido #MC-2026-5</h4>
+                            <p class="order-date">26 de junio de 2026</p>
+                            <p class="order-total-label">Total</p>
+                            <h3 class="order-amount">C$ 10, 400.00</h3>
+                            <p class="order-count">100 productos</p>
+                        </div>
+                        <div class="order-provider">
+                            <div class="provider-info-left">
+                                <div class="provider-logo">
+                                    <img src="./src/assets/ech-logo.png" alt="ECH" />
+                                </div>
+                                <div class="provider-name-container">
+                                    <p class="provider-name">E. Chamorro S.A</p>
+                                    <a href="#" class="provider-link"
+                                        >ver proveedor</a
+                                    >
+                                </div>
+                            </div>
+                            <div class="provider-products">
+                                <div class="product-thumb">
+                                    <img src="./src/assets/product1.png" alt="Product" />
+                                </div>
+                                <div class="product-thumb">
+                                    <img src="./src/assets/product2.png" alt="Product" />
+                                </div>
+                                <div class="product-thumb more-thumb">+1</div>
+                            </div>
+                        </div>
+                        <div class="order-status-action">
+                            <div class="status-badge received">
+                                <i class="fa-solid fa-check"></i> Recibido
+                            </div>
+                            <p class="status-date">
+                                Recibido el 26 de julio de 2026
+                            </p>
+                            <button class="btn-outline-teal">
+                                ver detalles
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Order 2 -->
+                    <div class="order-card">
+                        <div class="order-details">
+                            <h4>Pedido #MC-2026-4</h4>
+                            <p class="order-date">20 de junio de 2026</p>
+                            <p class="order-total-label">Total</p>
+                            <h3 class="order-amount">C$ 7, 000.00</h3>
+                            <p class="order-count">50 productos</p>
+                        </div>
+                        <div class="order-provider">
+                            <div class="provider-info-left">
+                                <div class="provider-logo">
+                                    <img
+                                        src="./src/assets/flor-de-cana-logo.png"
+                                        alt="Flor de Caña"
+                                    />
+                                </div>
+                                <div class="provider-name-container">
+                                    <p class="provider-name">
+                                        Ron Flor de Caña
+                                    </p>
+                                    <a href="#" class="provider-link"
+                                        >ver proveedor</a
+                                    >
+                                </div>
+                            </div>
+                            <div class="provider-products">
+                                <div class="product-thumb">
+                                    <img src="./src/assets/product3.png" alt="Product" />
+                                </div>
+                                <div class="product-thumb">
+                                    <img src="./src/assets/product4.png" alt="Product" />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-status-action">
+                            <div class="status-badge processing">
+                                <i class="fa-regular fa-clock"></i> En proceso
+                            </div>
+                            <p class="status-date">
+                                Recibido el 20 de julio de 2026
+                            </p>
+                            <button class="btn-outline-teal">
+                                ver detalles
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Order 3 -->
+                    <div class="order-card">
+                        <div class="order-details">
+                            <h4>Pedido #MC-2026-3</h4>
+                            <p class="order-date">15 de junio de 2026</p>
+                            <p class="order-total-label">Total</p>
+                            <h3 class="order-amount">C$ 16, 950.00</h3>
+                            <p class="order-count">30 productos</p>
+                        </div>
+                        <div class="order-provider">
+                            <div class="provider-info-left">
+                                <div class="provider-logo">
+                                    <img
+                                        src="./src/assets/dicegsa-logo.png"
+                                        alt="Dicegsa"
+                                    />
+                                </div>
+                                <div class="provider-name-container">
+                                    <p class="provider-name">Dicegsa</p>
+                                    <a href="#" class="provider-link"
+                                        >ver proveedor</a
+                                    >
+                                </div>
+                            </div>
+                            <div class="provider-products">
+                                <div class="product-thumb">
+                                    <img
+                                        src="./src/assets/producto5.png"
+                                        alt="Product"
+                                    />
+                                </div>
+                                <div class="product-thumb">
+                                    <img
+                                        src="./src/assets/producto6.png"
+                                        alt="Product"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                        <div class="order-status-action">
+                            <div class="status-badge shipped">
+                                <i class="fa-solid fa-truck"></i> Enviado
+                            </div>
+                            <p class="status-date">
+                                Recibido el 15 de julio de 2026
+                            </p>
+                            <button class="btn-outline-teal">
+                                ver detalles
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+        <script type="module" src="./src/pedidos.js"></script>
+    </body>
+</html>
