@@ -1,7 +1,14 @@
+import { healthApi, identityApi } from "./api";
+
 document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.getElementById('categories-carousel');
     const prevBtn = document.querySelector('.prev-btn');
   const nextBtn = document.querySelector('.next-btn');
+
+  healthApi.getReadiness().finally(() => {
+    console.log("The server is ready")
+  });
+
 
      if (carousel && prevBtn && nextBtn) {
         prevBtn.addEventListener('click', () => {

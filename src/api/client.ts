@@ -20,17 +20,12 @@ export class ApiError extends Error {
     this.payload = payload;
   }
 }
-
+// TODO: do the the parsing of the data directly in the service
 export class ApiClient {
   private isRefreshing = false;
-  private tokenProvider: TokenProvider;
   private refreshQueue: Array<(token: string) => void> = [];
-  private config: ApiClientConfig;
 
-  constructor(config: ApiClientConfig, tokenProvider: TokenProvider) {
-    this.config = config;
-    this.tokenProvider = tokenProvider;
-  }
+  constructor(private readonly config: ApiClientConfig, private readonly tokenProvider: TokenProvider) {}
 
   private async refreshTokens(): Promise<AuthResponse> {
     const requestBody = TokenRequestSchema.parse({
@@ -50,105 +45,78 @@ export class ApiClient {
       return data;
   }
 
-  constructAuthHeaders(): Headers {
-    const headers = new Headers();
-    const token = this.tokenProvider.getAccessToken();
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
-    return headers;
-  }
-
   getBaseUrl(): string {
     return this.config.baseUrl;
   }
 
-  // TODO: Refactor api client retry system
   async request<T>(
-    endpoint: string,
-    options: RequestInit,
-    schema: z.ZodSchema<T>,
-  ): Promise<T> {
-    const executeRequest = async (token: string | null) => {
-      const headers = new Headers(options.headers);
-      if (!headers.has("Content-Type") && !(options.body instanceof FormData))
-        headers.set("Content-Type", "application/json");
-      if (token) headers.set("Authorization", `Bearer ${token}`);
+      endpoint: string,
+      options: RequestInit,
+      schema: z.ZodSchema<T>,
+    ): Promise<T> {
+      const executeRequest = async (token: string | null) => {
+        const headers = new Headers(options.headers);
+        if (!headers.has("Content-Type") && !(options.body instanceof FormData))
+          headers.set("Content-Type", "application/json");
+        if (token) headers.set("Authorization", `Bearer ${token}`);
 
-      return fetch(`${this.config.baseUrl}${endpoint}`, {
-        ...options,
-        headers,
-      });
-    };
-
-    let response = await executeRequest(this.tokenProvider.getAccessToken());
-
-    // Intercept 401s, excluding the refresh endpoint itself to prevent infinite loops
-    if (
-      response.status === 401 &&
-      endpoint !== "/refresh" &&
-      this.tokenProvider.getRefreshToken()
-    ) {
-      response = await this.handleUnauthorized(endpoint, options);
-    }
-
-    if (!response.ok) {
-      const rawError = await response.json().catch(() => null);
-      const parsedError = ErrorPayloadSchema.safeParse(rawError);
-      throw new ApiError(
-        response.status,
-        parsedError.success
-          ? parsedError.data.message
-          : `HTTP Error ${response.status}`,
-        parsedError.success ? parsedError.data : undefined,
-      );
-    }
-
-    if (response.status === 204 || response.status === 201)
-      return schema.parse(undefined);
-    return schema.parse(await response.json());
-  }
-
-  private async handleUnauthorized(
-    endpoint: string,
-    options: RequestInit,
-  ): Promise<Response> {
-    if (this.isRefreshing) {
-      // Suspend concurrent requests until the lock is released
-      return new Promise<Response>((resolve) => {
-        this.refreshQueue.push(async (newToken: string) => {
-          const headers = new Headers(options.headers);
-          headers.set("Authorization", `Bearer ${newToken}`);
-          resolve(
-            await fetch(`${this.config.baseUrl}${endpoint}`, {
-              ...options,
-              headers,
-            }),
-          );
+        return fetch(`${this.config.baseUrl}${endpoint}`, {
+          ...options,
+          headers,
         });
-      });
+      };
+
+      let response = await executeRequest(this.tokenProvider.getAccessToken());
+
+      if (
+        response.status === 401 &&
+        endpoint !== "/refresh" &&
+        this.tokenProvider.getRefreshToken()
+      ) {
+        response = await this.handleUnauthorized(executeRequest);
+      }
+
+      if (!response.ok) {
+        const rawError = await response.json().catch(() => null);
+        const parsedError = ErrorPayloadSchema.safeParse(rawError);
+        throw new ApiError(
+          response.status,
+          parsedError.success
+            ? parsedError.data.message
+            : `HTTP Error ${response.status}`,
+          parsedError.success ? parsedError.data : undefined,
+        );
+      }
+
+      if (response.status === 204 || response.status === 201)
+        return schema.parse(undefined);
+      return schema.parse(await response.json());
     }
 
-    this.isRefreshing = true;
+    private async handleUnauthorized(
+      executeRequest: (token: string) => Promise<Response>
+    ): Promise<Response> {
+      if (this.isRefreshing) {
+        return new Promise<Response>((resolve) => {
+          this.refreshQueue.push(async (newToken: string) => resolve(await executeRequest(newToken)));
+        });
+      }
 
-    try {
-      const newTokens = await this.refreshTokens();
+      this.isRefreshing = true;
 
-      this.refreshQueue.forEach((cb) => cb(newTokens.access_token));
+      try {
+        const newTokens = await this.refreshTokens();
 
-      const retryHeaders = new Headers(options.headers);
-      retryHeaders.set("Authorization", `Bearer ${newTokens.access_token}`);
-      return fetch(`${this.config.baseUrl}${endpoint}`, {
-        ...options,
-        headers: retryHeaders,
-      });
-    } catch (error) {
-      this.refreshQueue = [];
-      this.config.onSessionExpired();
-      throw new ApiError(401, "Session expired and refresh failed.");
-    } finally {
-      this.isRefreshing = false;
-      this.refreshQueue = [];
+        this.refreshQueue.forEach((cb) => cb(newTokens.access_token));
+
+        return await executeRequest(newTokens.access_token);
+      } catch (error) {
+        this.refreshQueue = [];
+        this.config.onSessionExpired();
+        throw new ApiError(401, "Session expired and refresh failed.");
+      } finally {
+        this.isRefreshing = false;
+        this.refreshQueue = [];
+      }
     }
-  }
 }

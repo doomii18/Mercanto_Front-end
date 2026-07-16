@@ -1,4 +1,5 @@
 import { ApiClient } from "./client";
+import { HealthService } from "./services/health";
 import { IdentityService } from "./services/identity";
 import { LocalStorageTokenProvider } from "./token";
 
@@ -18,3 +19,4 @@ const apiConfig = {
 export const apiClient = new ApiClient(apiConfig, tokenProvider);
 
 export const identityApi = new IdentityService(apiClient);
+export const healthApi = new HealthService(apiClient);
