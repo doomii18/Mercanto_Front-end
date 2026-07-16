@@ -1,5 +1,3 @@
-import './styles/home.css'
-
 document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.getElementById('categories-carousel');
     const prevBtn = document.querySelector('.prev-btn');
