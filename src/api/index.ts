@@ -18,5 +18,5 @@ const apiConfig = {
 }
 export const apiClient = new ApiClient(apiConfig, tokenProvider);
 
-export const identityApi = new IdentityService(apiClient);
+export const identityApi = new IdentityService(apiClient, tokenProvider);
 export const healthApi = new HealthService(apiClient);

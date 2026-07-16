@@ -1,15 +1,11 @@
-import { healthApi, identityApi } from "./api";
+import { healthApi } from "./api";
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const carousel = document.getElementById('categories-carousel');
     const prevBtn = document.querySelector('.prev-btn');
   const nextBtn = document.querySelector('.next-btn');
 
-  healthApi.getReadiness().finally(() => {
-    console.log("The server is ready")
-  });
-
-
+    await healthApi.getReadiness();
      if (carousel && prevBtn && nextBtn) {
         prevBtn.addEventListener('click', () => {
             // Scroll left by roughly one card width + gap (220px + 24px)
