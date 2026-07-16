@@ -1,4 +1,4 @@
-import { z } from "zod";
+
 import type { ErrorPayload } from "./shared/types";
 import { ErrorPayloadSchema } from "./shared/schemas";
 import type { TokenProvider } from "./token";
@@ -20,7 +20,7 @@ export class ApiError extends Error {
     this.payload = payload;
   }
 }
-// TODO: do the the parsing of the data directly in the service
+
 export class ApiClient {
   private isRefreshing = false;
   private refreshQueue: Array<(token: string) => void> = [];
@@ -49,11 +49,10 @@ export class ApiClient {
     return this.config.baseUrl;
   }
 
-  async request<T>(
+  async request(
       endpoint: string,
       options: RequestInit,
-      schema: z.ZodSchema<T>,
-    ): Promise<T> {
+    ): Promise<unknown> {
       const executeRequest = async (token: string | null) => {
         const headers = new Headers(options.headers);
         if (!headers.has("Content-Type") && !(options.body instanceof FormData))
@@ -89,8 +88,9 @@ export class ApiClient {
       }
 
       if (response.status === 204 || response.status === 201)
-        return schema.parse(undefined);
-      return schema.parse(await response.json());
+        return undefined;
+
+      return response.json();
     }
 
     private async handleUnauthorized(
@@ -106,9 +106,7 @@ export class ApiClient {
 
       try {
         const newTokens = await this.refreshTokens();
-
         this.refreshQueue.forEach((cb) => cb(newTokens.access_token));
-
         return await executeRequest(newTokens.access_token);
       } catch (error) {
         this.refreshQueue = [];

@@ -6,18 +6,12 @@ export class HealthService {
   constructor(private readonly client: ApiClient) {}
 
   async getLiveness(): Promise<HealthResponse> {
-    return this.client.request(
-      "/health/live",
-      { method: "GET" },
-      HealthResponseSchema,
-    );
+    const data = await this.client.request("/health/live", { method: "GET" });
+    return HealthResponseSchema.parse(data);
   }
 
   async getReadiness(): Promise<HealthResponse> {
-    return this.client.request(
-      "/health/ready",
-      { method: "GET" },
-      HealthResponseSchema,
-    );
+    const data = await this.client.request("/health/ready", { method: "GET" });
+    return HealthResponseSchema.parse(data);
   }
 }
