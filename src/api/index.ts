@@ -5,6 +5,7 @@ import { GeographyService } from "./services/geography";
 import { HealthService } from "./services/health";
 import { IdentityService } from "./services/identity";
 import { UserProfileService } from "./services/user_profile";
+import { WalletService } from "./services/wallet";
 import { LocalStorageTokenProvider } from "./token";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -27,6 +28,8 @@ export const cartApi = new CartService(apiClient);
 export const categoryApi = new CategoryService(apiClient);
 export const geographyApi = new GeographyService(apiClient);
 export const userProfileApi = new UserProfileService(apiClient);
+export const walletApi = new WalletService(apiClient);
+
 
 export async function bootstrapSession(): Promise<void> {
   const currentRefresh = tokenProvider.getRefreshToken();
