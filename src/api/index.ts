@@ -1,6 +1,7 @@
 import { ApiClient } from "./client";
 import { CartService } from "./services/cart";
 import { CategoryService } from "./services/category";
+import { GeographyService } from "./services/geography";
 import { HealthService } from "./services/health";
 import { IdentityService } from "./services/identity";
 import { LocalStorageTokenProvider } from "./token";
@@ -23,6 +24,7 @@ export const identityApi = new IdentityService(apiClient, tokenProvider);
 export const healthApi = new HealthService(apiClient);
 export const cartApi = new CartService(apiClient);
 export const categoryApi = new CategoryService(apiClient);
+export const geographyApi = new GeographyService(apiClient);
 
 export async function bootstrapSession(): Promise<void> {
   const currentRefresh = tokenProvider.getRefreshToken();

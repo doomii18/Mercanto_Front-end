@@ -1,4 +1,4 @@
-import { bootstrapSession, categoryApi, healthApi } from "./api";
+import { bootstrapSession, geographyApi, healthApi } from "./api";
 
 document.addEventListener('DOMContentLoaded', async () => {
   await bootstrapSession();
@@ -7,10 +7,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const prevBtn = document.querySelector('.prev-btn');
   const nextBtn = document.querySelector('.next-btn');
 
-
-
   await healthApi.getReadiness();
-  const categories = await categoryApi.getCategoryTree("019f6ce8-00b3-7421-b36e-0d0e9f7f395c");
+  const categories = await geographyApi.getGeographyTree({ country_iso: "NIC" });
   console.log(categories);
      if (carousel && prevBtn && nextBtn) {
         prevBtn.addEventListener('click', () => {

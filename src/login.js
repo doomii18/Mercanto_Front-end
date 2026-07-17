@@ -1,6 +1,7 @@
 import { identityApi } from "./api";
 
 document.addEventListener('DOMContentLoaded', () => {
+  await bootstrapSession();
   const loginForm = document.getElementById('login-form');
 
   loginForm.addEventListener('submit', async (e) => {
