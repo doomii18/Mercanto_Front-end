@@ -58,7 +58,7 @@ export class UserProfileService {
     return URL.createObjectURL(blob);
   }
 
-  async changeProfilePicture(file: File): Promise<UserProfileResponse> {
+  async changeProfilePicture(file: File): Promise<void> {
     const initData = UploadUrlResponseSchema.parse(
       await this.client.request("/assets/profile-picture", {
         method: "POST",
@@ -80,7 +80,7 @@ export class UserProfileService {
       body: JSON.stringify({}),
     });
 
-    return this.getMyProfile();
+    return
   }
 
   async deleteProfilePicture(blobId: string): Promise<void> {
