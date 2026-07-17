@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CategoryDescriptionSchema, CategoryNameSchema } from "./domain";
+import { PaginatedResponseSchema } from "../../shared/schemas";
 
 export const ProductCategoryResponseSchema = z.object({
   id: z.uuid(),
@@ -29,12 +30,7 @@ export const ProductCategoryNodeResponseSchema: z.ZodType<ProductCategoryNodeRes
   })
 );
 
-export const PaginatedCategoriesResponseSchema = z.object({
-  data: z.array(ProductCategoryResponseSchema),
-  total: z.number().int(),
-  limit: z.number().int(),
-  offset: z.number().int(),
-});
+export const PaginatedCategoriesResponseSchema = PaginatedResponseSchema(ProductCategoryResponseSchema);
 
 export const CreateCategoryRequestSchema = z.object({
   parent_id: z.uuid().optional().nullable(),

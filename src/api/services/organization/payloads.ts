@@ -7,6 +7,7 @@ import {
   companyDescriptionSchema,
   addressSchema,
 } from "./domain";
+import { PaginatedResponseSchema } from "../../shared/schemas";
 
 export const InternalOrganizationDtoSchema = z.object({
   type: z.literal("Internal"),
@@ -36,12 +37,7 @@ export const OrganizationResponseSchema = z.discriminatedUnion("type", [
   PublicOrganizationDtoSchema,
 ]);
 
-export const PaginatedOrganizationsResponseSchema = z.object({
-  data: z.array(OrganizationResponseSchema),
-  total: z.number().int(),
-  limit: z.number().int(),
-  offset: z.number().int(),
-});
+export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(OrganizationResponseSchema);
 
 export const RegisterOrganizationRequestSchema = z.object({
   company_name: companyNameSchema,

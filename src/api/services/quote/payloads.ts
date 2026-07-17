@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { QuoteStatusSchema, ShippingMethodSchema, PaymentMethodSchema } from "./domain";
+import { PaginatedResponseSchema } from "../../shared/schemas";
 
 export const QuoteItemDtoSchema = z.object({
   product_id: z.uuid(),
@@ -40,9 +41,4 @@ export const QuoteAggregateResponseSchema = z.object({
   items: z.array(QuoteItemResponseSchema),
 });
 
-export const PaginatedQuoteAggregateResponseSchema = z.object({
-  data: z.array(QuoteAggregateResponseSchema),
-  total: z.number().int(),
-  limit: z.number().int(),
-  offset: z.number().int(),
-});
+export const PaginatedQuoteAggregateResponseSchema = PaginatedResponseSchema(QuoteAggregateResponseSchema);

@@ -6,6 +6,7 @@ import { HealthService } from "./services/health";
 import { IdentityService } from "./services/identity";
 import { InventoryService } from "./services/inventory";
 import { OrganizationService } from "./services/organization";
+import { ProductService } from "./services/product";
 import { QuoteService } from "./services/quote";
 import { UserProfileService } from "./services/user_profile";
 import { WalletService } from "./services/wallet";
@@ -35,6 +36,7 @@ export const walletApi = new WalletService(apiClient);
 export const inventoryApi = new InventoryService(apiClient);
 export const organizationApi = new OrganizationService(apiClient);
 export const quoteApi = new QuoteService(apiClient);
+export const productApi = new ProductService(apiClient);
 
 
 export async function bootstrapSession(): Promise<void> {

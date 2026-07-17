@@ -15,3 +15,11 @@ export const ErrorPayloadSchema = z.object({
   kind: ErrorKindSchema,
   message: z.string(),
 });
+
+
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) => z.object({
+  data: z.array(itemSchema),
+  total: z.number().int().nonnegative(),
+  limit: z.number().int().nonnegative(),
+  offset: z.number().int().nonnegative(),
+});

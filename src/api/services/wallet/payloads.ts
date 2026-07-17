@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TransactionTypeSchema } from "./domain";
+import { PaginatedResponseSchema } from "../../shared/schemas";
 
 export const VirtualWalletResponseSchema = z.object({
   id: z.uuid(),
@@ -16,9 +17,4 @@ export const LedgerEntryResponseSchema = z.object({
   reference_notes: z.string().optional().nullable(),
 });
 
-export const PaginatedLedgerResponseSchema = z.object({
-  data: z.array(LedgerEntryResponseSchema),
-  total: z.number().int(),
-  limit: z.number().int(),
-  offset: z.number().int(),
-});
+export const PaginatedLedgerResponseSchema = PaginatedResponseSchema(LedgerEntryResponseSchema);
