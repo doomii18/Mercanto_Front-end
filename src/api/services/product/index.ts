@@ -1,4 +1,5 @@
 import type { ApiClient } from "../../client";
+import { AssetUploadRequestSchema, UploadUrlResponseSchema } from "../../shared/schemas";
 import {
   ProductResponseSchema,
   PaginatedProductResponseSchema,
@@ -14,7 +15,51 @@ import type {
 } from "./types";
 
 export class ProductService {
-  constructor(private readonly client: ApiClient) {}
+  constructor(private readonly client: ApiClient) { }
+
+  async getProductImageBlobUrl(blobId: string): Promise<string> {
+      const response = await fetch(
+        `${this.client.getBaseUrl()}/assets/product-image/${blobId}`,
+        { method: "GET" }
+      );
+
+      if (!response.ok) throw new Error(`Failed to fetch product image: ${response.statusText}`);
+
+      return URL.createObjectURL(await response.blob());
+    }
+
+    async uploadProductImage(productId: string, file: File): Promise<void> {
+      const payload = AssetUploadRequestSchema.parse({
+        mime_type: file.type,
+        size_bytes: file.size,
+      });
+
+      const initData = UploadUrlResponseSchema.parse(
+        await this.client.request(`/products/${productId}/image`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
+      );
+
+      const storageResponse = await fetch(initData.presigned_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!storageResponse.ok) throw new Error("Product image upload failed");
+
+      await this.client.request(`/products/${productId}/image/${initData.blob_id}/confirm`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+    }
+
+    async deleteProductImage(productId: string, blobId: string): Promise<void> {
+      await this.client.request(`/products/${productId}/image/${blobId}`, {
+        method: "DELETE",
+      });
+    }
 
   async getProducts(params?: ProductFiltersRequest): Promise<PaginatedProductResponse> {
     const queryParams = new URLSearchParams();

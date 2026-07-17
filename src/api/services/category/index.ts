@@ -13,9 +13,54 @@ import type {
   CreateCategoryRequest,
   ProductCategoryPatchRequest,
 } from "./types";
+import { AssetUploadRequestSchema, UploadUrlResponseSchema } from "../../shared/schemas";
 
 export class CategoryService {
-  constructor(private readonly client: ApiClient) {}
+  constructor(private readonly client: ApiClient) { }
+
+  async getCategoryImageBlobUrl(blobId: string): Promise<string> {
+      const response = await fetch(
+        `${this.client.getBaseUrl()}/assets/category-image/${blobId}`,
+        { method: "GET" }
+      );
+
+      if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+
+      return URL.createObjectURL(await response.blob());
+    }
+
+    async uploadCategoryImage(categoryId: string, file: File): Promise<void> {
+      const payload = AssetUploadRequestSchema.parse({
+        mime_type: file.type,
+        size_bytes: file.size,
+      });
+
+      const initData = UploadUrlResponseSchema.parse(
+        await this.client.request(`/categories/${categoryId}/image`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
+      );
+
+      const storageResponse = await fetch(initData.presigned_url, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
+
+      if (!storageResponse.ok) throw new Error("Category image upload failed");
+
+      await this.client.request(`/categories/${categoryId}/image/${initData.blob_id}/confirm`, {
+        method: "POST",
+        body: JSON.stringify({}),
+      });
+    }
+
+    async deleteCategoryImage(categoryId: string, blobId: string): Promise<void> {
+      await this.client.request(`/categories/${categoryId}/image/${blobId}`, {
+        method: "DELETE",
+      });
+    }
 
   async getCategories(params?: { limit?: number; offset?: number }): Promise<PaginatedCategoriesResponse> {
     const queryParams = new URLSearchParams();

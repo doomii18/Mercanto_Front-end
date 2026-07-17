@@ -12,7 +12,7 @@ import type {
   UserInterestsRequest,
 } from "./types";
 import type { ProductCategoryResponse } from "../category/types";
-import { UploadUrlResponseSchema } from "../../shared/schemas";
+import { AssetUploadRequestSchema, UploadUrlResponseSchema } from "../../shared/schemas";
 
 export class UserProfileService {
   constructor(private readonly client: ApiClient) {}
@@ -59,10 +59,15 @@ export class UserProfileService {
   }
 
   async changeProfilePicture(file: File): Promise<void> {
+    const payload = AssetUploadRequestSchema.parse({
+      mime_type: file.type,
+      size_bytes: file.size,
+    });
+
     const initData = UploadUrlResponseSchema.parse(
-      await this.client.request("/assets/profile-picture", {
+      await this.client.request(`/assets/profile-picture`, {
         method: "POST",
-        body: JSON.stringify({ mime_type: file.type, size_bytes: file.size }),
+        body: JSON.stringify(payload),
       })
     );
 

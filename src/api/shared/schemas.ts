@@ -28,3 +28,8 @@ export const UploadUrlResponseSchema = z.object({
   blob_id: z.uuid(),
   presigned_url: z.url(),
 });
+
+export const AssetUploadRequestSchema = z.object({
+  mime_type: z.string(),
+  size_bytes: z.number().int().positive(),
+});
