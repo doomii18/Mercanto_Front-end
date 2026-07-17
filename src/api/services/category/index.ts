@@ -13,59 +13,96 @@ import type {
   CreateCategoryRequest,
   ProductCategoryPatchRequest,
 } from "./types";
-import { AssetUploadRequestSchema, UploadUrlResponseSchema } from "../../shared/schemas";
+import {
+  AssetUploadRequestSchema,
+  UploadUrlResponseSchema,
+} from "../../shared/schemas";
 
 export class CategoryService {
-  constructor(private readonly client: ApiClient) { }
+  constructor(private readonly client: ApiClient) {}
 
   async getCategoryImageBlobUrl(blobId: string): Promise<string> {
-      const response = await fetch(
-        `${this.client.getBaseUrl()}/assets/category-image/${blobId}`,
-        { method: "GET" }
-      );
+    const response = await fetch(
+      `${this.client.getBaseUrl()}/assets/category-image/${blobId}`,
+      { method: "GET" },
+    );
 
-      if (!response.ok) throw new Error(`Failed to fetch image: ${response.statusText}`);
+    if (!response.ok)
+      throw new Error(`Failed to fetch image: ${response.statusText}`);
 
-      return URL.createObjectURL(await response.blob());
-    }
+    return URL.createObjectURL(await response.blob());
+  }
 
-    async uploadCategoryImage(categoryId: string, file: File): Promise<void> {
-      const payload = AssetUploadRequestSchema.parse({
-        mime_type: file.type,
-        size_bytes: file.size,
-      });
+  async uploadCategoryImage(categoryId: string, file: File): Promise<void> {
+    await new Promise<void>((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
 
-      const initData = UploadUrlResponseSchema.parse(
-        await this.client.request(`/categories/${categoryId}/image`, {
-          method: "POST",
-          body: JSON.stringify(payload),
-        })
-      );
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        if (img.width > 4096 || img.height > 4096) {
+          reject(
+            new Error(
+              `Image dimensions must not exceed 4096x4096. Current: ${img.width}x${img.height}`,
+            ),
+          );
+        } else {
+          resolve();
+        }
+      };
 
-      const storageResponse = await fetch(initData.presigned_url, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Invalid image file format."));
+      };
 
-      if (!storageResponse.ok) throw new Error("Category image upload failed");
+      img.src = objectUrl;
+    });
 
-      await this.client.request(`/categories/${categoryId}/image/${initData.blob_id}/confirm`, {
+    const payload = AssetUploadRequestSchema.parse({
+      mime_type: file.type,
+      size_bytes: file.size,
+    });
+
+    const initData = UploadUrlResponseSchema.parse(
+      await this.client.request(`/categories/${categoryId}/image`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    );
+
+    const storageResponse = await fetch(initData.presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!storageResponse.ok) throw new Error("Category image upload failed");
+
+    await this.client.request(
+      `/categories/${categoryId}/image/${initData.blob_id}/confirm`,
+      {
         method: "POST",
         body: JSON.stringify({}),
-      });
-    }
+      },
+    );
+  }
 
-    async deleteCategoryImage(categoryId: string, blobId: string): Promise<void> {
-      await this.client.request(`/categories/${categoryId}/image/${blobId}`, {
-        method: "DELETE",
-      });
-    }
+  async deleteCategoryImage(categoryId: string, blobId: string): Promise<void> {
+    await this.client.request(`/categories/${categoryId}/image/${blobId}`, {
+      method: "DELETE",
+    });
+  }
 
-  async getCategories(params?: { limit?: number; offset?: number }): Promise<PaginatedCategoriesResponse> {
+  async getCategories(params?: {
+    limit?: number;
+    offset?: number;
+  }): Promise<PaginatedCategoriesResponse> {
     const queryParams = new URLSearchParams();
-    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
-    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (params?.limit !== undefined)
+      queryParams.append("limit", params.limit.toString());
+    if (params?.offset !== undefined)
+      queryParams.append("offset", params.offset.toString());
 
     const queryString = queryParams.toString();
     const endpoint = `/categories${queryString ? `?${queryString}` : ""}`;
@@ -74,7 +111,9 @@ export class CategoryService {
     return PaginatedCategoriesResponseSchema.parse(data);
   }
 
-  async createCategory(payload: CreateCategoryRequest): Promise<ProductCategoryResponse> {
+  async createCategory(
+    payload: CreateCategoryRequest,
+  ): Promise<ProductCategoryResponse> {
     const validatedPayload = CreateCategoryRequestSchema.parse(payload);
     const data = await this.client.request("/categories", {
       method: "POST",
@@ -83,12 +122,20 @@ export class CategoryService {
     return ProductCategoryResponseSchema.parse(data);
   }
 
-  async getCategoryTree(rootCategoryId: string): Promise<ProductCategoryNodeResponse> {
-    const data = await this.client.request(`/categories/tree/${rootCategoryId}`, { method: "GET" });
+  async getCategoryTree(
+    rootCategoryId: string,
+  ): Promise<ProductCategoryNodeResponse> {
+    const data = await this.client.request(
+      `/categories/tree/${rootCategoryId}`,
+      { method: "GET" },
+    );
     return ProductCategoryNodeResponseSchema.parse(data);
   }
 
-  async updateCategory(categoryId: string, payload: ProductCategoryPatchRequest): Promise<ProductCategoryResponse> {
+  async updateCategory(
+    categoryId: string,
+    payload: ProductCategoryPatchRequest,
+  ): Promise<ProductCategoryResponse> {
     const validatedPayload = ProductCategoryPatchRequestSchema.parse(payload);
     const data = await this.client.request(`/categories/${categoryId}`, {
       method: "PATCH",
@@ -98,6 +145,8 @@ export class CategoryService {
   }
 
   async deleteCategory(categoryId: string): Promise<void> {
-    await this.client.request(`/categories/${categoryId}`, { method: "DELETE" });
+    await this.client.request(`/categories/${categoryId}`, {
+      method: "DELETE",
+    });
   }
 }

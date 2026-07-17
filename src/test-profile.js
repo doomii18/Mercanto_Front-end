@@ -19,9 +19,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       await userProfileApi.changeProfilePicture(file);
       const blobUrl = URL.createObjectURL(file);
       profilePicture.src = blobUrl;
-    } catch {
-      alert('Failed to upload profile picture.')
-    }
+    }catch (error) {
+          alert(error.message || 'Failed to upload profile picture.');
+        }
   });
 
   // fetch data

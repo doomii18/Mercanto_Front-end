@@ -59,6 +59,28 @@ export class UserProfileService {
   }
 
   async changeProfilePicture(file: File): Promise<void> {
+
+    await new Promise<void>((resolve, reject) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        if (img.width > 2048 || img.height > 2048) {
+          reject(new Error(`Image dimensions must not exceed 2048x2048. Current: ${img.width}x${img.height}`));
+        } else {
+          resolve();
+        }
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error("Invalid image file format."));
+      };
+
+      img.src = objectUrl;
+    });
+
     const payload = AssetUploadRequestSchema.parse({
       mime_type: file.type,
       size_bytes: file.size,
@@ -85,7 +107,7 @@ export class UserProfileService {
       body: JSON.stringify({}),
     });
 
-    return
+    return;
   }
 
   async deleteProfilePicture(blobId: string): Promise<void> {
