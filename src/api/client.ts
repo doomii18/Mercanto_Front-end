@@ -52,12 +52,13 @@ export class ApiClient {
   async requestRaw(
      endpoint: string,
      options: RequestInit,
+     skipRetry: boolean = false
    ): Promise<Response> {
      const executeRequest = async (token: string | null) => {
        const headers = new Headers(options.headers);
        if (!headers.has("Content-Type") && !(options.body instanceof FormData))
          headers.set("Content-Type", "application/json");
-       if (token) headers.set("Authorization", `Bearer ${token}`);
+       if (token && !skipRetry) headers.set("Authorization", `Bearer ${token}`);
 
        return fetch(`${this.config.baseUrl}${endpoint}`, {
          ...options,
@@ -69,7 +70,7 @@ export class ApiClient {
 
      if (
        response.status === 401 &&
-       endpoint !== "/refresh" &&
+       !skipRetry &&
        this.tokenProvider.getRefreshToken()
      ) {
        response = await this.handleUnauthorized(executeRequest);
@@ -93,8 +94,9 @@ export class ApiClient {
    async request(
      endpoint: string,
      options: RequestInit,
+     skipRetry: boolean = false
    ): Promise<unknown> {
-     const response = await this.requestRaw(endpoint, options);
+     const response = await this.requestRaw(endpoint, options, skipRetry);
 
      if (response.status === 204 || response.status === 201)
        return undefined;

@@ -22,7 +22,7 @@ export class IdentityService {
     const data = await this.client.request("/login", {
       method: "POST",
       body: JSON.stringify(validatedPayload),
-    });
+    }, true);
     const tokens = AuthResponseSchema.parse(data);
     this.tokenProvider.setAccessToken(tokens.access_token);
     this.tokenProvider.setRefreshToken(tokens.refresh_token);
@@ -33,7 +33,8 @@ export class IdentityService {
     const data = await this.client.request("/refresh", {
       method: "POST",
       body: JSON.stringify(validatedPayload),
-    });
+
+    }, true);
     const tokens = AuthResponseSchema.parse(data);
     this.tokenProvider.setAccessToken(tokens.access_token);
     this.tokenProvider.setRefreshToken(tokens.refresh_token);
