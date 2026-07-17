@@ -49,49 +49,63 @@ export class ApiClient {
     return this.config.baseUrl;
   }
 
-  async request(
-      endpoint: string,
-      options: RequestInit,
-    ): Promise<unknown> {
-      const executeRequest = async (token: string | null) => {
-        const headers = new Headers(options.headers);
-        if (!headers.has("Content-Type") && !(options.body instanceof FormData))
-          headers.set("Content-Type", "application/json");
-        if (token) headers.set("Authorization", `Bearer ${token}`);
+  async requestRaw(
+     endpoint: string,
+     options: RequestInit,
+   ): Promise<Response> {
+     const executeRequest = async (token: string | null) => {
+       const headers = new Headers(options.headers);
+       if (!headers.has("Content-Type") && !(options.body instanceof FormData))
+         headers.set("Content-Type", "application/json");
+       if (token) headers.set("Authorization", `Bearer ${token}`);
 
-        return fetch(`${this.config.baseUrl}${endpoint}`, {
-          ...options,
-          headers,
-        });
-      };
+       return fetch(`${this.config.baseUrl}${endpoint}`, {
+         ...options,
+         headers,
+       });
+     };
 
-      let response = await executeRequest(this.tokenProvider.getAccessToken());
+     let response = await executeRequest(this.tokenProvider.getAccessToken());
 
-      if (
-        response.status === 401 &&
-        endpoint !== "/refresh" &&
-        this.tokenProvider.getRefreshToken()
-      ) {
-        response = await this.handleUnauthorized(executeRequest);
-      }
+     if (
+       response.status === 401 &&
+       endpoint !== "/refresh" &&
+       this.tokenProvider.getRefreshToken()
+     ) {
+       response = await this.handleUnauthorized(executeRequest);
+     }
 
-      if (!response.ok) {
-        const rawError = await response.json().catch(() => null);
-        const parsedError = ErrorPayloadSchema.safeParse(rawError);
-        throw new ApiError(
-          response.status,
-          parsedError.success
-            ? parsedError.data.message
-            : `HTTP Error ${response.status}`,
-          parsedError.success ? parsedError.data : undefined,
-        );
-      }
+     if (!response.ok) {
+       const rawError = await response.json().catch(() => null);
+       const parsedError = ErrorPayloadSchema.safeParse(rawError);
+       throw new ApiError(
+         response.status,
+         parsedError.success
+           ? parsedError.data.message
+           : `HTTP Error ${response.status}`,
+         parsedError.success ? parsedError.data : undefined,
+       );
+     }
 
-      if (response.status === 204 || response.status === 201)
-        return undefined;
+     return response;
+   }
 
-      return response.json();
-    }
+   async request(
+     endpoint: string,
+     options: RequestInit,
+   ): Promise<unknown> {
+     const response = await this.requestRaw(endpoint, options);
+
+     if (response.status === 204 || response.status === 201)
+       return undefined;
+
+     return response.json();
+   }
+
+   async downloadBlob(endpoint: string): Promise<Blob> {
+     const response = await this.requestRaw(endpoint, { method: "GET" });
+     return response.blob();
+   }
 
     private async handleUnauthorized(
       executeRequest: (token: string) => Promise<Response>

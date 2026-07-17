@@ -12,6 +12,7 @@ import type {
   UserInterestsRequest,
 } from "./types";
 import type { ProductCategoryResponse } from "../category/types";
+import { UploadUrlResponseSchema } from "../../shared/schemas";
 
 export class UserProfileService {
   constructor(private readonly client: ApiClient) {}
@@ -52,8 +53,44 @@ export class UserProfileService {
     });
   }
 
-  // Specific Account Endpoints
+  async getProfilePictureBlobUrl(blobId: string): Promise<string> {
+    const blob = await this.client.downloadBlob(`/assets/profile-picture/${blobId}`);
+    return URL.createObjectURL(blob);
+  }
 
+  async changeProfilePicture(file: File): Promise<UserProfileResponse> {
+    const initData = UploadUrlResponseSchema.parse(
+      await this.client.request("/assets/profile-picture", {
+        method: "POST",
+        body: JSON.stringify({ mime_type: file.type, size_bytes: file.size }),
+      })
+    );
+
+    const storageResponse = await fetch(initData.presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!storageResponse.ok) throw new Error("Upload failed");
+
+    // confirm
+    await this.client.request(`/assets/profile-picture/${initData.blob_id}/confirm`, {
+      method: "POST",
+      body: JSON.stringify({}),
+    });
+
+    return this.getMyProfile();
+  }
+
+  async deleteProfilePicture(blobId: string): Promise<void> {
+    await this.client.request(
+      `/assets/profile-picture/${blobId}`,
+      { method: "DELETE" }
+    );
+  }
+
+  // Specific Account Endpoints
   async getUserProfile(accountId: string): Promise<UserProfileResponse> {
     const data = await this.client.request(`/profiles/${accountId}`, { method: "GET" });
     return UserProfileResponseSchema.parse(data);

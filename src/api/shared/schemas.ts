@@ -23,3 +23,8 @@ export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =
   limit: z.number().int().nonnegative(),
   offset: z.number().int().nonnegative(),
 });
+
+export const UploadUrlResponseSchema = z.object({
+  blob_id: z.uuid(),
+  presigned_url: z.url(),
+});

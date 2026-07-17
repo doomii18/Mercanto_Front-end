@@ -21,3 +21,9 @@ export const UserProfilePatchRequestSchema = z.object({
 export const UserInterestsRequestSchema = z.object({
   category_ids: z.array(z.uuid()),
 });
+
+
+export const ProfilePicUploadRequestDtoSchema = z.object({
+  mime_type: z.string(),
+  size_bytes: z.number().int().positive(),
+});
