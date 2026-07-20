@@ -21,11 +21,11 @@ export const AuthResponseSchema = z.object({
 });
 
 export const RegisterRequestSchema = z.object({
-  firstName: personNameSchema,
-  lastName: personNameSchema,
+  first_name: personNameSchema,
+  last_name: personNameSchema,
   email: emailSchema,
   password: securePasswordSchema,
-  phoneNumber: phoneNumberSchema,
-  nationalId: nationalIdSchema,
+  phone_number: phoneNumberSchema,
+  national_id: nationalIdSchema,
   department: z.string().min(1).max(100),
 });

@@ -8,6 +8,7 @@ import { InventoryService } from "./services/inventory";
 import { OrganizationService } from "./services/organization";
 import { ProductService } from "./services/product";
 import { QuoteService } from "./services/quote";
+import { ReviewService } from "./services/review";
 import { UserProfileService } from "./services/user_profile";
 import { WalletService } from "./services/wallet";
 import { LocalStorageTokenProvider } from "./token";
@@ -37,6 +38,7 @@ export const inventoryApi = new InventoryService(apiClient);
 export const organizationApi = new OrganizationService(apiClient);
 export const quoteApi = new QuoteService(apiClient);
 export const productApi = new ProductService(apiClient);
+export const reviewApi = new ReviewService(apiClient);
 
 
 export async function bootstrapSession(): Promise<void> {
