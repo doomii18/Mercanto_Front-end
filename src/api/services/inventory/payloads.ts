@@ -11,12 +11,14 @@ export const InternalInventoryDtoSchema = z.object({
   available_stock: z.number().int(),
   reserved_stock: z.number().int(),
   updated_at: z.iso.datetime(),
+  lifetime_units_sold: z.number().int(),
 });
 
 export const PublicInventoryDtoSchema = z.object({
   type: z.literal("Public"),
   product_id: z.uuid(),
   is_in_stock: z.boolean(),
+  lifetime_units_sold: z.number().int(),
 });
 
 export const InventoryResponseSchema = z.discriminatedUnion("type", [

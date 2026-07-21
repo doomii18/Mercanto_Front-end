@@ -34,62 +34,29 @@ export class CategoryService {
   }
 
   async uploadCategoryImage(categoryId: string, file: File): Promise<void> {
-    await new Promise<void>((resolve, reject) => {
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        if (img.width > 4096 || img.height > 4096) {
-          reject(
-            new Error(
-              `Image dimensions must not exceed 4096x4096. Current: ${img.width}x${img.height}`,
-            ),
-          );
-        } else {
-          resolve();
-        }
-      };
-
-      img.onerror = () => {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("Invalid image file format."));
-      };
-
-      img.src = objectUrl;
-    });
-
     const payload = AssetUploadRequestSchema.parse({
       mime_type: file.type,
       size_bytes: file.size,
     });
-
     const initData = UploadUrlResponseSchema.parse(
-      await this.client.request(`/categories/${categoryId}/image`, {
+      await this.client.request("/assets/category-image", {
         method: "POST",
         body: JSON.stringify(payload),
       }),
     );
-
     const storageResponse = await fetch(initData.presigned_url, {
       method: "PUT",
       headers: { "Content-Type": file.type },
       body: file,
     });
-
-    if (!storageResponse.ok) throw new Error("Category image upload failed");
-
+    if (!storageResponse.ok) throw new Error("Upload failed");
     await this.client.request(
-      `/categories/${categoryId}/image/${initData.blob_id}/confirm`,
-      {
-        method: "POST",
-        body: JSON.stringify({}),
-      },
+      `/assets/category-image/${initData.blob_id}/confirm`,
+      { method: "POST", body: JSON.stringify({ category_id: categoryId }) },
     );
   }
-
-  async deleteCategoryImage(categoryId: string, blobId: string): Promise<void> {
-    await this.client.request(`/categories/${categoryId}/image/${blobId}`, {
+  async deleteCategoryImage(blobId: string): Promise<void> {
+    await this.client.request(`/assets/category-image/${blobId}`, {
       method: "DELETE",
     });
   }

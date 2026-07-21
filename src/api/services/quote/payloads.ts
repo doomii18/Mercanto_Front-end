@@ -1,15 +1,19 @@
 import { z } from "zod";
-import { QuoteStatusSchema, ShippingMethodSchema, PaymentMethodSchema } from "./domain";
+import {
+  QuoteStatusSchema,
+  ShippingMethodSchema,
+  PaymentMethodSchema,
+} from "./domain";
 import { PaginatedResponseSchema } from "../../shared/schemas";
 
 export const QuoteItemDtoSchema = z.object({
   product_id: z.uuid(),
   quantity: z.number().int().positive(),
+  shipping_preference: ShippingMethodSchema,
 });
 
 export const CreateQuoteRequestSchema = z.object({
   provider_id: z.uuid(),
-  shipping_preference: ShippingMethodSchema,
   payment_preference: PaymentMethodSchema,
   buyer_notes: z.string().max(1000).optional().nullable(),
   shipping_address: z.string().trim().min(1),
@@ -41,4 +45,6 @@ export const QuoteAggregateResponseSchema = z.object({
   items: z.array(QuoteItemResponseSchema),
 });
 
-export const PaginatedQuoteAggregateResponseSchema = PaginatedResponseSchema(QuoteAggregateResponseSchema);
+export const PaginatedQuoteAggregateResponseSchema = PaginatedResponseSchema(
+  QuoteAggregateResponseSchema,
+);

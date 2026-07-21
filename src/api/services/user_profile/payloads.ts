@@ -1,15 +1,29 @@
 import { z } from "zod";
-import { personNameSchema, nationalIdSchema, phoneNumberSchema } from "./domain";
+import {
+  personNameSchema,
+  nationalIdSchema,
+  phoneNumberSchema,
+} from "./domain";
 
-export const UserProfileResponseSchema = z.object({
+export const InternalUserProfileSchema = z.object({
   account_id: z.uuid(),
   first_name: personNameSchema,
   last_name: personNameSchema,
-  national_id: nationalIdSchema.optional().nullable(),
-  phone_number: phoneNumberSchema.optional().nullable(),
-  avatar_blob_id: z.uuid().optional().nullable(),
-  municipality_id: z.uuid().optional(),
+  national_id: nationalIdSchema.nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
+  avatar_blob_id: z.uuid().nullable().optional(),
+  municipality_id: z.uuid(),
 });
+export const PublicUserProfileSchema = z.object({
+  account_id: z.uuid(),
+  first_name: personNameSchema,
+  last_name: personNameSchema,
+  avatar_blob_id: z.uuid().nullable().optional(),
+});
+export const UserProfileResponseSchema = z.union([
+  InternalUserProfileSchema,
+  PublicUserProfileSchema,
+]);
 
 export const UserProfilePatchRequestSchema = z.object({
   first_name: personNameSchema.optional().nullable(),
@@ -21,7 +35,6 @@ export const UserProfilePatchRequestSchema = z.object({
 export const UserInterestsRequestSchema = z.object({
   category_ids: z.array(z.uuid()),
 });
-
 
 export const ProfilePicUploadRequestDtoSchema = z.object({
   mime_type: z.string(),

@@ -1,5 +1,7 @@
 import type { ApiClient } from "../../client";
 import type { TokenProvider } from "../../token";
+import { UserProfileResponseSchema } from "../user_profile/payloads";
+import type { UserProfileResponse } from "../user_profile/types";
 import { AuthResponseSchema, LoginRequestSchema, RegisterRequestSchema, TokenRequestSchema } from "./payloads";
 import type { LoginRequest, RegisterRequest, TokenRequest } from "./types";
 
@@ -9,12 +11,10 @@ export class IdentityService {
     private readonly tokenProvider: TokenProvider
   ) {}
 
-   async register(payload: RegisterRequest): Promise<void> {
+  async register(payload: RegisterRequest): Promise<UserProfileResponse> {
     const validatedPayload = RegisterRequestSchema.parse(payload);
-    await this.client.request("/register", {
-      method: "POST",
-      body: JSON.stringify(validatedPayload),
-    });
+    const data = await this.client.request("/register", { method: "POST", body: JSON.stringify(validatedPayload) });
+    return UserProfileResponseSchema.parse(data);
   }
 
   async login(payload: LoginRequest): Promise<void> {

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ShippingMethodSchema } from "../quote/domain";
 
 export const CategoryNameSchema = z.string().min(1).max(100);
 export const CategoryDescriptionSchema = z.string().min(1).max(2000);
@@ -32,6 +33,7 @@ export const PublicProductSchema = z.object({
   description: ProductDescriptionSchema.nullable().optional(),
   base_price: ProductPriceSchema,
   min_order_quantity: MinOrderQuantitySchema,
+  shipping_methods: z.array(ShippingMethodSchema),
   category: CategorySummarySchema,
   inventory: PublicInventorySchema,
 });
@@ -46,6 +48,7 @@ export const InternalProductSchema = z.object({
   min_order_quantity: MinOrderQuantitySchema,
   is_active: z.boolean(),
   updated_at: z.iso.datetime(),
+  shipping_methods: z.array(ShippingMethodSchema),
   category: CategorySummarySchema,
   inventory: InternalInventorySchema,
 });
