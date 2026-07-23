@@ -64,7 +64,6 @@ export class NotificationsService {
       this.ws.onmessage = (message: MessageEvent) => {
         try {
           const rawPayload = JSON.parse(message.data);
-          console.log(rawPayload);
           const event = BaseEventSchema.parse(rawPayload);
           this.dispatchEvent(event);
         } catch (e) {
