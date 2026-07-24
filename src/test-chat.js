@@ -1,4 +1,5 @@
-import { bootstrapSession, chatApi } from "./api";
+import { bootstrapSession, chatApi, notificationsApi } from "./api";
+import { NewChatMessageEventSchema } from "./api/services/notifications/payloads";
 
 const THREAD_ITEM_TEMPLATE = (thread) => {
   const raw_element = `
@@ -17,11 +18,11 @@ const THREAD_ITEM_TEMPLATE = (thread) => {
   return template.content.firstElementChild;
 };
 
-const MESSAGE_ITEM_TEMPLATE = (msg) => {
+const MESSAGE_ITEM_TEMPLATE = (is_read, sender_id, content) => {
   const raw_element = `
-  <div class="message-item ${msg.is_read ? "read" : "unread"}">
-    <span class="message-sender">Sender: ${msg.sender_id}</span>
-    <p class="message-content">${escapeHtml(msg.content)}</p>
+  <div class="message-item ${is_read ? "read" : "unread"}">
+    <span class="message-sender">Sender: ${sender_id}</span>
+    <p class="message-content">${escapeHtml(content)}</p>
   </div>
 `;
   const template = document.createElement("template");
@@ -74,22 +75,38 @@ const loadMessages = async (chat_thread_id) => {
     messageListContainer.innerHTML = "";
 
     messagesResponse.data.forEach((e) => {
-      const messageComponent = MESSAGE_ITEM_TEMPLATE(e);
+      const messageComponent = MESSAGE_ITEM_TEMPLATE(e.is_read, e.sender_id, e.content);
       messageListContainer.prepend(messageComponent);
     });
   } catch (error) {
-    console.error(`Failed to fetch messages for thread ${chat_thread_id}:`, error);
+    console.error(
+      `Failed to fetch messages for thread ${chat_thread_id}:`,
+      error,
+    );
     messageListContainer.innerHTML = ERROR_TEMPLATE;
   }
 };
 
-
-
 document.addEventListener("DOMContentLoaded", async () => {
   await bootstrapSession();
+  await notificationsApi.connect();
+
   const listContainer = document.getElementById("thread-list");
   const inputElement = document.getElementById("message-content");
   const messageForm = document.getElementById("message-form");
+  const messageListContainer = document.getElementById("message-list");
+
+  notificationsApi.subscribe("NewChatMessage", (rawEvent) => {
+    try {
+      const event = NewChatMessageEventSchema.parse(rawEvent);
+      if (current_chat_id && event.thread_id == current_chat_id) {
+        const messageComponent = MESSAGE_ITEM_TEMPLATE(false, event.sender_id, event.content_preview);
+        messageListContainer.append(messageComponent);
+      }
+    } catch (error) {
+      console.error("Malformed NewChatMessage payload:", error);
+    }
+  });
 
   messageForm.addEventListener("submit", async (e) => {
     e.preventDefault();
