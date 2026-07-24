@@ -22,7 +22,6 @@ const MESSAGE_ITEM_TEMPLATE = (msg) => {
   <div class="message-item ${msg.is_read ? "read" : "unread"}">
     <span class="message-sender">Sender: ${msg.sender_id}</span>
     <p class="message-content">${escapeHtml(msg.content)}</p>
-    <span class="message-status">${msg.is_read ? " ✓ Read" : " ● Unread"}</span>
   </div>
 `;
   const template = document.createElement("template");
@@ -43,6 +42,9 @@ const NO_MESSAGES_TEMPLATE = `
   <p class="no-messages-text">No messages yet.</p>
 `;
 
+// globals
+let current_chat_id = null;
+
 function escapeHtml(str) {
   const div = document.createElement("div");
   div.textContent = str;
@@ -61,6 +63,8 @@ const loadMessages = async (chat_thread_id) => {
       offset: 0,
     });
 
+    current_chat_id = chat_thread_id;
+
     if (messagesResponse.data.length < 1) {
       messageListContainer.innerHTML = NO_MESSAGES_TEMPLATE;
       return;
@@ -71,7 +75,7 @@ const loadMessages = async (chat_thread_id) => {
 
     messagesResponse.data.forEach((e) => {
       const messageComponent = MESSAGE_ITEM_TEMPLATE(e);
-      messageListContainer.appendChild(messageComponent);
+      messageListContainer.prepend(messageComponent);
     });
   } catch (error) {
     console.error(`Failed to fetch messages for thread ${chat_thread_id}:`, error);
@@ -79,9 +83,22 @@ const loadMessages = async (chat_thread_id) => {
   }
 };
 
+
+
 document.addEventListener("DOMContentLoaded", async () => {
   await bootstrapSession();
   const listContainer = document.getElementById("thread-list");
+  const inputElement = document.getElementById("message-content");
+  const messageForm = document.getElementById("message-form");
+
+  messageForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!current_chat_id) return;
+
+    const payload = { content: inputElement.value };
+    inputElement.value = "";
+    await chatApi.publishChatMessage(current_chat_id, payload);
+  });
 
   try {
     const response = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });

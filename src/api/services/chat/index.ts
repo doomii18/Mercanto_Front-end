@@ -45,6 +45,7 @@ export class ChatService {
       method: "POST",
       body: JSON.stringify(validatedPayload),
     });
+
     return ChatMessageResponseSchema.parse(data);
   }
 

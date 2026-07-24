@@ -98,7 +98,7 @@ export class ApiClient {
    ): Promise<unknown> {
      const response = await this.requestRaw(endpoint, options, skipRetry);
 
-     if (response.status === 204 || response.status === 201)
+     if (response.status === 204)
        return undefined;
 
      return response.json();
