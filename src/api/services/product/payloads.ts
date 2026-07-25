@@ -4,9 +4,10 @@ import {
   ProductDescriptionSchema,
   ProductPriceSchema,
   MinOrderQuantitySchema,
-  ProductSchema
+  ProductSchema,
 } from "./domain";
 import { PaginatedResponseSchema } from "../../shared/schemas";
+import { ShippingMethodSchema } from "../quote/domain";
 
 export const CreateProductRequestSchema = z.object({
   provider_id: z.uuid(),
@@ -15,6 +16,7 @@ export const CreateProductRequestSchema = z.object({
   description: ProductDescriptionSchema.optional(),
   base_price: ProductPriceSchema,
   min_order_quantity: MinOrderQuantitySchema,
+  shipping_methods: z.array(ShippingMethodSchema),
 });
 
 export const PatchProductRequestSchema = z.object({
@@ -23,6 +25,7 @@ export const PatchProductRequestSchema = z.object({
   description: ProductDescriptionSchema.optional(),
   base_price: ProductPriceSchema.optional(),
   min_order_quantity: MinOrderQuantitySchema.optional(),
+  shipping_methods: z.array(ShippingMethodSchema).optional(),
 });
 
 export const ProductFiltersRequestSchema = z.object({
@@ -37,4 +40,5 @@ export const ProductFiltersRequestSchema = z.object({
 
 export const ProductResponseSchema = ProductSchema;
 
-export const PaginatedProductResponseSchema = PaginatedResponseSchema(ProductSchema);
+export const PaginatedProductResponseSchema =
+  PaginatedResponseSchema(ProductSchema);

@@ -1,12 +1,12 @@
-import { z } from 'zod';
+import { z } from "zod";
 import {
   emailSchema,
   passwordSchema,
   securePasswordSchema,
   personNameSchema,
   phoneNumberSchema,
-  nationalIdSchema
-} from './domain';
+  nationalIdSchema,
+} from "./domain";
 
 export const LoginRequestSchema = z.object({
   email: emailSchema,
@@ -21,11 +21,12 @@ export const AuthResponseSchema = z.object({
 });
 
 export const RegisterRequestSchema = z.object({
-  first_name: personNameSchema,
-  last_name: personNameSchema,
   email: emailSchema,
   password: securePasswordSchema,
-  phone_number: phoneNumberSchema,
-  national_id: nationalIdSchema,
-  department: z.string().min(1).max(100),
+  first_name: personNameSchema,
+  last_name: personNameSchema,
+  national_id: nationalIdSchema.nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
+  municipality_id: z.uuid(),
+  interests: z.array(z.uuid()),
 });

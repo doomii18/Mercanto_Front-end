@@ -1,10 +1,12 @@
 import { ApiClient } from "./client";
 import { CartService } from "./services/cart";
 import { CategoryService } from "./services/category";
+import { ChatService } from "./services/chat";
 import { GeographyService } from "./services/geography";
 import { HealthService } from "./services/health";
 import { IdentityService } from "./services/identity";
 import { InventoryService } from "./services/inventory";
+import { NotificationsService } from "./services/notifications";
 import { OrganizationService } from "./services/organization";
 import { ProductService } from "./services/product";
 import { QuoteService } from "./services/quote";
@@ -39,6 +41,8 @@ export const organizationApi = new OrganizationService(apiClient);
 export const quoteApi = new QuoteService(apiClient);
 export const productApi = new ProductService(apiClient);
 export const reviewApi = new ReviewService(apiClient);
+export const notificationsApi = new NotificationsService(apiClient);
+export const chatApi = new ChatService(apiClient);
 
 
 export async function bootstrapSession(): Promise<void> {

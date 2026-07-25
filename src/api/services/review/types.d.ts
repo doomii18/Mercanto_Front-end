@@ -1,12 +1,9 @@
 import { z } from 'zod';
-import {
-  createProviderReviewDtoSchema,
-  createProductReviewDtoSchema,
-  providerReviewResponseDtoSchema,
-  productReviewResponseDtoSchema,
-} from './payloads';
+import { CreateProviderReviewSchema, CreateProductReviewSchema, ProviderReviewResponseSchema, ProductReviewResponseSchema, PaginatedProviderReviewResponseSchema, PaginatedProductReviewResponseSchema } from './payloads';
 
-export type CreateProviderReviewDto = z.infer<typeof createProviderReviewDtoSchema>;
-export type CreateProductReviewDto = z.infer<typeof createProductReviewDtoSchema>;
-export type ProviderReviewResponseDto = z.infer<typeof providerReviewResponseDtoSchema>;
-export type ProductReviewResponseDto = z.infer<typeof productReviewResponseDtoSchema>;
+export type CreateProviderReview = z.infer<typeof CreateProviderReviewSchema>;
+export type CreateProductReview = z.infer<typeof CreateProductReviewSchema>;
+export type ProviderReviewResponse = z.infer<typeof ProviderReviewResponseSchema>;
+export type ProductReviewResponse = z.infer<typeof ProductReviewResponseSchema>;
+export type PaginatedProviderReviewResponse = z.infer<typeof PaginatedProviderReviewResponseSchema>;
+export type PaginatedProductReviewResponse = z.infer<typeof PaginatedProductReviewResponseSchema>;
