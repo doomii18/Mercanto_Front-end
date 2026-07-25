@@ -1,5 +1,6 @@
 import { bootstrapSession, geographyApi, healthApi } from "./api";
 
+// Carga asíncrona de datos de la API
 document.addEventListener('DOMContentLoaded', async () => {
   await bootstrapSession();
 
@@ -10,15 +11,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   await healthApi.getReadiness();
   const categories = await geographyApi.getGeographyTree({ country_iso: "NIC" });
   console.log(categories);
-     if (carousel && prevBtn && nextBtn) {
-        prevBtn.addEventListener('click', () => {
-            // Scroll left by roughly one card width + gap (220px + 24px)
-            carousel.scrollBy({ left: -244, behavior: 'smooth' });
-        });
 
-        nextBtn.addEventListener('click', () => {
-            // Scroll right
-            carousel.scrollBy({ left: 244, behavior: 'smooth' });
-        });
-    }
+  if (carousel && prevBtn && nextBtn) {
+      prevBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: -244, behavior: 'smooth' });
+      });
+      nextBtn.addEventListener('click', () => {
+          carousel.scrollBy({ left: 244, behavior: 'smooth' });
+      });
+  }
+
 });

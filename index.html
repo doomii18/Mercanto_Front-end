@@ -23,11 +23,14 @@
                 <div class="logo">
                     <img src="./src/assets/logo.png" style="height: 45px" />
                 </div>
+                <button class="mobile-menu-btn" aria-label="Abrir menú">
+                    <i class="fa-solid fa-bars" id="menu-icon"></i>
+                </button>
                 <nav class="nav-links">
-                    <a href="#">Inicio</a>
-                    <a href="#">Categorías</a>
-                    <a href="#">Proveedores</a>
-                    <a href="#">Como funciona</a>
+                    <a href="#inicio">Inicio</a>
+                    <a href="#categorias">Categorías</a>
+                    <a href="#proveedores">Proveedores</a>
+                    <a href="#como-funciona">Como funciona</a>
                 </nav>
                 <div class="auth-buttons">
                     <a href="login.html" class="login">Iniciar sesión</a>
@@ -37,7 +40,7 @@
         </header>
 
         <main>
-            <section class="hero container">
+            <section id="inicio" class="hero container">
                 <div class="hero-text">
                     <h1>
                         Encuentra los<br />mejores<br />
@@ -100,7 +103,7 @@
                 </div>
             </section>
 
-            <section class="categories container">
+            <section id="categorias" class="categories container">
                 <div class="categories-header">
                     <h2>Categorías</h2>
                     <p>
@@ -294,7 +297,7 @@
                 </div>
             </section>
 
-            <section class="top-providers container">
+            <section id="proveedores" class="top-providers container">
                 <h2>
                     Nuestros proveedores más
                     <span class="highlight-orange">TOP</span>
@@ -365,7 +368,7 @@
                 </div>
             </section>
 
-            <section class="how-it-works container">
+            <section id="como-funciona" class="how-it-works container">
                 <h2>¿Comó funciona la plataforma?</h2>
                 <div class="steps-grid">
                     <div class="step">
@@ -447,7 +450,7 @@
             <div class="footer-bottom">
                 <p>Mercanto S.A 2026. Todos los derechos reservados</p>
             </div>
-        </footer>
-            <script type="module" src="./src/index.js"></script>
+        <script type="module" src="./src/ui.js"></script>
+        <script type="module" src="./src/index.js"></script>
     </body>
 </html>

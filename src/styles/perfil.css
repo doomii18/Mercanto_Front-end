@@ -343,3 +343,116 @@ h1, h2, h3, .logo {
     color: #3e7b9e;
     text-decoration: underline;
 }
+
+/* =========================================
+   Animaciones sutiles
+   ========================================= */
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.card    { animation: fadeInUp 0.5s ease both; }
+.profile-card { animation: fadeInUp 0.5s ease 0.1s both; }
+.stats-cards  { animation: fadeInUp 0.5s ease 0.2s both; }
+
+.menu-item {
+    transition: background 0.25s ease, transform 0.2s ease, padding-left 0.2s ease;
+}
+.menu-item:hover {
+    padding-left: 2rem;
+}
+
+.btn-edit {
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+.btn-edit:hover {
+    background-color: #a0d8d4;
+    transform: translateY(-1px);
+}
+
+/* =========================================
+   Media Queries — Responsive
+   ========================================= */
+
+/* Tablet (≤ 1024px) */
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 220px;
+    }
+    .content {
+        margin-left: 220px;
+        padding: 2rem;
+    }
+    .profile-card {
+        gap: 2rem;
+    }
+    .avatar-container {
+        width: 140px;
+        height: 140px;
+    }
+    .info-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Tablet (≤ 768px) */
+@media (max-width: 768px) {
+    .header {
+        padding: 1rem 1.5rem;
+    }
+    .sidebar {
+        display: none;
+    }
+    .content {
+        margin-left: 0;
+        padding: 1.5rem 1rem;
+        max-width: 100%;
+    }
+    .dashboard-container {
+        flex-direction: column;
+    }
+    .profile-card {
+        flex-direction: column;
+        text-align: center;
+        gap: 1.5rem;
+    }
+    .avatar-container {
+        width: 120px;
+        height: 120px;
+        margin: 0 auto;
+    }
+    .profile-header {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    .contact-info p {
+        justify-content: center;
+    }
+    .stats-cards {
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+    .stat-divider { display: none; }
+    .stat-card { justify-content: flex-start; }
+    .info-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+}
+
+/* Mobile pequeño (≤ 480px) */
+@media (max-width: 480px) {
+    .content { padding: 1rem 0.75rem; }
+    .card { padding: 1.5rem 1rem; }
+    .profile-header h2 { font-size: 1.4rem; }
+    .stat-icon-circle { width: 60px; height: 60px; font-size: 1.5rem; }
+    .stat-text h3 { font-size: 1.5rem; }
+}
