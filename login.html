@@ -12,181 +12,103 @@
 </head>
 <body>
 
-<div class="login-page">
+<div class="login-container">
 
-    <!-- Panel izquierdo (solo desktop) -->
+    <!-- Panel izquierdo -->
     <div class="login-left">
         <div class="login-brand">
-            <img src="./src/assets/logo.png" alt="Mercanto">
-            <h2>Bienvenido a Mercanto</h2>
-            <p>La plataforma mayorista más confiable de Nicaragua.</p>
+            <img src="./src/assets/1.1 Imagotipo variacion.png" alt="Mercanto Icon" style="height: 60px;">
+        
         </div>
-        <div class="login-features">
+        
+        <h2 class="login-left-title">
+            Encuentra a los mejores proveedores<br>para <span>TÚ</span> negocio
+        </h2>
+
+        <div class="login-hero-image">
+            <img src="./src/assets/login_hero1.png" alt="Persona usando tablet en tienda">
+        </div>
+
+        <div class="login-features-list">
             <div class="login-feature-item">
-                <i class="fa-solid fa-shield-halved"></i>
-                <span>Proveedores 100% verificados</span>
+                <i class="fa-solid fa-certificate"></i>
+                <span>Proveedores verificados</span>
             </div>
             <div class="login-feature-item">
-                <i class="fa-solid fa-tags"></i>
-                <span>Precios competitivos al por mayor</span>
-            </div>
-            <div class="login-feature-item">
-                <i class="fa-solid fa-truck"></i>
-                <span>Envíos a todo el país</span>
+                <i class="fa-solid fa-box"></i>
+                <span>Compras al por mayor</span>
             </div>
         </div>
+
+        <img src="./src/assets/city_outline.png" alt="City Outline" class="city-outline" style="mix-blend-mode: screen;">
     </div>
 
-    <!-- Panel derecho (formularios) -->
-    <div class="login-right">
-
-        <!-- Logo visible solo en móvil -->
-        <div class="login-mobile-logo" style="display:none;">
-            <img src="./src/assets/logo.png" alt="Mercanto" style="height:45px;">
-        </div>
-
-        <div class="login-box">
-
-            <!-- Tabs -->
-            <div class="auth-tabs">
-                <button class="auth-tab-btn active" data-tab="login">Iniciar sesión</button>
-                <button class="auth-tab-btn" data-tab="signup">Crear cuenta</button>
+    <!-- Panel derecho -->
+    <div class="login-right" style="position: relative;">
+        <div class="login-card">
+            <div class="card-header">
+                <div class="store-icon">
+                    <i class="fa-solid fa-store"></i>
+                </div>
+                <h3>¡Bienvenido de nuevo!</h3>
+                <p>Inicia sesión en tu cuenta</p>
             </div>
 
-            <!-- Formulario Iniciar Sesión -->
-            <form class="auth-form active" id="login-form" data-form="login">
-                <h2 class="form-title">Hola de nuevo 👋</h2>
-                <p class="form-subtitle">Ingresa tus datos para continuar</p>
-
+            <form action="#">
                 <div class="form-group">
-                    <label for="login-email">Correo electrónico</label>
+                    <label for="email">Correo electrónico:</label>
                     <div class="input-wrapper">
                         <i class="fa-regular fa-envelope input-icon"></i>
-                        <input type="email" id="login-email" name="email" placeholder="tu@correo.com" required>
+                        <input type="email" id="email" placeholder="example@gmail.com" required>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <label for="login-password">Contraseña</label>
+                    <label for="password">Contraseña:</label>
                     <div class="input-wrapper">
                         <i class="fa-solid fa-lock input-icon"></i>
-                        <input type="password" id="login-password" name="password" placeholder="••••••••" required>
-                        <button type="button" class="toggle-password" data-target="login-password" aria-label="Mostrar contraseña">
-                            <i class="fa-regular fa-eye"></i>
+                        <input type="password" id="password" placeholder="••••••••" required>
+                        <button type="button" class="toggle-password" id="toggle-password-btn" aria-label="Mostrar contraseña">
+                            <i class="fa-solid fa-eye"></i>
                         </button>
                     </div>
                 </div>
 
                 <div class="form-options">
-                    <label>
-                        <input type="checkbox" name="remember"> Recordarme
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="remember">
+                        Recordarme
                     </label>
-                    <a href="#">¿Olvidaste tu contraseña?</a>
+                    <a href="#" class="forgot-password">¿Olvidaste tu contraseña?</a>
                 </div>
 
-                <button type="submit" class="btn-submit">Iniciar sesión</button>
-
-                <div class="divider-or">o continúa con</div>
-
-                <button type="button" class="btn-google">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
-                    Continuar con Google
+                <button type="submit" class="btn-submit">
+                    Iniciar sesión <i class="fa-solid fa-arrow-right"></i>
                 </button>
+
+                <div class="divider-container">
+                    <div class="divider-line"></div>
+                    <div class="divider-dot"></div>
+                    <div class="divider-line"></div>
+                </div>
+
+                <div class="register-link-container">
+                    ¿No tienes cuenta?
+                    <a href="#">Registrate</a>
+                </div>
             </form>
-
-            <!-- Formulario Crear Cuenta -->
-            <form class="auth-form" id="signup-form" data-form="signup">
-                <h2 class="form-title">Crea tu cuenta 🚀</h2>
-                <p class="form-subtitle">Únete a miles de negocios en Mercanto</p>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="signup-nombre">Nombre</label>
-                        <div class="input-wrapper">
-                            <i class="fa-regular fa-user input-icon"></i>
-                            <input type="text" id="signup-nombre" name="nombre" placeholder="Juan" required>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="signup-apellido">Apellido</label>
-                        <div class="input-wrapper">
-                            <i class="fa-regular fa-user input-icon"></i>
-                            <input type="text" id="signup-apellido" name="apellido" placeholder="Pérez" required>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="signup-email">Correo electrónico</label>
-                    <div class="input-wrapper">
-                        <i class="fa-regular fa-envelope input-icon"></i>
-                        <input type="email" id="signup-email" name="email" placeholder="tu@correo.com" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="signup-password">Contraseña</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock input-icon"></i>
-                        <input type="password" id="signup-password" name="password" placeholder="Mín. 8 caracteres" required>
-                        <button type="button" class="toggle-password" data-target="signup-password" aria-label="Mostrar contraseña">
-                            <i class="fa-regular fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label for="signup-confirm">Confirmar contraseña</label>
-                    <div class="input-wrapper">
-                        <i class="fa-solid fa-lock input-icon"></i>
-                        <input type="password" id="signup-confirm" name="confirm" placeholder="Repite tu contraseña" required>
-                        <button type="button" class="toggle-password" data-target="signup-confirm" aria-label="Mostrar contraseña">
-                            <i class="fa-regular fa-eye"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit">Crear cuenta</button>
-
-                <div class="divider-or">o continúa con</div>
-
-                <button type="button" class="btn-google">
-                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google">
-                    Continuar con Google
-                </button>
-            </form>
-
+        </div>
+        
+        <!-- Envíos a todo el país (fuera de la tarjeta en el mockup) -->
+        <div class="shipping-info">
+            <i class="fa-solid fa-truck-fast"></i>
+            Envíos a todo el país
         </div>
     </div>
 
 </div>
 
-<script type="module" src="./src/login.js"></script>
-<script>
-    // Tabs
-    document.querySelectorAll('.auth-tab-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            btn.classList.add('active');
-            document.getElementById(btn.dataset.tab + '-form').classList.add('active');
-        });
-    });
 
-    // Toggle contraseña
-    document.querySelectorAll('.toggle-password').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const input = document.getElementById(btn.dataset.target);
-            const icon  = btn.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.classList.replace('fa-eye', 'fa-eye-slash');
-            } else {
-                input.type = 'password';
-                icon.classList.replace('fa-eye-slash', 'fa-eye');
-            }
-        });
-    });
-</script>
+
 </body>
 </html>
