@@ -48,12 +48,10 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 }
 
 .login-brand {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 1.2rem;
+    margin-bottom: 1.8rem;
 }
+
 .brand-text {
     font-family: 'Lora', serif;
     font-size: 3rem;
@@ -98,23 +96,29 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     left: 20px;
     right: -15px;
     height: 100%;
-    border-bottom: 15px solid var(--primary-orange);
-    border-right: 15px solid var(--primary-orange);
+    background: linear-gradient(135deg, transparent 60%, var(--primary-orange) 50%);
     border-radius: 0 0 60px 0;
     z-index: -1;
+    opacity: 0.7;
 }
 
+/* Separación de los iconos debajo de la imagen */
 .login-features-list {
     display: flex;
     flex-direction: column;
-    gap: 1.2rem;
-    margin-bottom: 3rem;
+    gap: 2.5rem;
+    margin-top: 2rem;
+    margin-bottom: 5rem;   /* alineado el form con la imagen*/
+    align-self: flex-start; /* para que no herede el centrado del padre */
+    width: 100%;
+    padding-left: 2.6rem; /*   margen para que se alinie a la imagen */
 }
+
 .login-feature-item {
     display: flex;
     align-items: center;
     gap: 1rem;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
 }
 .login-feature-item i {
     font-size: 1.8rem;
@@ -127,8 +131,9 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 
 .city-outline {
     width: 100%;
-    max-width: 400px;
+    max-width: 600px;
     opacity: 0.8;
+    margin-top: -5rem;
 }
 
 /* ── Panel Derecho (Tarjeta Blanca) ── */
@@ -343,18 +348,20 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 /* ── Panel Derecha Inferior ── */
 .shipping-info {
     position: absolute;
-    bottom: -60px;
-    right: 0;
+    bottom: -130px;
+    left: 110px;
     display: flex;
     align-items: center;
     gap: 0.75rem;
     color: white;
     font-weight: 500;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
 }
 .shipping-info i {
     color: var(--primary-orange);
-    font-size: 2rem;
+    top: -2rem;
+    font-size: 3.3rem;
+    
 }
 
 /* =========================================
