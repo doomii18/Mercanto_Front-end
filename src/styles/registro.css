@@ -29,6 +29,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
     display: flex;
     flex-wrap: wrap;
     min-height: 100vh;
+    zoom: 0.80; /* Reduce uniformemente todo el diseño a un 80% */
 }
 
 /* ── Panel Izquierdo ── */
@@ -88,7 +89,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 .registro-tagline {
     font-size: 1.1rem;
     color: var(--light-teal);
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
     line-height: 1.4;
     font-weight: 500;
 }
@@ -140,7 +141,7 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 
 /* Icono de bolsa superior */
 .registro-bag-icon {
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.5rem;
 }
 .registro-bag-icon img {
     width: 80px;
@@ -148,12 +149,12 @@ h1, h2, h3 { font-family: 'Lora', serif; }
 }
 /* Como el diseño muestra una bolsita con cara sonriente en líneas blancas */
 .bag-icon-svg {
-    width: 70px;
-    height: 70px;
+    width: 100px;
+    height: 100px;
     stroke: white;
     stroke-width: 2;
     fill: none;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
 }
 
 .registro-right-title {
