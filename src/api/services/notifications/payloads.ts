@@ -16,3 +16,13 @@ export const NewChatMessageEventSchema = BaseEventSchema.extend({
   sender_id: z.uuid(),
   thread_id: z.uuid(),
 });
+
+export const QuoteStatusChangedEventSchema = BaseEventSchema.extend({
+  type: z.literal("QuoteStatusChanged"),
+  quote_id: z.uuid(),
+  quote_group_id: z.uuid(),
+  old_status: z.string(),
+  new_status: z.string(),
+  buyer_id: z.uuid(),
+  provider_id: z.uuid(),
+});

@@ -1,8 +1,12 @@
 import { z } from "zod";
-import { CountryNodeSchema } from "./payloads";
+import { CountryNodeSchema, MunicipalityResponseSchema } from "./payloads";
 
 export type CountryNodeResponse = z.infer<typeof CountryNodeSchema>;
-
+export type MunicipalityResponse = z.infer<typeof MunicipalityResponseSchema>;
+export interface ReverseGeocodeQuery {
+  lat: float,
+  lng: float
+}
 export interface GeographyQuery {
   country_iso: string;
 }

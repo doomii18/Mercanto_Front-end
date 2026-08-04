@@ -1,59 +1,55 @@
 import { z } from "zod";
-import { ShippingMethodSchema } from "../quote/domain";
 
 export const CategoryNameSchema = z.string().min(1).max(100);
 export const CategoryDescriptionSchema = z.string().min(1).max(2000);
 export const ProductTitleSchema = z.string().min(1).max(255);
 export const ProductDescriptionSchema = z.string().min(1).max(2000);
 export const ProductPriceSchema = z.number().min(0);
-export const MinOrderQuantitySchema = z.number().min(1);
+
+export const UnitOfMeasureSchema = z.enum([
+  "piece",
+  "box",
+  "roll",
+  "pallet",
+  "lot",
+  "package",
+  "set",
+  "system",
+  "service",
+  "contract",
+]);
+
+export const PhysicalSpecSchema = z.object({
+  min_order_quantity: z.number().int().min(1),
+});
+
+export const ServiceSpecSchema = z.object({
+  estimated_duration_minutes: z.number().int().positive().optional().nullable(),
+  service_radius_km: z.number().min(0).optional().nullable(),
+  requires_appointment: z.boolean(),
+});
+
+export const ProductSpecSchema = z.union([
+  z.object({ Physical: PhysicalSpecSchema }),
+  z.object({ Service: ServiceSpecSchema }),
+]);
+
+export const PhysicalSpecUpdateSchema = z.object({
+  min_order_quantity: z.number().int().min(1).optional().nullable(),
+});
+
+export const ServiceSpecUpdateSchema = z.object({
+  estimated_duration_minutes: z.number().int().positive().optional().nullable(),
+  service_radius_km: z.number().min(0).optional().nullable(),
+  requires_appointment: z.boolean().optional().nullable(),
+});
+
+export const ProductSpecUpdateSchema = z.union([
+  z.object({ Physical: PhysicalSpecUpdateSchema }),
+  z.object({ Service: ServiceSpecUpdateSchema }),
+]);
 
 export const CategorySummarySchema = z.object({
   id: z.uuid(),
   name: CategoryNameSchema,
 });
-
-export const PublicInventorySchema = z.object({
-  product_id: z.uuid(),
-  is_in_stock: z.boolean(),
-});
-
-export const InternalInventorySchema = z.object({
-  product_id: z.uuid(),
-  available_stock: z.number(),
-  reserved_stock: z.number(),
-  updated_at: z.iso.datetime(),
-});
-
-export const PublicProductSchema = z.object({
-  id: z.uuid(),
-  provider_id: z.uuid(),
-  category_id: z.uuid(),
-  title: ProductTitleSchema,
-  description: ProductDescriptionSchema.nullable().optional(),
-  base_price: ProductPriceSchema,
-  min_order_quantity: MinOrderQuantitySchema,
-  shipping_methods: z.array(ShippingMethodSchema),
-  category: CategorySummarySchema,
-  inventory: PublicInventorySchema,
-});
-
-export const InternalProductSchema = z.object({
-  id: z.uuid(),
-  provider_id: z.uuid(),
-  category_id: z.uuid(),
-  title: ProductTitleSchema,
-  description: ProductDescriptionSchema.nullable().optional(),
-  base_price: ProductPriceSchema,
-  min_order_quantity: MinOrderQuantitySchema,
-  is_active: z.boolean(),
-  updated_at: z.iso.datetime(),
-  shipping_methods: z.array(ShippingMethodSchema),
-  category: CategorySummarySchema,
-  inventory: InternalInventorySchema,
-});
-
-export const ProductSchema = z.discriminatedUnion("type", [
-  InternalProductSchema.extend({ type: z.literal("Internal") }),
-  PublicProductSchema.extend({ type: z.literal("Public") }),
-]);

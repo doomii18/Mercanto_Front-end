@@ -30,3 +30,13 @@ export const RegisterRequestSchema = z.object({
   municipality_id: z.uuid(),
   interests: z.array(z.uuid()),
 });
+
+
+export const RequestPasswordResetSchema = z.object({
+  email: emailSchema,
+});
+
+export const ResetPasswordSchema = z.object({
+  token: z.string(),
+  new_password: securePasswordSchema,
+});

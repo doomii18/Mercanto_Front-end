@@ -40,3 +40,9 @@ export const ProfilePicUploadRequestDtoSchema = z.object({
   mime_type: z.string(),
   size_bytes: z.number().int().positive(),
 });
+
+export const UserInterestSchema = z.object({
+  id: z.uuid(),
+  name: z.string(),
+  image_blob_id: z.uuid().nullable(),
+});

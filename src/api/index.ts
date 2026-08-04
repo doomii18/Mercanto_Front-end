@@ -9,9 +9,12 @@ import { InventoryService } from "./services/inventory";
 import { NotificationsService } from "./services/notifications";
 import { OrganizationService } from "./services/organization";
 import { ProductService } from "./services/product";
+import { ProductPromotionService } from "./services/product_promotion";
 import { QuoteService } from "./services/quote";
 import { ReviewService } from "./services/review";
 import { UserProfileService } from "./services/user_profile";
+import { VerificationRequestService } from "./services/verification_request";
+import { VerificationRequestDocumentService } from "./services/verification_request_document";
 import { WalletService } from "./services/wallet";
 import { LocalStorageTokenProvider } from "./token";
 
@@ -24,9 +27,9 @@ export const tokenProvider = new LocalStorageTokenProvider();
 const apiConfig = {
   baseUrl: API_BASE_URL,
   onSessionExpired: () => {
-    console.warn("Session expired")
+    console.warn("Session expired");
   },
-}
+};
 export const apiClient = new ApiClient(apiConfig, tokenProvider);
 
 export const identityApi = new IdentityService(apiClient, tokenProvider);
@@ -40,10 +43,12 @@ export const inventoryApi = new InventoryService(apiClient);
 export const organizationApi = new OrganizationService(apiClient);
 export const quoteApi = new QuoteService(apiClient);
 export const productApi = new ProductService(apiClient);
+export const productPromotionApi = new ProductPromotionService(apiClient);
 export const reviewApi = new ReviewService(apiClient);
 export const notificationsApi = new NotificationsService(apiClient);
 export const chatApi = new ChatService(apiClient);
-
+export const verificationRequestApi = new VerificationRequestService(apiClient);
+export const verificationRequestDocumentApi = new VerificationRequestDocumentService(apiClient);
 
 export async function bootstrapSession(): Promise<void> {
   const currentRefresh = tokenProvider.getRefreshToken();
@@ -56,6 +61,24 @@ export async function bootstrapSession(): Promise<void> {
   } catch (error) {
     console.error("Session bootstrap failed. Purging credentials.");
     tokenProvider.setRefreshToken(null);
-    window.location.assign('/login.html');
+    window.location.assign("/login.html");
   }
 }
+
+export * from "./services/cart/types.d";
+export * from "./services/category/types.d";
+export * from "./services/chat/types.d";
+export * from "./services/geography/types.d";
+export * from "./services/health/types.d";
+export * from "./services/identity/types.d";
+export * from "./services/inventory/types.d";
+export * from "./services/notifications/types.d";
+export * from "./services/organization/types.d";
+export * from "./services/product/types.d";
+export * from "./services/product_promotion/types.d";
+export * from "./services/quote/types.d";
+export * from "./services/review/types.d";
+export * from "./services/user_profile/types.d";
+export * from "./services/verification_request/types.d";
+export * from "./services/verification_request_document/types.d";
+export * from "./services/wallet/types.d";

@@ -17,3 +17,9 @@ export const CountryNodeSchema = z.object({
   iso_code: z.string(),
   departments: z.array(DepartmentNodeSchema),
 });
+
+export const MunicipalityResponseSchema = z.object({
+  id: z.uuid(),
+  municipality: z.string(),
+  department_id: z.uuid(),
+});

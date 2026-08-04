@@ -2,27 +2,41 @@ import type { ApiClient } from "../../client";
 import type { TokenProvider } from "../../token";
 import { UserProfileResponseSchema } from "../user_profile/payloads";
 import type { UserProfileResponse } from "../user_profile/types";
-import { AuthResponseSchema, LoginRequestSchema, RegisterRequestSchema, TokenRequestSchema } from "./payloads";
-import type { LoginRequest, RegisterRequest, TokenRequest } from "./types";
+import {
+  AuthResponseSchema,
+  LoginRequestSchema,
+  RegisterRequestSchema,
+  RequestPasswordResetSchema,
+  ResetPasswordSchema,
+  TokenRequestSchema,
+} from "./payloads";
+import type { LoginRequest, RegisterRequest, RequestPasswordReset, ResetPassword, TokenRequest } from "./types";
 
 export class IdentityService {
   constructor(
     private readonly client: ApiClient,
-    private readonly tokenProvider: TokenProvider
+    private readonly tokenProvider: TokenProvider,
   ) {}
 
   async register(payload: RegisterRequest): Promise<UserProfileResponse> {
     const validatedPayload = RegisterRequestSchema.parse(payload);
-    const data = await this.client.request("/register", { method: "POST", body: JSON.stringify(validatedPayload) });
+    const data = await this.client.request("/register", {
+      method: "POST",
+      body: JSON.stringify(validatedPayload),
+    });
     return UserProfileResponseSchema.parse(data);
   }
 
   async login(payload: LoginRequest): Promise<void> {
     const validatedPayload = LoginRequestSchema.parse(payload);
-    const data = await this.client.request("/login", {
-      method: "POST",
-      body: JSON.stringify(validatedPayload),
-    }, true);
+    const data = await this.client.request(
+      "/login",
+      {
+        method: "POST",
+        body: JSON.stringify(validatedPayload),
+      },
+      true,
+    );
     const tokens = AuthResponseSchema.parse(data);
     this.tokenProvider.setAccessToken(tokens.access_token);
     this.tokenProvider.setRefreshToken(tokens.refresh_token);
@@ -30,11 +44,14 @@ export class IdentityService {
 
   async refresh(payload: TokenRequest): Promise<void> {
     const validatedPayload = TokenRequestSchema.parse(payload);
-    const data = await this.client.request("/refresh", {
-      method: "POST",
-      body: JSON.stringify(validatedPayload),
-
-    }, true);
+    const data = await this.client.request(
+      "/refresh",
+      {
+        method: "POST",
+        body: JSON.stringify(validatedPayload),
+      },
+      true,
+    );
     const tokens = AuthResponseSchema.parse(data);
     this.tokenProvider.setAccessToken(tokens.access_token);
     this.tokenProvider.setRefreshToken(tokens.refresh_token);
@@ -54,5 +71,21 @@ export class IdentityService {
     await this.client.request("/logout-all", { method: "POST" });
     this.tokenProvider.setAccessToken(null);
     this.tokenProvider.setRefreshToken(null);
+  }
+
+  async forgotPassword(payload: RequestPasswordReset): Promise<void> {
+    const validatedPayload = RequestPasswordResetSchema.parse(payload);
+    await this.client.request("/forgot-password", {
+      method: "POST",
+      body: JSON.stringify(validatedPayload),
+    });
+  }
+
+  async resetPassword(payload: ResetPassword): Promise<void> {
+    const validatedPayload = ResetPasswordSchema.parse(payload);
+    await this.client.request("/reset-password", {
+      method: "POST",
+      body: JSON.stringify(validatedPayload),
+    });
   }
 }

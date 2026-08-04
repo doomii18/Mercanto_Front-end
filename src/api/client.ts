@@ -29,7 +29,7 @@ export class ApiClient {
 
   private async refreshTokens(): Promise<AuthResponse> {
     const requestBody = TokenRequestSchema.parse({
-       refreshToken: this.tokenProvider.getRefreshToken(),
+       refresh_token: this.tokenProvider.getRefreshToken(),
     });
     const response = await fetch(`${this.getBaseUrl()}/refresh`, {
         method: "POST",

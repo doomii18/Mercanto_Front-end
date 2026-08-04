@@ -55,8 +55,9 @@ export class CategoryService {
       { method: "POST", body: JSON.stringify({ category_id: categoryId }) },
     );
   }
-  async deleteCategoryImage(blobId: string): Promise<void> {
-    await this.client.request(`/assets/category-image/${blobId}`, {
+
+  async deleteCategoryImage(categoryId: string): Promise<void> {
+    await this.client.request(`/categories/${categoryId}/image`, {
       method: "DELETE",
     });
   }

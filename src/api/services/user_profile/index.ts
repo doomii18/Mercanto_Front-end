@@ -4,15 +4,20 @@ import {
   UserProfileResponseSchema,
   UserProfilePatchRequestSchema,
   UserInterestsRequestSchema,
+  UserInterestSchema,
 } from "./payloads";
-import { ProductCategoryResponseSchema } from "../category/payloads";
+
 import type {
   UserProfileResponse,
   UserProfilePatchRequest,
   UserInterestsRequest,
+  UserInterest,
 } from "./types";
-import type { ProductCategoryResponse } from "../category/types";
-import { AssetUploadRequestSchema, UploadUrlResponseSchema } from "../../shared/schemas";
+
+import {
+  AssetUploadRequestSchema,
+  UploadUrlResponseSchema,
+} from "../../shared/schemas";
 
 export class UserProfileService {
   constructor(private readonly client: ApiClient) {}
@@ -23,7 +28,9 @@ export class UserProfileService {
     return UserProfileResponseSchema.parse(data);
   }
 
-  async updateMyProfile(payload: UserProfilePatchRequest): Promise<UserProfileResponse> {
+  async updateMyProfile(
+    payload: UserProfilePatchRequest,
+  ): Promise<UserProfileResponse> {
     const validatedPayload = UserProfilePatchRequestSchema.parse(payload);
     const data = await this.client.request("/profiles/me", {
       method: "PATCH",
@@ -32,9 +39,9 @@ export class UserProfileService {
     return UserProfileResponseSchema.parse(data);
   }
 
-  async getMyInterests(): Promise<ProductCategoryResponse[]> {
+  async getMyInterests(): Promise<UserInterest[]> {
     const data = await this.client.request("/me/interests", { method: "GET" });
-    return z.array(ProductCategoryResponseSchema).parse(data);
+    return z.array(UserInterestSchema).parse(data);
   }
 
   async addMyInterests(payload: UserInterestsRequest): Promise<void> {
@@ -54,12 +61,11 @@ export class UserProfileService {
   }
 
   async getProfilePictureBlobUrl(blobId: string): Promise<string> {
-    const blob = await this.client.downloadBlob(`/assets/profile-picture/${blobId}`);
+    const blob = await this.client.downloadBlob(`/avatar/${blobId}`);
     return URL.createObjectURL(blob);
   }
 
   async changeProfilePicture(file: File): Promise<void> {
-
     await new Promise<void>((resolve, reject) => {
       const img = new Image();
       const objectUrl = URL.createObjectURL(file);
@@ -67,7 +73,11 @@ export class UserProfileService {
       img.onload = () => {
         URL.revokeObjectURL(objectUrl);
         if (img.width > 2048 || img.height > 2048) {
-          reject(new Error(`Image dimensions must not exceed 2048x2048. Current: ${img.width}x${img.height}`));
+          reject(
+            new Error(
+              `Image dimensions must not exceed 2048x2048. Current: ${img.width}x${img.height}`,
+            ),
+          );
         } else {
           resolve();
         }
@@ -87,10 +97,10 @@ export class UserProfileService {
     });
 
     const initData = UploadUrlResponseSchema.parse(
-      await this.client.request(`/assets/profile-picture`, {
+      await this.client.request(`/me/avatar/upload`, {
         method: "POST",
         body: JSON.stringify(payload),
-      })
+      }),
     );
 
     const storageResponse = await fetch(initData.presigned_url, {
@@ -102,28 +112,32 @@ export class UserProfileService {
     if (!storageResponse.ok) throw new Error("Upload failed");
 
     // confirm
-    await this.client.request(`/assets/profile-picture/${initData.blob_id}/confirm`, {
+    await this.client.request(`/me/avatar/confirm/${initData.blob_id}`, {
       method: "POST",
-      body: JSON.stringify({}),
     });
 
     return;
   }
 
   async deleteProfilePicture(blobId: string): Promise<void> {
-    await this.client.request(
-      `/assets/profile-picture/${blobId}`,
-      { method: "DELETE" }
-    );
-  }
+     await this.client.request(
+       `/me/avatar/${blobId}`,
+       { method: "DELETE" }
+     );
+   }
 
   // Specific Account Endpoints
   async getUserProfile(accountId: string): Promise<UserProfileResponse> {
-    const data = await this.client.request(`/profiles/${accountId}`, { method: "GET" });
+    const data = await this.client.request(`/profiles/${accountId}`, {
+      method: "GET",
+    });
     return UserProfileResponseSchema.parse(data);
   }
 
-  async updateUserProfile(accountId: string, payload: UserProfilePatchRequest): Promise<UserProfileResponse> {
+  async updateUserProfile(
+    accountId: string,
+    payload: UserProfilePatchRequest,
+  ): Promise<UserProfileResponse> {
     const validatedPayload = UserProfilePatchRequestSchema.parse(payload);
     const data = await this.client.request(`/profiles/${accountId}`, {
       method: "PATCH",
@@ -132,12 +146,17 @@ export class UserProfileService {
     return UserProfileResponseSchema.parse(data);
   }
 
-  async getAccountInterests(accountId: string): Promise<ProductCategoryResponse[]> {
-    const data = await this.client.request(`/account/${accountId}/interests`, { method: "GET" });
-    return z.array(ProductCategoryResponseSchema).parse(data);
+  async getAccountInterests(accountId: string): Promise<UserInterest[]> {
+    const data = await this.client.request(`/account/${accountId}/interests`, {
+      method: "GET",
+    });
+    return z.array(UserInterestSchema).parse(data);
   }
 
-  async addAccountInterests(accountId: string, payload: UserInterestsRequest): Promise<void> {
+  async addAccountInterests(
+    accountId: string,
+    payload: UserInterestsRequest,
+  ): Promise<void> {
     const validatedPayload = UserInterestsRequestSchema.parse(payload);
     await this.client.request(`/account/${accountId}/interests`, {
       method: "POST",
@@ -145,7 +164,10 @@ export class UserProfileService {
     });
   }
 
-  async removeAccountInterests(accountId: string, payload: UserInterestsRequest): Promise<void> {
+  async removeAccountInterests(
+    accountId: string,
+    payload: UserInterestsRequest,
+  ): Promise<void> {
     const validatedPayload = UserInterestsRequestSchema.parse(payload);
     await this.client.request(`/account/${accountId}/interests`, {
       method: "DELETE",
