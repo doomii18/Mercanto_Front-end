@@ -41,9 +41,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const scoreEl = document.createElement("div");
     scoreEl.className = "similarity-score";
-    // Cosine distance: 0 = identical. Convert to a 0-100% similarity scale.
-    const similarityPct = Math.max(0, (1 - distance) * 100);
-    scoreEl.textContent = `Similitud: ${similarityPct.toFixed(1)}%`;
+    scoreEl.textContent = `Distancia: ${distance.toFixed(2)}`;
 
     const idEl = document.createElement("div");
     idEl.className = "product-id";
