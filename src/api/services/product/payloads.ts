@@ -59,3 +59,22 @@ export const ProductResponseSchema = z.object({
 
 export const PaginatedProductResponseSchema =
   PaginatedResponseSchema(ProductResponseSchema);
+
+
+export const ProductImageSearchHitSchema = z.object({
+  product: ProductResponseSchema, distance: z.number(),
+});
+
+export const PaginatedProductImageSearchResponseSchema =
+  PaginatedResponseSchema(ProductImageSearchHitSchema);
+
+export const ProductImageSearchUploadSchema = z.object({
+  mime_type: z.string(),
+  size_bytes: z.number().int().positive(),
+});
+
+export const SearchProductsByImageSchema = z.object({
+  blob_id: z.uuid(),
+  limit: z.number().int().positive(),
+  offset: z.number().int().nonnegative(),
+});
