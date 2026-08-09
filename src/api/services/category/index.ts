@@ -23,7 +23,7 @@ export class CategoryService {
 
   async getCategoryImageBlobUrl(blobId: string): Promise<string> {
     const response = await fetch(
-      `${this.client.getBaseUrl()}/assets/category-image/${blobId}`,
+      `${this.client.getBaseUrl()}/categories/images/${blobId}`,
       { method: "GET" },
     );
 

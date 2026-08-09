@@ -28,7 +28,7 @@ export class ProductService {
 
   async getProductImageBlobUrl(blobId: string): Promise<string> {
     const response = await fetch(
-      `${this.client.getBaseUrl()}/assets/product-image/${blobId}`,
+      `${this.client.getBaseUrl()}/products/images/${blobId}`,
       { method: "GET" },
     );
 
