@@ -64,10 +64,17 @@
                         <button class="edit-avatar">
                             <i class="fa-solid fa-camera"></i>
                         </button>
+                        <div class="avatar-dropdown" id="avatar-dropdown" style="display: none;">
+                            <button class="dropdown-item" id="btn-menu-view"><i class="fa-regular fa-image"></i> Ver foto</button>
+                            <button class="dropdown-item" id="btn-menu-take"><i class="fa-solid fa-camera"></i> Tomar Foto</button>
+                            <button class="dropdown-item" id="btn-menu-upload"><i class="fa-regular fa-image"></i> Subir Foto</button>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item danger" id="btn-menu-delete"><i class="fa-regular fa-trash-can"></i> Eliminar Foto</button>
+                        </div>
                     </div>
                     <div class="profile-info">
                         <div class="profile-header">
-                            <h2>Hector Raul Hernández</h2>
+                            <h2 id="display-fullname">Hector Raul Hernández</h2>
                             <span class="badge"
                                 ><i class="fa-solid fa-bag-shopping"></i>
                                 Comprador</span
@@ -80,7 +87,7 @@
                         <div class="contact-info">
                             <p>
                                 <i class="fa-regular fa-envelope"></i>
-                                hectorhernan@gmail.com
+                                <span id="display-correo-header">hectorhernan@gmail.com</span>
                             </p>
                             <p>
                                 <i class="fa-regular fa-calendar"></i> Miembro
@@ -117,7 +124,7 @@
                 <div class="card personal-info-card">
                     <div class="card-header">
                         <h3>Información Personal</h3>
-                        <button class="btn-edit">
+                        <button class="btn-edit" id="btn-open-edit-profile">
                             <i class="fa-solid fa-pencil"></i> Editar
                         </button>
                     </div>
@@ -125,39 +132,267 @@
                         <div class="info-item">
                             <i class="fa-solid fa-user"></i>
                             <span class="label">Nombres</span>
-                            <span class="value">Hector Raul</span>
+                            <span class="value" id="display-nombres">Hector Raul</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-solid fa-phone"></i>
                             <span class="label">Teléfono</span>
-                            <span class="value">8730 9208</span>
+                            <span class="value" id="display-telefono">8730 9208</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-solid fa-user"></i>
                             <span class="label">Apellidos</span>
-                            <span class="value">Hernández López</span>
+                            <span class="value" id="display-apellidos">Hernández López</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-regular fa-id-card"></i>
                             <span class="label">Cédula</span>
-                            <span class="value">401-241200-1006E</span>
+                            <span class="value" id="display-cedula">401-241200-1006E</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-regular fa-envelope"></i>
                             <span class="label">Correo electrónico</span>
-                            <span class="value link"
-                                >hectorhernan@gmail.com</span
-                            >
+                            <span class="value link" id="display-correo">hectorhernan@gmail.com</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-solid fa-location-dot"></i>
                             <span class="label">Departamento</span>
-                            <span class="value">Granada</span>
+                            <span class="value" id="display-departamento">Granada</span>
                         </div>
                     </div>
                 </div>
             </main>
         </div>
+        
+        <!-- Modal for Profile Picture -->
+        <input type="file" id="profile-file-input" accept="image/jpeg, image/png" style="display: none;" />
+        <div class="modal-overlay" id="photo-modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button class="btn-back-modal" id="close-modal-top">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h3 class="modal-title" id="modal-title">Tomar foto</h3>
+                    <button class="btn-close-modal" id="close-modal-btn">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+                
+                <!-- Choice View -->
+                <div class="modal-body" id="choice-view" style="display: none;">
+                    <div class="choice-container">
+                        <div class="choice-avatar">
+                            <i class="fa-solid fa-user"></i>
+                        </div>
+                        <p class="choice-subtitle">Elige cómo cambiar tu foto de perfil</p>
+                        
+                        <button class="btn-choice" id="btn-choice-upload">
+                            <div class="choice-icon"><i class="fa-regular fa-image"></i></div>
+                            <div class="choice-text">
+                                <h4>Selecciona una imagen</h4>
+                                <p>Desde su equipo o dispositivo</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right choice-arrow"></i>
+                        </button>
+                        
+                        <button class="btn-choice secondary" id="btn-choice-camera">
+                            <div class="choice-icon"><i class="fa-solid fa-camera"></i></div>
+                            <div class="choice-text">
+                                <h4>Tomar una foto</h4>
+                                <p>Usa la cámara de tu dispositivo</p>
+                            </div>
+                            <i class="fa-solid fa-chevron-right choice-arrow"></i>
+                        </button>
+                        
+                        <div class="choice-footer">
+                            <button class="btn-secondary" id="btn-cancel-choice">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload View -->
+                <div class="modal-body" id="upload-view" style="display: none;">
+                    <div class="drag-drop-zone" id="drag-drop-zone">
+                        <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
+                        <p>Arrastra una imagen aquí</p>
+                        <span>o</span>
+                        <button class="btn-outline" id="btn-browse-file">Seleccionar archivo</button>
+                    </div>
+                    <div class="upload-info">
+                        <p>Formatos permitidos: JPG, PNG</p>
+                        <p>Tamaño máximo: 3MB</p>
+                    </div>
+                    <div class="upload-controls">
+                        <button class="btn-secondary" id="btn-cancel-upload">Cancelar</button>
+                        <button class="btn-primary" id="btn-continue-upload">Continuar <i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Camera View -->
+                <div class="modal-body" id="camera-view">
+                    <div class="camera-container">
+                        <video id="camera-stream" autoplay playsinline></video>
+                        <div class="camera-overlay-message" id="camera-message">
+                            <i class="fa-solid fa-camera"></i>
+                            <p>Se necesita acceso a la cámara<br>para tomar la foto de perfil.</p>
+                        </div>
+                    </div>
+                    <div class="camera-controls">
+                        <button class="btn-secondary" id="btn-cancel-camera">Cancelar</button>
+                        <button class="btn-shutter" id="btn-shutter"></button>
+                        <button class="btn-icon" id="btn-upload-file">
+                            <i class="fa-solid fa-image"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Adjust / Preview View -->
+                <div class="modal-body" id="adjust-view" style="display: none;">
+                    <p class="adjust-instruction">Arrastra la imagen para ajustarla.</p>
+                    <div class="adjust-container">
+                        <canvas id="photo-canvas"></canvas>
+                        <div class="adjust-overlay">
+                            <div class="crop-circle"></div>
+                        </div>
+                    </div>
+                    <div class="adjust-controls-top">
+                        <button class="btn-icon circle"><i class="fa-solid fa-minus"></i></button>
+                        <button class="btn-icon circle"><i class="fa-solid fa-plus"></i></button>
+                        <button class="btn-icon circle" id="btn-retake"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    <div class="adjust-controls-bottom">
+                        <button class="btn-secondary" id="btn-cancel-adjust">Cancelar</button>
+                        <button class="btn-primary" id="btn-save-photo">Usar <i class="fa-solid fa-check"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Photo Modal -->
+        <div class="modal-overlay" id="delete-modal" style="display: none;">
+            <div class="modal-content delete-modal-content">
+                <p class="delete-question">¿Desea eliminar su foto de perfil?</p>
+                <div class="delete-actions">
+                    <button class="btn-secondary" id="btn-cancel-delete">Cancelar</button>
+                    <button class="btn-danger" id="btn-confirm-delete">Eliminar <i class="fa-solid fa-xmark"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <!-- View Photo Modal -->
+        <div class="modal-overlay" id="view-photo-modal" style="display: none;">
+            <div class="modal-content view-photo-modal-content">
+                <button class="btn-close-modal" id="close-view-photo" style="margin-left: auto; display: flex;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="view-photo-container">
+                    <img id="view-photo-img" src="" alt="Foto de perfil" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Profile Modal -->
+        <div class="modal-overlay" id="edit-profile-modal" style="display: none;">
+            <div class="modal-content edit-profile-modal-content">
+                <div class="modal-header">
+                    <button class="btn-back-modal" id="close-edit-profile">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <h3 class="modal-title">Editar Información Personal</h3>
+                    <div style="width: 30px;"></div>
+                </div>
+
+                <!-- Photo section -->
+                <div class="edit-photo-section">
+                    <div class="edit-photo-preview" id="edit-photo-preview">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="edit-photo-info">
+                        <p class="edit-photo-label">Foto de Perfil</p>
+                        <p class="edit-photo-formats">JPG, PNG. Máx. 3MB.</p>
+                        <button class="btn-change-photo" id="btn-change-photo-in-edit">
+                            <i class="fa-solid fa-rotate"></i> Cambiar Foto
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form fields -->
+                <div class="edit-form-grid">
+                    <div class="edit-form-group">
+                        <label>Nombres</label>
+                        <div class="input-with-icon" id="wrap-nombres">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="input-nombres" placeholder="Nombres" maxlength="50" autocomplete="off" />
+                        </div>
+                        <span class="field-error" id="err-nombres"></span>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Apellidos</label>
+                        <div class="input-with-icon" id="wrap-apellidos">
+                            <i class="fa-solid fa-user"></i>
+                            <input type="text" id="input-apellidos" placeholder="Apellidos" maxlength="50" autocomplete="off" />
+                        </div>
+                        <span class="field-error" id="err-apellidos"></span>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Correo Electrónico</label>
+                        <div class="input-with-icon" id="wrap-correo">
+                            <i class="fa-regular fa-envelope"></i>
+                            <input type="email" id="input-correo" placeholder="Correo electrónico" maxlength="70" autocomplete="off" />
+                        </div>
+                        <span class="field-error" id="err-correo"></span>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Teléfono</label>
+                        <div class="input-with-icon" id="wrap-telefono">
+                            <i class="fa-solid fa-phone"></i>
+                            <input type="tel" id="input-telefono" placeholder="Teléfono" maxlength="12" autocomplete="off" />
+                        </div>
+                        <span class="field-error" id="err-telefono"></span>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Cédula</label>
+                        <div class="input-with-icon" id="wrap-cedula">
+                            <i class="fa-regular fa-id-card"></i>
+                            <input type="text" id="input-cedula" placeholder="Cédula" maxlength="17" autocomplete="off" />
+                        </div>
+                        <span class="field-error" id="err-cedula"></span>
+                    </div>
+                    <div class="edit-form-group">
+                        <label>Departamento</label>
+                        <div class="input-with-icon select-wrapper">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <select id="input-departamento">
+                                <option value="">Seleccionar...</option>
+                                <option value="Boaco">Boaco</option>
+                                <option value="Carazo">Carazo</option>
+                                <option value="Chinandega">Chinandega</option>
+                                <option value="Chontales">Chontales</option>
+                                <option value="Estelí">Estelí</option>
+                                <option value="Granada">Granada</option>
+                                <option value="Jinotega">Jinotega</option>
+                                <option value="León">León</option>
+                                <option value="Madriz">Madriz</option>
+                                <option value="Managua">Managua</option>
+                                <option value="Masaya">Masaya</option>
+                                <option value="Matagalpa">Matagalpa</option>
+                                <option value="Nueva Segovia">Nueva Segovia</option>
+                                <option value="RAAN">RAAN</option>
+                                <option value="RAAS">RAAS</option>
+                                <option value="Río San Juan">Río San Juan</option>
+                                <option value="Rivas">Rivas</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="edit-form-actions">
+                    <button class="btn-cancel-edit" id="btn-cancel-edit-profile">Cancelar</button>
+                    <button class="btn-save-edit" id="btn-save-edit-profile"><i class="fa-solid fa-check"></i> Actualizar</button>
+                </div>
+            </div>
+        </div>
+
         <script type="module" src="./src/perfil.js"></script>
     </body>
 </html>
