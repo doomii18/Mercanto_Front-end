@@ -2,9 +2,24 @@ import { bootstrapSession, identityApi } from "./api";
 
 document.addEventListener('DOMContentLoaded', async () => {
   await bootstrapSession();
-  const loginForm = document.getElementById('login-form');
 
-  if (!loginForm) {console.warn("No form"); return;}
+  const loginForm = document.getElementById('login-form');
+  const toggleBtn = document.getElementById('toggle-password-btn');
+  const passwordInput = document.getElementById('password');
+
+  if (toggleBtn && passwordInput) {
+    const icon = toggleBtn.querySelector('i');
+    toggleBtn.addEventListener('click', () => {
+      const isPassword = passwordInput.type === 'password';
+      passwordInput.type = isPassword ? 'text' : 'password';
+      icon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    });
+  }
+
+  if (!loginForm) {
+    console.warn("No form");
+    return;
+  }
 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -13,13 +28,12 @@ document.addEventListener('DOMContentLoaded', async () => {
       email: data.email,
       password: data.password,
     };
-    try {
 
+    try {
       await identityApi.login(payload);
       window.location.assign('/perfil.html');
-    }
-    catch (error) {
+    } catch (error) {
       alert(error);
     }
   });
-})
+});

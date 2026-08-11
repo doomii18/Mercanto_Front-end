@@ -1,4 +1,7 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { bootstrapSession, userProfileApi } from "./api";
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await bootstrapSession();
 
     // =============================================
     // ELEMENT REFERENCES
@@ -95,17 +98,13 @@ document.addEventListener('DOMContentLoaded', () => {
     let scale = 1;
     let offsetX = 0;
     let offsetY = 0;
+    let currentAvatarBlobId = null;
+    let currentAvatarViewUrl = null;
 
     // =============================================
     // LOAD SAVED DATA FROM LOCALSTORAGE
     // =============================================
     function loadSavedData() {
-        // Profile picture
-        const savedPic = localStorage.getItem('mercanto_profile_pic');
-        if (savedPic) {
-            setAvatarImage(savedPic);
-        }
-
         // Profile info
         const savedInfo = JSON.parse(localStorage.getItem('mercanto_profile_info') || '{}');
         if (savedInfo.nombres) displayNombres.textContent = savedInfo.nombres;
@@ -124,6 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function loadAvatarFromServer() {
+        try {
+            const profile = await userProfileApi.getMyProfile();
+            if (profile.avatar_blob_id) {
+                currentAvatarBlobId = profile.avatar_blob_id;
+                const blobUrl = await userProfileApi.getProfilePictureBlobUrl(profile.avatar_blob_id);
+                currentAvatarViewUrl = blobUrl;
+                setAvatarImage(blobUrl);
+            }
+        } catch (error) {
+            console.error("Failed to load avatar from server:", error);
+        }
+    }
+
     function setAvatarImage(dataUrl) {
         avatarDiv.innerHTML = '';
         avatarDiv.style.backgroundImage = `url(${dataUrl})`;
@@ -132,6 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadSavedData();
+    await loadAvatarFromServer();
 
     // =============================================
     // DROPDOWN MENU
@@ -150,12 +164,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // =============================================
     // DROPDOWN ACTIONS
     // =============================================
-    btnMenuView.addEventListener('click', () => {
+    btnMenuView.addEventListener('click', async () => {
         avatarDropdown.style.display = 'none';
-        const savedPic = localStorage.getItem('mercanto_profile_pic');
-        if (savedPic) {
-            viewPhotoImg.src = savedPic;
+        if (currentAvatarViewUrl) {
+            viewPhotoImg.src = currentAvatarViewUrl;
             viewPhotoModal.style.display = 'flex';
+        } else if (currentAvatarBlobId) {
+            try {
+                const blobUrl = await userProfileApi.getProfilePictureBlobUrl(currentAvatarBlobId);
+                currentAvatarViewUrl = blobUrl;
+                viewPhotoImg.src = blobUrl;
+                viewPhotoModal.style.display = 'flex';
+            } catch (error) {
+                alert('No se pudo cargar la foto de perfil.');
+            }
         } else {
             alert('No tienes una foto de perfil guardada.');
         }
@@ -193,8 +215,16 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteModal.style.display = 'none';
     });
 
-    btnConfirmDelete.addEventListener('click', () => {
-        localStorage.removeItem('mercanto_profile_pic');
+    btnConfirmDelete.addEventListener('click', async () => {
+        if (currentAvatarBlobId) {
+            try {
+                await userProfileApi.deleteProfilePicture(currentAvatarBlobId);
+            } catch (error) {
+                console.error("Failed to delete avatar:", error);
+            }
+        }
+        currentAvatarBlobId = null;
+        currentAvatarViewUrl = null;
         avatarDiv.style.backgroundImage = 'none';
         avatarDiv.innerHTML = '<i class="fa-solid fa-user"></i>';
         deleteModal.style.display = 'none';
@@ -276,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return valid;
     }
 
-    btnOpenEditProfile.addEventListener('click', () => {
+    btnOpenEditProfile.addEventListener('click', async () => {
         clearAllErrors();
         // Pre-fill form with current data
         const savedInfo = JSON.parse(localStorage.getItem('mercanto_profile_info') || '{}');
@@ -288,10 +318,9 @@ document.addEventListener('DOMContentLoaded', () => {
         inputDepartamento.value = savedInfo.departamento || displayDepartamento.textContent;
 
         // Pre-fill photo preview in edit modal
-        const savedPic = localStorage.getItem('mercanto_profile_pic');
-        if (savedPic) {
+        if (currentAvatarViewUrl) {
             editPhotoPreview.innerHTML = '';
-            editPhotoPreview.style.backgroundImage = `url(${savedPic})`;
+            editPhotoPreview.style.backgroundImage = `url(${currentAvatarViewUrl})`;
             editPhotoPreview.style.backgroundSize = 'cover';
             editPhotoPreview.style.backgroundPosition = 'center';
         } else {
@@ -340,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         closeEditProfileModal();
     });
 
-    // "Cambiar Foto" inside edit form â†’ open choice modal
+
     btnChangePhotoInEdit.addEventListener('click', () => {
         closeEditProfileModal();
         photoModal.style.display = 'flex';
@@ -455,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
             videoElement.play();
         } catch (err) {
             cameraMessage.style.display = 'block';
-            cameraMessage.innerHTML = '<i class="fa-solid fa-camera"></i><p>Se necesita acceso a la cÃ¡mara<br>para tomar la foto de perfil.</p>';
+            cameraMessage.innerHTML = '<i class="fa-solid fa-camera"></i><p>Se necesita acceso a la cámara<br>para tomar la foto de perfil.</p>';
         }
     }
 
@@ -516,11 +545,27 @@ document.addEventListener('DOMContentLoaded', () => {
         finalCanvas.width = size;
         finalCanvas.height = size;
         finalCanvas.getContext('2d').drawImage(photoCanvas, x, y, size, size, 0, 0, size, size);
-        const dataUrl = finalCanvas.toDataURL('image/jpeg');
 
-        localStorage.setItem('mercanto_profile_pic', dataUrl);
-        setAvatarImage(dataUrl);
-        closeAndStop();
+        finalCanvas.toBlob(async (blob) => {
+            if (!blob) return;
+            const file = new File([blob], "profile-picture.jpg", { type: "image/jpeg" });
+
+            try {
+                await userProfileApi.changeProfilePicture(file);
+
+                // Show immediate local preview
+                const dataUrl = finalCanvas.toDataURL('image/jpeg');
+                currentAvatarViewUrl = dataUrl;
+                setAvatarImage(dataUrl);
+
+                // Refresh blob ID from server so delete/view work
+                const profile = await userProfileApi.getMyProfile();
+                currentAvatarBlobId = profile.avatar_blob_id || null;
+
+                closeAndStop();
+            } catch (error) {
+                alert(error.message || 'Failed to upload profile picture.');
+            }
+        }, 'image/jpeg', 0.9);
     });
 });
-
