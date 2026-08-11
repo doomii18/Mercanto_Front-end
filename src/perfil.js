@@ -100,32 +100,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     let offsetY = 0;
     let currentAvatarBlobId = null;
     let currentAvatarViewUrl = null;
+    let currentProfile = null;
 
     // =============================================
-    // LOAD SAVED DATA FROM LOCALSTORAGE
+    // LOAD PROFILE DATA FROM API
     // =============================================
-    function loadSavedData() {
-        // Profile info
-        const savedInfo = JSON.parse(localStorage.getItem('mercanto_profile_info') || '{}');
-        if (savedInfo.nombres) displayNombres.textContent = savedInfo.nombres;
-        if (savedInfo.apellidos) displayApellidos.textContent = savedInfo.apellidos;
-        if (savedInfo.correo) displayCorreo.textContent = savedInfo.correo;
-        if (savedInfo.telefono) displayTelefono.textContent = savedInfo.telefono;
-        if (savedInfo.cedula) displayCedula.textContent = savedInfo.cedula;
-        if (savedInfo.departamento) displayDepartamento.textContent = savedInfo.departamento;
-
-        // Restore header name and email
-        if (savedInfo.nombres && savedInfo.apellidos && displayFullname) {
-            displayFullname.textContent = `${savedInfo.nombres} ${savedInfo.apellidos}`;
-        }
-        if (savedInfo.correo && displayCorreoHeader) {
-            displayCorreoHeader.textContent = savedInfo.correo;
-        }
-    }
-
-    async function loadAvatarFromServer() {
+    async function loadProfile() {
         try {
             const profile = await userProfileApi.getMyProfile();
+            currentProfile = profile;
+
+            // API fields
+            if (displayNombres) displayNombres.textContent = profile.first_name ?? '';
+            if (displayApellidos) displayApellidos.textContent = profile.last_name ?? '';
+            if (displayCedula) displayCedula.textContent = profile.national_id ?? '—';
+            if (displayTelefono) displayTelefono.textContent = profile.phone_number ?? '—';
+            if (displayFullname) displayFullname.textContent = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim();
+
+            // Mock data for unsupported fields
+            const mockEmail = 'hectorhernan@gmail.com';
+            const mockDept = 'Nueva Segovia';
+            if (displayCorreo) displayCorreo.textContent = mockEmail;
+            if (displayCorreoHeader) displayCorreoHeader.textContent = mockEmail;
+            if (displayDepartamento) displayDepartamento.textContent = mockDept;
+
+            // Avatar
             if (profile.avatar_blob_id) {
                 currentAvatarBlobId = profile.avatar_blob_id;
                 const blobUrl = await userProfileApi.getProfilePictureBlobUrl(profile.avatar_blob_id);
@@ -133,7 +132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 setAvatarImage(blobUrl);
             }
         } catch (error) {
-            console.error("Failed to load avatar from server:", error);
+            console.error("Failed to load profile:", error);
         }
     }
 
@@ -144,8 +143,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         avatarDiv.style.backgroundPosition = 'center';
     }
 
-    loadSavedData();
-    await loadAvatarFromServer();
+    await loadProfile();
 
     // =============================================
     // DROPDOWN MENU
@@ -308,14 +306,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     btnOpenEditProfile.addEventListener('click', async () => {
         clearAllErrors();
-        // Pre-fill form with current data
-        const savedInfo = JSON.parse(localStorage.getItem('mercanto_profile_info') || '{}');
-        inputNombres.value = savedInfo.nombres || displayNombres.textContent;
-        inputApellidos.value = savedInfo.apellidos || displayApellidos.textContent;
-        inputCorreo.value = savedInfo.correo || displayCorreo.textContent;
-        inputTelefono.value = savedInfo.telefono || displayTelefono.textContent;
-        inputCedula.value = savedInfo.cedula || displayCedula.textContent;
-        inputDepartamento.value = savedInfo.departamento || displayDepartamento.textContent;
+
+        if (!currentProfile) {
+            try {
+                currentProfile = await userProfileApi.getMyProfile();
+            } catch (e) {
+                console.error(e);
+                return;
+            }
+        }
+
+        inputNombres.value = currentProfile.first_name ?? '';
+        inputApellidos.value = currentProfile.last_name ?? '';
+        inputCorreo.value = 'hectorhernan@gmail.com';
+        inputTelefono.value = currentProfile.phone_number ?? '';
+        inputCedula.value = currentProfile.national_id ?? '';
+        inputDepartamento.value = 'Nueva Segovia';
 
         // Pre-fill photo preview in edit modal
         if (currentAvatarViewUrl) {
@@ -342,29 +348,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnSaveEditProfile.addEventListener('click', () => {
         if (!validateForm()) return;
 
-        const info = {
-            nombres: inputNombres.value.trim(),
-            apellidos: inputApellidos.value.trim(),
-            correo: inputCorreo.value.trim(),
-            telefono: inputTelefono.value.trim(),
-            cedula: inputCedula.value.trim(),
-            departamento: inputDepartamento.value.trim(),
-        };
+        const firstName = inputNombres.value.trim();
+        const lastName = inputApellidos.value.trim();
 
-        // Save to localStorage
-        localStorage.setItem('mercanto_profile_info', JSON.stringify(info));
+        // Update DOM directly
+        if (displayNombres) displayNombres.textContent = firstName;
+        if (displayApellidos) displayApellidos.textContent = lastName;
+        if (displayFullname) displayFullname.textContent = `${firstName} ${lastName}`.trim();
+        if (displayTelefono) displayTelefono.textContent = inputTelefono.value.trim();
+        if (displayCedula) displayCedula.textContent = inputCedula.value.trim();
+        if (displayCorreo) displayCorreo.textContent = inputCorreo.value.trim();
+        if (displayCorreoHeader) displayCorreoHeader.textContent = inputCorreo.value.trim();
+        if (displayDepartamento) displayDepartamento.textContent = inputDepartamento.value;
 
-        // Update info card
-        if (info.nombres) displayNombres.textContent = info.nombres;
-        if (info.apellidos) displayApellidos.textContent = info.apellidos;
-        if (info.correo) displayCorreo.textContent = info.correo;
-        if (info.telefono) displayTelefono.textContent = info.telefono;
-        if (info.cedula) displayCedula.textContent = info.cedula;
-        if (info.departamento) displayDepartamento.textContent = info.departamento;
-
-        // Update profile header (name + email next to avatar)
-        if (displayFullname) displayFullname.textContent = `${info.nombres} ${info.apellidos}`;
-        if (displayCorreoHeader) displayCorreoHeader.textContent = info.correo;
+        // Update in-memory object
+        if (currentProfile) {
+            currentProfile.first_name = firstName;
+            currentProfile.last_name = lastName;
+            currentProfile.phone_number = inputTelefono.value.trim() || null;
+            currentProfile.national_id = inputCedula.value.trim() || null;
+        }
 
         closeEditProfileModal();
     });
@@ -421,16 +424,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalTitle.textContent = 'Ajustar foto';
         stopCamera();
 
-        // Square canvas: resolution matches the rendered CSS size
-        const container = photoCanvas.parentElement;
-        const rect = container.getBoundingClientRect();
-        const size = Math.max(Math.round(rect.width), 1);
-        photoCanvas.width = size;
-        photoCanvas.height = size;
-
-        scale = 1;
-        offsetX = 0;
-        offsetY = 0;
+        photoCanvas.width = photoCanvas.clientWidth;
+        photoCanvas.height = photoCanvas.clientHeight;
+        scale = 1; offsetX = 0; offsetY = 0;
         drawImageToCanvas();
     }
 
@@ -526,30 +522,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     function drawImageToCanvas() {
         if (!currentImage) return;
         ctx.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
-
         const sx = photoCanvas.width / currentImage.width;
         const sy = photoCanvas.height / currentImage.height;
         const base = Math.max(sx, sy) * scale;
         const dw = currentImage.width * base;
         const dh = currentImage.height * base;
-
-        // Constrain pan so the image always covers the square canvas
-        if (dw > photoCanvas.width) {
-            const minOffsetX = (photoCanvas.width - dw) / 2;
-            const maxOffsetX = (dw - photoCanvas.width) / 2;
-            offsetX = Math.max(minOffsetX, Math.min(offsetX, maxOffsetX));
-        } else {
-            offsetX = 0;
-        }
-
-        if (dh > photoCanvas.height) {
-            const minOffsetY = (photoCanvas.height - dh) / 2;
-            const maxOffsetY = (dh - photoCanvas.height) / 2;
-            offsetY = Math.max(minOffsetY, Math.min(offsetY, maxOffsetY));
-        } else {
-            offsetY = 0;
-        }
-
         const dx = (photoCanvas.width - dw) / 2 + offsetX;
         const dy = (photoCanvas.height - dh) / 2 + offsetY;
         ctx.drawImage(currentImage, dx, dy, dw, dh);
@@ -560,71 +537,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnZoomIn.addEventListener('click', () => { scale += 0.1; drawImageToCanvas(); });
     btnZoomOut.addEventListener('click', () => { if (scale > 0.5) { scale -= 0.1; drawImageToCanvas(); } });
 
-    // --- Drag / Pan ---
-    let isDragging = false;
-    let dragStartX = 0;
-    let dragStartY = 0;
-
-    photoCanvas.addEventListener('mousedown', (e) => {
-        isDragging = true;
-        dragStartX = e.clientX - offsetX;
-        dragStartY = e.clientY - offsetY;
-        photoCanvas.style.cursor = 'grabbing';
-    });
-
-    window.addEventListener('mousemove', (e) => {
-        if (!isDragging) return;
-        offsetX = e.clientX - dragStartX;
-        offsetY = e.clientY - dragStartY;
-        drawImageToCanvas();
-    });
-
-    window.addEventListener('mouseup', () => {
-        isDragging = false;
-        photoCanvas.style.cursor = 'grab';
-    });
-
-    photoCanvas.addEventListener('touchstart', (e) => {
-        if (e.touches.length !== 1) return;
-        isDragging = true;
-        const t = e.touches[0];
-        dragStartX = t.clientX - offsetX;
-        dragStartY = t.clientY - offsetY;
-    }, { passive: false });
-
-    photoCanvas.addEventListener('touchmove', (e) => {
-        if (!isDragging || e.touches.length !== 1) return;
-        e.preventDefault();
-        const t = e.touches[0];
-        offsetX = t.clientX - dragStartX;
-        offsetY = t.clientY - dragStartY;
-        drawImageToCanvas();
-    }, { passive: false });
-
-    photoCanvas.addEventListener('touchend', () => {
-        isDragging = false;
-    });
-
     // =============================================
     // SAVE PHOTO
     // =============================================
     btnSavePhoto.addEventListener('click', () => {
-        // The canvas is already 1:1 and represents the exact crop area
-        photoCanvas.toBlob(async (blob) => {
+        const size = Math.min(photoCanvas.width, photoCanvas.height);
+        const x = (photoCanvas.width - size) / 2;
+        const y = (photoCanvas.height - size) / 2;
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = size;
+        finalCanvas.height = size;
+        finalCanvas.getContext('2d').drawImage(photoCanvas, x, y, size, size, 0, 0, size, size);
+
+        finalCanvas.toBlob(async (blob) => {
             if (!blob) return;
-
-            if (blob.size > 3 * 1024 * 1024) {
-                alert('La imagen recortada excede 3MB. Intenta reducir el zoom o usar una imagen más pequeña.');
-                return;
-            }
-
             const file = new File([blob], "profile-picture.jpg", { type: "image/jpeg" });
 
             try {
                 await userProfileApi.changeProfilePicture(file);
 
                 // Show immediate local preview
-                const dataUrl = photoCanvas.toDataURL('image/jpeg');
+                const dataUrl = finalCanvas.toDataURL('image/jpeg');
                 currentAvatarViewUrl = dataUrl;
                 setAvatarImage(dataUrl);
 
