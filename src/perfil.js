@@ -1,5 +1,5 @@
-import { bootstrapSession, userProfileApi } from "./api";
 import { bootstrapGeo, getGeoManager } from "./modules/geo";
+import { bootstrapSession, userProfileApi, identityApi } from "./api";
 
 document.addEventListener("DOMContentLoaded", async () => {
   await bootstrapSession();
@@ -82,7 +82,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Edit form inputs
   const inputNombres = document.getElementById("input-nombres");
   const inputApellidos = document.getElementById("input-apellidos");
-  const inputCorreo = document.getElementById("input-correo");
   const inputTelefono = document.getElementById("input-telefono");
   const inputCedula = document.getElementById("input-cedula");
   const inputMunicipio = document.getElementById("input-municipio");
@@ -96,6 +95,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Header displays
   const displayFullname = document.getElementById("display-fullname");
   const displayCorreoHeader = document.getElementById("display-correo-header");
+  const displayMiembroDesde = document.getElementById("display-miembro-desde");
 
   let stream = null;
   let currentImage = null;
@@ -145,10 +145,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         displayFullname.textContent =
           `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim();
 
-      // Mock data for unsupported fields
-      const mockEmail = "hectorhernan@gmail.com";
-      if (displayCorreo) displayCorreo.textContent = mockEmail;
-      if (displayCorreoHeader) displayCorreoHeader.textContent = mockEmail;
+      try {
+        const account = await identityApi.getMyAccount();
+        if (displayCorreo) displayCorreo.textContent = account.email;
+        if (displayCorreoHeader)
+          displayCorreoHeader.textContent = account.email;
+        if (displayMiembroDesde) {
+          const localizedDate = new Date(account.created_at).toLocaleString();
+          displayMiembroDesde.textContent = `Miembro desde ${localizedDate}`;
+        }
+      } catch (err) {
+        console.error("Failed to load account data:", err);
+      }
+
       if (displayMunicipio && profile.municipality_id && geoManager) {
         const mun = geoManager.getMunicipalityById(profile.municipality_id);
         displayMunicipio.textContent = mun ? mun.name : profile.municipality_id;
@@ -307,7 +316,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   function clearAllErrors() {
     clearError("wrap-nombres", "err-nombres");
     clearError("wrap-apellidos", "err-apellidos");
-    clearError("wrap-correo", "err-correo");
     clearError("wrap-telefono", "err-telefono");
     clearError("wrap-cedula", "err-cedula");
   }
@@ -315,7 +323,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   function validateForm() {
     let valid = true;
     const lettersOnly = /^[a-zA-Z\u00C0-\u024F\s]+$/;
-    const emailReg = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const digitsOnly = /^[0-9]+$/;
 
     clearAllErrors();
@@ -335,15 +342,6 @@ document.addEventListener("DOMContentLoaded", async () => {
       valid = false;
     } else if (!lettersOnly.test(a)) {
       showError("wrap-apellidos", "err-apellidos", "Solo se permiten letras.");
-      valid = false;
-    }
-
-    const c = inputCorreo.value.trim();
-    if (!c) {
-      showError("wrap-correo", "err-correo", "El correo es requerido.");
-      valid = false;
-    } else if (!emailReg.test(c)) {
-      showError("wrap-correo", "err-correo", "Formato de correo incorrecto.");
       valid = false;
     }
 
@@ -370,7 +368,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     inputNombres.value = currentProfile.first_name ?? "";
     inputApellidos.value = currentProfile.last_name ?? "";
-    inputCorreo.value = "hectorhernan@gmail.com";
     inputTelefono.value = currentProfile.phone_number ?? "";
     inputCedula.value = currentProfile.national_id ?? "";
     inputMunicipio.value = currentProfile.municipality_id ?? "";
@@ -397,40 +394,56 @@ document.addEventListener("DOMContentLoaded", async () => {
   closeEditProfile.addEventListener("click", closeEditProfileModal);
   btnCancelEditProfile.addEventListener("click", closeEditProfileModal);
 
-  btnSaveEditProfile.addEventListener("click", () => {
+  btnSaveEditProfile.addEventListener("click", async () => {
     if (!validateForm()) return;
 
-    const firstName = inputNombres.value.trim();
-    const lastName = inputApellidos.value.trim();
+    const originalBtnContent = btnSaveEditProfile.innerHTML;
+    btnSaveEditProfile.disabled = true;
+    btnSaveEditProfile.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
 
-    // Update DOM directly
-    if (displayNombres) displayNombres.textContent = firstName;
-    if (displayApellidos) displayApellidos.textContent = lastName;
-    if (displayFullname)
-      displayFullname.textContent = `${firstName} ${lastName}`.trim();
-    if (displayTelefono)
-      displayTelefono.textContent = inputTelefono.value.trim();
-    if (displayCedula) displayCedula.textContent = inputCedula.value.trim();
-    if (displayCorreo) displayCorreo.textContent = inputCorreo.value.trim();
-    if (displayCorreoHeader)
-      displayCorreoHeader.textContent = inputCorreo.value.trim();
-    if (displayMunicipio && geoManager) {
-      const selectedMun = geoManager.getMunicipalityById(inputMunicipio.value);
-      displayMunicipio.textContent = selectedMun
-        ? selectedMun.name
-        : inputMunicipio.value;
+    const payload = {
+      first_name: inputNombres.value.trim(),
+      last_name: inputApellidos.value.trim(),
+      phone_number: inputTelefono.value.trim() || null,
+      national_id: inputCedula.value.trim() || null,
+      municipality_id: inputMunicipio.value || null,
+    };
+
+    try {
+      const updatedProfile = await userProfileApi.updateMyProfile(payload);
+      currentProfile = updatedProfile;
+
+      if (displayNombres)
+        displayNombres.textContent = updatedProfile.first_name ?? "";
+      if (displayApellidos)
+        displayApellidos.textContent = updatedProfile.last_name ?? "";
+      if (displayFullname)
+        displayFullname.textContent =
+          `${updatedProfile.first_name ?? ""} ${updatedProfile.last_name ?? ""}`.trim();
+      if (displayTelefono)
+        displayTelefono.textContent = updatedProfile.phone_number ?? "—";
+      if (displayCedula)
+        displayCedula.textContent = updatedProfile.national_id ?? "—";
+      if (displayMunicipio && geoManager) {
+        const selectedMun = geoManager.getMunicipalityById(
+          updatedProfile.municipality_id,
+        );
+        displayMunicipio.textContent = selectedMun
+          ? selectedMun.name
+          : updatedProfile.municipality_id ?? "—";
+      }
+
+      closeEditProfileModal();
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert(
+        error.message || "No se pudo actualizar el perfil. Inténtalo de nuevo.",
+      );
+    } finally {
+      btnSaveEditProfile.disabled = false;
+      btnSaveEditProfile.innerHTML = originalBtnContent;
     }
-
-    // Update in-memory object
-    if (currentProfile) {
-      currentProfile.first_name = firstName;
-      currentProfile.last_name = lastName;
-      currentProfile.phone_number = inputTelefono.value.trim() || null;
-      currentProfile.national_id = inputCedula.value.trim() || null;
-      currentProfile.municipality_id = inputMunicipio.value || null;
-    }
-
-    closeEditProfileModal();
   });
 
   btnChangePhotoInEdit.addEventListener("click", () => {
