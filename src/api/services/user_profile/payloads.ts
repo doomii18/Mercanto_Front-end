@@ -30,6 +30,7 @@ export const UserProfilePatchRequestSchema = z.object({
   last_name: personNameSchema.optional().nullable(),
   national_id: nationalIdSchema.optional().nullable(),
   phone_number: phoneNumberSchema.optional().nullable(),
+  municipality_id: z.uuid().optional().nullable(),
 });
 
 export const UserInterestsRequestSchema = z.object({

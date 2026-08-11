@@ -5,12 +5,14 @@ import {
   PaginatedOrganizationsResponseSchema,
   RegisterOrganizationRequestSchema,
   OrganizationPatchRequestSchema,
+  UpdateMemberRoleRequestSchema,
 } from "./payloads";
 import type {
   OrganizationResponse,
   PaginatedOrganizationsResponse,
   RegisterOrganizationRequest,
   OrganizationPatchRequest,
+  UpdateMemberRoleRequest,
 } from "./types";
 
 export class OrganizationService {
@@ -27,14 +29,20 @@ export class OrganizationService {
     lng?: number;
   }): Promise<PaginatedOrganizationsResponse> {
     const queryParams = new URLSearchParams();
-    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
-    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
-    if (params?.search_term) queryParams.append("search_term", params.search_term);
-    if (params?.municipality_id) queryParams.append("municipality_id", params.municipality_id);
+    if (params?.limit !== undefined)
+      queryParams.append("limit", params.limit.toString());
+    if (params?.offset !== undefined)
+      queryParams.append("offset", params.offset.toString());
+    if (params?.search_term)
+      queryParams.append("search_term", params.search_term);
+    if (params?.municipality_id)
+      queryParams.append("municipality_id", params.municipality_id);
     if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params?.sort_dir) queryParams.append("sort_dir", params.sort_dir);
-    if (params?.lat !== undefined) queryParams.append("lat", params.lat.toString());
-    if (params?.lng !== undefined) queryParams.append("lng", params.lng.toString());
+    if (params?.lat !== undefined)
+      queryParams.append("lat", params.lat.toString());
+    if (params?.lng !== undefined)
+      queryParams.append("lng", params.lng.toString());
 
     const queryString = queryParams.toString();
     const endpoint = `/providers${queryString ? `?${queryString}` : ""}`;
@@ -44,11 +52,15 @@ export class OrganizationService {
   }
 
   async getOrganization(id: string): Promise<OrganizationResponse> {
-    const data = await this.client.request(`/providers/${id}`, { method: "GET" });
+    const data = await this.client.request(`/providers/${id}`, {
+      method: "GET",
+    });
     return OrganizationResponseSchema.parse(data);
   }
 
-  async registerOrganization(payload: RegisterOrganizationRequest): Promise<OrganizationResponse> {
+  async registerOrganization(
+    payload: RegisterOrganizationRequest,
+  ): Promise<OrganizationResponse> {
     const validatedPayload = RegisterOrganizationRequestSchema.parse(payload);
     const data = await this.client.request("/providers", {
       method: "POST",
@@ -57,7 +69,10 @@ export class OrganizationService {
     return OrganizationResponseSchema.parse(data);
   }
 
-  async updateOrganization(id: string, payload: OrganizationPatchRequest): Promise<OrganizationResponse> {
+  async updateOrganization(
+    id: string,
+    payload: OrganizationPatchRequest,
+  ): Promise<OrganizationResponse> {
     const validatedPayload = OrganizationPatchRequestSchema.parse(payload);
     const data = await this.client.request(`/providers/${id}`, {
       method: "PATCH",
@@ -67,7 +82,31 @@ export class OrganizationService {
   }
 
   async getMyOrganizations(): Promise<OrganizationResponse[]> {
-    const data = await this.client.request("/memberships/me/providers", { method: "GET" });
+    const data = await this.client.request("/memberships/me/providers", {
+      method: "GET",
+    });
     return z.array(OrganizationResponseSchema).parse(data);
+  }
+
+  async updateMemberRole(
+    organizationId: string,
+    accountId: string,
+    payload: UpdateMemberRoleRequest,
+  ): Promise<void> {
+    const validatedPayload = UpdateMemberRoleRequestSchema.parse(payload);
+    await this.client.request(
+      `/providers/${organizationId}/members/${accountId}/role`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(validatedPayload),
+      },
+    );
+  }
+
+  async revokeMember(organizationId: string, accountId: string): Promise<void> {
+    await this.client.request(
+      `/providers/${organizationId}/members/${accountId}`,
+      { method: "DELETE" },
+    );
   }
 }

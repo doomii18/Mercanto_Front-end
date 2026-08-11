@@ -39,7 +39,7 @@ export class CategoryService {
       size_bytes: file.size,
     });
     const initData = UploadUrlResponseSchema.parse(
-      await this.client.request("/assets/category-image", {
+      await this.client.request(`/categories/${categoryId}/images/upload`, {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -51,13 +51,13 @@ export class CategoryService {
     });
     if (!storageResponse.ok) throw new Error("Upload failed");
     await this.client.request(
-      `/assets/category-image/${initData.blob_id}/confirm`,
-      { method: "POST", body: JSON.stringify({ category_id: categoryId }) },
+      `/categories/${categoryId}/images/${initData.blob_id}/confirm`,
+      { method: "POST" },
     );
   }
 
   async deleteCategoryImage(categoryId: string): Promise<void> {
-    await this.client.request(`/categories/${categoryId}/image`, {
+    await this.client.request(`/categories/${categoryId}/images`, {
       method: "DELETE",
     });
   }

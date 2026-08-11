@@ -9,6 +9,17 @@ import {
 } from "./domain";
 import { PaginatedResponseSchema } from "../../shared/schemas";
 
+export const OrganizationMemberRoleSchema = z.enum([
+  "owner",
+  "admin",
+  "publisher",
+  "viewer",
+]);
+
+export const UpdateMemberRoleRequestSchema = z.object({
+  new_role: OrganizationMemberRoleSchema,
+});
+
 export const InternalOrganizationDtoSchema = z.object({
   type: z.literal("Internal"),
   id: z.uuid(),

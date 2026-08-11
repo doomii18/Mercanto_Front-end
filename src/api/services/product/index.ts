@@ -39,15 +39,12 @@ export class ProductService {
   }
 
   async uploadProductImage(productId: string, file: File): Promise<void> {
-    const payload = {
-      ...AssetUploadRequestSchema.parse({
-        mime_type: file.type,
-        size_bytes: file.size,
-      }),
-      product_id: productId,
-    };
+    const payload = AssetUploadRequestSchema.parse({
+      mime_type: file.type,
+      size_bytes: file.size,
+    });
     const initData = UploadUrlResponseSchema.parse(
-      await this.client.request("/assets/product-image", {
+      await this.client.request(`/products/${productId}/images/upload`, {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -59,12 +56,13 @@ export class ProductService {
     });
     if (!storageResponse.ok) throw new Error("Upload failed");
     await this.client.request(
-      `/assets/product-image/${initData.blob_id}/confirm`,
-      { method: "POST", body: JSON.stringify({ product_id: productId }) },
+      `/products/${productId}/images/${initData.blob_id}/confirm`,
+      { method: "POST" },
     );
   }
-  async deleteProductImage(blobId: string): Promise<void> {
-    await this.client.request(`/assets/product-image/${blobId}`, {
+
+  async deleteProductImage(productId: string, blobId: string): Promise<void> {
+    await this.client.request(`/products/${productId}/images/${blobId}`, {
       method: "DELETE",
     });
   }
@@ -126,7 +124,9 @@ export class ProductService {
   async deleteProduct(id: string): Promise<void> {
     await this.client.request(`/products/${id}`, { method: "DELETE" });
   }
-  async searchProductsByImage(file: File): Promise<PaginatedProductImageSearchResponse> {
+  async searchProductsByImage(
+    file: File,
+  ): Promise<PaginatedProductImageSearchResponse> {
     const uploadPayload: ProductImageSearchUploadRequest = {
       mime_type: file.type,
       size_bytes: file.size,
