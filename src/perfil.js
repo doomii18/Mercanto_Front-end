@@ -431,7 +431,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         );
         displayMunicipio.textContent = selectedMun
           ? selectedMun.name
-          : updatedProfile.municipality_id ?? "—";
+          : (updatedProfile.municipality_id ?? "—");
       }
 
       closeEditProfileModal();
@@ -631,6 +631,70 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // =============================================
+  // DRAG / PAN
+  // =============================================
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let dragStartOffsetX = 0;
+  let dragStartOffsetY = 0;
+
+  photoCanvas.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragStartOffsetX = offsetX;
+    dragStartOffsetY = offsetY;
+    photoCanvas.style.cursor = "grabbing";
+  });
+
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    offsetX = dragStartOffsetX + dx;
+    offsetY = dragStartOffsetY + dy;
+    drawImageToCanvas();
+  });
+
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+    photoCanvas.style.cursor = "grab";
+  });
+
+  // Touch support
+  photoCanvas.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches.length !== 1) return;
+      isDragging = true;
+      dragStartX = e.touches[0].clientX;
+      dragStartY = e.touches[0].clientY;
+      dragStartOffsetX = offsetX;
+      dragStartOffsetY = offsetY;
+    },
+    { passive: false },
+  );
+
+  window.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!isDragging) return;
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      const dx = e.touches[0].clientX - dragStartX;
+      const dy = e.touches[0].clientY - dragStartY;
+      offsetX = dragStartOffsetX + dx;
+      offsetY = dragStartOffsetY + dy;
+      drawImageToCanvas();
+    },
+    { passive: false },
+  );
+
+  window.addEventListener("touchend", () => {
+    isDragging = false;
+  });
   // =============================================
   // SAVE PHOTO
   // =============================================
