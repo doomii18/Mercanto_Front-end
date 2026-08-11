@@ -85,15 +85,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   const inputCorreo = document.getElementById("input-correo");
   const inputTelefono = document.getElementById("input-telefono");
   const inputCedula = document.getElementById("input-cedula");
-  const inputDepartamento = document.getElementById("input-departamento");
-
+  const inputMunicipio = document.getElementById("input-municipio");
   // Display spans
   const displayNombres = document.getElementById("display-nombres");
   const displayApellidos = document.getElementById("display-apellidos");
   const displayCorreo = document.getElementById("display-correo");
   const displayTelefono = document.getElementById("display-telefono");
   const displayCedula = document.getElementById("display-cedula");
-  const displayDepartamento = document.getElementById("display-departamento");
+  const displayMunicipio = document.getElementById("display-municipio");
   // Header displays
   const displayFullname = document.getElementById("display-fullname");
   const displayCorreoHeader = document.getElementById("display-correo-header");
@@ -113,13 +112,18 @@ document.addEventListener("DOMContentLoaded", async () => {
   await bootstrapGeo();
   const geoManager = getGeoManager();
 
-  if (geoManager && inputDepartamento) {
+  if (geoManager && inputMunicipio) {
     const departments = geoManager.getDepartments();
     departments.forEach((dept) => {
-      const option = document.createElement("option");
-      option.value = dept.id;
-      option.textContent = dept.name;
-      inputDepartamento.appendChild(option);
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = dept.name;
+      dept.municipalities.forEach((mun) => {
+        const option = document.createElement("option");
+        option.value = mun.id;
+        option.textContent = mun.name;
+        optgroup.appendChild(option);
+      });
+      inputMunicipio.appendChild(optgroup);
     });
   }
   // =============================================
@@ -143,10 +147,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Mock data for unsupported fields
       const mockEmail = "hectorhernan@gmail.com";
-      const mockDept = "Nueva Segovia";
       if (displayCorreo) displayCorreo.textContent = mockEmail;
       if (displayCorreoHeader) displayCorreoHeader.textContent = mockEmail;
-      if (displayDepartamento) displayDepartamento.textContent = mockDept;
+      if (displayMunicipio && profile.municipality_id && geoManager) {
+        const mun = geoManager.getMunicipalityById(profile.municipality_id);
+        displayMunicipio.textContent = mun ? mun.name : profile.municipality_id;
+      } else if (displayMunicipio) {
+        displayMunicipio.textContent = "—";
+      }
 
       // Avatar
       if (profile.avatar_blob_id) {
@@ -365,7 +373,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     inputCorreo.value = "hectorhernan@gmail.com";
     inputTelefono.value = currentProfile.phone_number ?? "";
     inputCedula.value = currentProfile.national_id ?? "";
-    inputDepartamento.value = "";
+    inputMunicipio.value = currentProfile.municipality_id ?? "";
 
     // Pre-fill photo preview in edit modal
     if (currentAvatarViewUrl) {
@@ -406,8 +414,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (displayCorreo) displayCorreo.textContent = inputCorreo.value.trim();
     if (displayCorreoHeader)
       displayCorreoHeader.textContent = inputCorreo.value.trim();
-    if (displayDepartamento)
-      displayDepartamento.textContent = inputDepartamento.value;
+    if (displayMunicipio && geoManager) {
+      const selectedMun = geoManager.getMunicipalityById(inputMunicipio.value);
+      displayMunicipio.textContent = selectedMun
+        ? selectedMun.name
+        : inputMunicipio.value;
+    }
 
     // Update in-memory object
     if (currentProfile) {
@@ -415,6 +427,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       currentProfile.last_name = lastName;
       currentProfile.phone_number = inputTelefono.value.trim() || null;
       currentProfile.national_id = inputCedula.value.trim() || null;
+      currentProfile.municipality_id = inputMunicipio.value || null;
     }
 
     closeEditProfileModal();
