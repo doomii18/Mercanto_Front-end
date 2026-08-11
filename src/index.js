@@ -9,8 +9,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const nextBtn = document.querySelector('.next-btn');
 
   await healthApi.getReadiness();
-  const categories = await geographyApi.getGeographyTree({ country_iso: "NIC" });
-  console.log(categories);
 
   if (carousel && prevBtn && nextBtn) {
       prevBtn.addEventListener('click', () => {
