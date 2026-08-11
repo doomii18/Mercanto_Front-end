@@ -421,9 +421,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         modalTitle.textContent = 'Ajustar foto';
         stopCamera();
 
-        photoCanvas.width = photoCanvas.clientWidth;
-        photoCanvas.height = photoCanvas.clientHeight;
-        scale = 1; offsetX = 0; offsetY = 0;
+        // Square canvas: resolution matches the rendered CSS size
+        const container = photoCanvas.parentElement;
+        const rect = container.getBoundingClientRect();
+        const size = Math.max(Math.round(rect.width), 1);
+        photoCanvas.width = size;
+        photoCanvas.height = size;
+
+        scale = 1;
+        offsetX = 0;
+        offsetY = 0;
         drawImageToCanvas();
     }
 
@@ -519,11 +526,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     function drawImageToCanvas() {
         if (!currentImage) return;
         ctx.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
+
         const sx = photoCanvas.width / currentImage.width;
         const sy = photoCanvas.height / currentImage.height;
         const base = Math.max(sx, sy) * scale;
         const dw = currentImage.width * base;
         const dh = currentImage.height * base;
+
+        // Constrain pan so the image always covers the square canvas
+        if (dw > photoCanvas.width) {
+            const minOffsetX = (photoCanvas.width - dw) / 2;
+            const maxOffsetX = (dw - photoCanvas.width) / 2;
+            offsetX = Math.max(minOffsetX, Math.min(offsetX, maxOffsetX));
+        } else {
+            offsetX = 0;
+        }
+
+        if (dh > photoCanvas.height) {
+            const minOffsetY = (photoCanvas.height - dh) / 2;
+            const maxOffsetY = (dh - photoCanvas.height) / 2;
+            offsetY = Math.max(minOffsetY, Math.min(offsetY, maxOffsetY));
+        } else {
+            offsetY = 0;
+        }
+
         const dx = (photoCanvas.width - dw) / 2 + offsetX;
         const dy = (photoCanvas.height - dh) / 2 + offsetY;
         ctx.drawImage(currentImage, dx, dy, dw, dh);
@@ -534,27 +560,71 @@ document.addEventListener('DOMContentLoaded', async () => {
     btnZoomIn.addEventListener('click', () => { scale += 0.1; drawImageToCanvas(); });
     btnZoomOut.addEventListener('click', () => { if (scale > 0.5) { scale -= 0.1; drawImageToCanvas(); } });
 
+    // --- Drag / Pan ---
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+
+    photoCanvas.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        dragStartX = e.clientX - offsetX;
+        dragStartY = e.clientY - offsetY;
+        photoCanvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        offsetX = e.clientX - dragStartX;
+        offsetY = e.clientY - dragStartY;
+        drawImageToCanvas();
+    });
+
+    window.addEventListener('mouseup', () => {
+        isDragging = false;
+        photoCanvas.style.cursor = 'grab';
+    });
+
+    photoCanvas.addEventListener('touchstart', (e) => {
+        if (e.touches.length !== 1) return;
+        isDragging = true;
+        const t = e.touches[0];
+        dragStartX = t.clientX - offsetX;
+        dragStartY = t.clientY - offsetY;
+    }, { passive: false });
+
+    photoCanvas.addEventListener('touchmove', (e) => {
+        if (!isDragging || e.touches.length !== 1) return;
+        e.preventDefault();
+        const t = e.touches[0];
+        offsetX = t.clientX - dragStartX;
+        offsetY = t.clientY - dragStartY;
+        drawImageToCanvas();
+    }, { passive: false });
+
+    photoCanvas.addEventListener('touchend', () => {
+        isDragging = false;
+    });
+
     // =============================================
     // SAVE PHOTO
     // =============================================
     btnSavePhoto.addEventListener('click', () => {
-        const size = Math.min(photoCanvas.width, photoCanvas.height);
-        const x = (photoCanvas.width - size) / 2;
-        const y = (photoCanvas.height - size) / 2;
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = size;
-        finalCanvas.height = size;
-        finalCanvas.getContext('2d').drawImage(photoCanvas, x, y, size, size, 0, 0, size, size);
-
-        finalCanvas.toBlob(async (blob) => {
+        // The canvas is already 1:1 and represents the exact crop area
+        photoCanvas.toBlob(async (blob) => {
             if (!blob) return;
+
+            if (blob.size > 3 * 1024 * 1024) {
+                alert('La imagen recortada excede 3MB. Intenta reducir el zoom o usar una imagen más pequeña.');
+                return;
+            }
+
             const file = new File([blob], "profile-picture.jpg", { type: "image/jpeg" });
 
             try {
                 await userProfileApi.changeProfilePicture(file);
 
                 // Show immediate local preview
-                const dataUrl = finalCanvas.toDataURL('image/jpeg');
+                const dataUrl = photoCanvas.toDataURL('image/jpeg');
                 currentAvatarViewUrl = dataUrl;
                 setAvatarImage(dataUrl);
 
