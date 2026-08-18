@@ -1,7 +1,8 @@
-import { bootstrapSession, productApi } from "./api";
+import { authManager } from "./modules/auth";
+import { productApi } from "./api";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await bootstrapSession();
+  await authManager.initialize();
 
   const fileInput = document.getElementById("file-input");
   const searchButton = document.getElementById("search-button");
@@ -10,7 +11,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   const resultsContainer = document.getElementById("results-container");
 
   let currentFile = null;
-
 
   fileInput.addEventListener("change", () => {
     if (fileInput.files.length !== 1) {
@@ -32,7 +32,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     searchStatus.textContent = `Imagen lista: ${file.name}`;
     resultsContainer.innerHTML = "";
   });
-
 
   async function buildProductCard(hit) {
     const { product, distance } = hit;
@@ -104,7 +103,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         searchStatus.textContent = "No se encontraron productos similares.";
         return;
       }
-
 
       const sortedData = result.data
         .slice()

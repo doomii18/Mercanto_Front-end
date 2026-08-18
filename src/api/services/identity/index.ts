@@ -11,6 +11,7 @@ import {
 } from "./payloads";
 import type {
   AccountResponse,
+  AuthResponse,
   LoginRequest,
   RegisterRequest,
   RequestPasswordReset,
@@ -33,7 +34,7 @@ export class IdentityService {
     return AccountResponseSchema.parse(data);
   }
 
-  async login(payload: LoginRequest): Promise<void> {
+  async login(payload: LoginRequest): Promise<AuthResponse> {
     const validatedPayload = LoginRequestSchema.parse(payload);
     const data = await this.client.request(
       "/login",
@@ -46,9 +47,10 @@ export class IdentityService {
     const tokens = AuthResponseSchema.parse(data);
     this.tokenProvider.setAccessToken(tokens.access_token);
     this.tokenProvider.setRefreshToken(tokens.refresh_token);
+    return tokens;
   }
 
-  async refresh(payload: TokenRequest): Promise<void> {
+  async refresh(payload: TokenRequest): Promise<AuthResponse> {
     const validatedPayload = TokenRequestSchema.parse(payload);
     const data = await this.client.request(
       "/refresh",
@@ -61,6 +63,7 @@ export class IdentityService {
     const tokens = AuthResponseSchema.parse(data);
     this.tokenProvider.setAccessToken(tokens.access_token);
     this.tokenProvider.setRefreshToken(tokens.refresh_token);
+    return tokens;
   }
 
   async logout(payload: TokenRequest): Promise<void> {

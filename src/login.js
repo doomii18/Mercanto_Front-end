@@ -1,18 +1,18 @@
-import { bootstrapSession, identityApi } from "./api";
+import { authManager,  identityApi } from "./api";
 
-document.addEventListener('DOMContentLoaded', async () => {
-  await bootstrapSession();
+document.addEventListener("DOMContentLoaded", async () => {
+  await authManager.initialize();
 
-  const loginForm = document.getElementById('login-form');
-  const toggleBtn = document.getElementById('toggle-password-btn');
-  const passwordInput = document.getElementById('password');
+  const loginForm = document.getElementById("login-form");
+  const toggleBtn = document.getElementById("toggle-password-btn");
+  const passwordInput = document.getElementById("password");
 
   if (toggleBtn && passwordInput) {
-    const icon = toggleBtn.querySelector('i');
-    toggleBtn.addEventListener('click', () => {
-      const isPassword = passwordInput.type === 'password';
-      passwordInput.type = isPassword ? 'text' : 'password';
-      icon.className = isPassword ? 'fa-solid fa-eye-slash' : 'fa-solid fa-eye';
+    const icon = toggleBtn.querySelector("i");
+    toggleBtn.addEventListener("click", () => {
+      const isPassword = passwordInput.type === "password";
+      passwordInput.type = isPassword ? "text" : "password";
+      icon.className = isPassword ? "fa-solid fa-eye-slash" : "fa-solid fa-eye";
     });
   }
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     return;
   }
 
-  loginForm.addEventListener('submit', async (e) => {
+  loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(loginForm));
     const payload = {
@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     try {
       await identityApi.login(payload);
-      window.location.assign('/perfil.html');
+      window.location.assign("/perfil.html");
     } catch (error) {
       alert(error);
     }

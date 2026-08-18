@@ -17,6 +17,7 @@ import { VerificationRequestService } from "./services/verification_request";
 import { VerificationRequestDocumentService } from "./services/verification_request_document";
 import { WalletService } from "./services/wallet";
 import { LocalStorageTokenProvider } from "./token";
+import { authManager } from "../modules/auth";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 if (!API_BASE_URL)
@@ -24,13 +25,14 @@ if (!API_BASE_URL)
 
 export const tokenProvider = new LocalStorageTokenProvider();
 
-const apiConfig = {
-  baseUrl: API_BASE_URL,
-  onSessionExpired: () => {
-    console.warn("Session expired");
+export const apiClient = new ApiClient(
+  {
+    baseUrl: API_BASE_URL,
+    refreshTokenHandler: () => authManager.refreshAccessToken(),
+    onSessionExpired: () => authManager.handleSessionExpired(),
   },
-};
-export const apiClient = new ApiClient(apiConfig, tokenProvider);
+  tokenProvider,
+);
 
 export const identityApi = new IdentityService(apiClient, tokenProvider);
 export const healthApi = new HealthService(apiClient);
@@ -50,21 +52,8 @@ export const chatApi = new ChatService(apiClient);
 export const verificationRequestApi = new VerificationRequestService(apiClient);
 export const verificationRequestDocumentApi = new VerificationRequestDocumentService(apiClient);
 
-export async function bootstrapSession(): Promise<void> {
-  const currentRefresh = tokenProvider.getRefreshToken();
-  if (!currentRefresh) {
-    return;
-  }
-
-  try {
-    await identityApi.refresh({ refresh_token: currentRefresh });
-  } catch (error) {
-    console.error("Session bootstrap failed. Purging credentials.");
-    tokenProvider.setRefreshToken(null);
-    window.location.assign("/login.html");
-  }
-}
-
+export { authManager };
+export * from "../modules/auth";
 export * from "./services/cart/types.d";
 export * from "./services/category/types.d";
 export * from "./services/chat/types.d";
