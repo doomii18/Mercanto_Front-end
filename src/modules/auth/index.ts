@@ -39,39 +39,6 @@ export class AuthManager {
     return tokens.access_token;
   }
 
-  async initialize(): Promise<AccountResponse | null> {
-    if (this.isInitialized) return this.currentAccount;
-    if (this.initPromise) return this.initPromise;
-
-    this.initPromise = (async () => {
-      const refreshToken = tokenProvider.getRefreshToken();
-      if (!refreshToken) {
-        this.currentAccount = null;
-        this.isInitialized = true;
-        return null;
-      }
-
-      try {
-        this.currentAccount = await identityApi.getMyAccount();
-      } catch (error) {
-        console.warn(
-          "Session verification failed. Clearing credentials.",
-          error,
-        );
-        tokenProvider.setAccessToken(null);
-        tokenProvider.setRefreshToken(null);
-        this.currentAccount = null;
-      } finally {
-        this.isInitialized = true;
-        this.notify();
-      }
-
-      return this.currentAccount;
-    })();
-
-    return this.initPromise;
-  }
-
   async requireAuth(redirectTo = "/login.html"): Promise<AccountResponse> {
     const account = await this.initialize();
     if (!account) {
@@ -92,8 +59,47 @@ export class AuthManager {
     return account;
   }
 
+  async initialize(): Promise<AccountResponse | null> {
+    if (this.isInitialized) return this.currentAccount;
+    if (this.initPromise) return this.initPromise;
+
+    this.initPromise = (async () => {
+      const refreshToken = tokenProvider.getRefreshToken();
+      if (!refreshToken) {
+        this.currentAccount = null;
+        this.isInitialized = true;
+        return null;
+      }
+
+      try {
+        this.currentAccount = await identityApi.getMyAccount();
+      } catch (error) {
+        // Clear cached promise on failure to allow re-attempts
+        this.initPromise = null;
+        this.currentAccount = null;
+      } finally {
+        this.isInitialized = true;
+        this.notify();
+      }
+
+      return this.currentAccount;
+    })();
+
+    return this.initPromise;
+  }
+
   async logout(): Promise<void> {
     const refreshToken = tokenProvider.getRefreshToken();
+
+    tokenProvider.setAccessToken(null);
+    tokenProvider.setRefreshToken(null);
+    this.currentAccount = null;
+    this.initPromise = null;
+    this.isInitialized = false;
+    this.notify();
+
+    window.location.assign("/login.html");
+
     if (refreshToken) {
       try {
         await identityApi.logout({ refresh_token: refreshToken });
@@ -101,17 +107,14 @@ export class AuthManager {
         console.warn("Logout request failed:", err);
       }
     }
-    tokenProvider.setAccessToken(null);
-    tokenProvider.setRefreshToken(null);
-    this.currentAccount = null;
-    this.notify();
-    window.location.assign("/login.html");
   }
 
   handleSessionExpired(): void {
     tokenProvider.setAccessToken(null);
     tokenProvider.setRefreshToken(null);
     this.currentAccount = null;
+    this.initPromise = null;
+    this.isInitialized = false;
     this.notify();
     window.location.assign("/login.html");
   }

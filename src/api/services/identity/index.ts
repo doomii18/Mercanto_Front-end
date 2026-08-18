@@ -68,14 +68,17 @@ export class IdentityService {
 
   async logout(payload: TokenRequest): Promise<void> {
     const validatedPayload = TokenRequestSchema.parse(payload);
-    await this.client.request("/logout", {
-      method: "POST",
-      body: JSON.stringify(validatedPayload),
-    });
+    await this.client.request(
+      "/logout",
+      {
+        method: "POST",
+        body: JSON.stringify(validatedPayload),
+      },
+      true,
+    );
     this.tokenProvider.setAccessToken(null);
     this.tokenProvider.setRefreshToken(null);
   }
-
   async logoutAll(): Promise<void> {
     await this.client.request("/logout-all", { method: "POST" });
     this.tokenProvider.setAccessToken(null);
