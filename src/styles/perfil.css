@@ -118,8 +118,8 @@ h1, h2, h3, .logo {
     display: flex;
     flex-direction: column;
     gap: 2rem;
-    max-width: 1000px;
     margin-left: 280px;
+    width: calc(100% - 280px);
 }
 
 .card {
@@ -384,6 +384,7 @@ h1, h2, h3, .logo {
     }
     .content {
         margin-left: 220px;
+        width: calc(100% - 220px);
         padding: 2rem;
     }
     .profile-card {

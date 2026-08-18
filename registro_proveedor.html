@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Proveedor — Mercanto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./src/styles/registro_proveedor.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="top-header">
+        <div class="logo">
+            <img src="./src/assets/logo.png" alt="Mercanto Icon" class="logo-icon">
+        </div>
+        <a href="index.html" class="home-icon">
+            <i class="fa-solid fa-house"></i>
+        </a>
+    </header>
+
+    <main class="wizard-container">
+        <div class="wizard-header">
+            <h1>Registro de Proveedor</h1>
+            <p>Completa la información requerida para crear una cuenta de proveedor en la plataforma.</p>
+        </div>
+
+        <!-- Progress Stepper -->
+        <div class="stepper">
+            <div class="step active" id="indicator-step1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Información del Negocio</span>
+            </div>
+            <div class="step-line" id="line-1"></div>
+            <div class="step" id="indicator-step2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Información del Propietario</span>
+            </div>
+            <div class="step-line" id="line-2"></div>
+            <div class="step" id="indicator-step3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Revisión y Envío.</span>
+            </div>
+        </div>
+
+        <div class="wizard-card">
+            <!-- STEP 1: Negocio -->
+            <div id="step1-content" class="wizard-step active-step">
+                <h3 class="step-title">Información del Negocio</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>1. Número RUC <span class="required">*</span></label>
+                        <input type="text" id="negocio-ruc" placeholder="J0310000664348">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>2. Nombre del Negocio <span class="required">*</span></label>
+                        <input type="text" id="negocio-nombre" placeholder="E. Chamorro Industrial S.A">
+                    </div>
+
+                    <div class="form-group">
+                        <label>3. Tipo de Negocio <span class="required">*</span></label>
+                        <div class="select-wrapper">
+                            <select id="negocio-tipo">
+                                <option value="" disabled selected>Seleccione...</option>
+                                <option value="Industria Manufacturera">Industria Manufacturera</option>
+                                <option value="Comercio al por mayor">Comercio al por mayor</option>
+                                <option value="Agricultura y Ganadería">Agricultura y Ganadería</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>4. Teléfono del Negocio <span class="required">*</span></label>
+                        <input type="tel" id="negocio-telefono" placeholder="2222 7854">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>5. Dirección <span class="required">*</span></label>
+                        <input type="text" id="negocio-direccion" placeholder="Calle La Inmaculada en la ciudad de Granada, Nicaragua.">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>6. Logo del Negocio <span class="required">*</span></label>
+                        <div class="drag-drop-zone" id="drag-drop-logo">
+                            <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
+                            <p>Arrastra una imagen aquí</p>
+                            <span>o</span>
+                            <button type="button" class="btn-outline" id="btn-browse-logo">Seleccionar archivo</button>
+                            <input type="file" id="file-logo" accept="image/png, image/jpeg" style="display: none;">
+                        </div>
+                        <div id="logo-preview-container" style="display: none;" class="preview-container">
+                            <img id="logo-preview" src="" alt="Logo">
+                            <button type="button" class="btn-remove-logo" id="btn-remove-logo"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button type="button" class="btn-orange" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn-teal" id="btn-next-to-2">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Propietario -->
+            <div id="step2-content" class="wizard-step" style="display: none;">
+                <h3 class="step-title">Información del Propietario</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>1. Cédula de Identidad <span class="required">*</span></label>
+                        <input type="text" id="propietario-cedula" placeholder="401-230900-5001F">
+                        <div style="margin-top:0.5rem">
+                            <button type="button" class="btn-subir-doc" id="btn-subir-cedula">Subir documento <i class="fa-regular fa-file-image"></i></button>
+                            <span id="cedula-filename" style="margin-left: 10px; font-size:0.9rem; color:#666;"></span>
+                        </div>
+                        <input type="file" id="file-cedula" accept="image/png, image/jpeg, application/pdf" style="display: none;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>2. Nombre del Propietario <span class="required">*</span></label>
+                        <input type="text" id="propietario-nombre" placeholder="Ernesto Chamorro">
+                    </div>
+
+                    <div class="form-group">
+                        <label>3. Correo electrónico <span class="required">*</span></label>
+                        <input type="email" id="propietario-correo" placeholder="echamorro@gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>4. Teléfono <span class="required">*</span></label>
+                        <input type="tel" id="propietario-telefono" placeholder="8790 - 6723">
+                    </div>
+                </div>
+
+                <div class="step-actions right-align" style="justify-content: flex-end; gap: 1rem; margin-top: 3rem;">
+                    <button type="button" class="btn-orange" id="btn-back-to-1"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
+                    <button type="button" class="btn-teal" id="btn-next-to-3">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Revisión y Envío -->
+            <div id="step3-content" class="wizard-step split-view" style="display: none;">
+                <div class="review-left">
+                    <div class="review-section">
+                        <h3 class="step-title section-title">Información del Negocio</h3>
+                        <div class="review-grid">
+                            <div class="review-logo-area">
+                                <div class="review-logo-circle" id="review-logo">
+                                    <i class="fa-solid fa-image"></i>
+                                </div>
+                            </div>
+                            <div class="review-data-area">
+                                <div class="review-item">
+                                    <span class="label">Número RUC</span>
+                                    <span class="value" id="res-ruc"></span>
+                                </div>
+                                <div class="review-item">
+                                    <span class="label">Nombre del Negocio</span>
+                                    <span class="value" id="res-negocio"></span>
+                                </div>
+                                <div class="review-item">
+                                    <span class="label">Tipo de Negocio</span>
+                                    <span class="value" id="res-tipo"></span>
+                                </div>
+                                <div class="review-item">
+                                    <span class="label">Teléfono del Negocio</span>
+                                    <span class="value" id="res-tel-negocio"></span>
+                                </div>
+                                <div class="review-item full-row">
+                                    <span class="label">Dirección</span>
+                                    <span class="value" id="res-direccion"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="review-section" style="margin-top:2rem;">
+                        <h3 class="step-title section-title">Información del Propietario</h3>
+                        <div class="review-data-area owner-data">
+                            <div class="review-item">
+                                <span class="label">Cédula de Identidad</span>
+                                <span class="value" id="res-cedula"></span>
+                            </div>
+                            <div class="review-item">
+                                <span class="label">Nombre del Propietario</span>
+                                <span class="value" id="res-propietario"></span>
+                            </div>
+                            <div class="review-item">
+                                <span class="label">Correo electrónico</span>
+                                <span class="value" id="res-correo"></span>
+                            </div>
+                            <div class="review-item">
+                                <span class="label">Teléfono</span>
+                                <span class="value" id="res-tel-prop"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="confirm-check">
+                        <label for="confirm-check">Confirmo que la información enviada es correcta y autorizo a Mercanto verificar los datos enviados.</label>
+                    </div>
+
+                    <div class="step-actions center-align">
+                        <button type="button" class="btn-orange" id="btn-back-to-2"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
+                        <button type="button" class="btn-teal" id="btn-submit" disabled>Enviar</button>
+                    </div>
+                </div>
+
+                <div class="review-right">
+                    <div class="approval-panel">
+                        <div class="shield-icon">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h4>¿Qué sucederá después?</h4>
+                        <p class="approval-desc">Nuestro equipo revisará la infomación y verificará que los datos enviados sean correctos</p>
+                        
+                        <div class="approval-process">
+                            <h5>Proceso de Aprobación</h5>
+                            
+                            <div class="process-step">
+                                <i class="fa-regular fa-clock text-orange"></i>
+                                <div class="process-text">
+                                    <h6>En revisión</h6>
+                                    <p>Tu solicitud es revisada por nuestro equipo.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="process-step">
+                                <i class="fa-regular fa-circle-check text-green"></i>
+                                <div class="process-text">
+                                    <h6>Aprobado</h6>
+                                    <p>Se te notificará por correo que tu solicitud ha sido aprobada.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="process-step">
+                                <i class="fa-regular fa-circle-xmark text-orange"></i>
+                                <div class="process-text">
+                                    <h6>Desaprobado</h6>
+                                    <p>Te pediremos actualizar la información.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="./src/registro_proveedor.js"></script>
+</body>
+</html>
