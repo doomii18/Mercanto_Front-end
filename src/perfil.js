@@ -1,526 +1,740 @@
-document.addEventListener('DOMContentLoaded', () => {
+import { bootstrapGeo, getGeoManager } from "./modules/geo";
+import { bootstrapSession, userProfileApi, identityApi } from "./api";
 
-    // =============================================
-    // ELEMENT REFERENCES
-    // =============================================
-    const editAvatarBtn = document.querySelector('.edit-avatar');
-    const avatarDropdown = document.getElementById('avatar-dropdown');
-    const avatarDiv = document.querySelector('.avatar');
+document.addEventListener("DOMContentLoaded", async () => {
+  await bootstrapSession();
 
-    // Photo modals
-    const photoModal = document.getElementById('photo-modal');
-    const deleteModal = document.getElementById('delete-modal');
-    const viewPhotoModal = document.getElementById('view-photo-modal');
+  // =============================================
+  // ELEMENT REFERENCES
+  // =============================================
+  const editAvatarBtn = document.querySelector(".edit-avatar");
+  const avatarDropdown = document.getElementById("avatar-dropdown");
+  const avatarDiv = document.querySelector(".avatar");
 
-    const closeModalTop = document.getElementById('close-modal-top');
-    const closeModalBtn = document.getElementById('close-modal-btn');
+  // Photo modals
+  const photoModal = document.getElementById("photo-modal");
+  const deleteModal = document.getElementById("delete-modal");
+  const viewPhotoModal = document.getElementById("view-photo-modal");
 
-    // Views inside photo-modal
-    const choiceView = document.getElementById('choice-view');
-    const uploadView = document.getElementById('upload-view');
-    const cameraView = document.getElementById('camera-view');
-    const adjustView = document.getElementById('adjust-view');
-    const modalTitle = document.getElementById('modal-title');
+  const closeModalTop = document.getElementById("close-modal-top");
+  const closeModalBtn = document.getElementById("close-modal-btn");
 
-    // Dropdown items
-    const btnMenuView = document.getElementById('btn-menu-view');
-    const btnMenuTake = document.getElementById('btn-menu-take');
-    const btnMenuUpload = document.getElementById('btn-menu-upload');
-    const btnMenuDelete = document.getElementById('btn-menu-delete');
+  // Views inside photo-modal
+  const choiceView = document.getElementById("choice-view");
+  const uploadView = document.getElementById("upload-view");
+  const cameraView = document.getElementById("camera-view");
+  const adjustView = document.getElementById("adjust-view");
+  const modalTitle = document.getElementById("modal-title");
 
-    // Choice view
-    const btnChoiceUpload = document.getElementById('btn-choice-upload');
-    const btnChoiceCamera = document.getElementById('btn-choice-camera');
-    const btnCancelChoice = document.getElementById('btn-cancel-choice');
+  // Dropdown items
+  const btnMenuView = document.getElementById("btn-menu-view");
+  const btnMenuTake = document.getElementById("btn-menu-take");
+  const btnMenuUpload = document.getElementById("btn-menu-upload");
+  const btnMenuDelete = document.getElementById("btn-menu-delete");
 
-    // Upload view
-    const dragDropZone = document.getElementById('drag-drop-zone');
-    const btnBrowseFile = document.getElementById('btn-browse-file');
-    const btnCancelUpload = document.getElementById('btn-cancel-upload');
-    const btnContinueUpload = document.getElementById('btn-continue-upload');
+  // Choice view
+  const btnChoiceUpload = document.getElementById("btn-choice-upload");
+  const btnChoiceCamera = document.getElementById("btn-choice-camera");
+  const btnCancelChoice = document.getElementById("btn-cancel-choice");
 
-    // Camera
-    const videoElement = document.getElementById('camera-stream');
-    const cameraMessage = document.getElementById('camera-message');
-    const btnCancelCamera = document.getElementById('btn-cancel-camera');
-    const btnShutter = document.getElementById('btn-shutter');
-    const btnUploadFile = document.getElementById('btn-upload-file');
-    const fileInput = document.getElementById('profile-file-input');
+  // Upload view
+  const dragDropZone = document.getElementById("drag-drop-zone");
+  const btnBrowseFile = document.getElementById("btn-browse-file");
+  const btnCancelUpload = document.getElementById("btn-cancel-upload");
+  const btnContinueUpload = document.getElementById("btn-continue-upload");
 
-    // Adjust
-    const photoCanvas = document.getElementById('photo-canvas');
-    const ctx = photoCanvas.getContext('2d');
-    const btnCancelAdjust = document.getElementById('btn-cancel-adjust');
-    const btnSavePhoto = document.getElementById('btn-save-photo');
-    const btnRetake = document.getElementById('btn-retake');
+  // Camera
+  const videoElement = document.getElementById("camera-stream");
+  const cameraMessage = document.getElementById("camera-message");
+  const btnCancelCamera = document.getElementById("btn-cancel-camera");
+  const btnShutter = document.getElementById("btn-shutter");
+  const btnUploadFile = document.getElementById("btn-upload-file");
+  const fileInput = document.getElementById("profile-file-input");
 
-    // Delete
-    const btnCancelDelete = document.getElementById('btn-cancel-delete');
-    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+  // Adjust
+  const photoCanvas = document.getElementById("photo-canvas");
+  const ctx = photoCanvas.getContext("2d");
+  const btnCancelAdjust = document.getElementById("btn-cancel-adjust");
+  const btnSavePhoto = document.getElementById("btn-save-photo");
+  const btnRetake = document.getElementById("btn-retake");
 
-    // View Photo
-    const viewPhotoImg = document.getElementById('view-photo-img');
-    const closeViewPhoto = document.getElementById('close-view-photo');
+  // Delete
+  const btnCancelDelete = document.getElementById("btn-cancel-delete");
+  const btnConfirmDelete = document.getElementById("btn-confirm-delete");
 
-    // Edit Profile Modal
-    const editProfileModal = document.getElementById('edit-profile-modal');
-    const btnOpenEditProfile = document.getElementById('btn-open-edit-profile');
-    const closeEditProfile = document.getElementById('close-edit-profile');
-    const btnCancelEditProfile = document.getElementById('btn-cancel-edit-profile');
-    const btnSaveEditProfile = document.getElementById('btn-save-edit-profile');
-    const editPhotoPreview = document.getElementById('edit-photo-preview');
-    const btnChangePhotoInEdit = document.getElementById('btn-change-photo-in-edit');
+  // View Photo
+  const viewPhotoImg = document.getElementById("view-photo-img");
+  const closeViewPhoto = document.getElementById("close-view-photo");
 
-    // Edit form inputs
-    const inputNombres = document.getElementById('input-nombres');
-    const inputApellidos = document.getElementById('input-apellidos');
-    const inputCorreo = document.getElementById('input-correo');
-    const inputTelefono = document.getElementById('input-telefono');
-    const inputCedula = document.getElementById('input-cedula');
-    const inputDepartamento = document.getElementById('input-departamento');
+  // Edit Profile Modal
+  const editProfileModal = document.getElementById("edit-profile-modal");
+  const btnOpenEditProfile = document.getElementById("btn-open-edit-profile");
+  const closeEditProfile = document.getElementById("close-edit-profile");
+  const btnCancelEditProfile = document.getElementById(
+    "btn-cancel-edit-profile",
+  );
+  const btnSaveEditProfile = document.getElementById("btn-save-edit-profile");
+  const editPhotoPreview = document.getElementById("edit-photo-preview");
+  const btnChangePhotoInEdit = document.getElementById(
+    "btn-change-photo-in-edit",
+  );
 
-    // Display spans
-    const displayNombres = document.getElementById('display-nombres');
-    const displayApellidos = document.getElementById('display-apellidos');
-    const displayCorreo = document.getElementById('display-correo');
-    const displayTelefono = document.getElementById('display-telefono');
-    const displayCedula = document.getElementById('display-cedula');
-    const displayDepartamento = document.getElementById('display-departamento');
-    // Header displays
-    const displayFullname = document.getElementById('display-fullname');
-    const displayCorreoHeader = document.getElementById('display-correo-header');
+  // Edit form inputs
+  const inputNombres = document.getElementById("input-nombres");
+  const inputApellidos = document.getElementById("input-apellidos");
+  const inputTelefono = document.getElementById("input-telefono");
+  const inputCedula = document.getElementById("input-cedula");
+  const inputMunicipio = document.getElementById("input-municipio");
+  // Display spans
+  const displayNombres = document.getElementById("display-nombres");
+  const displayApellidos = document.getElementById("display-apellidos");
+  const displayCorreo = document.getElementById("display-correo");
+  const displayTelefono = document.getElementById("display-telefono");
+  const displayCedula = document.getElementById("display-cedula");
+  const displayMunicipio = document.getElementById("display-municipio");
+  // Header displays
+  const displayFullname = document.getElementById("display-fullname");
+  const displayCorreoHeader = document.getElementById("display-correo-header");
+  const displayMiembroDesde = document.getElementById("display-miembro-desde");
 
-    let stream = null;
-    let currentImage = null;
-    let scale = 1;
-    let offsetX = 0;
-    let offsetY = 0;
+  let stream = null;
+  let currentImage = null;
+  let scale = 1;
+  let offsetX = 0;
+  let offsetY = 0;
+  let currentAvatarBlobId = null;
+  let currentAvatarViewUrl = null;
+  let currentProfile = null;
 
-    // =============================================
-    // LOAD SAVED DATA FROM LOCALSTORAGE
-    // =============================================
-    function loadSavedData() {
-        // Profile picture
-        const savedPic = localStorage.getItem('mercanto_profile_pic');
-        if (savedPic) {
-            setAvatarImage(savedPic);
+  // =============================================
+  // GEO SETUP
+  // =============================================
+  await bootstrapGeo();
+  const geoManager = getGeoManager();
+
+  if (geoManager && inputMunicipio) {
+    const departments = geoManager.getDepartments();
+    departments.forEach((dept) => {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = dept.name;
+      dept.municipalities.forEach((mun) => {
+        const option = document.createElement("option");
+        option.value = mun.id;
+        option.textContent = mun.name;
+        optgroup.appendChild(option);
+      });
+      inputMunicipio.appendChild(optgroup);
+    });
+  }
+  // =============================================
+  // LOAD PROFILE DATA FROM API
+  // =============================================
+  async function loadProfile() {
+    try {
+      const profile = await userProfileApi.getMyProfile();
+      currentProfile = profile;
+
+      // API fields
+      if (displayNombres) displayNombres.textContent = profile.first_name ?? "";
+      if (displayApellidos)
+        displayApellidos.textContent = profile.last_name ?? "";
+      if (displayCedula) displayCedula.textContent = profile.national_id ?? "—";
+      if (displayTelefono)
+        displayTelefono.textContent = profile.phone_number ?? "—";
+      if (displayFullname)
+        displayFullname.textContent =
+          `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim();
+
+      try {
+        const account = await identityApi.getMyAccount();
+        if (displayCorreo) displayCorreo.textContent = account.email;
+        if (displayCorreoHeader)
+          displayCorreoHeader.textContent = account.email;
+        if (displayMiembroDesde) {
+          const localizedDate = new Date(account.created_at).toLocaleString();
+          displayMiembroDesde.textContent = `Miembro desde ${localizedDate}`;
         }
+      } catch (err) {
+        console.error("Failed to load account data:", err);
+      }
 
-        // Profile info
-        const savedInfo = JSON.parse(localStorage.getItem('mercanto_profile_info') || '{}');
-        if (savedInfo.nombres) displayNombres.textContent = savedInfo.nombres;
-        if (savedInfo.apellidos) displayApellidos.textContent = savedInfo.apellidos;
-        if (savedInfo.correo) displayCorreo.textContent = savedInfo.correo;
-        if (savedInfo.telefono) displayTelefono.textContent = savedInfo.telefono;
-        if (savedInfo.cedula) displayCedula.textContent = savedInfo.cedula;
-        if (savedInfo.departamento) displayDepartamento.textContent = savedInfo.departamento;
+      if (displayMunicipio && profile.municipality_id && geoManager) {
+        const mun = geoManager.getMunicipalityById(profile.municipality_id);
+        displayMunicipio.textContent = mun ? mun.name : profile.municipality_id;
+      } else if (displayMunicipio) {
+        displayMunicipio.textContent = "—";
+      }
 
-        // Restore header name and email
-        if (savedInfo.nombres && savedInfo.apellidos && displayFullname) {
-            displayFullname.textContent = `${savedInfo.nombres} ${savedInfo.apellidos}`;
-        }
-        if (savedInfo.correo && displayCorreoHeader) {
-            displayCorreoHeader.textContent = savedInfo.correo;
-        }
+      // Avatar
+      if (profile.avatar_blob_id) {
+        currentAvatarBlobId = profile.avatar_blob_id;
+        const blobUrl = await userProfileApi.getProfilePictureBlobUrl(
+          profile.avatar_blob_id,
+        );
+        currentAvatarViewUrl = blobUrl;
+        setAvatarImage(blobUrl);
+      }
+    } catch (error) {
+      console.error("Failed to load profile:", error);
+    }
+  }
+
+  function setAvatarImage(dataUrl) {
+    avatarDiv.innerHTML = "";
+    avatarDiv.style.backgroundImage = `url(${dataUrl})`;
+    avatarDiv.style.backgroundSize = "cover";
+    avatarDiv.style.backgroundPosition = "center";
+  }
+
+  await loadProfile();
+
+  // =============================================
+  // DROPDOWN MENU
+  // =============================================
+  editAvatarBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    avatarDropdown.style.display =
+      avatarDropdown.style.display === "none" ? "block" : "none";
+  });
+
+  document.addEventListener("click", (e) => {
+    if (
+      !editAvatarBtn.contains(e.target) &&
+      !avatarDropdown.contains(e.target)
+    ) {
+      avatarDropdown.style.display = "none";
+    }
+  });
+
+  // =============================================
+  // DROPDOWN ACTIONS
+  // =============================================
+  btnMenuView.addEventListener("click", async () => {
+    avatarDropdown.style.display = "none";
+    if (currentAvatarViewUrl) {
+      viewPhotoImg.src = currentAvatarViewUrl;
+      viewPhotoModal.style.display = "flex";
+    } else if (currentAvatarBlobId) {
+      try {
+        const blobUrl =
+          await userProfileApi.getProfilePictureBlobUrl(currentAvatarBlobId);
+        currentAvatarViewUrl = blobUrl;
+        viewPhotoImg.src = blobUrl;
+        viewPhotoModal.style.display = "flex";
+      } catch (error) {
+        alert("No se pudo cargar la foto de perfil.");
+      }
+    } else {
+      alert("No tienes una foto de perfil guardada.");
+    }
+  });
+
+  closeViewPhoto.addEventListener("click", () => {
+    viewPhotoModal.style.display = "none";
+  });
+
+  viewPhotoModal.addEventListener("click", (e) => {
+    if (e.target === viewPhotoModal) viewPhotoModal.style.display = "none";
+  });
+
+  btnMenuTake.addEventListener("click", () => {
+    avatarDropdown.style.display = "none";
+    photoModal.style.display = "flex";
+    showCameraView();
+  });
+
+  btnMenuUpload.addEventListener("click", () => {
+    avatarDropdown.style.display = "none";
+    photoModal.style.display = "flex";
+    showUploadView();
+  });
+
+  btnMenuDelete.addEventListener("click", () => {
+    avatarDropdown.style.display = "none";
+    deleteModal.style.display = "flex";
+  });
+
+  // =============================================
+  // DELETE PHOTO
+  // =============================================
+  btnCancelDelete.addEventListener("click", () => {
+    deleteModal.style.display = "none";
+  });
+
+  btnConfirmDelete.addEventListener("click", async () => {
+    if (currentAvatarBlobId) {
+      try {
+        await userProfileApi.deleteProfilePicture(currentAvatarBlobId);
+      } catch (error) {
+        console.error("Failed to delete avatar:", error);
+      }
+    }
+    currentAvatarBlobId = null;
+    currentAvatarViewUrl = null;
+    avatarDiv.style.backgroundImage = "none";
+    avatarDiv.innerHTML = '<i class="fa-solid fa-user"></i>';
+    deleteModal.style.display = "none";
+  });
+
+  // =============================================
+  // EDIT PROFILE FORM — VALIDATION & FILTERING
+  // =============================================
+
+  // Real-time: only letters and spaces for names
+  function onlyLetters(e) {
+    const allowed = /^[a-zA-Z\u00C0-\u024F\s]$/;
+    if (
+      !allowed.test(e.key) &&
+      !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  }
+  // Real-time: only digits for phone
+  function onlyDigits(e) {
+    if (
+      !/^[0-9]$/.test(e.key) &&
+      !["Backspace", "Delete", "ArrowLeft", "ArrowRight", "Tab"].includes(e.key)
+    ) {
+      e.preventDefault();
+    }
+  }
+
+  inputNombres.addEventListener("keydown", onlyLetters);
+  inputApellidos.addEventListener("keydown", onlyLetters);
+  inputTelefono.addEventListener("keydown", onlyDigits);
+
+  // Validation helpers
+  function showError(wrapId, errId, msg) {
+    document.getElementById(wrapId).classList.add("error");
+    document.getElementById(errId).textContent = msg;
+  }
+  function clearError(wrapId, errId) {
+    document.getElementById(wrapId).classList.remove("error");
+    document.getElementById(errId).textContent = "";
+  }
+  function clearAllErrors() {
+    clearError("wrap-nombres", "err-nombres");
+    clearError("wrap-apellidos", "err-apellidos");
+    clearError("wrap-telefono", "err-telefono");
+    clearError("wrap-cedula", "err-cedula");
+  }
+
+  function validateForm() {
+    let valid = true;
+    const lettersOnly = /^[a-zA-Z\u00C0-\u024F\s]+$/;
+    const digitsOnly = /^[0-9]+$/;
+
+    clearAllErrors();
+
+    const n = inputNombres.value.trim();
+    if (!n) {
+      showError("wrap-nombres", "err-nombres", "El nombre es requerido.");
+      valid = false;
+    } else if (!lettersOnly.test(n)) {
+      showError("wrap-nombres", "err-nombres", "Solo se permiten letras.");
+      valid = false;
     }
 
-    function setAvatarImage(dataUrl) {
-        avatarDiv.innerHTML = '';
-        avatarDiv.style.backgroundImage = `url(${dataUrl})`;
-        avatarDiv.style.backgroundSize = 'cover';
-        avatarDiv.style.backgroundPosition = 'center';
+    const a = inputApellidos.value.trim();
+    if (!a) {
+      showError("wrap-apellidos", "err-apellidos", "El apellido es requerido.");
+      valid = false;
+    } else if (!lettersOnly.test(a)) {
+      showError("wrap-apellidos", "err-apellidos", "Solo se permiten letras.");
+      valid = false;
     }
 
-    loadSavedData();
-
-    // =============================================
-    // DROPDOWN MENU
-    // =============================================
-    editAvatarBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        avatarDropdown.style.display = avatarDropdown.style.display === 'none' ? 'block' : 'none';
-    });
-
-    document.addEventListener('click', (e) => {
-        if (!editAvatarBtn.contains(e.target) && !avatarDropdown.contains(e.target)) {
-            avatarDropdown.style.display = 'none';
-        }
-    });
-
-    // =============================================
-    // DROPDOWN ACTIONS
-    // =============================================
-    btnMenuView.addEventListener('click', () => {
-        avatarDropdown.style.display = 'none';
-        const savedPic = localStorage.getItem('mercanto_profile_pic');
-        if (savedPic) {
-            viewPhotoImg.src = savedPic;
-            viewPhotoModal.style.display = 'flex';
-        } else {
-            alert('No tienes una foto de perfil guardada.');
-        }
-    });
-
-    closeViewPhoto.addEventListener('click', () => {
-        viewPhotoModal.style.display = 'none';
-    });
-
-    viewPhotoModal.addEventListener('click', (e) => {
-        if (e.target === viewPhotoModal) viewPhotoModal.style.display = 'none';
-    });
-
-    btnMenuTake.addEventListener('click', () => {
-        avatarDropdown.style.display = 'none';
-        photoModal.style.display = 'flex';
-        showCameraView();
-    });
-
-    btnMenuUpload.addEventListener('click', () => {
-        avatarDropdown.style.display = 'none';
-        photoModal.style.display = 'flex';
-        showUploadView();
-    });
-
-    btnMenuDelete.addEventListener('click', () => {
-        avatarDropdown.style.display = 'none';
-        deleteModal.style.display = 'flex';
-    });
-
-    // =============================================
-    // DELETE PHOTO
-    // =============================================
-    btnCancelDelete.addEventListener('click', () => {
-        deleteModal.style.display = 'none';
-    });
-
-    btnConfirmDelete.addEventListener('click', () => {
-        localStorage.removeItem('mercanto_profile_pic');
-        avatarDiv.style.backgroundImage = 'none';
-        avatarDiv.innerHTML = '<i class="fa-solid fa-user"></i>';
-        deleteModal.style.display = 'none';
-    });
-
-    // =============================================
-    // EDIT PROFILE FORM — VALIDATION & FILTERING
-    // =============================================
-
-    // Real-time: only letters and spaces for names
-    function onlyLetters(e) {
-        const allowed = /^[a-zA-Z\u00C0-\u024F\s]$/;
-        if (!allowed.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) {
-            e.preventDefault();
-        }
-    }
-    // Real-time: only digits for phone
-    function onlyDigits(e) {
-        if (!/^[0-9]$/.test(e.key) && !['Backspace','Delete','ArrowLeft','ArrowRight','Tab'].includes(e.key)) {
-            e.preventDefault();
-        }
+    const t = inputTelefono.value.trim();
+    if (t && !digitsOnly.test(t)) {
+      showError("wrap-telefono", "err-telefono", "Solo se permiten números.");
+      valid = false;
     }
 
-    inputNombres.addEventListener('keydown', onlyLetters);
-    inputApellidos.addEventListener('keydown', onlyLetters);
-    inputTelefono.addEventListener('keydown', onlyDigits);
+    return valid;
+  }
 
-    // Validation helpers
-    function showError(wrapId, errId, msg) {
-        document.getElementById(wrapId).classList.add('error');
-        document.getElementById(errId).textContent = msg;
-    }
-    function clearError(wrapId, errId) {
-        document.getElementById(wrapId).classList.remove('error');
-        document.getElementById(errId).textContent = '';
-    }
-    function clearAllErrors() {
-        clearError('wrap-nombres',   'err-nombres');
-        clearError('wrap-apellidos', 'err-apellidos');
-        clearError('wrap-correo',    'err-correo');
-        clearError('wrap-telefono',  'err-telefono');
-        clearError('wrap-cedula',    'err-cedula');
+  btnOpenEditProfile.addEventListener("click", async () => {
+    clearAllErrors();
+
+    if (!currentProfile) {
+      try {
+        currentProfile = await userProfileApi.getMyProfile();
+      } catch (e) {
+        console.error(e);
+        return;
+      }
     }
 
-    function validateForm() {
-        let valid = true;
-        const lettersOnly = /^[a-zA-Z\u00C0-\u024F\s]+$/;
-        const emailReg    = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        const digitsOnly  = /^[0-9]+$/;
+    inputNombres.value = currentProfile.first_name ?? "";
+    inputApellidos.value = currentProfile.last_name ?? "";
+    inputTelefono.value = currentProfile.phone_number ?? "";
+    inputCedula.value = currentProfile.national_id ?? "";
+    inputMunicipio.value = currentProfile.municipality_id ?? "";
 
-        clearAllErrors();
-
-        const n = inputNombres.value.trim();
-        if (!n) {
-            showError('wrap-nombres','err-nombres','El nombre es requerido.'); valid = false;
-        } else if (!lettersOnly.test(n)) {
-            showError('wrap-nombres','err-nombres','Solo se permiten letras.'); valid = false;
-        }
-
-        const a = inputApellidos.value.trim();
-        if (!a) {
-            showError('wrap-apellidos','err-apellidos','El apellido es requerido.'); valid = false;
-        } else if (!lettersOnly.test(a)) {
-            showError('wrap-apellidos','err-apellidos','Solo se permiten letras.'); valid = false;
-        }
-
-        const c = inputCorreo.value.trim();
-        if (!c) {
-            showError('wrap-correo','err-correo','El correo es requerido.'); valid = false;
-        } else if (!emailReg.test(c)) {
-            showError('wrap-correo','err-correo','Formato de correo incorrecto.'); valid = false;
-        }
-
-        const t = inputTelefono.value.trim();
-        if (t && !digitsOnly.test(t)) {
-            showError('wrap-telefono','err-telefono','Solo se permiten números.'); valid = false;
-        }
-
-        return valid;
+    // Pre-fill photo preview in edit modal
+    if (currentAvatarViewUrl) {
+      editPhotoPreview.innerHTML = "";
+      editPhotoPreview.style.backgroundImage = `url(${currentAvatarViewUrl})`;
+      editPhotoPreview.style.backgroundSize = "cover";
+      editPhotoPreview.style.backgroundPosition = "center";
+    } else {
+      editPhotoPreview.style.backgroundImage = "none";
+      editPhotoPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
     }
 
-    btnOpenEditProfile.addEventListener('click', () => {
-        clearAllErrors();
-        // Pre-fill form with current data
-        const savedInfo = JSON.parse(localStorage.getItem('mercanto_profile_info') || '{}');
-        inputNombres.value = savedInfo.nombres || displayNombres.textContent;
-        inputApellidos.value = savedInfo.apellidos || displayApellidos.textContent;
-        inputCorreo.value = savedInfo.correo || displayCorreo.textContent;
-        inputTelefono.value = savedInfo.telefono || displayTelefono.textContent;
-        inputCedula.value = savedInfo.cedula || displayCedula.textContent;
-        inputDepartamento.value = savedInfo.departamento || displayDepartamento.textContent;
+    editProfileModal.style.display = "flex";
+  });
 
-        // Pre-fill photo preview in edit modal
-        const savedPic = localStorage.getItem('mercanto_profile_pic');
-        if (savedPic) {
-            editPhotoPreview.innerHTML = '';
-            editPhotoPreview.style.backgroundImage = `url(${savedPic})`;
-            editPhotoPreview.style.backgroundSize = 'cover';
-            editPhotoPreview.style.backgroundPosition = 'center';
-        } else {
-            editPhotoPreview.style.backgroundImage = 'none';
-            editPhotoPreview.innerHTML = '<i class="fa-solid fa-user"></i>';
-        }
+  function closeEditProfileModal() {
+    editProfileModal.style.display = "none";
+    clearAllErrors();
+  }
 
-        editProfileModal.style.display = 'flex';
-    });
+  closeEditProfile.addEventListener("click", closeEditProfileModal);
+  btnCancelEditProfile.addEventListener("click", closeEditProfileModal);
 
-    function closeEditProfileModal() {
-        editProfileModal.style.display = 'none';
-        clearAllErrors();
+  btnSaveEditProfile.addEventListener("click", async () => {
+    if (!validateForm()) return;
+
+    const originalBtnContent = btnSaveEditProfile.innerHTML;
+    btnSaveEditProfile.disabled = true;
+    btnSaveEditProfile.innerHTML =
+      '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+
+    const payload = {
+      first_name: inputNombres.value.trim(),
+      last_name: inputApellidos.value.trim(),
+      phone_number: inputTelefono.value.trim() || null,
+      national_id: inputCedula.value.trim() || null,
+      municipality_id: inputMunicipio.value || null,
+    };
+
+    try {
+      const updatedProfile = await userProfileApi.updateMyProfile(payload);
+      currentProfile = updatedProfile;
+
+      if (displayNombres)
+        displayNombres.textContent = updatedProfile.first_name ?? "";
+      if (displayApellidos)
+        displayApellidos.textContent = updatedProfile.last_name ?? "";
+      if (displayFullname)
+        displayFullname.textContent =
+          `${updatedProfile.first_name ?? ""} ${updatedProfile.last_name ?? ""}`.trim();
+      if (displayTelefono)
+        displayTelefono.textContent = updatedProfile.phone_number ?? "—";
+      if (displayCedula)
+        displayCedula.textContent = updatedProfile.national_id ?? "—";
+      if (displayMunicipio && geoManager) {
+        const selectedMun = geoManager.getMunicipalityById(
+          updatedProfile.municipality_id,
+        );
+        displayMunicipio.textContent = selectedMun
+          ? selectedMun.name
+          : (updatedProfile.municipality_id ?? "—");
+      }
+
+      closeEditProfileModal();
+    } catch (error) {
+      console.error("Failed to update profile:", error);
+      alert(
+        error.message || "No se pudo actualizar el perfil. Inténtalo de nuevo.",
+      );
+    } finally {
+      btnSaveEditProfile.disabled = false;
+      btnSaveEditProfile.innerHTML = originalBtnContent;
     }
+  });
 
-    closeEditProfile.addEventListener('click', closeEditProfileModal);
-    btnCancelEditProfile.addEventListener('click', closeEditProfileModal);
+  btnChangePhotoInEdit.addEventListener("click", () => {
+    closeEditProfileModal();
+    photoModal.style.display = "flex";
+    showChoiceView();
+  });
 
-    btnSaveEditProfile.addEventListener('click', () => {
-        if (!validateForm()) return;
+  // =============================================
+  // PHOTO MODAL VIEWS
+  // =============================================
+  function hideAllViews() {
+    choiceView.style.display = "none";
+    uploadView.style.display = "none";
+    cameraView.style.display = "none";
+    adjustView.style.display = "none";
+  }
 
-        const info = {
-            nombres: inputNombres.value.trim(),
-            apellidos: inputApellidos.value.trim(),
-            correo: inputCorreo.value.trim(),
-            telefono: inputTelefono.value.trim(),
-            cedula: inputCedula.value.trim(),
-            departamento: inputDepartamento.value.trim(),
-        };
+  function closeAndStop() {
+    photoModal.style.display = "none";
+    hideAllViews();
+    stopCamera();
+  }
 
-        // Save to localStorage
-        localStorage.setItem('mercanto_profile_info', JSON.stringify(info));
+  closeModalTop.addEventListener("click", closeAndStop);
+  closeModalBtn.addEventListener("click", closeAndStop);
 
-        // Update info card
-        if (info.nombres) displayNombres.textContent = info.nombres;
-        if (info.apellidos) displayApellidos.textContent = info.apellidos;
-        if (info.correo) displayCorreo.textContent = info.correo;
-        if (info.telefono) displayTelefono.textContent = info.telefono;
-        if (info.cedula) displayCedula.textContent = info.cedula;
-        if (info.departamento) displayDepartamento.textContent = info.departamento;
+  function showChoiceView() {
+    hideAllViews();
+    choiceView.style.display = "block";
+    modalTitle.textContent = "Cambiar foto de Perfil";
+  }
 
-        // Update profile header (name + email next to avatar)
-        if (displayFullname) displayFullname.textContent = `${info.nombres} ${info.apellidos}`;
-        if (displayCorreoHeader) displayCorreoHeader.textContent = info.correo;
+  function showUploadView() {
+    hideAllViews();
+    uploadView.style.display = "block";
+    modalTitle.textContent = "Seleccionar imagen";
+    stopCamera();
+  }
 
-        closeEditProfileModal();
-    });
+  function showCameraView() {
+    hideAllViews();
+    cameraView.style.display = "block";
+    modalTitle.textContent = "Tomar foto";
+    startCamera();
+  }
 
-    // "Cambiar Foto" inside edit form â†’ open choice modal
-    btnChangePhotoInEdit.addEventListener('click', () => {
-        closeEditProfileModal();
-        photoModal.style.display = 'flex';
-        showChoiceView();
-    });
+  function showAdjustView() {
+    hideAllViews();
+    adjustView.style.display = "block";
+    modalTitle.textContent = "Ajustar foto";
+    stopCamera();
 
-    // =============================================
-    // PHOTO MODAL VIEWS
-    // =============================================
-    function hideAllViews() {
-        choiceView.style.display = 'none';
-        uploadView.style.display = 'none';
-        cameraView.style.display = 'none';
-        adjustView.style.display = 'none';
+    photoCanvas.width = photoCanvas.clientWidth;
+    photoCanvas.height = photoCanvas.clientHeight;
+    scale = 1;
+    offsetX = 0;
+    offsetY = 0;
+    drawImageToCanvas();
+  }
+
+  // Choice view
+  btnChoiceCamera.addEventListener("click", showCameraView);
+  btnChoiceUpload.addEventListener("click", showUploadView);
+  btnCancelChoice.addEventListener("click", closeAndStop);
+
+  // =============================================
+  // UPLOAD / DRAG & DROP
+  // =============================================
+  btnCancelUpload.addEventListener("click", () => showChoiceView());
+  btnBrowseFile.addEventListener("click", () => fileInput.click());
+
+  dragDropZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    dragDropZone.classList.add("dragover");
+  });
+  dragDropZone.addEventListener("dragleave", () =>
+    dragDropZone.classList.remove("dragover"),
+  );
+  dragDropZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragDropZone.classList.remove("dragover");
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0)
+      handleFile(e.dataTransfer.files[0]);
+  });
+
+  fileInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0)
+      handleFile(e.target.files[0]);
+  });
+
+  function handleFile(file) {
+    if (!file || (file.type !== "image/jpeg" && file.type !== "image/png"))
+      return;
+    if (file.size > 3 * 1024 * 1024) {
+      alert("El archivo excede 3MB.");
+      return;
     }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      currentImage = new Image();
+      currentImage.onload = () => showAdjustView();
+      currentImage.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
 
-    function closeAndStop() {
-        photoModal.style.display = 'none';
-        hideAllViews();
-        stopCamera();
+  btnContinueUpload.addEventListener("click", () => {
+    if (currentImage) showAdjustView();
+  });
+
+  btnUploadFile.addEventListener("click", () => fileInput.click());
+
+  // =============================================
+  // CAMERA
+  // =============================================
+  btnCancelCamera.addEventListener("click", () => showChoiceView());
+
+  async function startCamera() {
+    try {
+      cameraMessage.style.display = "none";
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "user" },
+      });
+      videoElement.srcObject = stream;
+      videoElement.play();
+    } catch (err) {
+      cameraMessage.style.display = "block";
+      cameraMessage.innerHTML =
+        '<i class="fa-solid fa-camera"></i><p>Se necesita acceso a la cámara<br>para tomar la foto de perfil.</p>';
     }
+  }
 
-    closeModalTop.addEventListener('click', closeAndStop);
-    closeModalBtn.addEventListener('click', closeAndStop);
-
-    function showChoiceView() {
-        hideAllViews();
-        choiceView.style.display = 'block';
-        modalTitle.textContent = 'Cambiar foto de Perfil';
+  function stopCamera() {
+    if (stream) {
+      stream.getTracks().forEach((t) => t.stop());
+      stream = null;
     }
+  }
 
-    function showUploadView() {
-        hideAllViews();
-        uploadView.style.display = 'block';
-        modalTitle.textContent = 'Seleccionar imagen';
-        stopCamera();
+  btnShutter.addEventListener("click", () => {
+    if (!stream) return;
+    const tmpCanvas = document.createElement("canvas");
+    tmpCanvas.width = videoElement.videoWidth;
+    tmpCanvas.height = videoElement.videoHeight;
+    tmpCanvas.getContext("2d").drawImage(videoElement, 0, 0);
+    currentImage = new Image();
+    currentImage.onload = () => showAdjustView();
+    currentImage.src = tmpCanvas.toDataURL("image/jpeg");
+  });
+
+  btnRetake.addEventListener("click", () => showCameraView());
+
+  // =============================================
+  // ADJUST / CANVAS
+  // =============================================
+  btnCancelAdjust.addEventListener("click", () => {
+    currentImage = null;
+    showChoiceView();
+  });
+
+  function drawImageToCanvas() {
+    if (!currentImage) return;
+    ctx.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
+    const sx = photoCanvas.width / currentImage.width;
+    const sy = photoCanvas.height / currentImage.height;
+    const base = Math.max(sx, sy) * scale;
+    const dw = currentImage.width * base;
+    const dh = currentImage.height * base;
+    const dx = (photoCanvas.width - dw) / 2 + offsetX;
+    const dy = (photoCanvas.height - dh) / 2 + offsetY;
+    ctx.drawImage(currentImage, dx, dy, dw, dh);
+  }
+
+  const btnZoomOut = document.querySelector(".fa-minus").parentElement;
+  const btnZoomIn = document.querySelector(".fa-plus").parentElement;
+  btnZoomIn.addEventListener("click", () => {
+    scale += 0.1;
+    drawImageToCanvas();
+  });
+  btnZoomOut.addEventListener("click", () => {
+    if (scale > 0.5) {
+      scale -= 0.1;
+      drawImageToCanvas();
     }
+  });
 
-    function showCameraView() {
-        hideAllViews();
-        cameraView.style.display = 'block';
-        modalTitle.textContent = 'Tomar foto';
-        startCamera();
-    }
+  // =============================================
+  // DRAG / PAN
+  // =============================================
+  let isDragging = false;
+  let dragStartX = 0;
+  let dragStartY = 0;
+  let dragStartOffsetX = 0;
+  let dragStartOffsetY = 0;
 
-    function showAdjustView() {
-        hideAllViews();
-        adjustView.style.display = 'block';
-        modalTitle.textContent = 'Ajustar foto';
-        stopCamera();
+  photoCanvas.addEventListener("mousedown", (e) => {
+    isDragging = true;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    dragStartOffsetX = offsetX;
+    dragStartOffsetY = offsetY;
+    photoCanvas.style.cursor = "grabbing";
+  });
 
-        photoCanvas.width = photoCanvas.clientWidth;
-        photoCanvas.height = photoCanvas.clientHeight;
-        scale = 1; offsetX = 0; offsetY = 0;
-        drawImageToCanvas();
-    }
+  window.addEventListener("mousemove", (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartX;
+    const dy = e.clientY - dragStartY;
+    offsetX = dragStartOffsetX + dx;
+    offsetY = dragStartOffsetY + dy;
+    drawImageToCanvas();
+  });
 
-    // Choice view
-    btnChoiceCamera.addEventListener('click', showCameraView);
-    btnChoiceUpload.addEventListener('click', showUploadView);
-    btnCancelChoice.addEventListener('click', closeAndStop);
+  window.addEventListener("mouseup", () => {
+    isDragging = false;
+    photoCanvas.style.cursor = "grab";
+  });
 
-    // =============================================
-    // UPLOAD / DRAG & DROP
-    // =============================================
-    btnCancelUpload.addEventListener('click', () => showChoiceView());
-    btnBrowseFile.addEventListener('click', () => fileInput.click());
+  // Touch support
+  photoCanvas.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches.length !== 1) return;
+      isDragging = true;
+      dragStartX = e.touches[0].clientX;
+      dragStartY = e.touches[0].clientY;
+      dragStartOffsetX = offsetX;
+      dragStartOffsetY = offsetY;
+    },
+    { passive: false },
+  );
 
-    dragDropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dragDropZone.classList.add('dragover');
-    });
-    dragDropZone.addEventListener('dragleave', () => dragDropZone.classList.remove('dragover'));
-    dragDropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dragDropZone.classList.remove('dragover');
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]);
-    });
+  window.addEventListener(
+    "touchmove",
+    (e) => {
+      if (!isDragging) return;
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      const dx = e.touches[0].clientX - dragStartX;
+      const dy = e.touches[0].clientY - dragStartY;
+      offsetX = dragStartOffsetX + dx;
+      offsetY = dragStartOffsetY + dy;
+      drawImageToCanvas();
+    },
+    { passive: false },
+  );
 
-    fileInput.addEventListener('change', (e) => {
-        if (e.target.files && e.target.files.length > 0) handleFile(e.target.files[0]);
-    });
+  window.addEventListener("touchend", () => {
+    isDragging = false;
+  });
+  // =============================================
+  // SAVE PHOTO
+  // =============================================
+  btnSavePhoto.addEventListener("click", () => {
+    const size = Math.min(photoCanvas.width, photoCanvas.height);
+    const x = (photoCanvas.width - size) / 2;
+    const y = (photoCanvas.height - size) / 2;
+    const finalCanvas = document.createElement("canvas");
+    finalCanvas.width = size;
+    finalCanvas.height = size;
+    finalCanvas
+      .getContext("2d")
+      .drawImage(photoCanvas, x, y, size, size, 0, 0, size, size);
 
-    function handleFile(file) {
-        if (!file || (file.type !== 'image/jpeg' && file.type !== 'image/png')) return;
-        if (file.size > 3 * 1024 * 1024) { alert('El archivo excede 3MB.'); return; }
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            currentImage = new Image();
-            currentImage.onload = () => showAdjustView();
-            currentImage.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    }
+    finalCanvas.toBlob(
+      async (blob) => {
+        if (!blob) return;
+        const file = new File([blob], "profile-picture.jpg", {
+          type: "image/jpeg",
+        });
 
-    btnContinueUpload.addEventListener('click', () => {
-        if (currentImage) showAdjustView();
-    });
-
-    btnUploadFile.addEventListener('click', () => fileInput.click());
-
-    // =============================================
-    // CAMERA
-    // =============================================
-    btnCancelCamera.addEventListener('click', () => showChoiceView());
-
-    async function startCamera() {
         try {
-            cameraMessage.style.display = 'none';
-            stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-            videoElement.srcObject = stream;
-            videoElement.play();
-        } catch (err) {
-            cameraMessage.style.display = 'block';
-            cameraMessage.innerHTML = '<i class="fa-solid fa-camera"></i><p>Se necesita acceso a la cÃ¡mara<br>para tomar la foto de perfil.</p>';
+          await userProfileApi.changeProfilePicture(file);
+
+          // Show immediate local preview
+          const dataUrl = finalCanvas.toDataURL("image/jpeg");
+          currentAvatarViewUrl = dataUrl;
+          setAvatarImage(dataUrl);
+
+          // Refresh blob ID from server so delete/view work
+          const profile = await userProfileApi.getMyProfile();
+          currentAvatarBlobId = profile.avatar_blob_id || null;
+
+          closeAndStop();
+        } catch (error) {
+          alert(error.message || "Failed to upload profile picture.");
         }
-    }
-
-    function stopCamera() {
-        if (stream) {
-            stream.getTracks().forEach(t => t.stop());
-            stream = null;
-        }
-    }
-
-    btnShutter.addEventListener('click', () => {
-        if (!stream) return;
-        const tmpCanvas = document.createElement('canvas');
-        tmpCanvas.width = videoElement.videoWidth;
-        tmpCanvas.height = videoElement.videoHeight;
-        tmpCanvas.getContext('2d').drawImage(videoElement, 0, 0);
-        currentImage = new Image();
-        currentImage.onload = () => showAdjustView();
-        currentImage.src = tmpCanvas.toDataURL('image/jpeg');
-    });
-
-    btnRetake.addEventListener('click', () => showCameraView());
-
-    // =============================================
-    // ADJUST / CANVAS
-    // =============================================
-    btnCancelAdjust.addEventListener('click', () => {
-        currentImage = null;
-        showChoiceView();
-    });
-
-    function drawImageToCanvas() {
-        if (!currentImage) return;
-        ctx.clearRect(0, 0, photoCanvas.width, photoCanvas.height);
-        const sx = photoCanvas.width / currentImage.width;
-        const sy = photoCanvas.height / currentImage.height;
-        const base = Math.max(sx, sy) * scale;
-        const dw = currentImage.width * base;
-        const dh = currentImage.height * base;
-        const dx = (photoCanvas.width - dw) / 2 + offsetX;
-        const dy = (photoCanvas.height - dh) / 2 + offsetY;
-        ctx.drawImage(currentImage, dx, dy, dw, dh);
-    }
-
-    const btnZoomOut = document.querySelector('.fa-minus').parentElement;
-    const btnZoomIn = document.querySelector('.fa-plus').parentElement;
-    btnZoomIn.addEventListener('click', () => { scale += 0.1; drawImageToCanvas(); });
-    btnZoomOut.addEventListener('click', () => { if (scale > 0.5) { scale -= 0.1; drawImageToCanvas(); } });
-
-    // =============================================
-    // SAVE PHOTO
-    // =============================================
-    btnSavePhoto.addEventListener('click', () => {
-        const size = Math.min(photoCanvas.width, photoCanvas.height);
-        const x = (photoCanvas.width - size) / 2;
-        const y = (photoCanvas.height - size) / 2;
-        const finalCanvas = document.createElement('canvas');
-        finalCanvas.width = size;
-        finalCanvas.height = size;
-        finalCanvas.getContext('2d').drawImage(photoCanvas, x, y, size, size, 0, 0, size, size);
-        const dataUrl = finalCanvas.toDataURL('image/jpeg');
-
-        localStorage.setItem('mercanto_profile_pic', dataUrl);
-        setAvatarImage(dataUrl);
-        closeAndStop();
-    });
+      },
+      "image/jpeg",
+      0.9,
+    );
+  });
 });
-

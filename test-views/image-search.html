@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Buscar por Imagen - Mercanto</title>
+
+        <style>
+            .similarity-score {
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: #ff6a00;
+                margin-bottom: 0.25rem;
+            }
+            .search-preview-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1.5rem;
+                padding: 2rem;
+            }
+            .preview-image {
+                max-width: 300px;
+                max-height: 300px;
+                border-radius: 15px;
+                border: 2px solid var(--light-teal);
+                object-fit: contain;
+                display: none;
+            }
+            .preview-image.visible {
+                display: block;
+            }
+
+
+            .results-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+                gap: 1.5rem;
+                width: 100%;
+                max-width: 1000px;
+                margin-top: 1rem;
+            }
+            .product-card {
+                background: #fff;
+                border: 1px solid #e0e0e0;
+                border-radius: 12px;
+                padding: 1rem;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+            .product-card .product-id {
+                font-size: 0.75rem;
+                color: #888;
+                font-family: monospace;
+                word-break: break-all;
+            }
+            .product-card .product-title {
+                font-size: 1rem;
+                font-weight: 600;
+                color: #083c5a;
+                margin: 0;
+            }
+            .product-images {
+                display: flex;
+                gap: 0.5rem;
+                flex-wrap: wrap;
+                margin-top: 0.5rem;
+            }
+            .product-images img {
+                width: 80px;
+                height: 80px;
+                object-fit: cover;
+                border-radius: 8px;
+                border: 1px solid #e0e0e0;
+                background: #f5f5f5;
+            }
+            .no-images {
+                font-size: 0.8rem;
+                color: #aaa;
+                font-style: italic;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="card">
+            <div class="card-header">
+                <h3>Buscar Productos por Imagen</h3>
+            </div>
+            <div class="search-preview-container">
+                <img
+                    id="preview-image"
+                    class="preview-image"
+                    alt="Vista previa de la imagen"
+                />
+
+                <input
+                    type="file"
+                    id="file-input"
+                    accept="image/png, image/jpeg, image/webp"
+                />
+
+                <button id="search-button" class="btn-search visible">
+                    <i class="fa-solid fa-magnifying-glass"></i> Buscar
+                    productos similares
+                </button>
+
+                <p id="search-status" class="search-status"></p>
+
+                <div id="results-container" class="results-grid"></div>
+            </div>
+        </div>
+
+        <script type="module" src="../src/test-image-search.js"></script>
+    </body>
+</html>

@@ -1,8 +1,7 @@
 import type { ApiClient } from "../../client";
 import type { TokenProvider } from "../../token";
-import { UserProfileResponseSchema } from "../user_profile/payloads";
-import type { UserProfileResponse } from "../user_profile/types";
 import {
+  AccountResponseSchema,
   AuthResponseSchema,
   LoginRequestSchema,
   RegisterRequestSchema,
@@ -10,7 +9,14 @@ import {
   ResetPasswordSchema,
   TokenRequestSchema,
 } from "./payloads";
-import type { LoginRequest, RegisterRequest, RequestPasswordReset, ResetPassword, TokenRequest } from "./types";
+import type {
+  AccountResponse,
+  LoginRequest,
+  RegisterRequest,
+  RequestPasswordReset,
+  ResetPassword,
+  TokenRequest,
+} from "./types";
 
 export class IdentityService {
   constructor(
@@ -18,13 +24,13 @@ export class IdentityService {
     private readonly tokenProvider: TokenProvider,
   ) {}
 
-  async register(payload: RegisterRequest): Promise<UserProfileResponse> {
+  async register(payload: RegisterRequest): Promise<AccountResponse> {
     const validatedPayload = RegisterRequestSchema.parse(payload);
     const data = await this.client.request("/register", {
       method: "POST",
       body: JSON.stringify(validatedPayload),
     });
-    return UserProfileResponseSchema.parse(data);
+    return AccountResponseSchema.parse(data);
   }
 
   async login(payload: LoginRequest): Promise<void> {
@@ -87,5 +93,19 @@ export class IdentityService {
       method: "POST",
       body: JSON.stringify(validatedPayload),
     });
+  }
+
+  async getAccount(accountId: string): Promise<AccountResponse> {
+    const data = await this.client.request(`/accounts/${accountId}`, {
+      method: "GET",
+    });
+    return AccountResponseSchema.parse(data);
+  }
+
+  async getMyAccount(): Promise<AccountResponse> {
+    const data = await this.client.request("/accounts/me", {
+      method: "GET",
+    });
+    return AccountResponseSchema.parse(data);
   }
 }

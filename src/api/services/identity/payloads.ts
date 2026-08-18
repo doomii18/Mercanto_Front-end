@@ -8,6 +8,15 @@ import {
   nationalIdSchema,
 } from "./domain";
 
+export const AccountRoleSchema = z.enum(["auditor", "member", "admin"]);
+
+export const AccountResponseSchema = z.object({
+  id: z.uuid(),
+  email: emailSchema,
+  role: AccountRoleSchema,
+  created_at: z.iso.datetime(),
+});
+
 export const LoginRequestSchema = z.object({
   email: emailSchema,
   password: passwordSchema,

@@ -87,11 +87,11 @@
                         <div class="contact-info">
                             <p>
                                 <i class="fa-regular fa-envelope"></i>
-                                <span id="display-correo-header">hectorhernan@gmail.com</span>
+                                <span id="display-correo-header">—</span>
                             </p>
                             <p>
-                                <i class="fa-regular fa-calendar"></i> Miembro
-                                desde junio 2026
+                                <i class="fa-regular fa-calendar"></i>
+                                <span id="display-miembro-desde">Miembro desde —</span>
                             </p>
                         </div>
                     </div>
@@ -132,38 +132,38 @@
                         <div class="info-item">
                             <i class="fa-solid fa-user"></i>
                             <span class="label">Nombres</span>
-                            <span class="value" id="display-nombres">Hector Raul</span>
+                            <span class="value" id="display-nombres">-</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-solid fa-phone"></i>
                             <span class="label">Teléfono</span>
-                            <span class="value" id="display-telefono">8730 9208</span>
+                            <span class="value" id="display-telefono">-</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-solid fa-user"></i>
                             <span class="label">Apellidos</span>
-                            <span class="value" id="display-apellidos">Hernández López</span>
+                            <span class="value" id="display-apellidos">-</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-regular fa-id-card"></i>
                             <span class="label">Cédula</span>
-                            <span class="value" id="display-cedula">401-241200-1006E</span>
+                            <span class="value" id="display-cedula">-</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-regular fa-envelope"></i>
                             <span class="label">Correo electrónico</span>
-                            <span class="value link" id="display-correo">hectorhernan@gmail.com</span>
+                            <span class="value link" id="display-correo">-</span>
                         </div>
                         <div class="info-item">
                             <i class="fa-solid fa-location-dot"></i>
-                            <span class="label">Departamento</span>
-                            <span class="value" id="display-departamento">Granada</span>
+                            <span class="label">Municipio</span>
+                            <span class="value" id="display-municipio">—</span>
                         </div>
                     </div>
                 </div>
             </main>
         </div>
-        
+
         <!-- Modal for Profile Picture -->
         <input type="file" id="profile-file-input" accept="image/jpeg, image/png" style="display: none;" />
         <div class="modal-overlay" id="photo-modal" style="display: none;">
@@ -177,7 +177,7 @@
                         <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
-                
+
                 <!-- Choice View -->
                 <div class="modal-body" id="choice-view" style="display: none;">
                     <div class="choice-container">
@@ -185,7 +185,7 @@
                             <i class="fa-solid fa-user"></i>
                         </div>
                         <p class="choice-subtitle">Elige cómo cambiar tu foto de perfil</p>
-                        
+
                         <button class="btn-choice" id="btn-choice-upload">
                             <div class="choice-icon"><i class="fa-regular fa-image"></i></div>
                             <div class="choice-text">
@@ -194,7 +194,7 @@
                             </div>
                             <i class="fa-solid fa-chevron-right choice-arrow"></i>
                         </button>
-                        
+
                         <button class="btn-choice secondary" id="btn-choice-camera">
                             <div class="choice-icon"><i class="fa-solid fa-camera"></i></div>
                             <div class="choice-text">
@@ -203,7 +203,7 @@
                             </div>
                             <i class="fa-solid fa-chevron-right choice-arrow"></i>
                         </button>
-                        
+
                         <div class="choice-footer">
                             <button class="btn-secondary" id="btn-cancel-choice">Cancelar</button>
                         </div>
@@ -359,28 +359,11 @@
                         <span class="field-error" id="err-cedula"></span>
                     </div>
                     <div class="edit-form-group">
-                        <label>Departamento</label>
+                        <label>Municipio</label>
                         <div class="input-with-icon select-wrapper">
                             <i class="fa-solid fa-location-dot"></i>
-                            <select id="input-departamento">
-                                <option value="">Seleccionar...</option>
-                                <option value="Boaco">Boaco</option>
-                                <option value="Carazo">Carazo</option>
-                                <option value="Chinandega">Chinandega</option>
-                                <option value="Chontales">Chontales</option>
-                                <option value="Estelí">Estelí</option>
-                                <option value="Granada">Granada</option>
-                                <option value="Jinotega">Jinotega</option>
-                                <option value="León">León</option>
-                                <option value="Madriz">Madriz</option>
-                                <option value="Managua">Managua</option>
-                                <option value="Masaya">Masaya</option>
-                                <option value="Matagalpa">Matagalpa</option>
-                                <option value="Nueva Segovia">Nueva Segovia</option>
-                                <option value="RAAN">RAAN</option>
-                                <option value="RAAS">RAAS</option>
-                                <option value="Río San Juan">Río San Juan</option>
-                                <option value="Rivas">Rivas</option>
+                            <select id="input-municipio">
+                                <option value="">Seleccione su municipio</option>
                             </select>
                         </div>
                     </div>

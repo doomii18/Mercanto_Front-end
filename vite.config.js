@@ -8,7 +8,8 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         perfil: resolve(__dirname, 'perfil.html'),
-        pedidos: resolve(__dirname, 'pedidos.html')
+        pedidos: resolve(__dirname, 'pedidos.html'),
+        login: resolve(__dirname, 'login.html')
       }
     }
   },

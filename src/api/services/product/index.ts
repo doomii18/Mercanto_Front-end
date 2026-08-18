@@ -8,6 +8,9 @@ import {
   PaginatedProductResponseSchema,
   CreateProductRequestSchema,
   PatchProductRequestSchema,
+  ProductImageSearchUploadSchema,
+  SearchProductsByImageSchema,
+  PaginatedProductImageSearchResponseSchema,
 } from "./payloads";
 import type {
   PaginatedProductResponse,
@@ -15,6 +18,9 @@ import type {
   ProductResponse,
   CreateProductRequest,
   PatchProductRequest,
+  ProductImageSearchUploadRequest,
+  SearchProductsByImageRequest,
+  PaginatedProductImageSearchResponse,
 } from "./types";
 
 export class ProductService {
@@ -22,7 +28,7 @@ export class ProductService {
 
   async getProductImageBlobUrl(blobId: string): Promise<string> {
     const response = await fetch(
-      `${this.client.getBaseUrl()}/assets/product-image/${blobId}`,
+      `${this.client.getBaseUrl()}/products/images/${blobId}`,
       { method: "GET" },
     );
 
@@ -33,15 +39,12 @@ export class ProductService {
   }
 
   async uploadProductImage(productId: string, file: File): Promise<void> {
-    const payload = {
-      ...AssetUploadRequestSchema.parse({
-        mime_type: file.type,
-        size_bytes: file.size,
-      }),
-      product_id: productId,
-    };
+    const payload = AssetUploadRequestSchema.parse({
+      mime_type: file.type,
+      size_bytes: file.size,
+    });
     const initData = UploadUrlResponseSchema.parse(
-      await this.client.request("/assets/product-image", {
+      await this.client.request(`/products/${productId}/images/upload`, {
         method: "POST",
         body: JSON.stringify(payload),
       }),
@@ -53,12 +56,13 @@ export class ProductService {
     });
     if (!storageResponse.ok) throw new Error("Upload failed");
     await this.client.request(
-      `/assets/product-image/${initData.blob_id}/confirm`,
-      { method: "POST", body: JSON.stringify({ product_id: productId }) },
+      `/products/${productId}/images/${initData.blob_id}/confirm`,
+      { method: "POST" },
     );
   }
-  async deleteProductImage(blobId: string): Promise<void> {
-    await this.client.request(`/assets/product-image/${blobId}`, {
+
+  async deleteProductImage(productId: string, blobId: string): Promise<void> {
+    await this.client.request(`/products/${productId}/images/${blobId}`, {
       method: "DELETE",
     });
   }
@@ -119,5 +123,41 @@ export class ProductService {
 
   async deleteProduct(id: string): Promise<void> {
     await this.client.request(`/products/${id}`, { method: "DELETE" });
+  }
+  async searchProductsByImage(
+    file: File,
+  ): Promise<PaginatedProductImageSearchResponse> {
+    const uploadPayload: ProductImageSearchUploadRequest = {
+      mime_type: file.type,
+      size_bytes: file.size,
+    };
+    const validatedUploadPayload =
+      ProductImageSearchUploadSchema.parse(uploadPayload);
+    const initData = UploadUrlResponseSchema.parse(
+      await this.client.request("/products/image-search/upload", {
+        method: "POST",
+        body: JSON.stringify(validatedUploadPayload),
+      }),
+    );
+
+    const storageResponse = await fetch(initData.presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!storageResponse.ok) throw new Error("Image upload failed");
+
+    const searchPayload: SearchProductsByImageRequest = {
+      blob_id: initData.blob_id,
+      limit: 20,
+      offset: 0,
+    };
+    const validatedSearchPayload =
+      SearchProductsByImageSchema.parse(searchPayload);
+    const data = await this.client.request("/products/image-search", {
+      method: "POST",
+      body: JSON.stringify(validatedSearchPayload),
+    });
+    return PaginatedProductImageSearchResponseSchema.parse(data);
   }
 }
