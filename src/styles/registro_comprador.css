@@ -465,7 +465,32 @@ h1, h2, h3, .logo {
     cursor: not-allowed;
 }
 
-/* Mobile Responsive */
+.btn-auto-geo {
+    background: transparent;
+    border: 1px solid var(--light-teal);
+    color: var(--light-teal);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    width: fit-content;
+    margin-left: auto;
+}
+
+.btn-auto-geo:hover {
+    background-color: var(--light-teal);
+    color: #fff;
+}
+
+.btn-auto-geo:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}/* Mobile Responsive */
 @media (max-width: 900px) {
     .split-view {
         flex-direction: column;

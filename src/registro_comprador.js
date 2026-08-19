@@ -1,68 +1,45 @@
 import { bootstrapGeo, getGeoManager } from "./modules/geo";
-import { categoryApi, identityApi, userProfileApi } from "./api";
+import { identityApi, userProfileApi, geographyApi } from "./api";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // --- DOM Elements ---
-
-  // Steps containers
-  const step1Content = document.getElementById("step1-content");
-  const step2Content = document.getElementById("step2-content");
-  const step3Content = document.getElementById("step3-content");
-  const step4Content = document.getElementById("step4-content");
-
-  // Stepper indicators
-  const indStep1 = document.getElementById("indicator-step1");
-  const indStep2 = document.getElementById("indicator-step2");
-  const indStep3 = document.getElementById("indicator-step3");
-  const indStep4 = document.getElementById("indicator-step4");
-
-  const line1 = document.getElementById("line-1");
-  const line2 = document.getElementById("line-2");
-  const line3 = document.getElementById("line-3");
-
-  // Buttons
-  const btnNextTo2 = document.getElementById("btn-next-to-2");
-  const btnBackTo1 = document.getElementById("btn-back-to-1");
-  const btnNextTo3 = document.getElementById("btn-next-to-3");
-  const btnBackTo2 = document.getElementById("btn-back-to-2");
-  const btnNextTo4 = document.getElementById("btn-next-to-4");
-  const btnBackTo3 = document.getElementById("btn-back-to-3");
   const btnSubmit = document.getElementById("btn-submit");
   const btnCancelar = document.getElementById("btn-cancelar");
-
-  // Checkbox
   const confirmCheck = document.getElementById("confirm-check");
 
-  // General Form Fields
   const selectDepartamento = document.getElementById("comp-departamento");
   const selectMunicipio = document.getElementById("comp-municipio");
+  const btnAutoLocation = document.getElementById("btn-auto-location");
 
-  // Photo Upload
   const dragDropFoto = document.getElementById("drag-drop-foto");
   const btnBrowseFoto = document.getElementById("btn-browse-foto");
   const fileFoto = document.getElementById("file-foto");
-  const fotoPreviewContainer = document.getElementById(
-    "foto-preview-container",
-  );
+  const fotoPreviewContainer = document.getElementById("foto-preview-container");
   const fotoPreview = document.getElementById("foto-preview");
   const btnRemoveFoto = document.getElementById("btn-remove-foto");
   let fotoDataUrl = null;
+  let geoManager = null;
 
-  // Categories
-  const categoriesGrid = document.getElementById("categories-grid");
-  const selectedInterests = new Set();
-  const categoriesMap = new Map();
+  // --- Geo Logic ---
+  function populateMunicipalitiesForDept(deptId, selectedMunId = null) {
+    if (!geoManager || !selectMunicipio) return;
+    const municipalities = geoManager.getMunicipalitiesByDepartment(deptId);
+    selectMunicipio.innerHTML = '<option value="" disabled selected>Seleccione...</option>';
+    selectMunicipio.disabled = false;
+    municipalities.forEach((mun) => {
+      const option = document.createElement("option");
+      option.value = mun.id;
+      option.textContent = mun.name;
+      if (selectedMunId && mun.id === selectedMunId) option.selected = true;
+      selectMunicipio.appendChild(option);
+    });
+  }
 
-  // --- Bootstrapping Geo ---
   try {
     await bootstrapGeo();
-    const geoManager = getGeoManager();
-
+    geoManager = getGeoManager();
     if (geoManager && selectDepartamento && selectMunicipio) {
-      selectDepartamento.innerHTML =
-        '<option value="" disabled selected>Seleccione...</option>';
+      selectDepartamento.innerHTML = '<option value="" disabled selected>Seleccione...</option>';
       selectDepartamento.disabled = false;
-
       const departments = geoManager.getDepartments();
       departments.forEach((dept) => {
         const option = document.createElement("option");
@@ -70,195 +47,53 @@ document.addEventListener("DOMContentLoaded", async () => {
         option.textContent = dept.name;
         selectDepartamento.appendChild(option);
       });
-
       selectDepartamento.addEventListener("change", (e) => {
-        const deptId = e.target.value;
-        const municipalities = geoManager.getMunicipalitiesByDepartment(deptId);
-
-        selectMunicipio.innerHTML =
-          '<option value="" disabled selected>Seleccione...</option>';
-        selectMunicipio.disabled = false;
-
-        municipalities.forEach((mun) => {
-          const option = document.createElement("option");
-          option.value = mun.id;
-          option.textContent = mun.name;
-          selectMunicipio.appendChild(option);
-        });
+        populateMunicipalitiesForDept(e.target.value);
       });
     }
   } catch (error) {
     console.error("Error loading geography data:", error);
-    if (selectDepartamento)
-      selectDepartamento.innerHTML =
-        '<option value="" disabled>Error de conexión</option>';
-    if (selectMunicipio)
-      selectMunicipio.innerHTML =
-        '<option value="" disabled>Error de conexión</option>';
+    if (selectDepartamento) selectDepartamento.innerHTML = '<option value="" disabled>Error de conexión</option>';
+    if (selectMunicipio) selectMunicipio.innerHTML = '<option value="" disabled>Error de conexión</option>';
   }
 
-  // --- Loading Categories ---
-  async function loadCategories() {
-    try {
-      const response = await categoryApi.getCategories({ limit: 50 });
-      categoriesGrid.innerHTML = "";
+  if (btnAutoLocation) {
+    btnAutoLocation.addEventListener("click", () => {
+      if (!navigator.geolocation) return alert("La geolocalización no está soportada por su navegador.");
+      const originalText = btnAutoLocation.innerHTML;
+      btnAutoLocation.disabled = true;
+      btnAutoLocation.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Detectando...';
 
-      if (response.data.length === 0) {
-        categoriesGrid.innerHTML = "<p>No hay categorías disponibles.</p>";
-        return;
-      }
-
-      response.data.forEach(async (cat) => {
-        categoriesMap.set(cat.id, cat.name);
-
-        const card = document.createElement("div");
-        card.className = "category-selectable-card";
-        card.dataset.id = cat.id;
-
-        let imgHtml =
-          '<div class="category-placeholder"><i class="fa-solid fa-tags"></i></div>';
-        if (cat.image_blob_id) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
           try {
-            const imgUrl = await categoryApi.getCategoryImageBlobUrl(
-              cat.image_blob_id,
-            );
-            imgHtml = `<img src="${imgUrl}" alt="${cat.name}">`;
-          } catch (e) {
-            console.warn("Failed to load category image", e);
+            const { latitude, longitude } = position.coords;
+            const res = await geographyApi.getMunicipalityByCoordinates({ lat: latitude, lng: longitude });
+            selectDepartamento.value = res.department_id;
+            populateMunicipalitiesForDept(res.department_id, res.id);
+          } catch (err) {
+            console.error("Reverse geocoding failed:", err);
+            alert("No se pudo determinar el municipio para tu ubicación actual.");
+          } finally {
+            btnAutoLocation.disabled = false;
+            btnAutoLocation.innerHTML = originalText;
           }
-        }
-
-        card.innerHTML = `
-                    ${imgHtml}
-                    <p>${cat.name}</p>
-                `;
-
-        card.addEventListener("click", () => {
-          card.classList.toggle("selected");
-          if (selectedInterests.has(cat.id)) {
-            selectedInterests.delete(cat.id);
-          } else {
-            selectedInterests.add(cat.id);
-          }
-        });
-
-        categoriesGrid.appendChild(card);
-      });
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      categoriesGrid.innerHTML = "<p>Error al cargar las categorías.</p>";
-    }
-  }
-
-  loadCategories();
-
-  // --- Navigation Logic ---
-  function updateStepperUI(activeStep) {
-    [indStep1, indStep2, indStep3, indStep4].forEach((ind, i) => {
-      if (i + 1 < activeStep) {
-        ind.classList.add("completed");
-        ind.classList.remove("active");
-      } else if (i + 1 === activeStep) {
-        ind.classList.add("active");
-        ind.classList.remove("completed");
-      } else {
-        ind.classList.remove("active", "completed");
-      }
-    });
-
-    line1.classList.toggle("active", activeStep > 1);
-    line2.classList.toggle("active", activeStep > 2);
-    line3.classList.toggle("active", activeStep > 3);
-  }
-
-  function showStep(step) {
-    step1Content.style.display = "none";
-    step2Content.style.display = "none";
-    step3Content.style.display = "none";
-    step4Content.style.display = "none";
-
-    if (step === 1) {
-      step1Content.style.display = "block";
-    } else if (step === 2) {
-      step2Content.style.display = "block";
-    } else if (step === 3) {
-      step3Content.style.display = "block";
-    } else if (step === 4) {
-      step4Content.style.display = "flex";
-      populateReview();
-    }
-
-    updateStepperUI(step);
-  }
-
-  btnNextTo2.addEventListener("click", () => showStep(2));
-  btnBackTo1.addEventListener("click", () => showStep(1));
-  btnNextTo3.addEventListener("click", () => showStep(3));
-  btnBackTo2.addEventListener("click", () => showStep(2));
-  btnNextTo4.addEventListener("click", () => showStep(4));
-  btnBackTo3.addEventListener("click", () => showStep(3));
-
-  btnCancelar.addEventListener("click", () => {
-    window.location.href = "registro.html";
-  });
-
-  confirmCheck.addEventListener("change", (e) => {
-    btnSubmit.disabled = !e.target.checked;
-  });
-
-  btnSubmit.addEventListener("click", async () => {
-    const email = document.getElementById("comp-correo").value.trim();
-    const password = document.getElementById("comp-password").value;
-
-    const payload = {
-      first_name: document.getElementById("comp-nombres").value.trim(),
-      last_name: document.getElementById("comp-apellidos").value.trim(),
-      national_id: document.getElementById("comp-cedula").value.trim() || null,
-      phone_number:
-        document.getElementById("comp-telefono").value.trim() || null,
-      municipality_id: document.getElementById("comp-municipio").value,
-      email: email,
-      password: password,
-      interests: Array.from(selectedInterests),
-    };
-
-    try {
-      btnSubmit.disabled = true;
-      btnSubmit.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Registrando...';
-
-      await identityApi.register(payload);
-
-      const fileInput = document.getElementById("file-foto");
-      if (fileInput.files.length > 0) {
-        btnSubmit.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo foto...';
-
-        await identityApi.login({ email, password });
-        await userProfileApi.changeProfilePicture(fileInput.files[0]);
-      }
-
-      window.location.href = "login.html";
-    } catch (error) {
-      console.error("Registration pipeline failed:", error);
-
-      alert(
-        "Error en el registro: " + (error.message || "Verifique los datos."),
+        },
+        () => {
+          btnAutoLocation.disabled = false;
+          btnAutoLocation.innerHTML = originalText;
+          alert("Error al obtener la ubicación. Verifique los permisos.");
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 },
       );
-    } finally {
-      btnSubmit.disabled = false;
-      btnSubmit.textContent = "Completar Registro";
-    }
-  });
+    });
+  }
 
   // --- Photo Upload Logic ---
   function handleFotoFiles(files) {
     if (files.length > 0) {
       const file = files[0];
-      if (!file.type.startsWith("image/")) {
-        alert("Solo se permiten imágenes.");
-        return;
-      }
+      if (!file.type.startsWith("image/")) return alert("Solo se permiten imágenes.");
       const reader = new FileReader();
       reader.onload = (e) => {
         fotoDataUrl = e.target.result;
@@ -271,27 +106,14 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   btnBrowseFoto.addEventListener("click", () => fileFoto.click());
-
-  fileFoto.addEventListener("change", (e) => {
-    handleFotoFiles(e.target.files);
-  });
-
-  dragDropFoto.addEventListener("dragover", (e) => {
-    e.preventDefault();
-    dragDropFoto.classList.add("dragover");
-  });
-
-  dragDropFoto.addEventListener("dragleave", (e) => {
-    e.preventDefault();
-    dragDropFoto.classList.remove("dragover");
-  });
-
+  fileFoto.addEventListener("change", (e) => handleFotoFiles(e.target.files));
+  dragDropFoto.addEventListener("dragover", (e) => { e.preventDefault(); dragDropFoto.classList.add("dragover"); });
+  dragDropFoto.addEventListener("dragleave", (e) => { e.preventDefault(); dragDropFoto.classList.remove("dragover"); });
   dragDropFoto.addEventListener("drop", (e) => {
     e.preventDefault();
     dragDropFoto.classList.remove("dragover");
     handleFotoFiles(e.dataTransfer.files);
   });
-
   btnRemoveFoto.addEventListener("click", () => {
     fotoDataUrl = null;
     fotoPreview.src = "";
@@ -300,37 +122,50 @@ document.addEventListener("DOMContentLoaded", async () => {
     dragDropFoto.style.display = "block";
   });
 
-  // --- Populate Review Step ---
-  function populateReview() {
-    const nombres = document.getElementById("comp-nombres").value;
-    const apellidos = document.getElementById("comp-apellidos").value;
+  // --- Actions ---
+  btnCancelar.addEventListener("click", () => window.location.href = "registro.html");
 
-    document.getElementById("res-nombres").textContent =
-      `${nombres} ${apellidos}`.trim() || "-";
-    document.getElementById("res-cedula").textContent =
-      document.getElementById("comp-cedula").value || "-";
-    document.getElementById("res-correo").textContent =
-      document.getElementById("comp-correo").value || "-";
-    document.getElementById("res-telefono").textContent =
-      document.getElementById("comp-telefono").value || "-";
+  confirmCheck.addEventListener("change", (e) => btnSubmit.disabled = !e.target.checked);
 
-    const resIntereses = document.getElementById("res-intereses");
-    if (selectedInterests.size > 0) {
-      const names = Array.from(selectedInterests).map((id) =>
-        categoriesMap.get(id),
-      );
-      resIntereses.textContent = names.join(", ");
-    } else {
-      resIntereses.textContent = "Ninguna categoría seleccionada";
+  btnSubmit.addEventListener("click", async () => {
+    const pwd = document.getElementById("comp-password").value;
+    const pwdConfirm = document.getElementById("comp-password-confirm").value;
+
+    if (!pwd) return alert("La contraseña no puede estar vacía.");
+    if (pwd !== pwdConfirm) return alert("Las contraseñas no coinciden. Por favor, verifíquelas.");
+
+    const email = document.getElementById("comp-correo").value.trim();
+    const payload = {
+      first_name: document.getElementById("comp-nombres").value.trim(),
+      last_name: document.getElementById("comp-apellidos").value.trim(),
+      national_id: document.getElementById("comp-cedula").value.trim() || null,
+      phone_number: document.getElementById("comp-telefono").value.trim() || null,
+      municipality_id: document.getElementById("comp-municipio").value,
+      email: email,
+      password: pwd,
+      interests: [],
+    };
+
+    try {
+      btnSubmit.disabled = true;
+      btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Registrando...';
+
+      await identityApi.register(payload);
+
+      const fileInput = document.getElementById("file-foto");
+      if (fileInput.files.length > 0) {
+        btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Subiendo foto...';
+        await identityApi.login({ email, password: pwd });
+        await userProfileApi.changeProfilePicture(fileInput.files[0]);
+      }
+
+      window.location.href = "login.html";
+    } catch (error) {
+      console.error("Registration pipeline failed:", error);
+      alert("Error en el registro: " + (error.message || "Verifique los datos."));
+    } finally {
+      btnSubmit.disabled = false;
+      btnSubmit.textContent = "Completar Registro";
     }
-
-    const reviewFoto = document.getElementById("review-foto");
-    if (fotoDataUrl) {
-      reviewFoto.innerHTML = `<img src="${fotoDataUrl}" alt="Foto de perfil">`;
-      reviewFoto.style.border = "none";
-    } else {
-      reviewFoto.innerHTML = '<i class="fa-solid fa-user"></i>';
-      reviewFoto.style.border = "1px solid var(--border-gray)";
-    }
-  }
+  });
 });
