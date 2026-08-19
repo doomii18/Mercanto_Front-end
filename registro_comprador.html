@@ -28,64 +28,100 @@
             <p>Completa la información requerida para crear una cuenta de comprador en la plataforma.</p>
         </div>
 
+        <!-- Progress Stepper -->
+        <div class="stepper">
+            <div class="step active" id="indicator-step1">
+                <div class="step-circle">1</div>
+                <span class="step-label">Datos Personales</span>
+            </div>
+            <div class="step-line" id="line-1"></div>
+            <div class="step" id="indicator-step2">
+                <div class="step-circle">2</div>
+                <span class="step-label">Cuenta</span>
+            </div>
+            <div class="step-line" id="line-2"></div>
+            <div class="step" id="indicator-step3">
+                <div class="step-circle">3</div>
+                <span class="step-label">Intereses</span>
+            </div>
+            <div class="step-line" id="line-3"></div>
+            <div class="step" id="indicator-step4">
+                <div class="step-circle">4</div>
+                <span class="step-label">Revisión</span>
+            </div>
+        </div>
+
         <div class="wizard-card">
-            <div class="wizard-step active-step">
+
+            <!-- STEP 1: Información Personal -->
+            <div id="step1-content" class="wizard-step active-step">
                 <h3 class="step-title">Información Personal</h3>
-                
+
                 <div class="form-grid">
                     <div class="form-group">
-                        <label>1. Nombres <span class="required">*</span></label>
+                        <label>Nombres <span class="required">*</span></label>
                         <input type="text" id="comp-nombres" placeholder="Héctor Raul">
                     </div>
-                    
+
                     <div class="form-group">
-                        <label>2. Apellidos <span class="required">*</span></label>
+                        <label>Apellidos <span class="required">*</span></label>
                         <input type="text" id="comp-apellidos" placeholder="Hernández López">
                     </div>
 
                     <div class="form-group">
-                        <label>3. Cédula de identidad <span class="required">*</span></label>
+                        <label>Cédula de identidad <span class="required">*</span></label>
                         <input type="text" id="comp-cedula" placeholder="401-241200-1006E">
                     </div>
 
                     <div class="form-group">
-                        <label>4. Departamento <span class="required">*</span></label>
-                        <div class="select-wrapper">
-                            <select id="comp-departamento">
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option value="Granada">Granada</option>
-                                <option value="Managua">Managua</option>
-                                <option value="Masaya">Masaya</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>5. Municipio <span class="required">*</span></label>
-                        <div class="select-wrapper">
-                            <select id="comp-municipio">
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option value="Diriomo">Diriomo</option>
-                                <option value="Granada">Granada</option>
-                                <option value="Nandaime">Nandaime</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>6. Correo electrónico <span class="required">*</span></label>
-                        <input type="email" id="comp-correo" placeholder="hectorhernan@gmail.com">
-                    </div>
-
-                    <div class="form-group">
-                        <label>7. Teléfono <span class="required">*</span></label>
+                        <label>Teléfono <span class="required">*</span></label>
                         <input type="tel" id="comp-telefono" placeholder="8730 9208">
                     </div>
 
                     <div class="form-group">
-                        <label>8. Foto de Perfil</label>
+                        <label>Departamento <span class="required">*</span></label>
+                        <div class="select-wrapper">
+                            <select id="comp-departamento" disabled>
+                                <option value="" disabled selected>Cargando departamentos...</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Municipio <span class="required">*</span></label>
+                        <div class="select-wrapper">
+                            <select id="comp-municipio" disabled>
+                                <option value="" disabled selected>Esperando departamento...</option>
+                            </select>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-actions right-align">
+                    <button type="button" class="btn-orange" id="btn-cancelar">Cancelar</button>
+                    <button type="button" class="btn-teal" id="btn-next-to-2">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Cuenta y Perfil -->
+            <div id="step2-content" class="wizard-step" style="display: none;">
+                <h3 class="step-title">Cuenta y Perfil</h3>
+
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Correo electrónico <span class="required">*</span></label>
+                        <input type="email" id="comp-correo" placeholder="hectorhernan@gmail.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Contraseña <span class="required">*</span></label>
+                        <input type="password" id="comp-password" placeholder="••••••••">
+                    </div>
+
+                    <div class="form-group full-width">
+                        <label>Foto de Perfil</label>
                         <div class="drag-drop-zone" id="drag-drop-foto">
                             <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
                             <p>Arrastra una imagen aquí</p>
@@ -101,13 +137,87 @@
                 </div>
 
                 <div class="step-actions right-align" style="justify-content: flex-end; gap: 1rem; margin-top: 3rem;">
-                    <button type="button" class="btn-orange" id="btn-cancelar">Cancelar</button>
-                    <button type="button" class="btn-teal" id="btn-submit">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+                    <button type="button" class="btn-orange" id="btn-back-to-1"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
+                    <button type="button" class="btn-teal" id="btn-next-to-3">Continuar <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
             </div>
+
+            <!-- STEP 3: Intereses -->
+            <div id="step3-content" class="wizard-step" style="display: none;">
+                <h3 class="step-title">Tus Intereses</h3>
+                <p style="margin-bottom: 2rem; color: #666;">Selecciona las categorías de productos que te interesan para personalizar tu experiencia.</p>
+
+                <div class="categories-grid" id="categories-grid">
+                    <p>Cargando categorías...</p>
+                </div>
+
+                <div class="step-actions right-align" style="justify-content: flex-end; gap: 1rem; margin-top: 3rem;">
+                    <button type="button" class="btn-orange" id="btn-back-to-2"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
+                    <button type="button" class="btn-teal" id="btn-next-to-4">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Revisión y Envío -->
+            <div id="step4-content" class="wizard-step split-view" style="display: none;">
+                <div class="review-left">
+                    <div class="review-section">
+                        <h3 class="step-title section-title">Resumen de Registro</h3>
+                        <div class="review-grid">
+                            <div class="review-logo-area">
+                                <div class="review-logo-circle" id="review-foto">
+                                    <i class="fa-solid fa-user"></i>
+                                </div>
+                            </div>
+                            <div class="review-data-area">
+                                <div class="review-item">
+                                    <span class="label">Nombres Completos</span>
+                                    <span class="value" id="res-nombres"></span>
+                                </div>
+                                <div class="review-item">
+                                    <span class="label">Cédula</span>
+                                    <span class="value" id="res-cedula"></span>
+                                </div>
+                                <div class="review-item">
+                                    <span class="label">Correo</span>
+                                    <span class="value" id="res-correo"></span>
+                                </div>
+                                <div class="review-item">
+                                    <span class="label">Teléfono</span>
+                                    <span class="value" id="res-telefono"></span>
+                                </div>
+                                <div class="review-item full-row">
+                                    <span class="label">Categorías de Interés</span>
+                                    <span class="value" id="res-intereses"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="confirm-check">
+                        <label for="confirm-check">Confirmo que la información brindada es correcta y acepto los términos de servicio.</label>
+                    </div>
+
+                    <div class="step-actions center-align">
+                        <button type="button" class="btn-orange" id="btn-back-to-3"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
+                        <button type="button" class="btn-teal" id="btn-submit" disabled>Completar Registro</button>
+                    </div>
+                </div>
+
+                <div class="review-right">
+                    <div class="approval-panel">
+                        <div class="shield-icon">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <h4>¡Estás a un paso!</h4>
+                        <p class="approval-desc">Una vez completado el registro podrás empezar a comprar inmediatamente y contactar a los proveedores de la plataforma.</p>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <script src="./src/registro_comprador.js"></script>
+    <script type="module" src="./src/registro_comprador.js"></script>
 </body>
 </html>

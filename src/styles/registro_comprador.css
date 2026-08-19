@@ -65,6 +65,60 @@ h1, h2, h3, .logo {
     font-size: 1.1rem;
 }
 
+/* Stepper */
+.stepper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 3rem;
+    max-width: 900px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.step {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+.step.active {
+    opacity: 1;
+}
+.step.completed .step-circle {
+    background-color: var(--light-teal);
+    color: white;
+}
+.step-circle {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #666;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1rem;
+}
+.step.active .step-circle {
+    background-color: var(--primary-orange);
+}
+.step-label {
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+.step-line {
+    flex: 1;
+    height: 2px;
+    background-color: var(--light-teal);
+    margin: 0 1.5rem;
+    opacity: 0.3;
+}
+.step-line.active {
+    opacity: 1;
+}
+
 /* Card */
 .wizard-card {
     background: #fff;
@@ -193,6 +247,181 @@ h1, h2, h3, .logo {
     cursor: pointer;
 }
 
+/* Categories Grid (Interests) */
+.categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.5rem;
+}
+.category-selectable-card {
+    border: 2px solid var(--border-gray);
+    border-radius: 12px;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.8rem;
+}
+.category-selectable-card:hover {
+    border-color: var(--light-teal);
+    box-shadow: var(--shadow);
+}
+.category-selectable-card.selected {
+    border-color: var(--primary-orange);
+    background-color: #fff4ec;
+}
+.category-selectable-card img {
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+}
+.category-placeholder {
+    width: 60px;
+    height: 60px;
+    background-color: var(--bg-gray);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #999;
+    font-size: 1.5rem;
+}
+.category-selectable-card p {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--primary-blue);
+    margin: 0;
+}
+
+/* Split View Step 3 (Review) */
+.split-view {
+    display: flex;
+    gap: 3rem;
+}
+.review-left {
+    flex: 2;
+}
+.review-right {
+    flex: 1;
+}
+
+.section-title {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-gray);
+    padding-bottom: 0.5rem;
+}
+
+.review-grid {
+    display: flex;
+    gap: 2rem;
+}
+.review-logo-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.review-logo-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 1px solid var(--border-gray);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 3rem;
+    color: #ccc;
+    overflow: hidden;
+}
+.review-logo-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.review-data-area {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+.review-item {
+    display: flex;
+    flex-direction: column;
+}
+.review-item.full-row {
+    grid-column: 1 / -1;
+}
+.review-item .label {
+    font-weight: 600;
+    color: var(--primary-blue);
+    font-size: 0.9rem;
+    margin-bottom: 0.2rem;
+}
+.review-item .value {
+    color: #555;
+    font-size: 1rem;
+    word-break: break-word;
+}
+
+.checkbox-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background: #f9f9f9;
+    border-radius: 8px;
+}
+.checkbox-container input {
+    margin-top: 0.2rem;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--light-teal);
+}
+.checkbox-container label {
+    font-size: 0.95rem;
+    color: var(--primary-blue);
+    font-weight: 500;
+    cursor: pointer;
+}
+
+/* Approval Panel */
+.approval-panel {
+    background: #e8f5f4;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid #c9e8e5;
+}
+.shield-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: #bae5e2;
+    color: var(--primary-orange);
+    font-size: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 1.5rem auto;
+    border: 3px solid #8ccac6;
+}
+.approval-panel h4 {
+    color: var(--primary-blue);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+.approval-desc {
+    font-size: 0.9rem;
+    color: var(--primary-blue);
+    margin-bottom: 2rem;
+}
+
 /* Buttons */
 .step-actions {
     display: flex;
@@ -202,6 +431,10 @@ h1, h2, h3, .logo {
 }
 .step-actions.right-align {
     justify-content: flex-end;
+    gap: 1rem;
+}
+.step-actions.center-align {
+    justify-content: center;
     gap: 1rem;
 }
 .btn-orange {
@@ -227,8 +460,27 @@ h1, h2, h3, .logo {
     gap: 0.5rem;
     font-size: 1rem;
 }
+.btn-teal:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
 
 /* Mobile Responsive */
+@media (max-width: 900px) {
+    .split-view {
+        flex-direction: column;
+    }
+    .stepper {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
+    .step-line {
+        width: 2px;
+        height: 20px;
+        margin: 0 0 0 15px;
+    }
+}
 @media (max-width: 600px) {
     .form-grid {
         grid-template-columns: 1fr;
@@ -238,6 +490,12 @@ h1, h2, h3, .logo {
     }
     .wizard-card {
         padding: 1.5rem;
+    }
+    .review-grid {
+        flex-direction: column;
+    }
+    .review-data-area {
+        grid-template-columns: 1fr;
     }
     .step-actions {
         flex-direction: column;
