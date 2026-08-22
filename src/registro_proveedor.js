@@ -21,6 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnBackTo2 = document.getElementById('btn-back-to-2');
     const btnSubmit = document.getElementById('btn-submit');
     const btnCancelar = document.getElementById('btn-cancelar');
+    const btnMapa = document.getElementById('btn-mapa');
 
     // Checkbox
     const confirmCheck = document.getElementById('confirm-check');
@@ -39,12 +40,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const fileCedula = document.getElementById('file-cedula');
     const cedulaFilename = document.getElementById('cedula-filename');
 
+    // Actions for step 3
+    const step3Actions = document.getElementById('step3-actions');
+
     // --- Navigation Logic ---
 
     function showStep(step) {
         step1Content.style.display = 'none';
         step2Content.style.display = 'none';
         step3Content.style.display = 'none';
+        step3Actions.style.display = 'none';
 
         if (step === 1) {
             step1Content.style.display = 'block';
@@ -74,7 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
             indStep3.classList.remove('completed');
             
         } else if (step === 3) {
-            step3Content.style.display = 'flex';
+            step3Content.style.display = 'block';
+            step3Actions.style.display = 'flex';
             populateReview();
             
             indStep1.classList.add('completed');
@@ -94,15 +100,40 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'registro.html';
     });
 
+    if (btnMapa) {
+        btnMapa.addEventListener('click', () => {
+            btnMapa.classList.add('used');
+        });
+    }
+
     confirmCheck.addEventListener('change', (e) => {
         btnSubmit.disabled = !e.target.checked;
     });
 
+    // Modals
+    const modalConfirm = document.getElementById('modal-confirm');
+    const modalSuccess = document.getElementById('modal-success');
+    const btnCloseConfirm = document.getElementById('btn-close-confirm');
+    const btnCancelModal = document.getElementById('btn-cancel-modal');
+    const btnConfirmSend = document.getElementById('btn-confirm-send');
+    const btnContinueSuccess = document.getElementById('btn-continue-success');
+
     btnSubmit.addEventListener('click', () => {
-        // Here you would normally send data to backend.
-        // For now, redirect to success/login or home.
-        alert('Solicitud enviada correctamente. Redirigiendo al inicio...');
-        window.location.href = 'login.html';
+        modalConfirm.style.display = 'flex';
+    });
+
+    const closeModal = () => modalConfirm.style.display = 'none';
+    btnCloseConfirm.addEventListener('click', closeModal);
+    btnCancelModal.addEventListener('click', closeModal);
+
+    btnConfirmSend.addEventListener('click', () => {
+        modalConfirm.style.display = 'none';
+        modalSuccess.style.display = 'flex';
+    });
+
+    btnContinueSuccess.addEventListener('click', () => {
+        // Redirigir a la pantalla de crear contraseña
+        window.location.href = 'registro_password.html';
     });
 
     // --- Logo Upload Logic (Drag & Drop) ---
