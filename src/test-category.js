@@ -1,12 +1,13 @@
-import { bootstrapSession, categoryApi } from "./api";
+import { authManager } from "./modules/auth";
+import { categoryApi } from "./api";
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await bootstrapSession();
+  await authManager.initialize();
   const list = document.getElementById('list');
 
   const response = await categoryApi.getCategories();
 
-  response.data.forEach(async(category) => {
+  response.data.forEach(async (category) => {
     const item = document.createElement('div');
 
     item.textContent = category.name;
@@ -18,8 +19,5 @@ document.addEventListener('DOMContentLoaded', async () => {
       image.src = imageUrl;
       item.appendChild(image);
     }
-
   });
-
-
 });

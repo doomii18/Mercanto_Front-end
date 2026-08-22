@@ -1,8 +1,24 @@
+import { authManager } from "./modules/auth";
 import { bootstrapGeo, getGeoManager } from "./modules/geo";
-import { bootstrapSession, userProfileApi, identityApi } from "./api";
+import { userProfileApi } from "./api";
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await bootstrapSession();
+
+  let account;
+  try {
+    account = await authManager.requireAuth();
+  } catch {
+    return;
+  }
+
+
+  const logoutBtn = document.querySelector(".logout");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      await authManager.logout();
+    });
+  }
 
   // =============================================
   // ELEMENT REFERENCES
@@ -126,6 +142,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       inputMunicipio.appendChild(optgroup);
     });
   }
+
   // =============================================
   // LOAD PROFILE DATA FROM API
   // =============================================
@@ -134,7 +151,15 @@ document.addEventListener("DOMContentLoaded", async () => {
       const profile = await userProfileApi.getMyProfile();
       currentProfile = profile;
 
-      // API fields
+      // Render Account data (from verified session proof)
+      if (displayCorreo) displayCorreo.textContent = account.email;
+      if (displayCorreoHeader) displayCorreoHeader.textContent = account.email;
+      if (displayMiembroDesde) {
+        const localizedDate = new Date(account.created_at).toLocaleString();
+        displayMiembroDesde.textContent = `Miembro desde ${localizedDate}`;
+      }
+
+      // Render UserProfile data
       if (displayNombres) displayNombres.textContent = profile.first_name ?? "";
       if (displayApellidos)
         displayApellidos.textContent = profile.last_name ?? "";
@@ -145,19 +170,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         displayFullname.textContent =
           `${profile.first_name ?? ""} ${profile.last_name ?? ""}`.trim();
 
-      try {
-        const account = await identityApi.getMyAccount();
-        if (displayCorreo) displayCorreo.textContent = account.email;
-        if (displayCorreoHeader)
-          displayCorreoHeader.textContent = account.email;
-        if (displayMiembroDesde) {
-          const localizedDate = new Date(account.created_at).toLocaleString();
-          displayMiembroDesde.textContent = `Miembro desde ${localizedDate}`;
-        }
-      } catch (err) {
-        console.error("Failed to load account data:", err);
-      }
-
       if (displayMunicipio && profile.municipality_id && geoManager) {
         const mun = geoManager.getMunicipalityById(profile.municipality_id);
         displayMunicipio.textContent = mun ? mun.name : profile.municipality_id;
@@ -165,7 +177,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         displayMunicipio.textContent = "—";
       }
 
-      // Avatar
+      // Render Avatar
       if (profile.avatar_blob_id) {
         currentAvatarBlobId = profile.avatar_blob_id;
         const blobUrl = await userProfileApi.getProfilePictureBlobUrl(
@@ -279,8 +291,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   // =============================================
   // EDIT PROFILE FORM — VALIDATION & FILTERING
   // =============================================
-
-  // Real-time: only letters and spaces for names
   function onlyLetters(e) {
     const allowed = /^[a-zA-Z\u00C0-\u024F\s]$/;
     if (
@@ -290,7 +300,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       e.preventDefault();
     }
   }
-  // Real-time: only digits for phone
+
   function onlyDigits(e) {
     if (
       !/^[0-9]$/.test(e.key) &&
@@ -304,15 +314,16 @@ document.addEventListener("DOMContentLoaded", async () => {
   inputApellidos.addEventListener("keydown", onlyLetters);
   inputTelefono.addEventListener("keydown", onlyDigits);
 
-  // Validation helpers
   function showError(wrapId, errId, msg) {
     document.getElementById(wrapId).classList.add("error");
     document.getElementById(errId).textContent = msg;
   }
+
   function clearError(wrapId, errId) {
     document.getElementById(wrapId).classList.remove("error");
     document.getElementById(errId).textContent = "";
   }
+
   function clearAllErrors() {
     clearError("wrap-nombres", "err-nombres");
     clearError("wrap-apellidos", "err-apellidos");
@@ -372,7 +383,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     inputCedula.value = currentProfile.national_id ?? "";
     inputMunicipio.value = currentProfile.municipality_id ?? "";
 
-    // Pre-fill photo preview in edit modal
     if (currentAvatarViewUrl) {
       editPhotoPreview.innerHTML = "";
       editPhotoPreview.style.backgroundImage = `url(${currentAvatarViewUrl})`;
@@ -505,7 +515,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     drawImageToCanvas();
   }
 
-  // Choice view
   btnChoiceCamera.addEventListener("click", showCameraView);
   btnChoiceUpload.addEventListener("click", showUploadView);
   btnCancelChoice.addEventListener("click", closeAndStop);
@@ -663,7 +672,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     photoCanvas.style.cursor = "grab";
   });
 
-  // Touch support
   photoCanvas.addEventListener(
     "touchstart",
     (e) => {
@@ -695,6 +703,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   window.addEventListener("touchend", () => {
     isDragging = false;
   });
+
   // =============================================
   // SAVE PHOTO
   // =============================================
@@ -719,12 +728,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         try {
           await userProfileApi.changeProfilePicture(file);
 
-          // Show immediate local preview
           const dataUrl = finalCanvas.toDataURL("image/jpeg");
           currentAvatarViewUrl = dataUrl;
           setAvatarImage(dataUrl);
 
-          // Refresh blob ID from server so delete/view work
           const profile = await userProfileApi.getMyProfile();
           currentAvatarBlobId = profile.avatar_blob_id || null;
 

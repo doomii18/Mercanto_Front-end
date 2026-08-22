@@ -1,22 +1,21 @@
-import { bootstrapSession, geographyApi, healthApi } from "./api";
+import { authManager } from "./modules/auth";
+import { geographyApi, healthApi } from "./api";
 
-// Carga asíncrona de datos de la API
-document.addEventListener('DOMContentLoaded', async () => {
-  await bootstrapSession();
+document.addEventListener("DOMContentLoaded", async () => {
+  await authManager.initialize();
 
-  const carousel = document.getElementById('categories-carousel');
-  const prevBtn = document.querySelector('.prev-btn');
-  const nextBtn = document.querySelector('.next-btn');
+  const carousel = document.getElementById("categories-carousel");
+  const prevBtn = document.querySelector(".prev-btn");
+  const nextBtn = document.querySelector(".next-btn");
 
   await healthApi.getReadiness();
 
   if (carousel && prevBtn && nextBtn) {
-      prevBtn.addEventListener('click', () => {
-          carousel.scrollBy({ left: -244, behavior: 'smooth' });
-      });
-      nextBtn.addEventListener('click', () => {
-          carousel.scrollBy({ left: 244, behavior: 'smooth' });
-      });
+    prevBtn.addEventListener("click", () => {
+      carousel.scrollBy({ left: -244, behavior: "smooth" });
+    });
+    nextBtn.addEventListener("click", () => {
+      carousel.scrollBy({ left: 244, behavior: "smooth" });
+    });
   }
-
 });

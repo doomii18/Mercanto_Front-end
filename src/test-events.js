@@ -1,7 +1,12 @@
-import { bootstrapSession, notificationsApi } from "./api";
+import { authManager } from "./modules/auth";
+import { notificationsApi } from "./api";
 
 document.addEventListener('DOMContentLoaded', async () => {
-  await bootstrapSession();
+  try {
+    await authManager.requireAuth();
+  } catch {
+    return;
+  }
 
   await notificationsApi.connect();
 
