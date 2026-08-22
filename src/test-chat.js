@@ -1,4 +1,5 @@
-import { bootstrapSession, chatApi, notificationsApi } from "./api";
+import { authManager } from "./modules/auth";
+import { chatApi, notificationsApi } from "./api";
 import { NewChatMessageEventSchema } from "./api/services/notifications/payloads";
 
 const THREAD_ITEM_TEMPLATE = (thread) => {
@@ -8,9 +9,7 @@ const THREAD_ITEM_TEMPLATE = (thread) => {
       <strong>Thread ID: ${thread.id}</strong>
       <p>Quote ID: ${thread.quote_group_id} | Archived: ${thread.is_archived}</p>
     </div>
-
   </div>
-
 `;
   const template = document.createElement("template");
   template.innerHTML = raw_element;
@@ -43,7 +42,6 @@ const NO_MESSAGES_TEMPLATE = `
   <p class="no-messages-text">No messages yet.</p>
 `;
 
-// globals
 let current_chat_id = null;
 
 function escapeHtml(str) {
@@ -71,7 +69,6 @@ const loadMessages = async (chat_thread_id) => {
       return;
     }
 
-    // clear container
     messageListContainer.innerHTML = "";
 
     messagesResponse.data.forEach((e) => {
@@ -88,7 +85,12 @@ const loadMessages = async (chat_thread_id) => {
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await bootstrapSession();
+  try {
+    await authManager.requireAuth();
+  } catch {
+    return;
+  }
+
   await notificationsApi.connect();
 
   const listContainer = document.getElementById("thread-list");

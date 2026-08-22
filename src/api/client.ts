@@ -1,14 +1,10 @@
 import type { ErrorPayload } from "./shared/types";
 import { ErrorPayloadSchema } from "./shared/schemas";
 import type { TokenProvider } from "./token";
-import {
-  AuthResponseSchema,
-  TokenRequestSchema,
-} from "./services/identity/payloads";
-import type { AuthResponse } from "./services/identity/types";
 
 export interface ApiClientConfig {
   baseUrl: string;
+  refreshTokenHandler: () => Promise<string>;
   onSessionExpired: () => void;
 }
 
@@ -32,24 +28,6 @@ export class ApiClient {
     private readonly tokenProvider: TokenProvider,
   ) {}
 
-  private async refreshTokens(): Promise<AuthResponse> {
-    const requestBody = TokenRequestSchema.parse({
-      refresh_token: this.tokenProvider.getRefreshToken(),
-    });
-    const response = await fetch(`${this.getBaseUrl()}/refresh`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody),
-    });
-    if (!response.ok) throw new Error("Failed to refresh token");
-    const data = AuthResponseSchema.parse(await response.json());
-
-    this.tokenProvider.setAccessToken(data.access_token);
-    this.tokenProvider.setRefreshToken(data.refresh_token);
-
-    return data;
-  }
-
   getBaseUrl(): string {
     return this.config.baseUrl;
   }
@@ -61,9 +39,12 @@ export class ApiClient {
   ): Promise<Response> {
     const executeRequest = async (token: string | null) => {
       const headers = new Headers(options.headers);
-      if (!headers.has("Content-Type") && !(options.body instanceof FormData))
+      if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
         headers.set("Content-Type", "application/json");
-      if (token && !skipRetry) headers.set("Authorization", `Bearer ${token}`);
+      }
+      if (token && !skipRetry) {
+        headers.set("Authorization", `Bearer ${token}`);
+      }
 
       return fetch(`${this.config.baseUrl}${endpoint}`, {
         ...options,
@@ -73,6 +54,7 @@ export class ApiClient {
 
     let response = await executeRequest(this.tokenProvider.getAccessToken());
 
+    // Intercept expired access tokens and refresh transparently
     if (
       response.status === 401 &&
       !skipRetry &&
@@ -102,9 +84,7 @@ export class ApiClient {
     skipRetry: boolean = false,
   ): Promise<unknown> {
     const response = await this.requestRaw(endpoint, options, skipRetry);
-
     if (response.status === 204) return undefined;
-
     return response.json();
   }
 
@@ -118,18 +98,18 @@ export class ApiClient {
   ): Promise<Response> {
     if (this.isRefreshing) {
       return new Promise<Response>((resolve) => {
-        this.refreshQueue.push(async (newToken: string) =>
-          resolve(await executeRequest(newToken)),
-        );
+        this.refreshQueue.push(async (newToken: string) => {
+          resolve(await executeRequest(newToken));
+        });
       });
     }
 
     this.isRefreshing = true;
 
     try {
-      const newTokens = await this.refreshTokens();
-      this.refreshQueue.forEach((cb) => cb(newTokens.access_token));
-      return await executeRequest(newTokens.access_token);
+      const newAccessToken = await this.config.refreshTokenHandler();
+      this.refreshQueue.forEach((cb) => cb(newAccessToken));
+      return await executeRequest(newAccessToken);
     } catch (error) {
       this.refreshQueue = [];
       this.config.onSessionExpired();

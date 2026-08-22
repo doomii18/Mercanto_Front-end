@@ -29,85 +29,98 @@
         </div>
 
         <div class="wizard-card">
-            <div class="wizard-step active-step">
-                <h3 class="step-title">Información Personal</h3>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>1. Nombres <span class="required">*</span></label>
-                        <input type="text" id="comp-nombres" placeholder="Héctor Raul">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>2. Apellidos <span class="required">*</span></label>
-                        <input type="text" id="comp-apellidos" placeholder="Hernández López">
-                    </div>
+            <h3 class="step-title">Información Personal y Cuenta</h3>
 
-                    <div class="form-group">
-                        <label>3. Cédula de identidad <span class="required">*</span></label>
-                        <input type="text" id="comp-cedula" placeholder="401-241200-1006E">
-                    </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nombres <span class="required">*</span></label>
+                    <input type="text" id="comp-nombres" placeholder="Héctor Raul">
+                </div>
 
-                    <div class="form-group">
-                        <label>4. Departamento <span class="required">*</span></label>
-                        <div class="select-wrapper">
-                            <select id="comp-departamento">
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option value="Granada">Granada</option>
-                                <option value="Managua">Managua</option>
-                                <option value="Masaya">Masaya</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label>Apellidos <span class="required">*</span></label>
+                    <input type="text" id="comp-apellidos" placeholder="Hernández López">
+                </div>
 
-                    <div class="form-group">
-                        <label>5. Municipio <span class="required">*</span></label>
-                        <div class="select-wrapper">
-                            <select id="comp-municipio">
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option value="Diriomo">Diriomo</option>
-                                <option value="Granada">Granada</option>
-                                <option value="Nandaime">Nandaime</option>
-                            </select>
-                            <i class="fa-solid fa-chevron-down"></i>
-                        </div>
-                    </div>
+                <div class="form-group">
+                    <label>Cédula de identidad <span class="required">*</span></label>
+                    <input type="text" id="comp-cedula" placeholder="401-241200-1006E">
+                </div>
 
-                    <div class="form-group">
-                        <label>6. Correo electrónico <span class="required">*</span></label>
-                        <input type="email" id="comp-correo" placeholder="hectorhernan@gmail.com">
-                    </div>
+                <div class="form-group">
+                    <label>Teléfono <span class="required">*</span></label>
+                    <input type="tel" id="comp-telefono" placeholder="8730 9208">
+                </div>
 
-                    <div class="form-group">
-                        <label>7. Teléfono <span class="required">*</span></label>
-                        <input type="tel" id="comp-telefono" placeholder="8730 9208">
-                    </div>
+                <div class="form-group full-width" style="display: flex; margin-bottom: -0.5rem;">
+                    <button type="button" id="btn-auto-location" class="btn-auto-geo">
+                        <i class="fa-solid fa-location-crosshairs"></i> Auto-detectar
+                    </button>
+                </div>
 
-                    <div class="form-group">
-                        <label>8. Foto de Perfil</label>
-                        <div class="drag-drop-zone" id="drag-drop-foto">
-                            <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
-                            <p>Arrastra una imagen aquí</p>
-                            <span>o</span>
-                            <button type="button" class="btn-outline" id="btn-browse-foto">Seleccionar archivo</button>
-                            <input type="file" id="file-foto" accept="image/png, image/jpeg" style="display: none;">
-                        </div>
-                        <div id="foto-preview-container" style="display: none;" class="preview-container">
-                            <img id="foto-preview" src="" alt="Foto de perfil">
-                            <button type="button" class="btn-remove-foto" id="btn-remove-foto"><i class="fa-solid fa-xmark"></i></button>
-                        </div>
+                <div class="form-group">
+                    <label>Departamento <span class="required">*</span></label>
+                    <div class="select-wrapper">
+                        <select id="comp-departamento" disabled>
+                            <option value="" disabled selected>Cargando departamentos...</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down"></i>
                     </div>
                 </div>
 
-                <div class="step-actions right-align" style="justify-content: flex-end; gap: 1rem; margin-top: 3rem;">
-                    <button type="button" class="btn-orange" id="btn-cancelar">Cancelar</button>
-                    <button type="button" class="btn-teal" id="btn-submit">Continuar <i class="fa-solid fa-arrow-right"></i></button>
+                <div class="form-group">
+                    <label>Municipio <span class="required">*</span></label>
+                    <div class="select-wrapper">
+                        <select id="comp-municipio" disabled>
+                            <option value="" disabled selected>Esperando departamento...</option>
+                        </select>
+                        <i class="fa-solid fa-chevron-down"></i>
+                    </div>
                 </div>
+
+                <div class="form-group full-width">
+                    <label>Correo electrónico <span class="required">*</span></label>
+                    <input type="email" id="comp-correo" placeholder="hectorhernan@gmail.com">
+                </div>
+
+                <div class="form-group">
+                    <label>Contraseña <span class="required">*</span></label>
+                    <input type="password" id="comp-password" placeholder="••••••••">
+                </div>
+
+                <div class="form-group">
+                    <label>Confirmar Contraseña <span class="required">*</span></label>
+                    <input type="password" id="comp-password-confirm" placeholder="••••••••">
+                </div>
+
+                <div class="form-group full-width">
+                    <label>Foto de Perfil</label>
+                    <div class="drag-drop-zone" id="drag-drop-foto">
+                        <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
+                        <p>Arrastra una imagen aquí</p>
+                        <span>o</span>
+                        <button type="button" class="btn-outline" id="btn-browse-foto">Seleccionar archivo</button>
+                        <input type="file" id="file-foto" accept="image/png, image/jpeg" style="display: none;">
+                    </div>
+                    <div id="foto-preview-container" style="display: none;" class="preview-container">
+                        <img id="foto-preview" src="" alt="Foto de perfil">
+                        <button type="button" class="btn-remove-foto" id="btn-remove-foto"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="checkbox-container" style="margin-top: 2rem; background: #f9f9f9; padding: 1.5rem; border-radius: 8px;">
+                <input type="checkbox" id="confirm-check">
+                <label for="confirm-check">Confirmo que la información brindada es correcta y acepto los términos de servicio.</label>
+            </div>
+
+            <div class="step-actions right-align" style="justify-content: flex-end; gap: 1rem; margin-top: 2rem;">
+                <button type="button" class="btn-orange" id="btn-cancelar">Cancelar</button>
+                <button type="button" class="btn-teal" id="btn-submit" disabled>Completar Registro</button>
             </div>
         </div>
     </main>
 
-    <script src="./src/registro_comprador.js"></script>
+    <script type="module" src="./src/registro_comprador.js"></script>
 </body>
 </html>
