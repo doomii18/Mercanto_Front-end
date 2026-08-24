@@ -4,7 +4,7 @@
             <div class="logo">
                 <router-link :to="{ name: 'home' }">
                     <img
-                        src="../assets/logo.png"
+                        src="../../assets/logo.png"
                         alt="Mercanto"
                         class="logo-icon"
                     />
