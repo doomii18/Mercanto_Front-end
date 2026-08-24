@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import BaseModal from "../components/common/BaseModal.vue";
+import ConfirmModal from "../components/common/ConfirmModal.vue";
 import CreatePasswordModal from "../components/CreatePasswordModal.vue";
 import { GeocodingService } from "../modules/geo";
 import {
@@ -14,11 +16,11 @@ import type { ProviderKind } from "../api/services/organization/types";
 
 const router = useRouter();
 
-// ── Wizard State ──
+// Multi-Step Wizard State Machine
 type WizardStep = 1 | 2 | 3;
 const currentStep = ref<WizardStep>(1);
 
-// ── Business Data Model ──
+// Business Data Model
 const businessForm = ref({
     ruc: "",
     companyName: "",
@@ -30,7 +32,7 @@ const businessForm = ref({
     municipalityId: "",
 });
 
-// ── Owner Data Model ──
+// Owner Data Model
 const ownerForm = ref({
     nationalId: "",
     firstName: "",
@@ -39,16 +41,16 @@ const ownerForm = ref({
     phoneNumber: "",
 });
 
-// ── Security & Confirmation Model ──
+// Security & Confirmation Model
 const termsConfirmed = ref(false);
 
-// ── Asset Files & Previews ──
+// Asset Files & Previews
 const logoFile = ref<File | null>(null);
 const logoPreviewUrl = ref<string | null>(null);
 const cedulaFile = ref<File | null>(null);
 const cedulaFileName = ref("");
 
-// ── Modal Visibility & Process State ──
+// Modal Visibility & Process State
 const showMapModal = ref(false);
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
@@ -56,7 +58,7 @@ const showSuccessModal = ref(false);
 const isSubmitting = ref(false);
 const isLocating = ref(false);
 
-// ── Map Controller State ──
+// Map Controller State
 const mapContainer = ref<HTMLElement | null>(null);
 let mapInstance: any = null;
 let markerInstance: any = null;
@@ -66,7 +68,6 @@ const tempLng = ref<number | null>(null);
 const tempAddress = ref("");
 const tempMunicipalityId = ref<string | null>(null);
 
-// ── Leaflet Injection & Setup ──
 const DEFAULT_CENTER = [12.1328, -86.2504];
 
 onMounted(() => {
@@ -182,7 +183,7 @@ const confirmLocationSelection = () => {
     showMapModal.value = false;
 };
 
-// ── Asset Handlers ──
+// Asset Handlers
 const handleLogoFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
     const file = files[0];
@@ -209,7 +210,7 @@ const handleCedulaFile = (event: Event) => {
     }
 };
 
-// ── Wizard Navigation & Validation ──
+// Wizard Validation
 const validateStep1 = (): boolean => {
     const { ruc, companyName, businessType, phoneNumber, address, municipalityId } = businessForm.value;
     if (!ruc || !companyName || !businessType || !phoneNumber || !address || !municipalityId) {
@@ -234,7 +235,7 @@ const goToStep = (step: WizardStep) => {
     currentStep.value = step;
 };
 
-// ── Registration Workflow Pipeline ──
+// Registration Pipeline
 const openPasswordModal = () => {
     showConfirmModal.value = false;
     showPasswordModal.value = true;
@@ -248,7 +249,6 @@ const handleFinalSubmit = async (credentials: { password: string; passwordConfir
 
     isSubmitting.value = true;
     try {
-        // Phase 1: Account registration & Session bootstrapping
         await identityApi.register({
             email: ownerForm.value.email.trim(),
             password: credentials.password,
@@ -265,7 +265,6 @@ const handleFinalSubmit = async (credentials: { password: string; passwordConfir
             password: credentials.password,
         });
 
-        // Phase 2: Organization Creation
         const kindMap: Record<string, ProviderKind> = {
             "Industria Manufacturera": "manufacturer",
             "Comercio al por mayor": "wholesaler",
@@ -286,7 +285,6 @@ const handleFinalSubmit = async (credentials: { password: string; passwordConfir
             kind: kindMap[businessForm.value.businessType] || "manufacturer",
         });
 
-        // Phase 3: Verification Request & KYC Document Upload
         const req = await verificationRequestApi.createVerificationRequest({
             organization_id: org.id,
         });
@@ -299,7 +297,6 @@ const handleFinalSubmit = async (credentials: { password: string; passwordConfir
             );
         }
 
-        // Phase 4: Verification Submission State Transition
         await verificationRequestApi.submitVerificationRequest(req.id, {
             request_id: req.id,
         });
@@ -321,7 +318,6 @@ const finishRegistration = () => {
 
 <template>
     <div class="provider-register-page">
-        <!-- Top Navigation Header -->
         <header class="top-header">
             <div class="logo">
                 <img src="../assets/logo.png" alt="Mercanto" class="logo-icon" />
@@ -542,7 +538,7 @@ const finishRegistration = () => {
 
                 <!-- STEP 3: Review & Submission -->
                 <div v-if="currentStep === 3" class="split-view">
-                    <!-- Left: Form Data Review -->
+                    <!-- Form Data Review -->
                     <div class="review-left">
                         <h3 class="step-title section-border-bottom">Información del Negocio</h3>
                         <div class="review-grid-new">
@@ -609,7 +605,7 @@ const finishRegistration = () => {
                         </div>
                     </div>
 
-                    <!-- Right: Verification SLA / Timeline Panel -->
+                    <!-- SLA Timeline Panel -->
                     <div class="review-right">
                         <div class="approval-panel">
                             <div class="shield-icon">
@@ -662,25 +658,18 @@ const finishRegistration = () => {
             </div>
         </main>
 
-        <!-- Modal: Confirm Intent -->
-        <div v-if="showConfirmModal" class="modal-overlay">
-            <div class="modal-content">
-                <button class="btn-close-modal" @click="showConfirmModal = false">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <div class="modal-icon teal-bg">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </div>
-                <h2>¿Deseas enviar tu información?</h2>
-                <p>Una vez enviada, nuestro equipo revisará la información proporcionada.</p>
-                <div class="modal-actions">
-                    <button type="button" class="btn-orange" @click="showConfirmModal = false">Cancelar</button>
-                    <button type="button" class="btn-teal" @click="openPasswordModal">Enviar Información</button>
-                </div>
-            </div>
-        </div>
+        <!-- Standardized Confirmation Modal -->
+        <ConfirmModal
+            v-model="showConfirmModal"
+            title="¿Deseas enviar tu información?"
+            description="Una vez enviada, nuestro equipo revisará la información proporcionada."
+            confirm-text="Enviar Información"
+            cancel-text="Cancelar"
+            :loading="isSubmitting"
+            @confirm="openPasswordModal"
+        />
 
-        <!-- Modal Component: Password Creation -->
+        <!-- Password Modal Component -->
         <CreatePasswordModal
             v-model="showPasswordModal"
             :email="ownerForm.email"
@@ -689,52 +678,53 @@ const finishRegistration = () => {
             @cancel="showPasswordModal = false"
         />
 
-        <!-- Modal: Success -->
-        <div v-if="showSuccessModal" class="modal-overlay">
-            <div class="modal-content">
-                <div class="modal-icon teal-bg">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </div>
-                <h2>¡Información Enviada!</h2>
-                <p>Tu solicitud de registro de proveedor ha sido enviada con éxito.</p>
-                <div class="modal-actions center-align">
-                    <button type="button" class="btn-teal" @click="finishRegistration">
-                        Continuar <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
+        <!-- Standardized Success Modal -->
+        <ConfirmModal
+            v-model="showSuccessModal"
+            title="¡Información Enviada!"
+            description="Tu solicitud de registro de proveedor ha sido enviada con éxito."
+            confirm-text="Continuar"
+            :show-close-button="false"
+            @confirm="finishRegistration"
+        >
+            <template #footer>
+                <button type="button" class="btn-teal full-width" @click="finishRegistration">
+                    Continuar <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </template>
+        </ConfirmModal>
+
+        <!-- BaseModal Leaflet Map Picker -->
+        <BaseModal
+            v-model="showMapModal"
+            max-width="680px"
+            @close="showMapModal = false"
+        >
+            <h2 class="map-modal-header">
+                <i class="fa-solid fa-location-dot"></i> Seleccionar Ubicación
+            </h2>
+            <button
+                type="button"
+                class="btn-teal map-btn-current"
+                :disabled="isLocating"
+                @click="useCurrentLocation"
+            >
+                <i :class="isLocating ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-location-crosshairs'"></i>
+                {{ isLocating ? "Obteniendo..." : "Usar mi ubicación actual" }}
+            </button>
+
+            <div ref="mapContainer" class="map-container-wrapper"></div>
+
+            <label class="map-address-label">Dirección detectada:</label>
+            <div class="map-address-box">
+                {{ mapAddressText }}
             </div>
-        </div>
 
-        <!-- Modal: Leaflet Map -->
-        <div v-if="showMapModal" class="modal-overlay">
-            <div class="modal-content map-modal-content">
-                <button class="btn-close-modal" @click="showMapModal = false">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <h2 class="map-modal-header">
-                    <i class="fa-solid fa-location-dot"></i> Seleccionar Ubicación
-                </h2>
-                <button
-                    type="button"
-                    class="btn-teal map-btn-current"
-                    :disabled="isLocating"
-                    @click="useCurrentLocation"
-                >
-                    <i :class="isLocating ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-location-crosshairs'"></i>
-                    {{ isLocating ? "Obteniendo..." : "Usar mi ubicación actual" }}
-                </button>
-
-                <div ref="mapContainer" class="map-container-wrapper"></div>
-
-                <label class="map-address-label">Dirección detectada:</label>
-                <div class="map-address-box">
-                    {{ mapAddressText }}
-                </div>
-
-                <div class="modal-actions right-align">
+            <template #footer>
+                <div class="map-modal-actions">
                     <button
                         type="button"
-                        class="btn-cancel"
+                        class="btn-secondary"
                         @click="showMapModal = false"
                     >
                         Cancelar
@@ -748,10 +738,12 @@ const finishRegistration = () => {
                         Confirmar Ubicación
                     </button>
                 </div>
-            </div>
-        </div>
+            </template>
+        </BaseModal>
     </div>
-</template><style scoped>
+</template>
+
+<style scoped>
 .provider-register-page {
     min-height: 100vh;
     background-color: #ffffff;
@@ -801,7 +793,7 @@ const finishRegistration = () => {
     font-size: 1rem;
 }
 
-/* ── Stepper ── */
+/* Stepper */
 .stepper {
     display: flex;
     justify-content: center;
@@ -860,7 +852,7 @@ const finishRegistration = () => {
     background-color: var(--light-teal);
 }
 
-/* ── Wizard Box ── */
+/* Wizard Box */
 .wizard-box {
     background: #ffffff;
     border: 1px solid var(--border-gray);
@@ -968,7 +960,7 @@ const finishRegistration = () => {
     pointer-events: none;
 }
 
-/* ── File Uploader ── */
+/* File Uploader */
 .drag-drop-zone {
     border: 2px dashed var(--border-gray);
     border-radius: 10px;
@@ -1050,7 +1042,7 @@ const finishRegistration = () => {
     white-space: nowrap;
 }
 
-/* ── Split View / Review ── */
+/* Split View / Review */
 .split-view {
     display: flex;
     gap: 2rem;
@@ -1150,7 +1142,7 @@ const finishRegistration = () => {
     cursor: pointer;
 }
 
-/* ── Approval Panel ── */
+/* Approval Panel */
 .approval-panel {
     background: #eaf5f4;
     border: 1px solid var(--light-teal);
@@ -1232,51 +1224,7 @@ const finishRegistration = () => {
     line-height: 1.35;
 }
 
-/* ── Password Card ── */
-.password-card {
-    padding: 2.5rem;
-}
-
-.password-card h2 {
-    font-size: 1.5rem;
-    margin-bottom: 0.4rem;
-}
-
-.password-card p {
-    color: #64748b;
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-}
-
-.text-left {
-    text-align: left;
-}
-
-.input-icon-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-icon-wrapper .left-icon {
-    position: absolute;
-    left: 12px;
-    color: var(--primary-blue);
-}
-
-.input-icon-wrapper .right-icon {
-    position: absolute;
-    right: 12px;
-    color: var(--light-teal);
-    cursor: pointer;
-}
-
-.input-icon-wrapper input {
-    padding-left: 2.4rem;
-    padding-right: 2.4rem;
-}
-
-/* ── Button Actions ── */
+/* Actions */
 .step-actions {
     display: flex;
     align-items: center;
@@ -1319,7 +1267,12 @@ const finishRegistration = () => {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+}
+
+.btn-teal.full-width {
+    width: 100%;
 }
 
 .btn-teal:disabled {
@@ -1327,108 +1280,17 @@ const finishRegistration = () => {
     cursor: not-allowed;
 }
 
-.card-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.btn-cancel {
-    flex: 1;
-    padding: 0.75rem;
+.btn-secondary {
+    background: #ffffff;
     border: 1px solid var(--border-gray);
-    background: #ffffff;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
     color: var(--primary-blue);
-}
-
-.btn-save {
-    flex: 1;
-    padding: 0.75rem;
-    border: none;
-    background: var(--primary-orange);
-    color: #ffffff;
+    padding: 0.75rem 1.5rem;
     border-radius: 8px;
     font-weight: 600;
     cursor: pointer;
 }
 
-/* ── Modals & Map ── */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: 1rem;
-}
-
-.modal-content {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 460px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.btn-close-modal {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    background: transparent;
-    border: 2px solid var(--primary-orange);
-    color: var(--primary-orange);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    margin: 0 auto 1.25rem auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-}
-
-.modal-icon.teal-bg {
-    background: #e6f7f5;
-    color: var(--light-teal);
-}
-
-.modal-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.8rem;
-}
-
-.modal-actions.center-align {
-    justify-content: center;
-}
-
-.modal-actions.right-align {
-    justify-content: flex-end;
-}
-
-.map-modal-content {
-    max-width: 680px;
-    padding: 2rem;
-}
-
+/* Map Picker Modal Specifics */
 .map-modal-header {
     text-align: left;
     font-size: 1.3rem;
@@ -1439,7 +1301,6 @@ const finishRegistration = () => {
 .map-btn-current {
     width: 100%;
     margin-bottom: 1rem;
-    justify-content: center;
     border-radius: 8px;
     padding: 0.6rem;
 }
@@ -1471,7 +1332,14 @@ const finishRegistration = () => {
     margin-top: 0.4rem;
 }
 
-/* ── Responsive ── */
+.map-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* Responsive */
 @media (max-width: 900px) {
     .split-view {
         flex-direction: column;

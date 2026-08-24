@@ -5,15 +5,16 @@ import { bootstrapGeo, getGeoManager } from "../modules/geo";
 import type { Department, Municipality } from "../modules/geo/types";
 import { categoryApi, identityApi, userProfileApi, geographyApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
+import ConfirmModal from "../components/common/ConfirmModal.vue";
 import CreatePasswordModal from "../components/CreatePasswordModal.vue";
 
 const router = useRouter();
 
-// ── Multi-Step Wizard State Machine ──
-type WizardStep = 1 | 2 | 3 | 4;
+// Multi-Step Wizard State Machine
+type WizardStep = 1 | 2 | 3;
 const currentStep = ref<WizardStep>(1);
 
-// ── Form Model State ──
+// Form Model State
 const form = ref({
     firstName: "",
     lastName: "",
@@ -25,7 +26,7 @@ const form = ref({
     termsAccepted: false,
 });
 
-// ── Geo State ──
+// Geo State
 const isGeoLoading = ref(false);
 const departments = ref<Department[]>([]);
 const municipalities = computed<Municipality[]>(() => {
@@ -35,13 +36,12 @@ const municipalities = computed<Municipality[]>(() => {
 });
 
 watch(() => form.value.departmentId, () => {
-    // Reset municipality selection when department changes
     if (!municipalities.value.some((m) => m.id === form.value.municipalityId)) {
         form.value.municipalityId = "";
     }
 });
 
-// ── Categories & Interests State ──
+// Categories & Interests State
 interface CategoryOption extends ProductCategoryResponse {
     imageUrl?: string | null;
 }
@@ -49,17 +49,16 @@ const categories = ref<CategoryOption[]>([]);
 const selectedInterests = ref<Set<string>>(new Set());
 const isCategoriesLoading = ref(false);
 
-// ── Avatar Asset State ──
+// Avatar Asset State
 const avatarFile = ref<File | null>(null);
 const avatarPreviewUrl = ref<string | null>(null);
 
-// ── Modals & Feedback ──
+// Modals & Process State
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
 const showSuccessModal = ref(false);
 const isSubmitting = ref(false);
 
-// ── Lifecycle Initialization ──
 onMounted(async () => {
     try {
         await bootstrapGeo();
@@ -78,7 +77,7 @@ onBeforeUnmount(() => {
     }
 });
 
-// ── Geolocation Detection ──
+// Geolocation Detection
 const handleAutoDetectLocation = () => {
     if (!navigator.geolocation) {
         alert("Geolocalización no soportada por el navegador.");
@@ -108,7 +107,7 @@ const handleAutoDetectLocation = () => {
     );
 };
 
-// ── Category Operations ──
+// Category Operations
 const loadCategories = async () => {
     if (categories.value.length > 0) return;
     isCategoriesLoading.value = true;
@@ -140,7 +139,7 @@ const toggleInterest = (categoryId: string) => {
     }
 };
 
-// ── Asset Upload Handlers ──
+// Asset Upload Handlers
 const handleAvatarSelection = (event: Event) => {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
@@ -170,7 +169,7 @@ const clearAvatar = () => {
     avatarPreviewUrl.value = null;
 };
 
-// ── Step Navigation & Validation ──
+// Step Navigation & Validation
 const validateStep1 = (): boolean => {
     const { firstName, lastName, nationalId, phoneNumber, departmentId, municipalityId, email } = form.value;
     if (!firstName || !lastName || !nationalId || !phoneNumber || !departmentId || !municipalityId || !email) {
@@ -188,7 +187,7 @@ const goToStep = (step: WizardStep) => {
     currentStep.value = step;
 };
 
-// ── Registration Submission Pipeline ──
+// Registration Pipeline
 const handleRegistration = async (credentials: { password: string; passwordConfirm: string }) => {
     isSubmitting.value = true;
     try {
@@ -441,28 +440,17 @@ const finishRegistration = () => {
             </div>
         </main>
 
-        <!-- Modals -->
-        <div v-if="showConfirmModal" class="modal-overlay">
-            <div class="modal-content">
-                <button class="btn-close-modal" @click="showConfirmModal = false">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-                <div class="modal-icon teal-bg">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </div>
-                <h2>¿Deseas enviar tu información?</h2>
-                <div class="modal-actions">
-                    <button type="button" class="btn-orange" :disabled="isSubmitting" @click="showConfirmModal = false">
-                        Cancelar
-                    </button>
-                    <button type="button" class="btn-teal" :disabled="isSubmitting" @click="() => { showConfirmModal = false; showPasswordModal = true; }">
-                        Continuar
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Standardized Confirmation Modal -->
+        <ConfirmModal
+            v-model="showConfirmModal"
+            title="¿Deseas enviar tu información?"
+            confirm-text="Continuar"
+            cancel-text="Cancelar"
+            :loading="isSubmitting"
+            @confirm="() => { showConfirmModal = false; showPasswordModal = true; }"
+        />
 
-
+        <!-- Password Modal Component -->
         <CreatePasswordModal
             v-model="showPasswordModal"
             :email="form.email"
@@ -471,20 +459,21 @@ const finishRegistration = () => {
             @cancel="showPasswordModal = false"
         />
 
-        <div v-if="showSuccessModal" class="modal-overlay">
-            <div class="modal-content">
-                <div class="modal-icon teal-bg">
-                    <i class="fa-regular fa-paper-plane"></i>
-                </div>
-                <h2>¡Información Enviada!</h2>
-                <p>Tu solicitud de registro de comprador ha sido enviada con éxito.</p>
-                <div class="modal-actions center-align">
-                    <button type="button" class="btn-teal" @click="finishRegistration">
-                        Continuar <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Standardized Success Modal -->
+        <ConfirmModal
+            v-model="showSuccessModal"
+            title="¡Información Enviada!"
+            description="Tu solicitud de registro de comprador ha sido enviada con éxito."
+            confirm-text="Continuar"
+            :show-close-button="false"
+            @confirm="finishRegistration"
+        >
+            <template #footer>
+                <button type="button" class="btn-teal full-width" @click="finishRegistration">
+                    Continuar <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </template>
+        </ConfirmModal>
     </div>
 </template>
 
@@ -538,7 +527,7 @@ const finishRegistration = () => {
     font-size: 1rem;
 }
 
-/* ── Stepper ── */
+/* Stepper */
 .stepper {
     display: flex;
     justify-content: center;
@@ -597,7 +586,7 @@ const finishRegistration = () => {
     background-color: var(--light-teal);
 }
 
-/* ── Wizard Card ── */
+/* Wizard Card */
 .wizard-card {
     background: #ffffff;
     border: 1px solid var(--border-gray);
@@ -708,7 +697,7 @@ const finishRegistration = () => {
     color: #ffffff;
 }
 
-/* ── File Uploader ── */
+/* File Uploader */
 .drag-drop-zone {
     border: 2px dashed var(--border-gray);
     border-radius: 10px;
@@ -761,7 +750,7 @@ const finishRegistration = () => {
     cursor: pointer;
 }
 
-/* ── Categories Grid ── */
+/* Categories Grid */
 .categories-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -814,7 +803,13 @@ const finishRegistration = () => {
     color: var(--primary-blue);
 }
 
-/* ── Review Section ── */
+.loading-state {
+    text-align: center;
+    padding: 3rem 0;
+    color: #64748b;
+}
+
+/* Review Section */
 .review-grid {
     display: flex;
     gap: 2rem;
@@ -891,60 +886,7 @@ const finishRegistration = () => {
     text-decoration: underline;
 }
 
-/* ── Password Card ── */
-.password-card-container {
-    display: flex;
-    justify-content: center;
-}
-
-.password-card {
-    background: #ffffff;
-    border-radius: 12px;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 480px;
-    border: 1px solid var(--border-gray);
-    box-shadow: var(--shadow-sm);
-}
-
-.password-card h2 {
-    text-align: center;
-    font-size: 1.5rem;
-    margin-bottom: 0.4rem;
-}
-
-.password-card p {
-    text-align: center;
-    color: #64748b;
-    font-size: 0.9rem;
-    margin-bottom: 1.5rem;
-}
-
-.input-icon-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.input-icon-wrapper .left-icon {
-    position: absolute;
-    left: 12px;
-    color: var(--primary-blue);
-}
-
-.input-icon-wrapper .right-icon {
-    position: absolute;
-    right: 12px;
-    color: var(--light-teal);
-    cursor: pointer;
-}
-
-.input-icon-wrapper input {
-    padding-left: 2.4rem;
-    padding-right: 2.4rem;
-}
-
-/* ── Buttons ── */
+/* Actions */
 .step-actions {
     display: flex;
     align-items: center;
@@ -984,7 +926,12 @@ const finishRegistration = () => {
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+}
+
+.btn-teal.full-width {
+    width: 100%;
 }
 
 .btn-teal:disabled {
@@ -992,104 +939,6 @@ const finishRegistration = () => {
     cursor: not-allowed;
 }
 
-.card-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 2rem;
-}
-
-.btn-cancel {
-    flex: 1;
-    padding: 0.75rem;
-    border: 1px solid var(--border-gray);
-    background: #ffffff;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-    color: var(--primary-blue);
-}
-
-.btn-save {
-    flex: 1;
-    padding: 0.75rem;
-    border: none;
-    background: var(--primary-orange);
-    color: #ffffff;
-    border-radius: 8px;
-    font-weight: 600;
-    cursor: pointer;
-}
-
-/* ── Modals ── */
-.modal-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.45);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    padding: 1rem;
-}
-
-.modal-content {
-    background: #ffffff;
-    border-radius: 16px;
-    padding: 2.5rem;
-    width: 100%;
-    max-width: 440px;
-    text-align: center;
-    position: relative;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-}
-
-.btn-close-modal {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    background: transparent;
-    border: 2px solid var(--primary-orange);
-    color: var(--primary-orange);
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
-    margin: 0 auto 1.25rem auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 2rem;
-}
-
-.modal-icon.teal-bg {
-    background: #e6f7f5;
-    color: var(--light-teal);
-}
-
-.modal-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.8rem;
-}
-
-.modal-actions.center-align {
-    justify-content: center;
-}
-
-.modal-actions button {
-    flex: 1;
-}
-
-/* ── Responsive ── */
 @media (max-width: 768px) {
     .form-grid, .review-data-area {
         grid-template-columns: 1fr;

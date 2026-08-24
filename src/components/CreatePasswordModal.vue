@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
+import BaseModal from "./common/BaseModal.vue";
 
 interface Props {
   modelValue: boolean;
@@ -27,7 +28,6 @@ const showPass = ref(false);
 const showPassConfirm = ref(false);
 const validationError = ref<string | null>(null);
 
-// Reset form state whenever modal is reopened
 watch(
   () => props.modelValue,
   (isOpen) => {
@@ -72,8 +72,14 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <div v-if="modelValue" class="modal-backdrop" @click.self="handleCancel">
-    <div class="password-card" role="dialog" aria-modal="true">
+  <BaseModal
+    :modelValue="modelValue"
+    max-width="480px"
+    :show-close-button="false"
+    @close="handleCancel"
+    @update:modelValue="emit('update:modelValue', $event)"
+  >
+    <div class="password-modal-content">
       <div class="success-icon">
         <i class="fa-solid fa-check"></i>
       </div>
@@ -151,41 +157,12 @@ const handleSubmit = () => {
         </div>
       </form>
     </div>
-  </div>
+  </BaseModal>
 </template>
 
 <style scoped>
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.password-card {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
-  width: 100%;
-  max-width: 480px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border-gray);
-  animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modalPop {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+.password-modal-content {
+  padding: 0.5rem;
 }
 
 .success-icon {
@@ -201,14 +178,14 @@ const handleSubmit = () => {
   margin: 0 auto 1.25rem auto;
 }
 
-.password-card h2 {
+.password-modal-content h2 {
   text-align: center;
   color: var(--primary-blue);
   font-size: 1.5rem;
   margin-bottom: 0.4rem;
 }
 
-.password-card p {
+.password-modal-content p {
   text-align: center;
   color: #64748b;
   margin-bottom: 1.5rem;

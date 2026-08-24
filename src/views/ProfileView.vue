@@ -6,6 +6,8 @@ import type { Department } from "../modules/geo/types";
 import { userProfileApi } from "../api";
 import type { AccountResponse } from "../api/services/identity/types";
 import type { UserProfileResponse } from "../api/services/user_profile/types";
+import BaseModal from "../components/common/BaseModal.vue";
+import ConfirmModal from "../components/common/ConfirmModal.vue";
 
 const account = ref<AccountResponse | null>(null);
 const profile = ref<UserProfileResponse | null>(null);
@@ -499,253 +501,261 @@ const saveCroppedAvatar = async () => {
     </div>
 
     <!-- Modal: Edit Profile -->
-    <div v-if="showEditProfileModal" class="modal-overlay">
-      <div class="modal-content edit-profile-modal-content">
-        <div class="modal-header">
-          <button class="btn-back-modal" @click="showEditProfileModal = false">
+    <BaseModal
+      v-model="showEditProfileModal"
+      max-width="620px"
+      :show-close-button="false"
+      @close="showEditProfileModal = false"
+    >
+      <template #header>
+        <div class="modal-nav-header">
+          <button class="btn-back-nav" @click="showEditProfileModal = false">
             <i class="fa-solid fa-arrow-left"></i>
           </button>
-          <h3 class="modal-title">Editar Información Personal</h3>
+          <h3 class="modal-heading">Editar Información Personal</h3>
           <div style="width: 30px;"></div>
         </div>
+      </template>
 
-        <div class="edit-photo-section">
-          <div
-            class="edit-photo-preview"
-            :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : {}"
+      <div class="edit-photo-section">
+        <div
+          class="edit-photo-preview"
+          :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : {}"
+        >
+          <i v-if="!avatarUrl" class="fa-solid fa-user"></i>
+        </div>
+        <div class="edit-photo-info">
+          <p class="edit-photo-label">Foto de Perfil</p>
+          <p class="edit-photo-formats">JPG, PNG. Máx. 3MB.</p>
+          <button
+            type="button"
+            class="btn-change-photo"
+            @click="() => { showEditProfileModal = false; openPhotoModal('choice'); }"
           >
-            <i v-if="!avatarUrl" class="fa-solid fa-user"></i>
+            <i class="fa-solid fa-rotate"></i> Cambiar Foto
+          </button>
+        </div>
+      </div>
+
+      <form @submit.prevent="handleSaveProfile" class="edit-form-grid">
+        <div class="edit-form-group">
+          <label>Nombres</label>
+          <div :class="['input-with-icon', { error: !!editErrors.firstName }]">
+            <i class="fa-solid fa-user"></i>
+            <input v-model="editForm.firstName" type="text" placeholder="Nombres" maxlength="50" required />
           </div>
-          <div class="edit-photo-info">
-            <p class="edit-photo-label">Foto de Perfil</p>
-            <p class="edit-photo-formats">JPG, PNG. Máx. 3MB.</p>
-            <button
-              type="button"
-              class="btn-change-photo"
-              @click="() => { showEditProfileModal = false; openPhotoModal('choice'); }"
-            >
-              <i class="fa-solid fa-rotate"></i> Cambiar Foto
-            </button>
+          <span v-if="editErrors.firstName" class="field-error">{{ editErrors.firstName }}</span>
+        </div>
+
+        <div class="edit-form-group">
+          <label>Apellidos</label>
+          <div :class="['input-with-icon', { error: !!editErrors.lastName }]">
+            <i class="fa-solid fa-user"></i>
+            <input v-model="editForm.lastName" type="text" placeholder="Apellidos" maxlength="50" required />
+          </div>
+          <span v-if="editErrors.lastName" class="field-error">{{ editErrors.lastName }}</span>
+        </div>
+
+        <div class="edit-form-group">
+          <label>Teléfono</label>
+          <div :class="['input-with-icon', { error: !!editErrors.phoneNumber }]">
+            <i class="fa-solid fa-phone"></i>
+            <input v-model="editForm.phoneNumber" type="tel" placeholder="Teléfono" maxlength="15" />
+          </div>
+          <span v-if="editErrors.phoneNumber" class="field-error">{{ editErrors.phoneNumber }}</span>
+        </div>
+
+        <div class="edit-form-group">
+          <label>Cédula</label>
+          <div class="input-with-icon">
+            <i class="fa-regular fa-id-card"></i>
+            <input v-model="editForm.nationalId" type="text" placeholder="Cédula" maxlength="20" />
           </div>
         </div>
 
-        <form @submit.prevent="handleSaveProfile" class="edit-form-grid">
-          <div class="edit-form-group">
-            <label>Nombres</label>
-            <div :class="['input-with-icon', { error: !!editErrors.firstName }]">
-              <i class="fa-solid fa-user"></i>
-              <input v-model="editForm.firstName" type="text" placeholder="Nombres" maxlength="50" required />
-            </div>
-            <span v-if="editErrors.firstName" class="field-error">{{ editErrors.firstName }}</span>
+        <div class="edit-form-group full-width">
+          <label>Municipio</label>
+          <div class="input-with-icon select-wrapper">
+            <i class="fa-solid fa-location-dot"></i>
+            <select v-model="editForm.municipalityId">
+              <option value="">Seleccione su municipio</option>
+              <optgroup v-for="dept in departments" :key="dept.id" :label="dept.name">
+                <option v-for="mun in dept.municipalities" :key="mun.id" :value="mun.id">
+                  {{ mun.name }}
+                </option>
+              </optgroup>
+            </select>
           </div>
+        </div>
 
-          <div class="edit-form-group">
-            <label>Apellidos</label>
-            <div :class="['input-with-icon', { error: !!editErrors.lastName }]">
-              <i class="fa-solid fa-user"></i>
-              <input v-model="editForm.lastName" type="text" placeholder="Apellidos" maxlength="50" required />
-            </div>
-            <span v-if="editErrors.lastName" class="field-error">{{ editErrors.lastName }}</span>
-          </div>
-
-          <div class="edit-form-group">
-            <label>Teléfono</label>
-            <div :class="['input-with-icon', { error: !!editErrors.phoneNumber }]">
-              <i class="fa-solid fa-phone"></i>
-              <input v-model="editForm.phoneNumber" type="tel" placeholder="Teléfono" maxlength="15" />
-            </div>
-            <span v-if="editErrors.phoneNumber" class="field-error">{{ editErrors.phoneNumber }}</span>
-          </div>
-
-          <div class="edit-form-group">
-            <label>Cédula</label>
-            <div class="input-with-icon">
-              <i class="fa-regular fa-id-card"></i>
-              <input v-model="editForm.nationalId" type="text" placeholder="Cédula" maxlength="20" />
-            </div>
-          </div>
-
-          <div class="edit-form-group full-width">
-            <label>Municipio</label>
-            <div class="input-with-icon select-wrapper">
-              <i class="fa-solid fa-location-dot"></i>
-              <select v-model="editForm.municipalityId">
-                <option value="">Seleccione su municipio</option>
-                <optgroup v-for="dept in departments" :key="dept.id" :label="dept.name">
-                  <option v-for="mun in dept.municipalities" :key="mun.id" :value="mun.id">
-                    {{ mun.name }}
-                  </option>
-                </optgroup>
-              </select>
-            </div>
-          </div>
-
-          <div class="edit-form-actions full-width">
-            <button
-              type="button"
-              class="btn-cancel-edit"
-              :disabled="isSavingProfile"
-              @click="showEditProfileModal = false"
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              class="btn-save-edit"
-              :disabled="isSavingProfile"
-            >
-              <i :class="isSavingProfile ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
-              {{ isSavingProfile ? "Guardando..." : "Actualizar" }}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div class="edit-form-actions full-width">
+          <button
+            type="button"
+            class="btn-cancel-edit"
+            :disabled="isSavingProfile"
+            @click="showEditProfileModal = false"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            class="btn-save-edit"
+            :disabled="isSavingProfile"
+          >
+            <i :class="isSavingProfile ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
+            {{ isSavingProfile ? "Guardando..." : "Actualizar" }}
+          </button>
+        </div>
+      </form>
+    </BaseModal>
 
     <!-- Modal: View Avatar -->
-    <div v-if="showViewPhotoModal" class="modal-overlay" @click.self="showViewPhotoModal = false">
-      <div class="modal-content view-photo-modal-content">
-        <button class="btn-close-modal" @click="showViewPhotoModal = false">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-        <div class="view-photo-container">
-          <img :src="avatarUrl || ''" alt="Foto de perfil" />
-        </div>
+    <BaseModal
+      v-model="showViewPhotoModal"
+      max-width="400px"
+      @close="showViewPhotoModal = false"
+    >
+      <div class="view-photo-container">
+        <img :src="avatarUrl || ''" alt="Foto de perfil" />
       </div>
-    </div>
+    </BaseModal>
 
     <!-- Modal: Delete Avatar -->
-    <div v-if="showDeletePhotoModal" class="modal-overlay">
-      <div class="modal-content delete-modal-content">
-        <p class="delete-question">¿Deseas eliminar tu foto de perfil?</p>
-        <div class="delete-actions">
-          <button class="btn-secondary" @click="showDeletePhotoModal = false">Cancelar</button>
-          <button class="btn-danger" @click="handleDeleteAvatar">
-            Eliminar <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
-      </div>
-    </div>
+    <ConfirmModal
+      v-model="showDeletePhotoModal"
+      title="¿Deseas eliminar tu foto de perfil?"
+      confirm-text="Eliminar"
+      cancel-text="Cancelar"
+      icon="fa-regular fa-trash-can"
+      icon-variant="orange"
+      @confirm="handleDeleteAvatar"
+      @cancel="showDeletePhotoModal = false"
+    />
 
     <!-- Modal: Photo Wizard -->
-    <div v-if="showPhotoModal" class="modal-overlay">
-      <div class="modal-content photo-wizard-content">
-        <div class="modal-header">
-          <button class="btn-back-modal" @click="closePhotoModal">
+    <BaseModal
+      v-model="showPhotoModal"
+      max-width="480px"
+      :show-close-button="false"
+      @close="closePhotoModal"
+    >
+      <template #header>
+        <div class="modal-nav-header">
+          <button class="btn-back-nav" @click="closePhotoModal">
             <i class="fa-solid fa-arrow-left"></i>
           </button>
-          <h3 class="modal-title">
+          <h3 class="modal-heading">
             {{ photoModalView === 'camera' ? 'Tomar Foto' : photoModalView === 'adjust' ? 'Ajustar Foto' : 'Cambiar Foto de Perfil' }}
           </h3>
-          <button class="btn-close-modal-top" @click="closePhotoModal">
+          <button class="btn-close-circle" @click="closePhotoModal">
             <i class="fa-solid fa-xmark"></i>
           </button>
         </div>
+      </template>
 
-        <div v-if="photoModalView === 'choice'" class="choice-container">
-          <div class="choice-avatar">
-            <i class="fa-solid fa-user"></i>
-          </div>
-          <p class="choice-subtitle">Elige cómo cambiar tu foto de perfil</p>
-          <button class="btn-choice" @click="photoModalView = 'upload'">
-            <div class="choice-icon"><i class="fa-regular fa-image"></i></div>
-            <div class="choice-text">
-              <h4>Seleccionar una imagen</h4>
-              <p>Desde tu equipo o dispositivo</p>
-            </div>
-            <i class="fa-solid fa-chevron-right choice-arrow"></i>
-          </button>
-          <button class="btn-choice secondary" @click="() => { photoModalView = 'camera'; startCameraStream(); }">
-            <div class="choice-icon"><i class="fa-solid fa-camera"></i></div>
-            <div class="choice-text">
-              <h4>Tomar una foto</h4>
-              <p>Usa la cámara de tu dispositivo</p>
-            </div>
-            <i class="fa-solid fa-chevron-right choice-arrow"></i>
-          </button>
+      <div v-if="photoModalView === 'choice'" class="choice-container">
+        <div class="choice-avatar">
+          <i class="fa-solid fa-user"></i>
         </div>
+        <p class="choice-subtitle">Elige cómo cambiar tu foto de perfil</p>
+        <button class="btn-choice" @click="photoModalView = 'upload'">
+          <div class="choice-icon"><i class="fa-regular fa-image"></i></div>
+          <div class="choice-text">
+            <h4>Seleccionar una imagen</h4>
+            <p>Desde tu equipo o dispositivo</p>
+          </div>
+          <i class="fa-solid fa-chevron-right choice-arrow"></i>
+        </button>
+        <button class="btn-choice secondary" @click="() => { photoModalView = 'camera'; startCameraStream(); }">
+          <div class="choice-icon"><i class="fa-solid fa-camera"></i></div>
+          <div class="choice-text">
+            <h4>Tomar una foto</h4>
+            <p>Usa la cámara de tu dispositivo</p>
+          </div>
+          <i class="fa-solid fa-chevron-right choice-arrow"></i>
+        </button>
+      </div>
 
-        <div v-if="photoModalView === 'upload'" class="upload-view">
-          <div
-            class="drag-drop-zone"
-            @dragover.prevent
-            @drop.prevent="handleFileDrop"
-          >
-            <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
-            <p>Arrastra una imagen aquí</p>
-            <span>o</span>
-            <label class="btn-outline">
-              Seleccionar archivo
-              <input type="file" accept="image/png, image/jpeg" style="display: none;" @change="handleFileSelected" />
-            </label>
-          </div>
-          <div class="upload-info">
-            <p>Formatos permitidos: JPG, PNG</p>
-            <p>Tamaño máximo: 3MB</p>
-          </div>
-          <div class="upload-controls">
-            <button class="btn-secondary" @click="photoModalView = 'choice'">Atrás</button>
-          </div>
+      <div v-if="photoModalView === 'upload'" class="upload-view">
+        <div
+          class="drag-drop-zone"
+          @dragover.prevent
+          @drop.prevent="handleFileDrop"
+        >
+          <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
+          <p>Arrastra una imagen aquí</p>
+          <span>o</span>
+          <label class="btn-outline">
+            Seleccionar archivo
+            <input type="file" accept="image/png, image/jpeg" style="display: none;" @change="handleFileSelected" />
+          </label>
         </div>
-
-        <div v-if="photoModalView === 'camera'" class="camera-view">
-          <div class="camera-container">
-            <video ref="videoElement" autoplay playsinline class="camera-stream"></video>
-            <div v-if="!cameraActive" class="camera-overlay-message">
-              <i class="fa-solid fa-camera"></i>
-              <p>Se necesita acceso a la cámara para capturar la foto.</p>
-            </div>
-          </div>
-          <div class="camera-controls">
-            <button class="btn-secondary" @click="() => { stopCameraStream(); photoModalView = 'choice'; }">Cancelar</button>
-            <button class="btn-shutter" :disabled="!cameraActive" @click="captureFromCamera"></button>
-            <button class="btn-icon" @click="() => { stopCameraStream(); photoModalView = 'upload'; }">
-              <i class="fa-solid fa-image"></i>
-            </button>
-          </div>
+        <div class="upload-info">
+          <p>Formatos permitidos: JPG, PNG</p>
+          <p>Tamaño máximo: 3MB</p>
         </div>
-
-        <div v-if="photoModalView === 'adjust'" class="adjust-view">
-          <p class="adjust-instruction">Arrastra la imagen para centrarla.</p>
-          <div class="adjust-container">
-            <canvas
-              ref="canvasElement"
-              class="photo-canvas"
-              @mousedown="(e) => startCanvasDrag(e.clientX, e.clientY)"
-              @mousemove="(e) => moveCanvasDrag(e.clientX, e.clientY)"
-              @mouseup="endCanvasDrag"
-              @mouseleave="endCanvasDrag"
-              @touchstart="(e) => startCanvasDrag(e.touches[0].clientX, e.touches[0].clientY)"
-              @touchmove="(e) => moveCanvasDrag(e.touches[0].clientX, e.touches[0].clientY)"
-              @touchend="endCanvasDrag"
-            ></canvas>
-            <div class="adjust-overlay">
-              <div class="crop-circle"></div>
-            </div>
-          </div>
-          <div class="adjust-controls-top">
-            <button type="button" class="btn-icon circle" @click="handleZoom(-0.1)">
-              <i class="fa-solid fa-minus"></i>
-            </button>
-            <button type="button" class="btn-icon circle" @click="handleZoom(0.1)">
-              <i class="fa-solid fa-plus"></i>
-            </button>
-          </div>
-          <div class="adjust-controls-bottom">
-            <button type="button" class="btn-secondary" @click="closePhotoModal">Cancelar</button>
-            <button
-              type="button"
-              class="btn-primary"
-              :disabled="isSavingPhoto"
-              @click="saveCroppedAvatar"
-            >
-              <i :class="isSavingPhoto ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
-              {{ isSavingPhoto ? "Guardando..." : "Usar foto" }}
-            </button>
-          </div>
+        <div class="upload-controls">
+          <button class="btn-secondary" @click="photoModalView = 'choice'">Atrás</button>
         </div>
       </div>
-    </div>
+
+      <div v-if="photoModalView === 'camera'" class="camera-view">
+        <div class="camera-container">
+          <video ref="videoElement" autoplay playsinline class="camera-stream"></video>
+          <div v-if="!cameraActive" class="camera-overlay-message">
+            <i class="fa-solid fa-camera"></i>
+            <p>Se necesita acceso a la cámara para capturar la foto.</p>
+          </div>
+        </div>
+        <div class="camera-controls">
+          <button class="btn-secondary" @click="() => { stopCameraStream(); photoModalView = 'choice'; }">Cancelar</button>
+          <button class="btn-shutter" :disabled="!cameraActive" @click="captureFromCamera"></button>
+          <button class="btn-icon" @click="() => { stopCameraStream(); photoModalView = 'upload'; }">
+            <i class="fa-solid fa-image"></i>
+          </button>
+        </div>
+      </div>
+
+      <div v-if="photoModalView === 'adjust'" class="adjust-view">
+        <p class="adjust-instruction">Arrastra la imagen para centrarla.</p>
+        <div class="adjust-container">
+          <canvas
+            ref="canvasElement"
+            class="photo-canvas"
+            @mousedown="(e) => startCanvasDrag(e.clientX, e.clientY)"
+            @mousemove="(e) => moveCanvasDrag(e.clientX, e.clientY)"
+            @mouseup="endCanvasDrag"
+            @mouseleave="endCanvasDrag"
+            @touchstart="(e) => startCanvasDrag(e.touches[0].clientX, e.touches[0].clientY)"
+            @touchmove="(e) => moveCanvasDrag(e.touches[0].clientX, e.touches[0].clientY)"
+            @touchend="endCanvasDrag"
+          ></canvas>
+          <div class="adjust-overlay">
+            <div class="crop-circle"></div>
+          </div>
+        </div>
+        <div class="adjust-controls-top">
+          <button type="button" class="btn-icon circle" @click="handleZoom(-0.1)">
+            <i class="fa-solid fa-minus"></i>
+          </button>
+          <button type="button" class="btn-icon circle" @click="handleZoom(0.1)">
+            <i class="fa-solid fa-plus"></i>
+          </button>
+        </div>
+        <div class="adjust-controls-bottom">
+          <button type="button" class="btn-secondary" @click="closePhotoModal">Cancelar</button>
+          <button
+            type="button"
+            class="btn-primary"
+            :disabled="isSavingPhoto"
+            @click="saveCroppedAvatar"
+          >
+            <i :class="isSavingPhoto ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
+            {{ isSavingPhoto ? "Guardando..." : "Usar foto" }}
+          </button>
+        </div>
+      </div>
+    </BaseModal>
   </div>
 </template>
 
@@ -1011,39 +1021,20 @@ const saveCroppedAvatar = async () => {
   color: var(--light-teal);
 }
 
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: #ffffff;
-  border-radius: 16px;
-  padding: 2.2rem;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-  position: relative;
-  width: 100%;
-}
-
-.modal-header {
+/* Modal Nav Header Specifics */
+.modal-nav-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.5rem;
 }
 
-.modal-title {
+.modal-heading {
   font-size: 1.3rem;
   color: var(--primary-blue);
 }
 
-.btn-back-modal {
+.btn-back-nav {
   background: none;
   border: none;
   font-size: 1.2rem;
@@ -1051,8 +1042,7 @@ const saveCroppedAvatar = async () => {
   cursor: pointer;
 }
 
-.btn-close-modal,
-.btn-close-modal-top {
+.btn-close-circle {
   background: var(--primary-orange);
   color: #ffffff;
   border: none;
@@ -1065,10 +1055,7 @@ const saveCroppedAvatar = async () => {
   cursor: pointer;
 }
 
-.edit-profile-modal-content {
-  max-width: 620px;
-}
-
+/* Edit Profile Modal */
 .edit-photo-section {
   display: flex;
   align-items: center;
@@ -1191,10 +1178,7 @@ const saveCroppedAvatar = async () => {
   gap: 0.4rem;
 }
 
-.photo-wizard-content {
-  max-width: 480px;
-}
-
+/* Photo Wizard */
 .choice-container {
   text-align: center;
 }
@@ -1412,8 +1396,7 @@ const saveCroppedAvatar = async () => {
 }
 
 .adjust-controls-bottom,
-.upload-controls,
-.delete-actions {
+.upload-controls {
   display: flex;
   justify-content: space-between;
 }
@@ -1441,30 +1424,11 @@ const saveCroppedAvatar = async () => {
   gap: 0.4rem;
 }
 
-.delete-modal-content {
-  max-width: 400px;
-  text-align: center;
-}
-
-.delete-question {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
-}
-
-.btn-danger {
-  background-color: var(--primary-orange);
-  color: #ffffff;
-  border: none;
-  padding: 0.6rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.view-photo-modal-content {
-  max-width: 380px;
-  text-align: center;
+.view-photo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 0;
 }
 
 .view-photo-container img {
