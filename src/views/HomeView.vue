@@ -10,11 +10,11 @@ const menuIcon = ref<HTMLElement | null>(null);
 const carousel = ref<HTMLElement | null>(null);
 
 interface CategoryView {
-  id: string;
-  name: string;
-  description: string | null;
-  imageUrl: string | null;
-  productCount: number; // TODO: wire to real data
+    id: string;
+    name: string;
+    description: string | null;
+    imageUrl?: string | null; // undefined = skeleton, null = no image, string = loaded
+    productCount: number;
 }
 
 const categories = ref<CategoryView[]>([]);
@@ -53,26 +53,43 @@ onMounted(async () => {
 
     try {
         const response = await categoryApi.getCategories({ limit: 50 });
-        const loaded = await Promise.all(
-            response.data.map(async (cat) => {
-                let imageUrl: string | null = null;
-                if (cat.image_blob_id) {
-                    try {
-                        imageUrl = await categoryApi.getCategoryImageBlobUrl(cat.image_blob_id);
-                    } catch (e) {
-                        console.warn(`Failed to load category image for ${cat.name}:`, e);
-                    }
-                }
-                return {
-                    id: cat.id,
-                    name: cat.name,
-                    description: cat.description,
-                    imageUrl,
-                    productCount: Math.floor(Math.random() * 600) + 50, // mock
+
+        categories.value = response.data.map((cat) => ({
+            id: cat.id,
+            name: cat.name,
+            description: cat.description,
+            imageUrl: undefined,
+            productCount: Math.floor(Math.random() * 600) + 50,
+        }));
+
+        response.data.forEach((cat, index) => {
+            if (!cat.image_blob_id) {
+                categories.value[index] = {
+                    ...categories.value[index],
+                    imageUrl: null,
                 };
-            })
-        );
-        categories.value = loaded;
+                return;
+            }
+
+            categoryApi
+                .getCategoryImageBlobUrl(cat.image_blob_id)
+                .then((url) => {
+                    categories.value[index] = {
+                        ...categories.value[index],
+                        imageUrl: url,
+                    };
+                })
+                .catch((e) => {
+                    console.warn(
+                        `Failed to load category image for ${cat.name}:`,
+                        e,
+                    );
+                    categories.value[index] = {
+                        ...categories.value[index],
+                        imageUrl: null,
+                    };
+                });
+        });
     } catch (err) {
         console.error("Failed to load categories:", err);
     }
@@ -177,7 +194,11 @@ onMounted(async () => {
                 <p>Explora todas nuestras categorías de productos para ti</p>
             </div>
             <div class="carousel-wrapper">
-                <button class="carousel-btn prev" @click="handlePrevClick" aria-label="Anterior">
+                <button
+                    class="carousel-btn prev"
+                    @click="handlePrevClick"
+                    aria-label="Anterior"
+                >
                     <i class="fa-solid fa-chevron-left"></i>
                 </button>
 
@@ -188,22 +209,29 @@ onMounted(async () => {
                         class="category-card"
                     >
                         <img
-                            v-if="cat.imageUrl"
+                            v-if="typeof cat.imageUrl === 'string'"
                             :src="cat.imageUrl"
                             :alt="cat.name"
                         />
                         <div
-                            v-else
-                            class="category-fallback"
-                        >
+                            v-else-if="cat.imageUrl === undefined"
+                            class="category-skeleton"
+                        ></div>
+                        <div v-else class="category-fallback">
                             <i class="fa-solid fa-image"></i>
                         </div>
                         <p>{{ cat.name }}</p>
-                        <span class="product-count">{{ cat.productCount }} Productos</span>
+                        <span class="product-count"
+                            >{{ cat.productCount }} Productos</span
+                        >
                     </div>
                 </div>
 
-                <button class="carousel-btn next" @click="handleNextClick" aria-label="Siguiente">
+                <button
+                    class="carousel-btn next"
+                    @click="handleNextClick"
+                    aria-label="Siguiente"
+                >
                     <i class="fa-solid fa-chevron-right"></i>
                 </button>
             </div>
