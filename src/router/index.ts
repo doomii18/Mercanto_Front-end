@@ -3,7 +3,9 @@ import HomeView from "../views/HomeView.vue";
 import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import BuyerRegisterView from "../views/BuyerRegisterView.vue";
-import ProviderRegisterView from '../views/ProviderRegisterView.vue';
+import ProviderRegisterView from "../views/ProviderRegisterView.vue";
+import ProfileView from "../views/ProfileView.vue";
+import OrdersView from "../views/OrdersView.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -17,10 +19,16 @@ const router = createRouter({
       component: BuyerRegisterView,
     },
     {
-      path: '/register/provider',
-      name: 'provider-register',
-      component: ProviderRegisterView
-    }
+      path: "/register/provider",
+      name: "provider-register",
+      component: ProviderRegisterView,
+    },
+    {
+      path: "/profile",
+      name: "profile",
+      component: ProfileView,
+    },
+    { path: "/orders", name: "orders", component: OrdersView },
   ],
 });
 

@@ -30,7 +30,7 @@ const handleLogin = async () => {
             password: password.value,
         });
 
-        router.push({ name: "home" });
+        router.push({ name: "profile" });
     } catch (error: any) {
         errorMessage.value = error.message || "Error al iniciar sesión";
     } finally {

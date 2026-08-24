@@ -531,7 +531,7 @@ onMounted(async () => {
                 <div class="footer-cta">
                     <h4>CONVIÉRTETE EN PROVEEDOR</h4>
                     <p>¿Eres exportador o distribuidor mayorista?</p>
-                    <router-link :to="{ name: 'register' }" class="btn-cta">
+                    <router-link :to="{ name: 'provider-register' }" class="btn-cta">
                         Regístrate hoy
                     </router-link>
                 </div>
