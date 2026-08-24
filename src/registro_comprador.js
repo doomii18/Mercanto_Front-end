@@ -1,10 +1,33 @@
 import { bootstrapGeo, getGeoManager } from "./modules/geo";
 import { identityApi, userProfileApi, geographyApi } from "./api";
 
+function togglePass(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+}
+window.togglePass = togglePass;
+
 document.addEventListener("DOMContentLoaded", async () => {
+  const btnNextTo2 = document.getElementById("btn-next-to-2");
+  const btnBackTo1 = document.getElementById("btn-back-to-1");
   const btnSubmit = document.getElementById("btn-submit");
   const btnCancelar = document.getElementById("btn-cancelar");
   const confirmCheck = document.getElementById("confirm-check");
+
+  const step1Content = document.getElementById("step1-content");
+  const step2Content = document.getElementById("step2-content");
+  const indStep1 = document.getElementById("indicator-step1");
+  const indStep2 = document.getElementById("indicator-step2");
+  const line1 = document.getElementById("line-1");
+  const step2Email = document.getElementById("step2-email");
 
   const selectDepartamento = document.getElementById("comp-departamento");
   const selectMunicipio = document.getElementById("comp-municipio");
@@ -18,6 +41,52 @@ document.addEventListener("DOMContentLoaded", async () => {
   const btnRemoveFoto = document.getElementById("btn-remove-foto");
   let fotoDataUrl = null;
   let geoManager = null;
+
+  // --- Step Navigation ---
+  function showStep(step) {
+    if (step === 1) {
+      step1Content.style.display = "block";
+      step2Content.style.display = "none";
+      indStep1.classList.add("active");
+      indStep1.classList.remove("completed");
+      line1.classList.remove("active");
+      indStep2.classList.remove("active", "completed");
+    } else if (step === 2) {
+      step1Content.style.display = "none";
+      step2Content.style.display = "block";
+      indStep1.classList.add("completed");
+      indStep1.classList.remove("active");
+      line1.classList.add("active");
+      indStep2.classList.add("active");
+      indStep2.classList.remove("completed");
+      step2Email.value = document.getElementById("comp-correo").value.trim();
+    }
+  }
+
+  function validateStep1() {
+    const nombres = document.getElementById("comp-nombres").value.trim();
+    const apellidos = document.getElementById("comp-apellidos").value.trim();
+    const cedula = document.getElementById("comp-cedula").value.trim();
+    const telefono = document.getElementById("comp-telefono").value.trim();
+    const correo = document.getElementById("comp-correo").value.trim();
+    const departamento = selectDepartamento.value;
+    const municipio = selectMunicipio.value;
+
+    if (!nombres) { alert("Por favor ingresa tus nombres."); return false; }
+    if (!apellidos) { alert("Por favor ingresa tus apellidos."); return false; }
+    if (!cedula) { alert("Por favor ingresa tu cédula de identidad."); return false; }
+    if (!telefono) { alert("Por favor ingresa tu teléfono."); return false; }
+    if (!departamento) { alert("Por favor selecciona un departamento."); return false; }
+    if (!municipio) { alert("Por favor selecciona un municipio."); return false; }
+    if (!correo) { alert("Por favor ingresa tu correo electrónico."); return false; }
+    return true;
+  }
+
+  btnNextTo2.addEventListener("click", () => {
+    if (validateStep1()) showStep(2);
+  });
+
+  btnBackTo1.addEventListener("click", () => showStep(1));
 
   // --- Geo Logic ---
   function populateMunicipalitiesForDept(deptId, selectedMunId = null) {
@@ -128,8 +197,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   confirmCheck.addEventListener("change", (e) => btnSubmit.disabled = !e.target.checked);
 
   btnSubmit.addEventListener("click", async () => {
-    const pwd = document.getElementById("comp-password").value;
-    const pwdConfirm = document.getElementById("comp-password-confirm").value;
+    const pwd = document.getElementById("step2-pass").value;
+    const pwdConfirm = document.getElementById("step2-pass-confirm").value;
 
     if (!pwd) return alert("La contraseña no puede estar vacía.");
     if (pwd !== pwdConfirm) return alert("Las contraseñas no coinciden. Por favor, verifíquelas.");
