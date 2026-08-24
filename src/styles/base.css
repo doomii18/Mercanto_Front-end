@@ -1,0 +1,28 @@
+:root {
+  --primary-orange: #ff6a00;
+  --primary-orange-hover: #e66000;
+  --primary-blue: #083c5a;
+  --light-teal: #189c94;
+  --bg-light: #fefcfb;
+  --bg-gray: #f5f7f9;
+  --border-gray: #e0e0e0;
+  --text-dark: #1e293b;
+  --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.05);
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--bg-light);
+  color: var(--text-dark);
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  font-family: 'Lora', serif;
+}
