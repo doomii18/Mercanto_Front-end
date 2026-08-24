@@ -1,19 +1,6 @@
-
 import { defineConfig } from 'vite';
-import { resolve } from 'path';
+import vue from '@vitejs/plugin-vue';
 
 export default defineConfig({
-  build: {
-    rollupOptions: {
-      input: {
-        index: resolve(__dirname, 'index.html'),
-        perfil: resolve(__dirname, 'perfil.html'),
-        pedidos: resolve(__dirname, 'pedidos.html'),
-        login: resolve(__dirname, 'login.html')
-      }
-    }
-  },
-  server: {
-    open: '/home.html'
-  }
+  plugins: [vue()]
 });
