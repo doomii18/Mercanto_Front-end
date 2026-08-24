@@ -6,6 +6,10 @@ import BuyerRegisterView from "../views/BuyerRegisterView.vue";
 import ProviderRegisterView from "../views/ProviderRegisterView.vue";
 import ProfileView from "../views/ProfileView.vue";
 import OrdersView from "../views/OrdersView.vue";
+import TestLayout from "../views/test/TestLayout.vue";
+import TestChatView from "../views/test/TestChatView.vue";
+import TestEventsView from "../views/test/TestEventsView.vue";
+import TestImageSearchView from "../views/test/TestImageSearchView.vue";
 
 const router = createRouter({
   history: createWebHashHistory(),
@@ -29,6 +33,15 @@ const router = createRouter({
       component: ProfileView,
     },
     { path: "/orders", name: "orders", component: OrdersView },
+    {
+      path: "/test",
+      component: TestLayout,
+      children: [
+        { path: "chat", name: "test-chat", component: TestChatView },
+        { path: "events", name: "test-events", component: TestEventsView },
+        { path: "image-search", name: "test-image-search", component: TestImageSearchView },
+      ]
+    }
   ],
 });
 
