@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { authManager } from '../../modules/auth';
 import { chatApi, notificationsApi } from '../../api';
 import { NewChatMessageEventSchema } from '../../api/services/notifications/payloads';
 import type { ChatThreadResponse, ChatMessageResponse } from '../../api/services/chat/types';
@@ -17,7 +16,7 @@ let unsubs: (() => void)[] = [];
 
 onMounted(async () => {
   try {
-    await authManager.requireAuth();
+
     await notificationsApi.connect();
 
     const unsub = notificationsApi.subscribe("NewChatMessage", (rawEvent) => {

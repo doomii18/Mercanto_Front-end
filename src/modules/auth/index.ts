@@ -39,17 +39,6 @@ export class AuthManager {
     return tokens.access_token;
   }
 
-  async requireAuth(redirectTo = "/login.html"): Promise<AccountResponse> {
-    const account = await this.initialize();
-    if (!account) {
-      const currentPath = window.location.pathname + window.location.search;
-      const redirectUrl = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`;
-      window.location.assign(redirectUrl);
-      throw new Error("Authentication required. Redirecting...");
-    }
-    return account;
-  }
-
   async login(credentials: LoginRequest): Promise<AccountResponse> {
     await identityApi.login(credentials);
     const account = await identityApi.getMyAccount();
@@ -74,7 +63,6 @@ export class AuthManager {
       try {
         this.currentAccount = await identityApi.getMyAccount();
       } catch (error) {
-        // Clear cached promise on failure to allow re-attempts
         this.initPromise = null;
         this.currentAccount = null;
       } finally {
@@ -95,10 +83,8 @@ export class AuthManager {
     tokenProvider.setRefreshToken(null);
     this.currentAccount = null;
     this.initPromise = null;
-    this.isInitialized = false;
+    this.isInitialized = true;
     this.notify();
-
-    window.location.assign("/login.html");
 
     if (refreshToken) {
       try {
@@ -114,9 +100,8 @@ export class AuthManager {
     tokenProvider.setRefreshToken(null);
     this.currentAccount = null;
     this.initPromise = null;
-    this.isInitialized = false;
+    this.isInitialized = true;
     this.notify();
-    window.location.assign("/login.html");
   }
 }
 

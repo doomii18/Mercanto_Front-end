@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { authManager } from "../modules/auth";
 import { quoteApi } from "../api";
 import type { QuoteAggregateResponse } from "../api/services/quote/types";
 
@@ -79,10 +78,9 @@ const orders = ref<OrderItemDisplay[]>([
 
 onMounted(async () => {
   try {
-    await authManager.requireAuth();
     await loadRemoteQuotes();
   } catch (err) {
-    console.error("Orders view authentication failure:", err);
+    console.error("Orders view quote loading failure:", err);
   }
 });
 

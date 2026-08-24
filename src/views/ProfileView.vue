@@ -91,7 +91,7 @@ const loadProfile = async () => {
 
 onMounted(async () => {
   try {
-    account.value = await authManager.requireAuth();
+    account.value = authManager.getAccount();
     await bootstrapGeo();
     const geo = getGeoManager();
     if (geo) {
@@ -99,7 +99,7 @@ onMounted(async () => {
     }
     await loadProfile();
   } catch (err) {
-    console.error("Auth or initialization failed:", err);
+    console.error("Profile initialization failed:", err);
   } finally {
     isLoading.value = false;
   }

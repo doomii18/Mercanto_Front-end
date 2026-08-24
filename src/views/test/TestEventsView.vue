@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { authManager } from '../../modules/auth';
 import { notificationsApi } from '../../api';
 import type { NotificationEvent } from '../../api/services/notifications/types';
 
@@ -10,7 +9,6 @@ let unsub: (() => void) | null = null;
 
 onMounted(async () => {
   try {
-    await authManager.requireAuth();
     await notificationsApi.connect();
     isConnected.value = true;
 

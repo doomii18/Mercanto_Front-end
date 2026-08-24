@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { authManager } from "../modules/auth";
 
 const router = useRouter();
+const route = useRoute();
 const email = ref("");
 const password = ref("");
 const showPassword = ref(false);
@@ -19,23 +20,27 @@ const togglePassword = () => {
 };
 
 const handleLogin = async () => {
-    if (!email.value || !password.value) return;
+  if (!email.value || !password.value) return;
 
-    isLoading.value = true;
-    errorMessage.value = null;
+  isLoading.value = true;
+  errorMessage.value = null;
 
-    try {
-        await authManager.login({
-            email: email.value,
-            password: password.value,
-        });
+  try {
+    await authManager.login({
+      email: email.value,
+      password: password.value,
+    });
 
-        router.push({ name: "profile" });
-    } catch (error: any) {
-        errorMessage.value = error.message || "Error al iniciar sesión";
-    } finally {
-        isLoading.value = false;
-    }
+    const redirectPath = typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
+      ? route.query.redirect
+      : { name: "profile" };
+
+    router.push(redirectPath);
+  } catch (error: any) {
+    errorMessage.value = error.message || "Error al iniciar sesión";
+  } finally {
+    isLoading.value = false;
+  }
 };
 </script>
 
