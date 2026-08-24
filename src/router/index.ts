@@ -4,6 +4,7 @@ import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import BuyerRegisterView from "../views/BuyerRegisterView.vue";
 import ProviderRegisterView from "../views/ProviderRegisterView.vue";
+import DashboardLayout from "../views/DashboardLayout.vue";
 import ProfileView from "../views/ProfileView.vue";
 import OrdersView from "../views/OrdersView.vue";
 import TestLayout from "../views/test/TestLayout.vue";
@@ -28,11 +29,21 @@ const router = createRouter({
       component: ProviderRegisterView,
     },
     {
-      path: "/profile",
-      name: "profile",
-      component: ProfileView,
+      path: "/",
+      component: DashboardLayout,
+      children: [
+        {
+          path: "profile",
+          name: "profile",
+          component: ProfileView,
+        },
+        {
+          path: "orders",
+          name: "orders",
+          component: OrdersView,
+        },
+      ],
     },
-    { path: "/orders", name: "orders", component: OrdersView },
     {
       path: "/test",
       component: TestLayout,
@@ -40,8 +51,8 @@ const router = createRouter({
         { path: "chat", name: "test-chat", component: TestChatView },
         { path: "events", name: "test-events", component: TestEventsView },
         { path: "image-search", name: "test-image-search", component: TestImageSearchView },
-      ]
-    }
+      ],
+    },
   ],
 });
 
