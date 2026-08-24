@@ -5,6 +5,7 @@ import { bootstrapGeo, getGeoManager } from "../modules/geo";
 import type { Department, Municipality } from "../modules/geo/types";
 import { categoryApi, identityApi, userProfileApi, geographyApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
+import CreatePasswordModal from "../components/CreatePasswordModal.vue";
 
 const router = useRouter();
 
@@ -21,8 +22,6 @@ const form = ref({
     departmentId: "",
     municipalityId: "",
     email: "",
-    password: "",
-    passwordConfirm: "",
     termsAccepted: false,
 });
 
@@ -56,10 +55,9 @@ const avatarPreviewUrl = ref<string | null>(null);
 
 // ── Modals & Feedback ──
 const showConfirmModal = ref(false);
+const showPasswordModal = ref(false);
 const showSuccessModal = ref(false);
 const isSubmitting = ref(false);
-const showPassword = ref(false);
-const showPasswordConfirm = ref(false);
 
 // ── Lifecycle Initialization ──
 onMounted(async () => {
@@ -191,12 +189,7 @@ const goToStep = (step: WizardStep) => {
 };
 
 // ── Registration Submission Pipeline ──
-const handleRegistration = async () => {
-    if (!form.value.password || form.value.password !== form.value.passwordConfirm) {
-        alert("Las contraseñas no coinciden.");
-        return;
-    }
-
+const handleRegistration = async (credentials: { password: string; passwordConfirm: string }) => {
     isSubmitting.value = true;
     try {
         await identityApi.register({
@@ -206,19 +199,19 @@ const handleRegistration = async () => {
             phone_number: form.value.phoneNumber.trim() || null,
             municipality_id: form.value.municipalityId,
             email: form.value.email.trim(),
-            password: form.value.password,
+            password: credentials.password,
             interests: Array.from(selectedInterests.value),
         });
 
         if (avatarFile.value) {
             await identityApi.login({
                 email: form.value.email.trim(),
-                password: form.value.password,
+                password: credentials.password,
             });
             await userProfileApi.changeProfilePicture(avatarFile.value);
         }
 
-        showConfirmModal.value = false;
+        showPasswordModal.value = false;
         showSuccessModal.value = true;
     } catch (err: any) {
         alert(err.message || "Ocurrió un error al procesar el registro.");
@@ -261,14 +254,9 @@ const finishRegistration = () => {
                     <span class="step-label">Intereses</span>
                 </div>
                 <div :class="['step-line', { active: currentStep >= 3 }]"></div>
-                <div :class="['step', { active: currentStep === 3, completed: currentStep > 3 }]">
+                <div :class="['step', { active: currentStep === 3, completed: currentStep === 3 }]">
                     <div class="step-circle">3</div>
                     <span class="step-label">Revisión</span>
-                </div>
-                <div :class="['step-line', { active: currentStep >= 4 }]"></div>
-                <div :class="['step', { active: currentStep === 4, completed: currentStep === 4 }]">
-                    <div class="step-circle">4</div>
-                    <span class="step-label">Seguridad</span>
                 </div>
             </div>
 
@@ -446,68 +434,9 @@ const finishRegistration = () => {
                     <button type="button" class="btn-orange" @click="goToStep(2)">
                         <i class="fa-solid fa-arrow-left"></i> Atrás
                     </button>
-                    <button type="button" class="btn-teal" :disabled="!form.termsAccepted" @click="goToStep(4)">
-                        Continuar <i class="fa-solid fa-arrow-right"></i>
+                    <button type="button" class="btn-teal" :disabled="!form.termsAccepted" @click="showConfirmModal = true">
+                        Guardar Registro <i class="fa-solid fa-arrow-right"></i>
                     </button>
-                </div>
-            </div>
-
-            <!-- STEP 4: Password Setup -->
-            <div v-if="currentStep === 4" class="password-card-container">
-                <div class="password-card">
-                    <h2>Crear Contraseña</h2>
-                    <p>Crea una contraseña segura para tu cuenta.</p>
-
-                    <div class="form-group">
-                        <label>Correo electrónico</label>
-                        <div class="input-icon-wrapper">
-                            <i class="fa-regular fa-envelope left-icon"></i>
-                            <input :value="form.email" type="email" disabled />
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Contraseña <span class="required">*</span></label>
-                        <div class="input-icon-wrapper">
-                            <i class="fa-solid fa-lock left-icon"></i>
-                            <input
-                                v-model="form.password"
-                                :type="showPassword ? 'text' : 'password'"
-                                placeholder="Ingresa tu contraseña"
-                                required
-                            />
-                            <i
-                                :class="showPassword ? 'fa-regular fa-eye-slash right-icon' : 'fa-regular fa-eye right-icon'"
-                                @click="showPassword = !showPassword"
-                            ></i>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Confirmar contraseña <span class="required">*</span></label>
-                        <div class="input-icon-wrapper">
-                            <i class="fa-solid fa-lock left-icon"></i>
-                            <input
-                                v-model="form.passwordConfirm"
-                                :type="showPasswordConfirm ? 'text' : 'password'"
-                                placeholder="Confirma tu contraseña"
-                                required
-                            />
-                            <i
-                                :class="showPasswordConfirm ? 'fa-regular fa-eye-slash right-icon' : 'fa-regular fa-eye right-icon'"
-                                @click="showPasswordConfirm = !showPasswordConfirm"
-                            ></i>
-                        </div>
-                    </div>
-
-                    <div class="card-actions">
-                        <button type="button" class="btn-cancel" @click="goToStep(3)">
-                            <i class="fa-solid fa-arrow-left"></i> Atrás
-                        </button>
-                        <button type="button" class="btn-save" @click="showConfirmModal = true">
-                            Guardar Registro
-                        </button>
-                    </div>
                 </div>
             </div>
         </main>
@@ -526,12 +455,21 @@ const finishRegistration = () => {
                     <button type="button" class="btn-orange" :disabled="isSubmitting" @click="showConfirmModal = false">
                         Cancelar
                     </button>
-                    <button type="button" class="btn-teal" :disabled="isSubmitting" @click="handleRegistration">
-                        {{ isSubmitting ? "Enviando..." : "Enviar Información" }}
+                    <button type="button" class="btn-teal" :disabled="isSubmitting" @click="() => { showConfirmModal = false; showPasswordModal = true; }">
+                        Continuar
                     </button>
                 </div>
             </div>
         </div>
+
+
+        <CreatePasswordModal
+            v-model="showPasswordModal"
+            :email="form.email"
+            :loading="isSubmitting"
+            @submit="handleRegistration"
+            @cancel="showPasswordModal = false"
+        />
 
         <div v-if="showSuccessModal" class="modal-overlay">
             <div class="modal-content">

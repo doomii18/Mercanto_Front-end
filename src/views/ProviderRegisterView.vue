@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRouter } from "vue-router";
+import CreatePasswordModal from "../components/CreatePasswordModal.vue";
 import { GeocodingService } from "../modules/geo";
 import {
     identityApi,
@@ -38,11 +39,7 @@ const ownerForm = ref({
     phoneNumber: "",
 });
 
-// ── Security Data Model ──
-const password = ref("");
-const passwordConfirm = ref("");
-const showPass = ref(false);
-const showPassConfirm = ref(false);
+// ── Security & Confirmation Model ──
 const termsConfirmed = ref(false);
 
 // ── Asset Files & Previews ──
@@ -243,11 +240,7 @@ const openPasswordModal = () => {
     showPasswordModal.value = true;
 };
 
-const handleFinalSubmit = async () => {
-    if (!password.value || password.value !== passwordConfirm.value) {
-        alert("Las contraseñas no coinciden.");
-        return;
-    }
+const handleFinalSubmit = async (credentials: { password: string; passwordConfirm: string }) => {
     if (!businessForm.value.municipalityId) {
         alert("Falta el identificador municipal. Por favor confirma la ubicación en el mapa.");
         return;
@@ -258,7 +251,7 @@ const handleFinalSubmit = async () => {
         // Phase 1: Account registration & Session bootstrapping
         await identityApi.register({
             email: ownerForm.value.email.trim(),
-            password: password.value,
+            password: credentials.password,
             first_name: ownerForm.value.firstName.trim(),
             last_name: ownerForm.value.lastName.trim(),
             national_id: ownerForm.value.nationalId.trim(),
@@ -269,7 +262,7 @@ const handleFinalSubmit = async () => {
 
         await identityApi.login({
             email: ownerForm.value.email.trim(),
-            password: password.value,
+            password: credentials.password,
         });
 
         // Phase 2: Organization Creation
@@ -687,77 +680,14 @@ const finishRegistration = () => {
             </div>
         </div>
 
-        <!-- Modal: Password Creation -->
-        <div v-if="showPasswordModal" class="modal-overlay">
-            <div class="modal-content password-card">
-                <div class="modal-icon teal-bg">
-                    <i class="fa-solid fa-lock"></i>
-                </div>
-                <h2>Crear Contraseña</h2>
-                <p>Para enviar tu solicitud, debes asegurar tu cuenta.</p>
-
-                <div class="form-group text-left">
-                    <label>Correo electrónico</label>
-                    <div class="input-icon-wrapper">
-                        <i class="fa-regular fa-envelope left-icon"></i>
-                        <input :value="ownerForm.email" type="email" disabled />
-                    </div>
-                </div>
-
-                <div class="form-group text-left">
-                    <label>Contraseña <span class="required">*</span></label>
-                    <div class="input-icon-wrapper">
-                        <i class="fa-solid fa-lock left-icon"></i>
-                        <input
-                            v-model="password"
-                            :type="showPass ? 'text' : 'password'"
-                            placeholder="Ingresa tu contraseña"
-                            required
-                        />
-                        <i
-                            :class="showPass ? 'fa-regular fa-eye-slash right-icon' : 'fa-regular fa-eye right-icon'"
-                            @click="showPass = !showPass"
-                        ></i>
-                    </div>
-                </div>
-
-                <div class="form-group text-left">
-                    <label>Confirmar contraseña <span class="required">*</span></label>
-                    <div class="input-icon-wrapper">
-                        <i class="fa-solid fa-lock left-icon"></i>
-                        <input
-                            v-model="passwordConfirm"
-                            :type="showPassConfirm ? 'text' : 'password'"
-                            placeholder="Confirma tu contraseña"
-                            required
-                        />
-                        <i
-                            :class="showPassConfirm ? 'fa-regular fa-eye-slash right-icon' : 'fa-regular fa-eye right-icon'"
-                            @click="showPassConfirm = !showPassConfirm"
-                        ></i>
-                    </div>
-                </div>
-
-                <div class="card-actions">
-                    <button
-                        type="button"
-                        class="btn-cancel"
-                        :disabled="isSubmitting"
-                        @click="showPasswordModal = false"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        type="button"
-                        class="btn-save"
-                        :disabled="isSubmitting"
-                        @click="handleFinalSubmit"
-                    >
-                        {{ isSubmitting ? "Procesando..." : "Enviar solicitud" }}
-                    </button>
-                </div>
-            </div>
-        </div>
+        <!-- Modal Component: Password Creation -->
+        <CreatePasswordModal
+            v-model="showPasswordModal"
+            :email="ownerForm.email"
+            :loading="isSubmitting"
+            @submit="handleFinalSubmit"
+            @cancel="showPasswordModal = false"
+        />
 
         <!-- Modal: Success -->
         <div v-if="showSuccessModal" class="modal-overlay">
@@ -821,9 +751,7 @@ const finishRegistration = () => {
             </div>
         </div>
     </div>
-</template>
-
-<style scoped>
+</template><style scoped>
 .provider-register-page {
     min-height: 100vh;
     background-color: #ffffff;

@@ -374,7 +374,7 @@ const handleLogin = async () => {
     margin-bottom: 1.1rem;
 }
 
-.login-form label {
+.login-form .form-group > label {
     display: block;
     color: var(--light-teal);
     font-size: 0.88rem;
@@ -428,38 +428,46 @@ const handleLogin = async () => {
     padding: 0.2rem;
 }
 
+/* ── Checkbox & Forgot Password Row ── */
 .form-options {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin: 1.2rem 0 1.5rem 0;
     font-size: 0.88rem;
+    gap: 1rem;
 }
 
 .custom-checkbox {
-    display: flex;
-    align-items: center;
+    display: inline-flex !important;
+    align-items: center !important;
     gap: 0.5rem;
     color: var(--light-teal);
     font-weight: 500;
     cursor: pointer;
+    user-select: none;
+    margin-bottom: 0 !important;
 }
 
 .custom-checkbox input[type="checkbox"] {
     appearance: none;
-    width: 1.1em;
-    height: 1.1em;
+    -webkit-appearance: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    margin: 0;
     border: 2px solid var(--light-teal);
     border-radius: 4px;
     display: grid;
     place-content: center;
     cursor: pointer;
+    flex-shrink: 0;
+    background-color: #ffffff;
 }
 
 .custom-checkbox input[type="checkbox"]::before {
     content: "";
-    width: 0.6em;
-    height: 0.6em;
+    width: 0.65rem;
+    height: 0.65rem;
     transform: scale(0);
     transition: 120ms transform ease-in-out;
     background-color: var(--light-teal);
@@ -474,6 +482,7 @@ const handleLogin = async () => {
     color: var(--primary-orange);
     text-decoration: none;
     font-weight: 500;
+    white-space: nowrap;
     transition: text-decoration 0.2s ease;
 }
 
