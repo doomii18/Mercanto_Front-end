@@ -1,4 +1,19 @@
-import { GeocodingService } from "./modules/geo/index.js";
+import { GeocodingService } from "./modules/geo";
+import { identityApi, organizationApi, verificationRequestApi, verificationRequestDocumentApi, geographyApi } from "./api";
+
+// Global helper for password toggle
+window.togglePass = function(inputId, icon) {
+    const input = document.getElementById(inputId);
+    if (input.type === "password") {
+        input.type = "text";
+        icon.classList.remove('fa-eye');
+        icon.classList.add('fa-eye-slash');
+    } else {
+        input.type = "password";
+        icon.classList.remove('fa-eye-slash');
+        icon.classList.add('fa-eye');
+    }
+};
 
 document.addEventListener("DOMContentLoaded", () => {
   const MapController = {
@@ -7,7 +22,8 @@ document.addEventListener("DOMContentLoaded", () => {
     selectedLat: null,
     selectedLng: null,
     selectedAddress: "",
-    DEFAULT_CENTER: [12.1328, -86.2504], // Managua Default
+    selectedMunicipalityId: null,
+    DEFAULT_CENTER: [12.1328, -86.2504],
 
     elements: {
       modal: document.getElementById("modal-mapa"),
@@ -20,6 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
       targetInput: document.getElementById("negocio-direccion"),
       targetLat: document.getElementById("negocio-lat"),
       targetLng: document.getElementById("negocio-lng"),
+      targetMunId: document.getElementById("negocio-municipality-id"),
     },
 
     init() {
@@ -30,15 +47,9 @@ document.addEventListener("DOMContentLoaded", () => {
     bindEvents() {
       this.elements.btnOpen.addEventListener("click", () => this.openModal());
       this.elements.btnClose.addEventListener("click", () => this.closeModal());
-      this.elements.btnCancel.addEventListener("click", () =>
-        this.closeModal(),
-      );
-      this.elements.btnConfirm.addEventListener("click", () =>
-        this.confirmSelection(),
-      );
-      this.elements.btnCurrent.addEventListener("click", () =>
-        this.useCurrentLocation(),
-      );
+      this.elements.btnCancel.addEventListener("click", () => this.closeModal());
+      this.elements.btnConfirm.addEventListener("click", () => this.confirmSelection());
+      this.elements.btnCurrent.addEventListener("click", () => this.useCurrentLocation());
     },
 
     openModal() {
@@ -62,9 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
         maxZoom: 19,
       }).addTo(this.map);
 
-      this.map.on("click", (e) =>
-        this.updateMarker(e.latlng.lat, e.latlng.lng),
-      );
+      this.map.on("click", (e) => this.updateMarker(e.latlng.lat, e.latlng.lng));
     },
 
     async updateMarker(lat, lng) {
@@ -81,20 +90,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
       }
 
-      this.elements.addressText.textContent = "Obteniendo dirección...";
+      this.elements.addressText.textContent = "Obteniendo dirección y municipio...";
       this.elements.btnConfirm.disabled = true;
 
-      this.selectedAddress = await GeocodingService.reverseGeocode(lat, lng);
-      this.elements.addressText.textContent = this.selectedAddress;
-      this.elements.btnConfirm.disabled = false;
+      try {
+        this.selectedAddress = await GeocodingService.reverseGeocode(lat, lng);
+        this.elements.addressText.textContent = this.selectedAddress;
+
+        // Retrieve municipality metadata using backend API
+        const geoRes = await geographyApi.getMunicipalityByCoordinates({ lat, lng });
+        this.selectedMunicipalityId = geoRes.id;
+
+        this.elements.btnConfirm.disabled = false;
+      } catch (error) {
+        console.error("Municipality lookup failed:", error);
+        this.selectedMunicipalityId = null;
+        this.elements.addressText.innerHTML = `${this.selectedAddress} <br><span style="color: #d9534f; font-size: 0.8rem; font-weight: 600;">(Coordenadas fuera de cobertura municipal. Intenta nuevamente.)</span>`;
+        this.elements.btnConfirm.disabled = true;
+      }
     },
 
     useCurrentLocation() {
       if (!navigator.geolocation) return alert("Geolocalización no soportada.");
 
       const originalHtml = this.elements.btnCurrent.innerHTML;
-      this.elements.btnCurrent.innerHTML =
-        '<i class="fa-solid fa-spinner fa-spin"></i> Obteniendo...';
+      this.elements.btnCurrent.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Obteniendo...';
       this.elements.btnCurrent.disabled = true;
 
       navigator.geolocation.getCurrentPosition(
@@ -104,7 +124,7 @@ document.addEventListener("DOMContentLoaded", () => {
           await this.updateMarker(latitude, longitude);
           this.restoreCurrentBtn(originalHtml);
         },
-        (err) => {
+        () => {
           alert("Permiso denegado o error de red.");
           this.restoreCurrentBtn(originalHtml);
         },
@@ -118,16 +138,18 @@ document.addEventListener("DOMContentLoaded", () => {
     },
 
     confirmSelection() {
-      if (!this.selectedLat) return;
+      if (!this.selectedLat || !this.selectedMunicipalityId) return;
       this.elements.targetInput.value = this.selectedAddress;
       this.elements.targetLat.value = this.selectedLat;
       this.elements.targetLng.value = this.selectedLng;
+      this.elements.targetMunId.value = this.selectedMunicipalityId;
       this.closeModal();
     },
   };
 
   MapController.init();
 
+  // View Navigation
   const step1Content = document.getElementById("step1-content");
   const step2Content = document.getElementById("step2-content");
   const step3Content = document.getElementById("step3-content");
@@ -172,35 +194,23 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  document
-    .getElementById("btn-next-to-2")
-    .addEventListener("click", () => showStep(2));
-  document
-    .getElementById("btn-back-to-1")
-    .addEventListener("click", () => showStep(1));
-  document
-    .getElementById("btn-next-to-3")
-    .addEventListener("click", () => showStep(3));
-  document
-    .getElementById("btn-back-to-2")
-    .addEventListener("click", () => showStep(2));
-  document
-    .getElementById("btn-cancelar")
-    .addEventListener("click", () => (window.location.href = "registro.html"));
+  document.getElementById("btn-next-to-2").addEventListener("click", () => showStep(2));
+  document.getElementById("btn-back-to-1").addEventListener("click", () => showStep(1));
+  document.getElementById("btn-next-to-3").addEventListener("click", () => showStep(3));
+  document.getElementById("btn-back-to-2").addEventListener("click", () => showStep(2));
+  document.getElementById("btn-cancelar").addEventListener("click", () => (window.location.href = "registro.html"));
 
+  // Logo Upload
   let logoDataUrl = null;
   const fileLogo = document.getElementById("file-logo");
   const logoPreview = document.getElementById("logo-preview");
   const dragDropLogo = document.getElementById("drag-drop-logo");
-  const logoPreviewContainer = document.getElementById(
-    "logo-preview-container",
-  );
+  const logoPreviewContainer = document.getElementById("logo-preview-container");
 
   function handleLogoFiles(files) {
     if (files.length === 0) return;
     const file = files[0];
-    if (!file.type.startsWith("image/"))
-      return alert("Solo se permiten imágenes.");
+    if (!file.type.startsWith("image/")) return alert("Solo se permiten imágenes.");
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -212,9 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
     reader.readAsDataURL(file);
   }
 
-  document
-    .getElementById("btn-browse-logo")
-    .addEventListener("click", () => fileLogo.click());
+  document.getElementById("btn-browse-logo").addEventListener("click", () => fileLogo.click());
   fileLogo.addEventListener("change", (e) => handleLogoFiles(e.target.files));
 
   dragDropLogo.addEventListener("dragover", (e) => {
@@ -239,44 +247,36 @@ document.addEventListener("DOMContentLoaded", () => {
     dragDropLogo.style.display = "block";
   });
 
+  // ID Upload (Documento de Identidad)
   const btnSubirCedula = document.getElementById("btn-subir-cedula");
   const fileCedula = document.getElementById("file-cedula");
   btnSubirCedula.addEventListener("click", () => fileCedula.click());
   fileCedula.addEventListener("change", (e) => {
     if (e.target.files.length > 0) {
-      document.getElementById("cedula-filename").textContent =
-        e.target.files[0].name;
-      btnSubirCedula.innerHTML =
-        'Documento seleccionado <i class="fa-solid fa-check"></i>';
+      document.getElementById("cedula-filename").textContent = e.target.files[0].name;
+      btnSubirCedula.innerHTML = 'Documento seleccionado <i class="fa-solid fa-check"></i>';
       btnSubirCedula.style.color = "var(--light-teal)";
       btnSubirCedula.style.borderColor = "var(--light-teal)";
     }
   });
 
   function populateReview() {
-    document.getElementById("res-ruc").textContent =
-      document.getElementById("negocio-ruc").value || "-";
-    document.getElementById("res-negocio").textContent =
-      document.getElementById("negocio-nombre").value || "-";
-    document.getElementById("res-tipo").textContent =
-      document.getElementById("negocio-tipo").value || "-";
-    document.getElementById("res-tel-negocio").textContent =
-      document.getElementById("negocio-telefono").value || "-";
-    document.getElementById("res-direccion").textContent =
-      document.getElementById("negocio-direccion").value || "-";
+    const nombres = document.getElementById("propietario-nombres").value.trim();
+    const apellidos = document.getElementById("propietario-apellidos").value.trim();
+    document.getElementById("res-propietario").textContent = `${nombres} ${apellidos}` || "-";
+    document.getElementById("res-ruc").textContent = document.getElementById("negocio-ruc").value || "-";
+    document.getElementById("res-negocio").textContent = document.getElementById("negocio-nombre").value || "-";
+    document.getElementById("res-tipo").textContent = document.getElementById("negocio-tipo").value || "-";
+    document.getElementById("res-tel-negocio").textContent = document.getElementById("negocio-telefono").value || "-";
+    document.getElementById("res-direccion").textContent = document.getElementById("negocio-direccion").value || "-";
 
-    document.getElementById("res-cedula").textContent =
-      document.getElementById("propietario-cedula").value || "-";
-    document.getElementById("res-propietario").textContent =
-      document.getElementById("propietario-nombre").value || "-";
-    document.getElementById("res-correo").textContent =
-      document.getElementById("propietario-correo").value || "-";
-    document.getElementById("res-tel-prop").textContent =
-      document.getElementById("propietario-telefono").value || "-";
+    document.getElementById("res-cedula").textContent = document.getElementById("propietario-cedula").value || "-";
+    document.getElementById("res-correo").textContent = document.getElementById("propietario-correo").value || "-";
+    document.getElementById("res-tel-prop").textContent = document.getElementById("propietario-telefono").value || "-";
 
     const reviewLogo = document.getElementById("review-logo");
     if (logoDataUrl) {
-      reviewLogo.innerHTML = `<img src="${logoDataUrl}" alt="Logo del Negocio">`;
+      reviewLogo.innerHTML = `<img src="${logoDataUrl}" alt="Logo del Negocio" style="width: 100%; height: 100%; object-fit: cover;">`;
       reviewLogo.style.border = "none";
     } else {
       reviewLogo.innerHTML = '<i class="fa-solid fa-image"></i>';
@@ -284,35 +284,120 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Modals Setup
   const btnSubmit = document.getElementById("btn-submit");
   const modalConfirm = document.getElementById("modal-confirm");
   const modalSuccess = document.getElementById("modal-success");
+  const modalPassword = document.getElementById("modal-password");
 
   document.getElementById("confirm-check").addEventListener("change", (e) => {
     btnSubmit.disabled = !e.target.checked;
   });
 
-  btnSubmit.addEventListener(
-    "click",
-    () => (modalConfirm.style.display = "flex"),
-  );
+  btnSubmit.addEventListener("click", () => (modalConfirm.style.display = "flex"));
 
   const closeModalConfirm = () => (modalConfirm.style.display = "none");
-  document
-    .getElementById("btn-close-confirm")
-    .addEventListener("click", closeModalConfirm);
-  document
-    .getElementById("btn-cancel-modal")
-    .addEventListener("click", closeModalConfirm);
+  document.getElementById("btn-close-confirm").addEventListener("click", closeModalConfirm);
+  document.getElementById("btn-cancel-modal").addEventListener("click", closeModalConfirm);
 
+  // Verification Workflow Integration
   document.getElementById("btn-confirm-send").addEventListener("click", () => {
     modalConfirm.style.display = "none";
-    modalSuccess.style.display = "flex";
+    document.getElementById("pass-email").value = document.getElementById("propietario-correo").value;
+    modalPassword.style.display = "flex";
   });
 
-  document
-    .getElementById("btn-continue-success")
-    .addEventListener("click", () => {
-      window.location.href = "registro_password.html";
-    });
+  document.getElementById("btn-cancel-password").addEventListener("click", () => {
+    modalPassword.style.display = "none";
+  });
+
+  document.getElementById("btn-confirm-password").addEventListener("click", async () => {
+    const pass = document.getElementById("pass-input").value;
+    const confirm = document.getElementById("pass-confirm").value;
+    const municipalityId = document.getElementById("negocio-municipality-id").value;
+
+    if (!pass || pass !== confirm) return alert("Las contraseñas no coinciden.");
+    if (!municipalityId) return alert("Falta el identificador de municipio. Por favor, selecciona la ubicación en el mapa nuevamente.");
+
+    const btn = document.getElementById("btn-confirm-password");
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+    btn.disabled = true;
+
+    try {
+      const email = document.getElementById("propietario-correo").value.trim();
+      const firstName = document.getElementById("propietario-nombres").value.trim() || "Proveedor";
+      const lastName = document.getElementById("propietario-apellidos").value.trim() || "Registrado";
+      const cedula = document.getElementById("propietario-cedula").value.trim();
+      const phone = document.getElementById("propietario-telefono").value.trim();
+
+      // Phase 1: Identity & Profile
+      await identityApi.register({
+        email,
+        password: pass,
+        first_name: firstName,
+        last_name: lastName,
+        national_id: cedula,
+        phone_number: phone,
+        municipality_id: municipalityId,
+        interests: []
+      });
+
+      await identityApi.login({ email, password: pass });
+
+      // Phase 2: Tenant creation
+      const rawKind = document.getElementById("negocio-tipo").value;
+      const kindMap = {
+        "Industria Manufacturera": "manufacturer",
+        "Comercio al por mayor": "wholesaler",
+        "Agricultura y Ganadería": "manufacturer"
+      };
+
+      const org = await organizationApi.registerOrganization({
+        company_name: document.getElementById("negocio-nombre").value.trim(),
+        tax_id: document.getElementById("negocio-ruc").value.trim(),
+        location: {
+          latitude: parseFloat(document.getElementById("negocio-lat").value) || 0,
+          longitude: parseFloat(document.getElementById("negocio-lng").value) || 0
+        },
+        company_description: null,
+        phone_number: document.getElementById("negocio-telefono").value.trim(),
+        municipality_id: municipalityId,
+        address: document.getElementById("negocio-direccion").value.trim(),
+        kind: kindMap[rawKind] || "manufacturer"
+      });
+
+      // Phase 3: State Machine Drafting & Upload
+      const req = await verificationRequestApi.createVerificationRequest({
+        organization_id: org.id
+      });
+
+      if (fileCedula.files.length > 0) {
+        await verificationRequestDocumentApi.uploadVerificationDocument(
+          req.id,
+          fileCedula.files[0],
+          "Documento de Identidad"
+        );
+      }
+
+      // Phase 4: Submit Verification
+      await verificationRequestApi.submitVerificationRequest(req.id, {
+        request_id: req.id
+      });
+
+      modalPassword.style.display = "none";
+      modalSuccess.style.display = "flex";
+
+    } catch (error) {
+      console.error("Workflow failed:", error);
+      alert("Error: " + (error.message || "Ocurrió un problema durante el registro."));
+    } finally {
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  document.getElementById("btn-continue-success").addEventListener("click", () => {
+    window.location.href = "login.html";
+  });
 });

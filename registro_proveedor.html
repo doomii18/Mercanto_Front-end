@@ -8,14 +8,17 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="./src/styles/registro_proveedor.css">
 
+    <!-- Core Stylesheets -->
+    <link rel="stylesheet" href="./src/styles/registro_proveedor.css">
+    <link rel="stylesheet" href="./src/styles/registro_password.css">
+
+    <!-- Map Dependencies -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 </head>
 <body>
 
-    <!-- Header -->
     <header class="top-header">
         <div class="logo">
             <img src="./src/assets/logo.png" alt="Mercanto Icon" class="logo-icon">
@@ -50,6 +53,7 @@
         </div>
 
         <div class="wizard-wrapper">
+
             <!-- STEP 1: Negocio -->
             <div id="step1-content" class="wizard-step active-step">
                 <div class="wizard-box">
@@ -57,17 +61,17 @@
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>1. Número RUC <span class="required">*</span></label>
+                            <label>Número RUC <span class="required">*</span></label>
                             <input type="text" id="negocio-ruc" placeholder="J0310000664348">
                         </div>
 
                         <div class="form-group">
-                            <label>2. Nombre del Negocio <span class="required">*</span></label>
+                            <label>Nombre del Negocio <span class="required">*</span></label>
                             <input type="text" id="negocio-nombre" placeholder="E. Chamorro Industrial S.A">
                         </div>
 
                         <div class="form-group">
-                            <label>3. Tipo de Negocio <span class="required">*</span></label>
+                            <label>Tipo de Negocio <span class="required">*</span></label>
                             <div class="select-wrapper">
                                 <select id="negocio-tipo">
                                     <option value="" disabled selected>Seleccione...</option>
@@ -80,20 +84,20 @@
                         </div>
 
                         <div class="form-group">
-                            <label>4. Teléfono del Negocio <span class="required">*</span></label>
+                            <label>Teléfono del Negocio <span class="required">*</span></label>
                             <input type="tel" id="negocio-telefono" placeholder="2222 7854">
                         </div>
 
                         <div class="form-group full-width">
-                            <label>5. Dirección <span class="required">*</span></label>
+                            <label>Dirección <span class="required">*</span></label>
                             <div class="input-with-button">
-                                <input type="text" id="negocio-direccion" placeholder="Calle La Inmaculada en la ciudad de Granada, Nicaragua.">
+                                <input type="text" id="negocio-direccion" placeholder="Calle La Inmaculada en la ciudad de Granada, Nicaragua." readonly>
                                 <button type="button" class="btn-mapa" id="btn-mapa"><i class="fa-solid fa-location-dot"></i> Mapa</button>
                             </div>
                         </div>
 
                         <div class="form-group full-width">
-                            <label>6. Logo del Negocio <span class="required">*</span></label>
+                            <label>Logo del Negocio</label>
                             <div class="drag-drop-zone" id="drag-drop-logo">
                                 <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
                                 <p>Arrastra una imagen aquí</p>
@@ -122,33 +126,38 @@
 
                     <div class="form-grid">
                         <div class="form-group">
-                            <label>1. Cédula de Identidad <span class="required">*</span></label>
+                            <label>Cédula de Identidad <span class="required">*</span></label>
                             <input type="text" id="propietario-cedula" placeholder="401-230900-5001F">
-                            <div style="margin-top:0.5rem">
+                            <div class="preview-container">
                                 <button type="button" class="btn-subir-doc" id="btn-subir-cedula">Subir documento <i class="fa-regular fa-file-image"></i></button>
-                                <span id="cedula-filename" style="margin-left: 10px; font-size:0.9rem; color:#666;"></span>
+                                <span id="cedula-filename" class="upload-info" style="margin:0;"></span>
                             </div>
                             <input type="file" id="file-cedula" accept="image/png, image/jpeg, application/pdf" style="display: none;">
                         </div>
 
                         <div class="form-group">
-                            <label>2. Nombre del Propietario <span class="required">*</span></label>
-                            <input type="text" id="propietario-nombre" placeholder="Ernesto Chamorro">
+                            <label>Nombres del Propietario <span class="required">*</span></label>
+                            <input type="text" id="propietario-nombres" placeholder="Ernesto">
                         </div>
 
                         <div class="form-group">
-                            <label>3. Correo electrónico <span class="required">*</span></label>
+                            <label>Apellidos del Propietario <span class="required">*</span></label>
+                            <input type="text" id="propietario-apellidos" placeholder="Chamorro">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Correo electrónico <span class="required">*</span></label>
                             <input type="email" id="propietario-correo" placeholder="echamorro@gmail.com">
                         </div>
 
                         <div class="form-group">
-                            <label>4. Teléfono <span class="required">*</span></label>
+                            <label>Teléfono <span class="required">*</span></label>
                             <input type="tel" id="propietario-telefono" placeholder="8790 - 6723">
                         </div>
                     </div>
                 </div>
 
-                <div class="step-actions right-align" style="justify-content: flex-end; gap: 1rem; margin-top: 3rem;">
+                <div class="step-actions right-align">
                     <button type="button" class="btn-orange" id="btn-back-to-1"><i class="fa-solid fa-arrow-left"></i> Atrás</button>
                     <button type="button" class="btn-teal" id="btn-next-to-3">Continuar <i class="fa-solid fa-arrow-right"></i></button>
                 </div>
@@ -156,10 +165,13 @@
 
             <!-- STEP 3: Revisión y Envío -->
             <div id="step3-content" class="wizard-step" style="display: none;">
-                <div class="wizard-box">
-                    <div class="review-section">
-                        <h3 class="step-title section-title">Información del Negocio</h3>
-                        <div class="review-grid-new">
+                <div class="split-view">
+
+                    <!-- Left Column: Data Review Grid -->
+                    <div class="review-left">
+                        <h3 class="step-title section-border-bottom">Información del Negocio</h3>
+
+                        <div class="review-grid-new" style="margin-bottom: 2rem;">
                             <div class="review-logo-area">
                                 <div class="review-logo-circle" id="review-logo">
                                     <i class="fa-solid fa-image"></i>
@@ -188,13 +200,11 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="review-section" style="margin-top:3rem;">
-                        <h3 class="step-title section-title">Información del Propietario</h3>
+                        <h3 class="step-title section-border-bottom">Información del Propietario</h3>
+
                         <div class="review-grid-new">
                             <div class="review-logo-area" style="visibility: hidden;">
-                                <!-- Placeholder to keep alignment -->
                                 <div class="review-logo-circle"></div>
                             </div>
                             <div class="review-data-list">
@@ -216,12 +226,52 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="checkbox-container-new">
+                            <input type="checkbox" id="confirm-check">
+                            <label for="confirm-check">Confirmo que la información enviada es correcta y autorizo a Mercanto verificar los datos enviados.</label>
+                        </div>
                     </div>
 
-                    <div class="checkbox-container-new">
-                        <input type="checkbox" id="confirm-check">
-                        <label for="confirm-check">Confirmo que la información enviada es correcta y autorizo a Mercanto verificar los datos enviados.</label>
+                    <!-- Right Column: Timeline Banner -->
+                    <div class="review-right">
+                        <div class="approval-panel">
+                            <div class="shield-icon">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <h4>¿Qué sucederá después?</h4>
+                            <p class="approval-desc">Nuestro equipo revisará la información y verificará que los datos enviados sean correctos.</p>
+
+                            <hr>
+
+                            <h4 style="text-align: left; margin-bottom: 1.5rem;">Proceso de Aprobación</h4>
+
+                            <div class="approval-timeline">
+                                <div class="timeline-item">
+                                    <i class="fa-regular fa-clock timeline-icon orange"></i>
+                                    <div class="timeline-content">
+                                        <h5>En revisión</h5>
+                                        <p>Tu solicitud es revisada por nuestro equipo.</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <i class="fa-regular fa-circle-check timeline-icon teal"></i>
+                                    <div class="timeline-content">
+                                        <h5>Aprobado</h5>
+                                        <p>Se te notificará por correo que tu solicitud ha sido aprobada.</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <i class="fa-regular fa-circle-xmark timeline-icon orange"></i>
+                                    <div class="timeline-content">
+                                        <h5>Desaprobado</h5>
+                                        <p>Te pediremos actualizar la información.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
                 </div>
             </div>
 
@@ -249,6 +299,48 @@
         </div>
     </div>
 
+    <!-- Modal Crear Contraseña -->
+    <div id="modal-password" class="modal-overlay" style="display: none;">
+        <div class="modal-content password-card">
+            <div class="modal-icon teal-bg">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h2>Crear Contraseña</h2>
+            <p>Para enviar tu solicitud, debes asegurar tu cuenta.</p>
+
+            <div class="form-group" style="text-align: left;">
+                <label>Correo electrónico</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-regular fa-envelope left-icon"></i>
+                    <input type="email" id="pass-email" disabled>
+                </div>
+            </div>
+
+            <div class="form-group" style="text-align: left;">
+                <label>Contraseña</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-lock left-icon"></i>
+                    <input type="password" id="pass-input" placeholder="Ingresa tu contraseña">
+                    <i class="fa-regular fa-eye right-icon" onclick="togglePass('pass-input', this)"></i>
+                </div>
+            </div>
+
+            <div class="form-group" style="text-align: left;">
+                <label>Confirmar contraseña</label>
+                <div class="input-icon-wrapper">
+                    <i class="fa-solid fa-lock left-icon"></i>
+                    <input type="password" id="pass-confirm" placeholder="Confirma tu contraseña">
+                    <i class="fa-regular fa-eye right-icon" onclick="togglePass('pass-confirm', this)"></i>
+                </div>
+            </div>
+
+            <div class="card-actions">
+                <button type="button" class="btn-cancel" id="btn-cancel-password">Cancelar</button>
+                <button type="button" class="btn-save" id="btn-confirm-password">Enviar solicitud</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Modal Éxito -->
     <div id="modal-success" class="modal-overlay" style="display: none;">
         <div class="modal-content">
@@ -256,7 +348,7 @@
                 <i class="fa-regular fa-paper-plane"></i>
             </div>
             <h2>¡Información Enviada!</h2>
-            <p>Tu solicitud de registro de proveedor ha sido enviada con éxito</p>
+            <p>Tu solicitud de registro de proveedor ha sido enviada con éxito.</p>
             <div class="modal-actions center-align">
                 <button type="button" class="btn-teal" id="btn-continue-success">Continuar <i class="fa-solid fa-arrow-right"></i></button>
             </div>
@@ -265,29 +357,30 @@
 
     <!-- Modal Mapa Geocodificación -->
     <div id="modal-mapa" class="modal-overlay" style="display: none;">
-        <div class="modal-content" style="max-width: 700px; padding: 2rem;">
+        <div class="modal-content map-modal-content">
             <button class="btn-close-modal" id="btn-close-mapa"><i class="fa-solid fa-xmark"></i></button>
 
-            <h2 style="margin-bottom: 1.5rem; color: var(--primary-blue); font-size: 1.4rem; text-align: left;">
+            <h2 class="map-modal-header">
                 <i class="fa-solid fa-location-dot" style="color: var(--light-teal); margin-right: 0.5rem;"></i> Seleccionar Ubicación
             </h2>
 
-            <button type="button" class="btn-teal" id="btn-current-location" style="width: 100%; margin-bottom: 1rem; justify-content: center; background-color: var(--bg-gray); color: var(--primary-blue); border: 1px solid var(--border-gray);">
+            <button type="button" class="btn-teal map-btn-current" id="btn-current-location">
                 <i class="fa-solid fa-location-crosshairs"></i> Usar mi ubicación actual
             </button>
 
-            <div id="map-container" style="height: 350px; width: 100%; border-radius: 8px; border: 1px solid var(--border-gray); z-index: 1;"></div>
+            <div id="map-container" class="map-container-wrapper"></div>
 
-            <div style="margin-top: 1rem; text-align: left;">
-                <label style="font-size: 0.85rem; font-weight: 600; color: var(--primary-blue);">Dirección detectada:</label>
-                <div id="selected-address-text" style="padding: 0.8rem; background: var(--bg-gray); border-radius: 8px; font-size: 0.9rem; color: #555; min-height: 45px; margin-top: 0.5rem;">
+            <div>
+                <label class="map-address-label">Dirección detectada:</label>
+                <div id="selected-address-text" class="map-address-box">
                     Ninguna ubicación seleccionada
                 </div>
             </div>
 
-            <!-- Campos ocultos para enviar al backend -->
+            <!-- Backend Payloads -->
             <input type="hidden" id="negocio-lat">
             <input type="hidden" id="negocio-lng">
+            <input type="hidden" id="negocio-municipality-id">
 
             <div class="modal-actions" style="margin-top: 2rem; justify-content: flex-end;">
                 <button type="button" class="btn-orange" id="btn-cancel-mapa" style="flex: none; padding: 0.8rem 2rem; background-color: var(--bg-gray); color: var(--primary-blue);">Cancelar</button>
