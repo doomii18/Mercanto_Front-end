@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artículos Tecnológicos — Mercanto</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lora:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="./src/styles/categoria.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="top-header">
+        <div class="logo">
+            <img src="./src/assets/logo.png" alt="Mercanto Logo" class="logo-icon">
+        </div>
+        <nav class="nav-links">
+            <a href="index.html#inicio">Inicio</a>
+            <a href="index.html#categorias">Categorías</a>
+            <a href="index.html#proveedores">Proveedores</a>
+            <a href="index.html#como-funciona">Como funciona</a>
+        </nav>
+        <div class="auth-buttons">
+            <a href="login.html" class="login-btn">Iniciar sesión</a>
+            <a href="registro.html" class="register-btn">Registrarse</a>
+        </div>
+    </header>
+
+    <main class="category-page-container">
+        
+        <!-- Category Hero Banner -->
+        <section class="category-hero">
+            <div class="hero-left">
+                <img src="./src/assets/audifonos.png" alt="Auriculares Tecnológicos" class="hero-image-main">
+            </div>
+            <div class="hero-center">
+                <h1>Artículos Tecnológicos</h1>
+                <p>Encuentra los mejores artículos tecnológicos al por mayor para tu negocio</p>
+                <div class="badge-products">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span>200 Productos disponibles</span>
+                </div>
+            </div>
+            <div class="hero-right">
+                <div class="circles-graphic">
+                    <div class="circle circle-teal"></div>
+                    <div class="circle circle-orange"></div>
+                    <div class="circle circle-darkblue"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Other Categories Carousel -->
+        <section class="explore-categories">
+            <h3>Explora otras categorías</h3>
+            <div class="categories-carousel-wrapper">
+                <button class="carousel-arrow arrow-left"><i class="fa-solid fa-chevron-left"></i></button>
+                <div class="categories-list">
+                    <div class="category-icon-item active">
+                        <div class="icon-circle"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+                    </div>
+                    <div class="category-icon-item">
+                        <div class="icon-circle"><i class="fa-solid fa-plug"></i></div>
+                    </div>
+                    <div class="category-icon-item">
+                        <div class="icon-circle"><i class="fa-solid fa-ring"></i></div>
+                    </div>
+                    <div class="category-icon-item">
+                        <div class="icon-circle"><i class="fa-solid fa-shirt"></i></div>
+                    </div>
+                    <div class="category-icon-item">
+                        <div class="icon-circle"><i class="fa-solid fa-user-tie"></i></div>
+                    </div>
+                    <div class="category-icon-item">
+                        <div class="icon-circle"><i class="fa-solid fa-horse"></i></div>
+                    </div>
+                    <div class="category-icon-item">
+                        <div class="icon-circle"><i class="fa-solid fa-utensils"></i></div>
+                    </div>
+                </div>
+                <button class="carousel-arrow arrow-right"><i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+        </section>
+
+        <!-- Search and Sorting Bar -->
+        <section class="search-sort-bar">
+            <div class="search-box-wrapper">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" placeholder="Buscar en Artículos Tecnológicos">
+                <button class="btn-orange">Buscar productos</button>
+            </div>
+            <div class="sort-filter-wrapper">
+                <div class="sort-select">
+                    <span>Ordenar por: <strong>Más Relevantes</strong></span>
+                </div>
+                <button class="btn-filter"><i class="fa-solid fa-bars"></i></button>
+            </div>
+        </section>
+
+        <!-- Products Section -->
+        <section class="products-catalog">
+            <div class="catalog-header">
+                <span>Mostrando 1-8 de 200 productos</span>
+            </div>
+            
+            <div class="products-grid">
+                <!-- Card 1 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <!-- Standard Laptop image placeholder -->
+                        <img src="https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&q=80" alt="Laptop Adventure">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Laptop Adventure</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 2350</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">NicaTech S.A.</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-1">1</div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80" alt="Samsung S26 Ultra">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Samsung S26 Ultra</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 23350</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">Mangua Labs S.A.</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-2">2</div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="./src/assets/tableta.png" alt="Tablet para niños">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Tablet para niños</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 950</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">Mangua Labs S.A.</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-3">3</div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=400&q=80" alt="Smart Watch Apple">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Smart Watch Apple</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 350</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">Apante Software</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-4">4</div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&q=80" alt="Consola de video">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Consola de video</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 850</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">Apante Software</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-1">1</div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="https://images.unsplash.com/photo-1557862921-37829c790f19?w=400&q=80" alt="Set de cámaras">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Set de cámaras</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 660</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">NicaTech S.A.</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-2">2</div>
+                </div>
+
+                <!-- Card 7 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="https://images.unsplash.com/photo-1622535056705-4171a824b7a4?w=400&q=80" alt="Usb 64Gb - HP">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Usb 64Gb - HP</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 250</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">Mangua Labs S.A.</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-3">3</div>
+                </div>
+
+                <!-- Card 8 -->
+                <div class="product-card">
+                    <button class="btn-wishlist"><i class="fa-regular fa-heart"></i></button>
+                    <div class="product-img-wrapper">
+                        <img src="https://images.unsplash.com/photo-1628149455678-16f37bc392f4?w=400&q=80" alt="Cargador Samsung">
+                    </div>
+                    <div class="card-info">
+                        <span class="category-label">Artículos tecnológicos</span>
+                        <h4 class="product-title">Cargador Samsung</h4>
+                        <div class="price-min-order">
+                            <span class="price">C$ 150</span>
+                            <span class="min-order">Pedido mín. 12 und</span>
+                        </div>
+                        <div class="provider-info">
+                            <div class="provider-details">
+                                <i class="fa-solid fa-circle-check verified-icon"></i>
+                                <span class="provider-name">NicaTech S.A.</span>
+                            </div>
+                            <div class="rating-info">
+                                <i class="fa-regular fa-user"></i>
+                                <span class="rating">4.5 <i class="fa-solid fa-star star-filled"></i></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="rank-badge rank-4">4</div>
+                </div>
+            </div>
+
+            <div class="load-more-wrapper">
+                <button class="btn-load-more">Cargar más productos <i class="fa-solid fa-chevron-down"></i></button>
+            </div>
+        </section>
+
+        <!-- Featured Providers Section -->
+        <section class="featured-providers">
+            <h2>Proveedores destacados de Artículos Tecnológicos</h2>
+            
+            <div class="providers-grid">
+                <!-- Provider 1 -->
+                <div class="provider-card">
+                    <div class="provider-avatar">
+                        <i class="fa-regular fa-user"></i>
+                    </div>
+                    <h4>NicaTech S.A.</h4>
+                    <div class="verified-badge">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Proveedor verificado</span>
+                    </div>
+                    <div class="provider-rating">
+                        <strong>4.5</strong>
+                        <i class="fa-solid fa-star star-filled"></i>
+                    </div>
+                    <p class="provider-location">León, El viejo</p>
+                    <button class="btn-catalog">Ver catálogo</button>
+                </div>
+
+                <!-- Provider 2 -->
+                <div class="provider-card">
+                    <div class="provider-avatar">
+                        <i class="fa-regular fa-user"></i>
+                    </div>
+                    <h4>Apante Software</h4>
+                    <div class="verified-badge">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Proveedor verificado</span>
+                    </div>
+                    <div class="provider-rating">
+                        <strong>4.2</strong>
+                        <i class="fa-solid fa-star star-filled"></i>
+                    </div>
+                    <p class="provider-location">San Ramón, Matagalpa</p>
+                    <button class="btn-catalog">Ver catálogo</button>
+                </div>
+
+                <!-- Provider 3 -->
+                <div class="provider-card">
+                    <div class="provider-avatar">
+                        <i class="fa-regular fa-user"></i>
+                    </div>
+                    <h4>Mangua Labs S.A.</h4>
+                    <div class="verified-badge">
+                        <i class="fa-solid fa-certificate"></i>
+                        <span>Proveedor verificado</span>
+                    </div>
+                    <div class="provider-rating">
+                        <strong>4.0</strong>
+                        <i class="fa-solid fa-star star-filled"></i>
+                    </div>
+                    <p class="provider-location">Managua, Managua</p>
+                    <button class="btn-catalog">Ver catálogo</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-info">
+                <div class="footer-logo">
+                    <img src="./src/assets/1.1 Imagotipo variacion.png" alt="Mercanto" style="height: 45px;" />
+                </div>
+                <p><i class="fa-regular fa-envelope"></i> mercanto@gmail.com</p>
+                <p><i class="fa-brands fa-whatsapp"></i> +505 88662233</p>
+                <p><i class="fa-solid fa-location-dot"></i> Managua, Nicaragua</p>
+            </div>
+
+            <div class="footer-links">
+                <a href="#">Política de privacidad</a>
+                <a href="#">Categorías</a>
+                <a href="#">Proveedores</a>
+                <a href="#">Productos</a>
+                <a href="#">Como funciona la plataforma</a>
+            </div>
+            <div class="footer-cta">
+                <h4 class="orange-text">CONVIERTE EN PROVEEDOR</h4>
+                <p>¿Eres exportador o distribuidor mayorista?</p>
+                <a href="registro.html" class="btn-primary" style="background-color: var(--primary-orange); color: white; text-decoration: none; display: inline-block;">
+                    Regístrate hoy
+                </a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>Mercanto S.A 2026. Todos los derechos reservados</p>
+        </div>
+    </footer>
+
+    <script src="./src/categoria.js"></script>
+</body>
+</html>

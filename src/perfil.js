@@ -20,6 +20,21 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   }
 
+  // Mobile menu toggle
+  const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+  const sidebarMenu = document.getElementById("sidebar-menu");
+  if (mobileMenuBtn && sidebarMenu) {
+    mobileMenuBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      sidebarMenu.classList.toggle("open");
+    });
+    document.addEventListener("click", (e) => {
+      if (!sidebarMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+        sidebarMenu.classList.remove("open");
+      }
+    });
+  }
+
   // =============================================
   // ELEMENT REFERENCES
   // =============================================

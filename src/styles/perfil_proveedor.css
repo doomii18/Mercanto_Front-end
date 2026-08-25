@@ -1,0 +1,657 @@
+/* =========================================
+   PERFIL DE PROVEEDOR - ESTILOS
+   ========================================= */
+
+.provider-content-layout {
+    width: calc(100% - 280px);
+    margin-left: 280px;
+    padding: 2.5rem 3.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* CARD 1: Hero Profile Card */
+.provider-hero-card {
+    background: #ffffff;
+    border: 1.5px solid #dcdcdc;
+    border-radius: 16px;
+    padding: 2.5rem 3rem;
+    display: flex;
+    align-items: center;
+    gap: 3.5rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.provider-avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.provider-avatar-circle {
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    border: 3px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 10px;
+    background: #ffffff;
+}
+
+.provider-avatar-circle img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.btn-avatar-camera {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background-color: #083c5a;
+    color: #ffffff;
+    border: 2.5px solid #ffffff;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.btn-avatar-camera:hover {
+    transform: scale(1.12);
+    background-color: #ff6a00;
+}
+
+.provider-hero-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.provider-name-badge-row {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+}
+
+.provider-business-name {
+    font-family: 'Lora', serif;
+    font-size: 1.85rem;
+    color: #083c5a;
+    font-weight: 700;
+}
+
+.provider-role-badge {
+    background-color: #c9e8e5;
+    color: #00a896;
+    padding: 0.35rem 1.1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.provider-bio-text {
+    color: #666;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 650px;
+}
+
+.provider-meta-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.meta-item i {
+    color: #083c5a;
+    font-size: 1.15rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* CARD 2: Stats Metrics Card */
+.provider-stats-card {
+    background: #ffffff;
+    border: 1.5px solid #dcdcdc;
+    border-radius: 16px;
+    padding: 1.8rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.stat-col {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1.4rem;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 60px;
+    background-color: #e0e0e0;
+    margin: 0 1.5rem;
+}
+
+.stat-icon-circle {
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+    flex-shrink: 0;
+}
+
+.stat-icon-circle.teal-bg {
+    background-color: #d6f2ef;
+    color: #00a896;
+}
+
+.stat-icon-circle.orange-bg {
+    background-color: #fde8db;
+    color: #ff6a00;
+}
+
+.stat-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.stat-title {
+    font-size: 0.95rem;
+    color: #083c5a;
+    font-weight: 700;
+}
+
+.stat-number {
+    font-size: 1.6rem;
+    color: #083c5a;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+}
+
+.stat-rating-row {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.stars-list {
+    display: flex;
+    gap: 0.2rem;
+    font-size: 0.9rem;
+}
+
+.stat-link {
+    color: #00a896;
+    text-decoration: none;
+    font-size: 0.88rem;
+    font-weight: 500;
+    margin-top: 0.2rem;
+    transition: text-decoration 0.2s ease;
+}
+
+.stat-link:hover {
+    text-decoration: underline;
+}
+
+/* CARD 3: Business & Owner Details Card */
+.provider-details-card {
+    background: #ffffff;
+    border: 1.5px solid #dcdcdc;
+    border-radius: 16px;
+    padding: 2.5rem 3rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+.info-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.section-heading-title {
+    font-family: 'Lora', serif;
+    font-size: 1.4rem;
+    color: #083c5a;
+    font-weight: 700;
+}
+
+.btn-edit-pill {
+    background-color: #c9e8e5;
+    color: #00a896;
+    border: none;
+    padding: 0.4rem 1.2rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-edit-pill:hover {
+    background-color: #b3deda;
+    transform: translateY(-1px);
+}
+
+.info-data-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 1.8rem;
+    column-gap: 3.5rem;
+}
+
+.info-data-item {
+    display: grid;
+    grid-template-columns: 190px 1fr;
+    align-items: center;
+    gap: 1rem;
+}
+
+.info-data-item.full-width-row {
+    grid-column: 1 / -1;
+    grid-template-columns: 190px 1fr;
+}
+
+.icon-label-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+
+.info-icon {
+    color: #083c5a;
+    font-size: 1.25rem;
+    width: 22px;
+    text-align: center;
+}
+
+.info-label {
+    color: #083c5a;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.info-value {
+    color: #083c5a;
+    font-size: 0.95rem;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.card-inner-divider {
+    height: 1px;
+    background-color: #e6e6e6;
+    margin: 2.5rem 0 2rem 0;
+}
+
+/* =========================================
+   Responsive Design
+   ========================================= */
+
+@media (max-width: 1024px) {
+    .provider-content-layout {
+        padding: 2rem;
+        width: 100%;
+        margin-left: 0;
+    }
+    .provider-hero-card {
+        gap: 2rem;
+        padding: 2rem;
+    }
+    .provider-avatar-circle {
+        width: 130px;
+        height: 130px;
+    }
+    .provider-stats-card {
+        padding: 1.5rem;
+    }
+    .stat-divider {
+        margin: 0 0.8rem;
+    }
+    .info-data-grid {
+        column-gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .provider-hero-card {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+    .provider-name-badge-row {
+        justify-content: center;
+    }
+    .provider-meta-row {
+        align-items: center;
+    }
+    .provider-stats-card {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1.5rem;
+    }
+    .stat-divider {
+        display: none;
+    }
+    .info-data-grid {
+        grid-template-columns: 1fr;
+    }
+    .info-data-item, .info-data-item.full-width-row {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+    }
+}
+
+/* =========================================
+   VISTA DE EDICIÓN INLINE
+   ========================================= */
+
+.edit-inline-view {
+    width: 100%;
+}
+
+.edit-inline-card {
+    background: #ffffff;
+    border: 1.5px solid #dcdcdc;
+    border-radius: 16px;
+    padding: 2.5rem 3rem 2rem 3rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
+}
+
+/* Cabecera con flecha */
+.edit-inline-header {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    margin-bottom: 0.5rem;
+}
+
+.btn-edit-back {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.3rem;
+    color: #083c5a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.3rem;
+    border-radius: 6px;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.btn-edit-back:hover {
+    color: #ff6a00;
+    transform: translateX(-3px);
+}
+
+.edit-inline-title {
+    font-family: 'Lora', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #083c5a;
+}
+
+.edit-inline-divider {
+    height: 1.5px;
+    background-color: #e6e6e6;
+    margin: 1.5rem 0;
+}
+
+.edit-inline-divider.thin {
+    height: 1px;
+    margin: 0.8rem 0 1.5rem 0;
+}
+
+/* Sección de foto en edición */
+.edit-photo-section {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    padding: 0.5rem 0 0.5rem 0;
+}
+
+.edit-photo-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    border: 2px solid #e0e0e0;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: #fff;
+    padding: 6px;
+}
+
+.edit-photo-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.edit-photo-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.edit-photo-label {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #083c5a;
+}
+
+.edit-photo-formats {
+    font-size: 0.88rem;
+    color: #999;
+}
+
+.btn-change-photo-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #c9e8e5;
+    color: #00a896;
+    border: none;
+    border-radius: 20px;
+    padding: 0.45rem 1.1rem;
+    font-size: 0.92rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 0.3rem;
+    transition: background 0.2s ease;
+    width: fit-content;
+}
+
+.btn-change-photo-inline:hover {
+    background: #b3deda;
+}
+
+/* Título de sección dentro del formulario */
+.edit-section-title {
+    font-family: 'Lora', serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #083c5a;
+    margin-bottom: 0.3rem;
+}
+
+/* Grid de campos de formulario */
+.edit-fields-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem 2.5rem;
+}
+
+.edit-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.edit-field-group.full-col {
+    grid-column: 1 / -1;
+}
+
+.edit-field-label {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #083c5a;
+}
+
+/* Input con icono */
+.edit-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    border: 1.5px solid #d0d0d0;
+    border-radius: 10px;
+    padding: 0.65rem 1rem;
+    background: #ffffff;
+    transition: border-color 0.2s ease;
+}
+
+.edit-input-wrap:focus-within {
+    border-color: #00a896;
+}
+
+.edit-input-wrap.locked {
+    background: #eff0f2;
+    border-color: #d0d0d0;
+}
+
+.edit-input-wrap.locked:focus-within {
+    border-color: #d0d0d0;
+}
+
+.edit-input-icon {
+    color: #083c5a;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    width: 18px;
+    text-align: center;
+}
+
+.edit-input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    color: #083c5a;
+    width: 100%;
+}
+
+.edit-input.locked-input {
+    color: #777;
+    cursor: not-allowed;
+}
+
+/* Botones de acción del formulario inline */
+.edit-inline-actions {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 1.2rem;
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1.5px solid #e6e6e6;
+}
+
+.btn-inline-cancel {
+    background: #ff6a00;
+    color: #ffffff;
+    border: none;
+    padding: 0.75rem 2.2rem;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-inline-cancel:hover {
+    background: #e05c00;
+    transform: translateY(-1px);
+}
+
+.btn-inline-save {
+    background: #00a896;
+    color: #ffffff;
+    border: none;
+    padding: 0.75rem 2.2rem;
+    border-radius: 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.btn-inline-save:hover {
+    background: #008f80;
+    transform: translateY(-1px);
+}
+
+/* Responsive edición */
+@media (max-width: 768px) {
+    .edit-inline-card {
+        padding: 1.5rem 1.2rem;
+    }
+    .edit-fields-grid {
+        grid-template-columns: 1fr;
+        gap: 1.2rem;
+    }
+    .edit-field-group.full-col {
+        grid-column: 1;
+    }
+    .edit-inline-actions {
+        flex-direction: column-reverse;
+        gap: 0.8rem;
+    }
+    .btn-inline-cancel,
+    .btn-inline-save {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
