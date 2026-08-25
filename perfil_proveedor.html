@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="es">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Perfil de Proveedor — Mercanto</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400..700;1,400..700&family=Inter:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+        />
+        <link rel="stylesheet" href="./src/styles/perfil.css" />
+        <link rel="stylesheet" href="./src/styles/perfil_proveedor.css" />
+    </head>
+    <body>
+        <header class="header">
+            <div class="header-left">
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Abrir menú">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <a href="index.html" class="logo">
+                    <img src="./src/assets/logo.png" alt="Mercanto" style="height: 45px" />
+                </a>
+            </div>
+            <a href="index.html" class="header-home-btn" aria-label="Inicio">
+                <i class="fa-solid fa-house"></i>
+            </a>
+        </header>
+
+        <div class="dashboard-container">
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar-menu">
+                <nav class="sidebar-menu">
+                    <a href="perfil_proveedor.html" class="menu-item active">
+                        <i class="fa-regular fa-circle-user"></i> Mi Perfil
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fa-solid fa-bag-shopping"></i> Mis Productos
+                    </a>
+                    <a href="pedidos.html" class="menu-item">
+                        <i class="fa-solid fa-cart-shopping"></i> Pedidos
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fa-regular fa-comment-dots"></i> Mensajes
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fa-solid fa-gear"></i> Configuración
+                    </a>
+                    <a href="#" class="menu-item">
+                        <i class="fa-regular fa-circle-question"></i> Ayuda
+                    </a>
+                </nav>
+                <a href="index.html" class="logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
+                </a>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="content provider-content-layout">
+
+                <!-- ================================================ -->
+                <!-- VISTA 1: PERFIL (visible por defecto)            -->
+                <!-- ================================================ -->
+                <div id="view-profile">
+
+                    <!-- CARD 1: Hero Profile Card -->
+                    <div class="card provider-hero-card">
+                        <div class="provider-avatar-wrapper">
+                            <div class="provider-avatar-circle" id="provider-logo-container">
+                                <img src="./src/assets/ech-logo.png" alt="E. Chamorro Industrial S.A" id="provider-avatar-img" />
+                            </div>
+                            <button type="button" class="btn-avatar-camera" id="btn-avatar-camera" aria-label="Cambiar logo">
+                                <i class="fa-solid fa-camera"></i>
+                            </button>
+
+                            <!-- Avatar Dropdown Menu -->
+                            <div class="avatar-dropdown" id="avatar-dropdown" style="display: none;">
+                                <button type="button" class="dropdown-item" id="btn-view-photo"><i class="fa-regular fa-image"></i> Ver logo</button>
+                                <button type="button" class="dropdown-item" id="btn-upload-photo"><i class="fa-solid fa-upload"></i> Subir nuevo logo</button>
+                                <button type="button" class="dropdown-item delete-item" id="btn-delete-photo"><i class="fa-regular fa-trash-can"></i> Eliminar logo</button>
+                            </div>
+                            <input type="file" id="provider-file-input" accept="image/png, image/jpeg, image/jpg" style="display: none;" />
+                        </div>
+
+                        <div class="provider-hero-info">
+                            <div class="provider-name-badge-row">
+                                <h2 class="provider-business-name" id="display-header-business-name">E. Chamorro Industrial S.A</h2>
+                                <span class="provider-role-badge">
+                                    <i class="fa-solid fa-store"></i> Proveedor
+                                </span>
+                            </div>
+
+                            <p class="provider-bio-text" id="display-provider-bio">
+                                Ofrecemos a las familias productos de la más alta calidad y prestamos un servicio al cliente destacado por su eficiencia, amabilidad y cortesía.
+                            </p>
+
+                            <div class="provider-meta-row">
+                                <div class="meta-item">
+                                    <i class="fa-regular fa-envelope"></i>
+                                    <span id="display-header-email">ecisa@echamorro.com</span>
+                                </div>
+                                <div class="meta-item">
+                                    <i class="fa-regular fa-calendar-days"></i>
+                                    <span>Miembro desde junio 2026</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 2: Stats Metrics Card -->
+                    <div class="card provider-stats-card">
+                        <div class="stat-col">
+                            <div class="stat-icon-circle teal-bg">
+                                <i class="fa-solid fa-bag-shopping"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title">Productos Publicados</span>
+                                <strong class="stat-number">23</strong>
+                                <a href="#" class="stat-link">Ver mis productos</a>
+                            </div>
+                        </div>
+
+                        <div class="stat-divider"></div>
+
+                        <div class="stat-col">
+                            <div class="stat-icon-circle teal-bg">
+                                <i class="fa-solid fa-cart-shopping"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title">Pedidos Recibidos</span>
+                                <strong class="stat-number">57</strong>
+                                <a href="pedidos.html" class="stat-link">Ver mis pedidos</a>
+                            </div>
+                        </div>
+
+                        <div class="stat-divider"></div>
+
+                        <div class="stat-col">
+                            <div class="stat-icon-circle orange-bg">
+                                <i class="fa-regular fa-star"></i>
+                            </div>
+                            <div class="stat-info">
+                                <span class="stat-title">Calificación Promedio</span>
+                                <div class="stat-rating-row">
+                                    <strong class="stat-number">4.8</strong>
+                                    <div class="stars-list">
+                                        <i class="fa-solid fa-star star-filled"></i>
+                                        <i class="fa-solid fa-star star-filled"></i>
+                                        <i class="fa-solid fa-star star-filled"></i>
+                                        <i class="fa-solid fa-star star-filled"></i>
+                                        <i class="fa-regular fa-star star-empty"></i>
+                                    </div>
+                                </div>
+                                <a href="#" class="stat-link">Ver opiniones</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD 3: Business & Owner Information Card -->
+                    <div class="card provider-details-card">
+                        <!-- Sección 1: Información del Negocio -->
+                        <div class="info-section-header">
+                            <h3 class="section-heading-title">Información del Negocio</h3>
+                            <button type="button" class="btn-edit-pill" id="btn-open-edit-provider">
+                                <i class="fa-solid fa-pen"></i> Editar
+                            </button>
+                        </div>
+
+                        <div class="info-data-grid">
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-regular fa-id-card info-icon"></i>
+                                    <span class="info-label">Número RUC</span>
+                                </div>
+                                <span class="info-value" id="disp-ruc">EMP120606BAKI</span>
+                            </div>
+
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-regular fa-building info-icon"></i>
+                                    <span class="info-label">Negocio</span>
+                                </div>
+                                <span class="info-value" id="disp-negocio-name">E. Chamorro Industrial S.A</span>
+                            </div>
+
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-solid fa-user info-icon"></i>
+                                    <span class="info-label">Tipo de Negocio</span>
+                                </div>
+                                <span class="info-value" id="disp-tipo-negocio">Industria manufacturera</span>
+                            </div>
+
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-solid fa-phone info-icon"></i>
+                                    <span class="info-label">Teléfono</span>
+                                </div>
+                                <span class="info-value" id="disp-telefono-negocio">8730 9208</span>
+                            </div>
+
+                            <div class="info-data-item full-width-row">
+                                <div class="icon-label-group">
+                                    <i class="fa-solid fa-location-dot info-icon"></i>
+                                    <span class="info-label">Dirección</span>
+                                </div>
+                                <span class="info-value" id="disp-direccion-negocio">Calle La Inmaculada en la ciudad de Granada, Nicaragua.</span>
+                            </div>
+                        </div>
+
+                        <div class="card-inner-divider"></div>
+
+                        <!-- Sección 2: Información del Propietario -->
+                        <div class="info-section-header">
+                            <h3 class="section-heading-title">Información del Propietario</h3>
+                        </div>
+
+                        <div class="info-data-grid">
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-regular fa-id-card info-icon"></i>
+                                    <span class="info-label">Cédula de Identidad</span>
+                                </div>
+                                <span class="info-value" id="disp-cedula-propietario">401-230900-5001F</span>
+                            </div>
+
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-solid fa-user info-icon"></i>
+                                    <span class="info-label">Propietario</span>
+                                </div>
+                                <span class="info-value" id="disp-nombre-propietario">Ernesto Chamorro</span>
+                            </div>
+
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-regular fa-envelope info-icon"></i>
+                                    <span class="info-label">Correo electrónico</span>
+                                </div>
+                                <span class="info-value" id="disp-correo-propietario">echamorro@gmail.com</span>
+                            </div>
+
+                            <div class="info-data-item">
+                                <div class="icon-label-group">
+                                    <i class="fa-solid fa-phone info-icon"></i>
+                                    <span class="info-label">Teléfono</span>
+                                </div>
+                                <span class="info-value" id="disp-telefono-propietario">8790 - 6723</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div><!-- /view-profile -->
+
+
+                <!-- ================================================ -->
+                <!-- VISTA 2: EDITAR (oculta por defecto)             -->
+                <!-- ================================================ -->
+                <div id="view-edit" class="edit-inline-view" style="display: none;">
+
+                    <div class="card edit-inline-card">
+
+                        <!-- Cabecera con flecha de regreso -->
+                        <div class="edit-inline-header">
+                            <button type="button" class="btn-edit-back" id="btn-edit-back">
+                                <i class="fa-solid fa-arrow-left"></i>
+                            </button>
+                            <h2 class="edit-inline-title">Editar Información General</h2>
+                        </div>
+
+                        <div class="edit-inline-divider"></div>
+
+                        <!-- Sección de foto -->
+                        <div class="edit-photo-section">
+                            <div class="edit-photo-preview" id="edit-photo-preview">
+                                <img src="./src/assets/ech-logo.png" alt="Logo" id="edit-preview-img" />
+                            </div>
+                            <div class="edit-photo-meta">
+                                <span class="edit-photo-label">Foto de Perfil</span>
+                                <span class="edit-photo-formats">JPG, PNG. Máx. 3MB.</span>
+                                <button type="button" class="btn-change-photo-inline" id="btn-change-photo-inline">
+                                    <i class="fa-solid fa-rotate"></i> Cambiar Foto
+                                </button>
+                                <input type="file" id="edit-file-input" accept="image/png, image/jpeg, image/jpg" style="display: none;" />
+                            </div>
+                        </div>
+
+                        <div class="edit-inline-divider"></div>
+
+                        <!-- Información del Negocio -->
+                        <h3 class="edit-section-title">Información del Negocio</h3>
+                        <div class="edit-inline-divider thin"></div>
+
+                        <div class="edit-fields-grid">
+                            <!-- Número RUC -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Número RUC</label>
+                                <div class="edit-input-wrap locked">
+                                    <i class="fa-regular fa-id-card edit-input-icon"></i>
+                                    <input type="text" id="input-ruc" class="edit-input locked-input" maxlength="20" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Negocio -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Negocio</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-solid fa-user edit-input-icon"></i>
+                                    <input type="text" id="input-negocio-name" class="edit-input" maxlength="70" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Tipo de Negocio -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Tipo de Negocio</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-solid fa-user edit-input-icon"></i>
+                                    <input type="text" id="input-tipo-negocio" class="edit-input" maxlength="50" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Teléfono -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Teléfono</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-solid fa-phone edit-input-icon"></i>
+                                    <input type="tel" id="input-tel-negocio" class="edit-input" maxlength="15" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Dirección (ancho completo) -->
+                            <div class="edit-field-group full-col">
+                                <label class="edit-field-label">Dirección</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-solid fa-location-dot edit-input-icon"></i>
+                                    <input type="text" id="input-direccion" class="edit-input" maxlength="120" autocomplete="off" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Información del Propietario -->
+                        <h3 class="edit-section-title" style="margin-top: 2rem;">Información del Propietario</h3>
+                        <div class="edit-inline-divider thin"></div>
+
+                        <div class="edit-fields-grid">
+                            <!-- Cédula de Identidad -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Cédula de Identidad</label>
+                                <div class="edit-input-wrap locked">
+                                    <i class="fa-regular fa-id-card edit-input-icon"></i>
+                                    <input type="text" id="input-cedula-prop" class="edit-input locked-input" maxlength="18" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Nombre del Propietario -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Nombre del Propietario</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-solid fa-user edit-input-icon"></i>
+                                    <input type="text" id="input-nombre-prop" class="edit-input" maxlength="50" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Correo electrónico -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Correo electrónico</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-regular fa-envelope edit-input-icon"></i>
+                                    <input type="email" id="input-correo-prop" class="edit-input" maxlength="70" autocomplete="off" />
+                                </div>
+                            </div>
+
+                            <!-- Teléfono propietario -->
+                            <div class="edit-field-group">
+                                <label class="edit-field-label">Teléfono</label>
+                                <div class="edit-input-wrap">
+                                    <i class="fa-solid fa-phone edit-input-icon"></i>
+                                    <input type="tel" id="input-tel-prop" class="edit-input" maxlength="15" autocomplete="off" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botones de acción -->
+                        <div class="edit-inline-actions">
+                            <button type="button" class="btn-inline-cancel" id="btn-inline-cancel">Cancelar</button>
+                            <button type="button" class="btn-inline-save" id="btn-inline-save">
+                                <i class="fa-solid fa-check"></i> Actualizar
+                            </button>
+                        </div>
+
+                    </div>
+                </div><!-- /view-edit -->
+
+            </main>
+        </div>
+
+        <!-- View Logo Modal -->
+        <div class="modal-overlay" id="view-photo-modal" style="display: none;">
+            <div class="modal-content view-photo-modal-content">
+                <button class="btn-close-modal" id="close-view-photo" style="margin-left: auto; display: flex;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="view-photo-container">
+                    <img id="view-photo-img" src="./src/assets/ech-logo.png" alt="Logo de Proveedor" />
+                </div>
+            </div>
+        </div>
+
+        <script type="module" src="./src/perfil_proveedor.js"></script>
+    </body>
+</html>
