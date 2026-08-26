@@ -213,10 +213,12 @@ onMounted(async () => {
                     </button>
 
                     <div ref="carousel" class="categories-box">
-                        <div
+                        <router-link
                             v-for="cat in categories"
                             :key="cat.id"
+                            :to="{ name: 'category' }"
                             class="category-card"
+                            style="text-decoration: none;"
                         >
                             <img
                                 v-if="typeof cat.imageUrl === 'string'"
@@ -231,10 +233,8 @@ onMounted(async () => {
                                 <i class="fa-solid fa-image"></i>
                             </div>
                             <p class="category-name">{{ cat.name }}</p>
-                            <span class="product-count"
-                                >{{ cat.productCount }} Productos</span
-                            >
-                        </div>
+                            <span class="product-count">{{ cat.productCount }} Productos</span>
+                        </router-link>
                     </div>
 
                     <button

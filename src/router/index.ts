@@ -3,10 +3,12 @@ import type { RouteRecordRaw } from "vue-router";
 import { authManager } from "../modules/auth";
 
 import HomeView from "../views/HomeView.vue";
+import CategoryView from "../views/CategoryView.vue";
 import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import BuyerRegisterView from "../views/BuyerRegisterView.vue";
 import ProviderRegisterView from "../views/ProviderRegisterView.vue";
+import ProviderProfileView from "../views/ProviderProfileView.vue";
 import DashboardLayout from "../views/DashboardLayout.vue";
 import ProfileView from "../views/ProfileView.vue";
 import OrdersView from "../views/OrdersView.vue";
@@ -27,6 +29,11 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     name: "home",
     component: HomeView,
+  },
+  {
+    path: "/category",
+    name: "category",
+    component: CategoryView,
   },
   {
     path: "/login",
@@ -51,6 +58,11 @@ const routes: RouteRecordRaw[] = [
     name: "provider-register",
     component: ProviderRegisterView,
     meta: { requiresGuest: true },
+  },
+  {
+    path: "/provider/profile",
+    name: "provider-profile",
+    component: ProviderProfileView,
   },
   {
     path: "/",
