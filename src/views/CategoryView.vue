@@ -1,9 +1,17 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 import logoImg from "../assets/logo.png";
 import audifonosImg from "../assets/audifonos.png";
 import tabletaImg from "../assets/tableta.png";
 import AppFooter from "../components/common/AppFooter.vue";
+
+const router = useRouter();
+
+const goToProduct = (product: ProductItem) => {
+  const param = product.id === 1 ? "laptop-adventure" : product.id.toString();
+  router.push({ name: "product-detail", params: { id: param } });
+};
 
 interface ProductItem {
   id: number;
@@ -36,7 +44,7 @@ const products = ref<ProductItem[]>([
     title: "Laptop Adventure",
     category: "Artículos tecnológicos",
     price: "C$ 2350",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "NicaTech S.A.",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&q=80",
@@ -48,7 +56,7 @@ const products = ref<ProductItem[]>([
     title: "Samsung S26 Ultra",
     category: "Artículos tecnológicos",
     price: "C$ 23350",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "Mangua Labs S.A.",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80",
@@ -60,7 +68,7 @@ const products = ref<ProductItem[]>([
     title: "Tablet para niños",
     category: "Artículos tecnológicos",
     price: "C$ 950",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "Mangua Labs S.A.",
     rating: 4.5,
     image: tabletaImg,
@@ -72,7 +80,7 @@ const products = ref<ProductItem[]>([
     title: "Smart Watch Apple",
     category: "Artículos tecnológicos",
     price: "C$ 350",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "Apante Software",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=400&q=80",
@@ -84,7 +92,7 @@ const products = ref<ProductItem[]>([
     title: "Consola de video",
     category: "Artículos tecnológicos",
     price: "C$ 850",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "Apante Software",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&q=80",
@@ -96,7 +104,7 @@ const products = ref<ProductItem[]>([
     title: "Set de cámaras",
     category: "Artículos tecnológicos",
     price: "C$ 660",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "NicaTech S.A.",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1557862921-37829c790f19?w=400&q=80",
@@ -108,7 +116,7 @@ const products = ref<ProductItem[]>([
     title: "Usb 64Gb - HP",
     category: "Artículos tecnológicos",
     price: "C$ 250",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "Mangua Labs S.A.",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1622535056705-4171a824b7a4?w=400&q=80",
@@ -120,7 +128,7 @@ const products = ref<ProductItem[]>([
     title: "Cargador Samsung",
     category: "Artículos tecnológicos",
     price: "C$ 150",
-    minOrder: "Pedido mín. 12 und",
+    minOrder: "Pedido mín. 1 und",
     provider: "NicaTech S.A.",
     rating: 4.5,
     image: "https://images.unsplash.com/photo-1628149455678-16f37bc392f4?w=400&q=80",
@@ -234,11 +242,17 @@ const toggleWishlist = (product: ProductItem) => {
         </div>
 
         <div class="products-grid">
-          <div v-for="prod in products" :key="prod.id" class="product-card">
+          <div
+            v-for="prod in products"
+            :key="prod.id"
+            class="product-card"
+            style="cursor: pointer;"
+            @click="goToProduct(prod)"
+          >
             <button
               type="button"
               :class="['btn-wishlist', { active: prod.isWishlist }]"
-              @click="toggleWishlist(prod)"
+              @click.stop="toggleWishlist(prod)"
             >
               <i :class="prod.isWishlist ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
             </button>
