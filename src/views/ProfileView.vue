@@ -8,10 +8,10 @@ import type { AccountResponse } from "../api/services/identity/types";
 import type { UserProfileResponse } from "../api/services/user_profile/types";
 import BaseModal from "../components/common/BaseModal.vue";
 import ConfirmModal from "../components/common/ConfirmModal.vue";
+import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 
 const account = ref<AccountResponse | null>(null);
 const profile = ref<UserProfileResponse | null>(null);
-const avatarUrl = ref<string | null>(null);
 const departments = ref<Department[]>([]);
 const isLoading = ref(true);
 
@@ -75,15 +75,7 @@ const municipalityName = computed(() => {
 
 const loadProfile = async () => {
   try {
-    const myProfile = await userProfileApi.getMyProfile();
-    profile.value = myProfile;
-
-    if (myProfile.avatar_blob_id) {
-      if (avatarUrl.value) URL.revokeObjectURL(avatarUrl.value);
-      avatarUrl.value = await userProfileApi.getProfilePictureBlobUrl(myProfile.avatar_blob_id);
-    } else {
-      avatarUrl.value = null;
-    }
+    profile.value = await userProfileApi.getMyProfile();
   } catch (err) {
     console.error("Error loading user profile:", err);
   }
@@ -106,7 +98,6 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(() => {
-  if (avatarUrl.value) URL.revokeObjectURL(avatarUrl.value);
   stopCameraStream();
 });
 
@@ -203,8 +194,6 @@ const handleDeleteAvatar = async () => {
   if (!profile.value?.avatar_blob_id) return;
   try {
     await userProfileApi.deleteProfilePicture(profile.value.avatar_blob_id);
-    if (avatarUrl.value) URL.revokeObjectURL(avatarUrl.value);
-    avatarUrl.value = null;
     if (profile.value) profile.value.avatar_blob_id = null;
     showDeletePhotoModal.value = false;
   } catch (err: any) {
@@ -370,18 +359,18 @@ const saveCroppedAvatar = async () => {
     <!-- Profile Header Card -->
     <div class="card profile-card">
       <div class="avatar-container">
-        <div
-          class="avatar"
-          :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : {}"
-        >
-          <i v-if="!avatarUrl" class="fa-solid fa-user"></i>
+        <div class="avatar">
+          <ProfileAvatar
+            :blob-id="profile?.avatar_blob_id"
+            :alt="fullName"
+          />
         </div>
 
         <button
           type="button"
           class="edit-avatar-btn"
-          @click="toggleAvatarDropdown"
           aria-label="Cambiar foto de perfil"
+          @click="toggleAvatarDropdown"
         >
           <i class="fa-solid fa-camera"></i>
         </button>
@@ -392,15 +381,15 @@ const saveCroppedAvatar = async () => {
             <i class="fa-solid fa-rotate"></i> Cambiar Foto
           </button>
           <button
-            v-if="avatarUrl"
+            v-if="profile?.avatar_blob_id"
             class="dropdown-item"
             @click="() => { closeAvatarDropdown(); showViewPhotoModal = true; }"
           >
             <i class="fa-regular fa-image"></i> Ver foto
           </button>
-          <div v-if="avatarUrl" class="dropdown-divider"></div>
+          <div v-if="profile?.avatar_blob_id" class="dropdown-divider"></div>
           <button
-            v-if="avatarUrl"
+            v-if="profile?.avatar_blob_id"
             class="dropdown-item danger"
             @click="() => { closeAvatarDropdown(); showDeletePhotoModal = true; }"
           >
@@ -518,11 +507,8 @@ const saveCroppedAvatar = async () => {
       </template>
 
       <div class="edit-photo-section">
-        <div
-          class="edit-photo-preview"
-          :style="avatarUrl ? { backgroundImage: `url(${avatarUrl})` } : {}"
-        >
-          <i v-if="!avatarUrl" class="fa-solid fa-user"></i>
+        <div class="edit-photo-preview">
+          <ProfileAvatar :blob-id="profile?.avatar_blob_id" :alt="fullName" />
         </div>
         <div class="edit-photo-info">
           <p class="edit-photo-label">Foto de Perfil</p>
@@ -616,7 +602,10 @@ const saveCroppedAvatar = async () => {
       @close="showViewPhotoModal = false"
     >
       <div class="view-photo-container">
-        <img :src="avatarUrl || ''" alt="Foto de perfil" />
+        <ProfileAvatar
+          :blob-id="profile?.avatar_blob_id"
+          alt="Foto de perfil ampliada"
+        />
       </div>
     </BaseModal>
 
@@ -790,16 +779,9 @@ const saveCroppedAvatar = async () => {
 .avatar {
   width: 100%;
   height: 100%;
-  background-color: #64748b;
-  background-size: cover;
-  background-position: center;
   border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-size: 5rem;
   overflow: hidden;
+  font-size: 4.5rem;
 }
 
 .edit-avatar-btn {
@@ -818,6 +800,7 @@ const saveCroppedAvatar = async () => {
   cursor: pointer;
   font-size: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 2;
 }
 
 .avatar-dropdown {
@@ -1021,7 +1004,6 @@ const saveCroppedAvatar = async () => {
   color: var(--light-teal);
 }
 
-/* Modal Nav Header Specifics */
 .modal-nav-header {
   display: flex;
   justify-content: space-between;
@@ -1055,7 +1037,6 @@ const saveCroppedAvatar = async () => {
   cursor: pointer;
 }
 
-/* Edit Profile Modal */
 .edit-photo-section {
   display: flex;
   align-items: center;
@@ -1069,14 +1050,8 @@ const saveCroppedAvatar = async () => {
   width: 75px;
   height: 75px;
   border-radius: 50%;
-  background-color: #64748b;
-  background-size: cover;
-  background-position: center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-size: 2.5rem;
+  overflow: hidden;
+  font-size: 2.2rem;
   flex-shrink: 0;
 }
 
@@ -1178,7 +1153,6 @@ const saveCroppedAvatar = async () => {
   gap: 0.4rem;
 }
 
-/* Photo Wizard */
 .choice-container {
   text-align: center;
 }
@@ -1429,13 +1403,10 @@ const saveCroppedAvatar = async () => {
   justify-content: center;
   align-items: center;
   padding: 1rem 0;
-}
-
-.view-photo-container img {
-  max-width: 100%;
-  max-height: 320px;
-  border-radius: 50%;
-  object-fit: cover;
+  width: 240px;
+  height: 240px;
+  margin: 0 auto;
+  font-size: 6rem;
 }
 
 @media (max-width: 768px) {

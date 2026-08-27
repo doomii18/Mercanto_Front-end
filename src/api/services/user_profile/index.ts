@@ -60,8 +60,12 @@ export class UserProfileService {
     });
   }
 
+  async getProfilePictureBlob(blobId: string): Promise<Blob> {
+    return this.client.downloadBlob(`/avatar/${blobId}`);
+  }
+
   async getProfilePictureBlobUrl(blobId: string): Promise<string> {
-    const blob = await this.client.downloadBlob(`/avatar/${blobId}`);
+    const blob = await this.getProfilePictureBlob(blobId);
     return URL.createObjectURL(blob);
   }
 
