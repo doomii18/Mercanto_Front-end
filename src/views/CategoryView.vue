@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import logoImg from "../assets/logo.png";
-import imagotipoImg from "../assets/1.1 Imagotipo variacion.png";
 import audifonosImg from "../assets/audifonos.png";
 import tabletaImg from "../assets/tableta.png";
+import AppFooter from "../components/common/AppFooter.vue";
 
 interface ProductItem {
   id: number;
@@ -154,7 +154,6 @@ const toggleWishlist = (product: ProductItem) => {
 
 <template>
   <div class="category-view">
-    <!-- Header -->
     <header class="top-header">
       <div class="logo">
         <router-link :to="{ name: 'home' }">
@@ -174,7 +173,6 @@ const toggleWishlist = (product: ProductItem) => {
     </header>
 
     <main class="category-page-container">
-      <!-- Category Hero Banner -->
       <section class="category-hero">
         <div class="hero-left">
           <img :src="audifonosImg" alt="Artículos Tecnológicos" class="hero-image-main" />
@@ -196,7 +194,6 @@ const toggleWishlist = (product: ProductItem) => {
         </div>
       </section>
 
-      <!-- Category Carousel -->
       <section class="explore-categories">
         <h3>Explora otras categorías</h3>
         <div class="categories-carousel-wrapper">
@@ -217,7 +214,6 @@ const toggleWishlist = (product: ProductItem) => {
         </div>
       </section>
 
-      <!-- Search & Sorting Bar -->
       <section class="search-sort-bar">
         <div class="search-box-wrapper">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
@@ -232,7 +228,6 @@ const toggleWishlist = (product: ProductItem) => {
         </div>
       </section>
 
-      <!-- Products Grid -->
       <section class="products-catalog">
         <div class="catalog-header">
           <span>Mostrando 1-8 de 200 productos</span>
@@ -279,7 +274,6 @@ const toggleWishlist = (product: ProductItem) => {
         </div>
       </section>
 
-      <!-- Featured Providers -->
       <section class="featured-providers">
         <h2>Proveedores destacados de Artículos Tecnológicos</h2>
         <div class="providers-grid">
@@ -303,34 +297,7 @@ const toggleWishlist = (product: ProductItem) => {
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-content">
-        <div class="footer-info">
-          <img :src="imagotipoImg" alt="Mercanto" style="height: 45px;" />
-          <p><i class="fa-regular fa-envelope"></i> mercanto@gmail.com</p>
-          <p><i class="fa-brands fa-whatsapp"></i> +505 88662233</p>
-          <p><i class="fa-solid fa-location-dot"></i> Managua, Nicaragua</p>
-        </div>
-        <div class="footer-links">
-          <a href="#">Política de privacidad</a>
-          <a href="#">Categorías</a>
-          <a href="#">Proveedores</a>
-          <a href="#">Productos</a>
-          <a href="#">Cómo funciona la plataforma</a>
-        </div>
-        <div class="footer-cta">
-          <h4>CONVIÉRTETE EN PROVEEDOR</h4>
-          <p>¿Eres exportador o distribuidor mayorista?</p>
-          <router-link :to="{ name: 'provider-register' }" class="btn-primary-cta">
-            Regístrate hoy
-          </router-link>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>Mercanto S.A 2026. Todos los derechos reservados.</p>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
@@ -876,78 +843,6 @@ const toggleWishlist = (product: ProductItem) => {
   font-size: 0.95rem;
 }
 
-.footer {
-  background-color: #023859;
-  color: #ffffff;
-  padding: 4rem 2rem 2rem 2rem;
-}
-
-.footer-content {
-  max-width: 1200px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4rem;
-  margin-bottom: 3rem;
-}
-
-.footer-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.footer-info p {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  color: #ccc;
-}
-
-.footer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.footer-links a {
-  color: #ccc;
-  text-decoration: none;
-  transition: color 0.2s;
-}
-
-.footer-links a:hover {
-  color: #ffffff;
-}
-
-.footer-cta h4 {
-  color: #ff6a00;
-  margin-bottom: 0.5rem;
-}
-
-.footer-cta p {
-  color: #ccc;
-  margin-bottom: 1.5rem;
-}
-
-.btn-primary-cta {
-  background-color: #ff6a00;
-  color: white;
-  text-decoration: none;
-  padding: 0.8rem 2rem;
-  border-radius: 25px;
-  font-weight: 600;
-  display: inline-block;
-}
-
-.footer-bottom {
-  text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 2rem;
-  color: #888;
-  font-size: 0.9rem;
-}
-
 @media (max-width: 900px) {
   .category-hero {
     grid-template-columns: 1fr;
@@ -961,10 +856,6 @@ const toggleWishlist = (product: ProductItem) => {
   }
   .providers-grid {
     grid-template-columns: 1fr;
-  }
-  .footer-content {
-    grid-template-columns: 1fr;
-    gap: 2rem;
   }
 }
 

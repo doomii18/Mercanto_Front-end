@@ -4,6 +4,7 @@ import { authManager } from "../modules/auth";
 import { healthApi, categoryApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
 import CategoryImage from "../components/category/CategoryImage.vue";
+import AppFooter from "../components/common/AppFooter.vue";
 
 interface CategoryViewItem extends ProductCategoryResponse {
   productCount: number;
@@ -48,7 +49,6 @@ onMounted(async () => {
 
 <template>
   <div class="home-page">
-    <!-- Header -->
     <header class="header">
       <div class="container header-content">
         <div class="logo">
@@ -100,7 +100,6 @@ onMounted(async () => {
     </header>
 
     <main>
-      <!-- Hero Section -->
       <section id="inicio" class="hero container">
         <div class="hero-text">
           <h1>
@@ -134,7 +133,6 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Features Bar -->
       <section class="features container">
         <div class="feature-item">
           <div class="icon-circle">
@@ -165,7 +163,6 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Categories Carousel -->
       <section id="categorias" class="categories container">
         <div class="categories-header">
           <h2>Categorías</h2>
@@ -208,7 +205,6 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Top Sellers -->
       <section class="top-sellers container">
         <div class="top-sellers-header">
           <div class="top-sellers-title">
@@ -311,7 +307,6 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- Top Providers -->
       <section id="proveedores" class="top-providers container">
         <h2>Nuestros proveedores más <span class="highlight-orange">TOP</span></h2>
         <div class="providers-grid">
@@ -362,7 +357,6 @@ onMounted(async () => {
         </div>
       </section>
 
-      <!-- How It Works -->
       <section id="como-funciona" class="how-it-works container">
         <h2>¿Cómo funciona la plataforma?</h2>
         <div class="steps-grid">
@@ -386,40 +380,7 @@ onMounted(async () => {
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="container footer-content">
-        <div class="footer-info">
-          <img
-            src="../assets/1.1 Imagotipo variacion.png"
-            alt="Mercanto"
-            class="footer-logo"
-          />
-          <p><i class="fa-regular fa-envelope"></i> mercanto@gmail.com</p>
-          <p><i class="fa-brands fa-whatsapp"></i> +505 88662233</p>
-          <p><i class="fa-solid fa-location-dot"></i> Managua, Nicaragua</p>
-        </div>
-
-        <div class="footer-links">
-          <a href="#">Política de privacidad</a>
-          <a href="#categorias">Categorías</a>
-          <a href="#proveedores">Proveedores</a>
-          <a href="#inicio">Productos</a>
-          <a href="#como-funciona">Cómo funciona la plataforma</a>
-        </div>
-
-        <div class="footer-cta">
-          <h4>CONVIÉRTETE EN PROVEEDOR</h4>
-          <p>¿Eres exportador o distribuidor mayorista?</p>
-          <router-link :to="{ name: 'provider-register' }" class="btn-cta">
-            Regístrate hoy
-          </router-link>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <p>Mercanto S.A 2026. Todos los derechos reservados.</p>
-      </div>
-    </footer>
+    <AppFooter />
   </div>
 </template>
 
@@ -435,7 +396,6 @@ onMounted(async () => {
   padding: 0 1.5rem;
 }
 
-/* Header */
 .header {
   background-color: #fff4ec;
   padding: 1rem 0;
@@ -516,7 +476,6 @@ onMounted(async () => {
   transform: translateY(-2px);
 }
 
-/* Hero */
 .hero {
   display: flex;
   justify-content: space-between;
@@ -603,7 +562,6 @@ onMounted(async () => {
   object-fit: cover;
 }
 
-/* Features */
 .features {
   display: flex;
   justify-content: space-between;
@@ -642,7 +600,6 @@ onMounted(async () => {
   background-color: var(--border-gray);
 }
 
-/* Categories */
 .categories {
   margin-bottom: 5rem;
 }
@@ -747,7 +704,6 @@ onMounted(async () => {
   right: -20px;
 }
 
-/* Top Sellers */
 .top-sellers {
   margin-bottom: 5rem;
 }
@@ -959,7 +915,6 @@ onMounted(async () => {
   background-color: #64748b;
 }
 
-/* Top Providers */
 .top-providers {
   text-align: center;
   margin-bottom: 5rem;
@@ -1075,7 +1030,6 @@ onMounted(async () => {
   font-weight: 600;
 }
 
-/* How It Works */
 .how-it-works {
   text-align: center;
   margin-bottom: 5rem;
@@ -1121,91 +1075,6 @@ onMounted(async () => {
   line-height: 1.4;
 }
 
-/* Footer */
-.footer {
-  background-color: var(--primary-blue);
-  color: #ffffff;
-  padding: 3.5rem 0 1.5rem;
-}
-
-.footer-content {
-  display: flex;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: 2.5rem;
-}
-
-.footer-info {
-  max-width: 320px;
-}
-
-.footer-logo {
-  height: 48px;
-  margin-bottom: 1.25rem;
-}
-
-.footer-info p {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 0.75rem;
-  color: #cbd5e1;
-  font-size: 0.9rem;
-}
-
-.footer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.footer-links a {
-  color: #cbd5e1;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-  color: var(--primary-orange);
-}
-
-.footer-cta {
-  text-align: center;
-}
-
-.footer-cta h4 {
-  color: var(--primary-orange);
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-}
-
-.footer-cta p {
-  color: #cbd5e1;
-  margin-bottom: 1.25rem;
-  font-size: 0.9rem;
-}
-
-.btn-cta {
-  background-color: var(--primary-orange);
-  color: #ffffff;
-  padding: 0.65rem 1.6rem;
-  border-radius: 20px;
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-block;
-}
-
-.footer-bottom {
-  text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 1.5rem;
-  color: #94a3b8;
-  font-size: 0.85rem;
-}
-
-/* Responsive */
 @media (max-width: 1024px) {
   .hero-text h1 {
     font-size: 2.6rem;
@@ -1310,16 +1179,6 @@ onMounted(async () => {
 
   .view-all-wrapper {
     text-align: center;
-  }
-
-  .footer-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 2rem;
-  }
-
-  .footer-info p {
-    justify-content: center;
   }
 }
 
