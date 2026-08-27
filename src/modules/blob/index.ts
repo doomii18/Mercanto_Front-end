@@ -57,19 +57,19 @@ export class BlobCacheManager {
   }
 
   async getOrFetch(blobId: string, fetcher: BlobFetcher): Promise<string> {
-    // 1. L1 Memory Cache Hit
+    // L1 Memory Cache Hit
     if (this.memoryCache.has(blobId)) {
       const url = this.memoryCache.get(blobId)!;
       this.refreshLru(blobId, url);
       return url;
     }
 
-    // 2. In-Flight Request Deduplication
+    //  In-Flight Request Deduplication
     if (this.inFlight.has(blobId)) {
       return this.inFlight.get(blobId)!;
     }
 
-    // 3. Execution Pipeline (L2 Disk Cache -> Network Fallback)
+    // Execution Pipeline (L2 Disk Cache -> Network Fallback)
     const task = (async () => {
       try {
         // Check L2 IndexedDB

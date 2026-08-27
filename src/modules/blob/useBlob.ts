@@ -1,4 +1,3 @@
-// src/modules/blob/useBlob.ts
 import { ref, watch } from "vue";
 import { blobCache } from "./index";
 
@@ -20,7 +19,7 @@ export function useBlobUrl(
       return;
     }
 
-    // Synchronous L1 memory cache hit (avoids loading flash)
+    // Synchronous L1 memory cache hit
     const memoryHit = blobCache.getMemory(id);
     if (memoryHit) {
       url.value = memoryHit;
