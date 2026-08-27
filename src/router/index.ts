@@ -4,6 +4,7 @@ import { authManager } from "../modules/auth";
 
 import HomeView from "../views/HomeView.vue";
 import CategoryView from "../views/CategoryView.vue";
+import ProductDetailView from "../views/ProductDetailView.vue";
 import LoginView from "../views/LoginView.vue";
 import RegisterView from "../views/RegisterView.vue";
 import BuyerRegisterView from "../views/BuyerRegisterView.vue";
@@ -34,6 +35,11 @@ const routes: RouteRecordRaw[] = [
     path: "/category",
     name: "category",
     component: CategoryView,
+  },
+  {
+    path: "/product/:id?",
+    name: "product-detail",
+    component: ProductDetailView,
   },
   {
     path: "/login",

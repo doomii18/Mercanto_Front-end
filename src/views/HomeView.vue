@@ -237,7 +237,10 @@ onMounted(async () => {
         </div>
 
         <div class="products-grid">
-          <div class="product-card">
+          <router-link
+            :to="{ name: 'product-detail', params: { id: 'mochila-adventure' } }"
+            class="product-card"
+          >
             <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
             <img src="../assets/mochila.png" alt="Mochila Adventure" />
             <p class="product-category">Bolsos & Maletas</p>
@@ -245,16 +248,19 @@ onMounted(async () => {
               <h4>Mochila Adventure</h4>
               <span class="price">C$ 350</span>
             </div>
-            <p class="min-order">Pedido mín. 12 und</p>
+            <p class="min-order">Pedido mín. 1 und</p>
             <div class="provider-info">
               <i class="fa-solid fa-certificate badge-verified"></i>
               <span>Megaboutique S.A</span>
               <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
             </div>
             <div class="ranking-bubble orange">1</div>
-          </div>
+          </router-link>
 
-          <div class="product-card">
+          <router-link
+            :to="{ name: 'product-detail', params: { id: 'set-de-ollas' } }"
+            class="product-card"
+          >
             <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
             <img src="../assets/utensilios.png" alt="Set de ollas 9 piezas" />
             <p class="product-category">Cocina</p>
@@ -262,16 +268,19 @@ onMounted(async () => {
               <h4>Set de ollas 9 piezas</h4>
               <span class="price">C$ 350</span>
             </div>
-            <p class="min-order">Pedido mín. 12 und</p>
+            <p class="min-order">Pedido mín. 1 und</p>
             <div class="provider-info">
               <i class="fa-solid fa-certificate badge-verified"></i>
               <span>Megaboutique S.A</span>
               <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
             </div>
             <div class="ranking-bubble teal">2</div>
-          </div>
+          </router-link>
 
-          <div class="product-card">
+          <router-link
+            :to="{ name: 'product-detail', params: { id: 'tablet-para-ninos' } }"
+            class="product-card"
+          >
             <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
             <img src="../assets/tableta.png" alt="Tablet para niños" />
             <p class="product-category">Artículos tecnológicos</p>
@@ -279,16 +288,19 @@ onMounted(async () => {
               <h4>Tablet para niños</h4>
               <span class="price">C$ 950</span>
             </div>
-            <p class="min-order">Pedido mín. 12 und</p>
+            <p class="min-order">Pedido mín. 1 und</p>
             <div class="provider-info">
               <i class="fa-solid fa-certificate badge-verified"></i>
               <span>Megaboutique S.A</span>
               <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
             </div>
             <div class="ranking-bubble blue">3</div>
-          </div>
+          </router-link>
 
-          <div class="product-card">
+          <router-link
+            :to="{ name: 'product-detail', params: { id: 'paleta-de-sombras' } }"
+            class="product-card"
+          >
             <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
             <img src="../assets/paleta.png" alt="Paleta de sombras" />
             <p class="product-category">Makeup & Cuidado personal</p>
@@ -296,14 +308,14 @@ onMounted(async () => {
               <h4>Paleta de sombras</h4>
               <span class="price">C$ 350</span>
             </div>
-            <p class="min-order">Pedido mín. 12 und</p>
+            <p class="min-order">Pedido mín. 1 und</p>
             <div class="provider-info">
               <i class="fa-solid fa-certificate badge-verified"></i>
               <span>Megaboutique S.A</span>
               <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
             </div>
             <div class="ranking-bubble grey">4</div>
-          </div>
+          </router-link>
         </div>
       </section>
 
@@ -814,6 +826,9 @@ onMounted(async () => {
   position: relative;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
