@@ -21,16 +21,13 @@ import {
 export class CategoryService {
   constructor(private readonly client: ApiClient) {}
 
+  async getCategoryImageBlob(blobId: string): Promise<Blob> {
+    return this.client.downloadBlob(`/categories/images/${blobId}`);
+  }
+
   async getCategoryImageBlobUrl(blobId: string): Promise<string> {
-    const response = await fetch(
-      `${this.client.getBaseUrl()}/categories/images/${blobId}`,
-      { method: "GET" },
-    );
-
-    if (!response.ok)
-      throw new Error(`Failed to fetch image: ${response.statusText}`);
-
-    return URL.createObjectURL(await response.blob());
+    const blob = await this.getCategoryImageBlob(blobId);
+    return URL.createObjectURL(blob);
   }
 
   async uploadCategoryImage(categoryId: string, file: File): Promise<void> {
