@@ -1,128 +1,134 @@
-import { createRouter, createWebHashHistory } from "vue-router";
-import type { RouteRecordRaw } from "vue-router";
+import {
+  createRouter,
+  createWebHistory,
+  type RouteRecordRaw,
+} from "vue-router";
 import { authManager } from "../modules/auth";
-
-import HomeView from "../views/HomeView.vue";
-import CategoryView from "../views/CategoryView.vue";
-import ProductDetailView from "../views/ProductDetailView.vue";
-import LoginView from "../views/LoginView.vue";
-import RegisterView from "../views/RegisterView.vue";
-import BuyerRegisterView from "../views/BuyerRegisterView.vue";
-import ProviderRegisterView from "../views/ProviderRegisterView.vue";
-import ProviderProfileView from "../views/ProviderProfileView.vue";
-import DashboardLayout from "../views/DashboardLayout.vue";
-import ProfileView from "../views/ProfileView.vue";
-import OrdersView from "../views/OrdersView.vue";
-import TestLayout from "../views/test/TestLayout.vue";
-import TestChatView from "../views/test/TestChatView.vue";
-import TestEventsView from "../views/test/TestEventsView.vue";
-import TestImageSearchView from "../views/test/TestImageSearchView.vue";
-
-declare module "vue-router" {
-  interface RouteMeta {
-    requiresAuth?: boolean;
-    requiresGuest?: boolean;
-  }
-}
 
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
     name: "home",
-    component: HomeView,
+    component: () => import("../views/HomeView.vue"),
   },
   {
     path: "/category",
     name: "category",
-    component: CategoryView,
+    component: () => import("../views/CategoryView.vue"),
   },
   {
-    path: "/product/:id?",
+    path: "/products/:id",
     name: "product-detail",
-    component: ProductDetailView,
+    component: () => import("../views/ProductDetailView.vue"),
   },
   {
     path: "/login",
     name: "login",
-    component: LoginView,
-    meta: { requiresGuest: true },
+    component: () => import("../views/LoginView.vue"),
+    meta: { guestOnly: true },
   },
   {
     path: "/register",
     name: "register",
-    component: RegisterView,
-    meta: { requiresGuest: true },
+    component: () => import("../views/RegisterView.vue"),
+    meta: { guestOnly: true },
   },
   {
     path: "/register/buyer",
     name: "buyer-register",
-    component: BuyerRegisterView,
-    meta: { requiresGuest: true },
+    component: () => import("../views/BuyerRegisterView.vue"),
+    meta: { guestOnly: true },
   },
   {
     path: "/register/provider",
     name: "provider-register",
-    component: ProviderRegisterView,
-    meta: { requiresGuest: true },
+    component: () => import("../views/ProviderRegisterView.vue"),
+    meta: { guestOnly: true },
   },
   {
     path: "/provider/profile",
     name: "provider-profile",
-    component: ProviderProfileView,
+    component: () => import("../views/ProviderProfileView.vue"),
+    meta: { requiresAuth: true },
   },
   {
-    path: "/",
-    component: DashboardLayout,
+    path: "/dashboard",
+    component: () => import("../views/DashboardLayout.vue"),
     meta: { requiresAuth: true },
     children: [
       {
+        path: "",
+        redirect: { name: "profile" },
+      },
+      {
         path: "profile",
         name: "profile",
-        component: ProfileView,
+        component: () => import("../views/ProfileView.vue"),
       },
       {
         path: "orders",
         name: "orders",
-        component: OrdersView,
+        component: () => import("../views/OrdersView.vue"),
+      },
+      {
+        path: "orders/:id",
+        name: "quote-detail",
+        component: () => import("../views/QuoteDetailView.vue"),
       },
     ],
   },
   {
     path: "/test",
-    component: TestLayout,
-    meta: { requiresAuth: true },
+    component: () => import("../views/test/TestLayout.vue"),
     children: [
-      { path: "chat", name: "test-chat", component: TestChatView },
-      { path: "events", name: "test-events", component: TestEventsView },
+      {
+        path: "",
+        redirect: { name: "test-chat" },
+      },
+      {
+        path: "chat",
+        name: "test-chat",
+        component: () => import("../views/test/TestChatView.vue"),
+      },
+      {
+        path: "events",
+        name: "test-events",
+        component: () => import("../views/test/TestEventsView.vue"),
+      },
       {
         path: "image-search",
         name: "test-image-search",
-        component: TestImageSearchView,
+        component: () => import("../views/test/TestImageSearchView.vue"),
       },
     ],
+  },
+  {
+    path: "/:pathMatch(.*)*",
+    redirect: { name: "home" },
   },
 ];
 
 const router = createRouter({
-  history: createWebHashHistory(),
+  history: createWebHistory(),
   routes,
+  scrollBehavior(to, _from, savedPosition) {
+    if (savedPosition) return savedPosition;
+    if (to.hash) return { el: to.hash, behavior: "smooth" };
+    return { top: 0 };
+  },
 });
 
 router.beforeEach(async (to) => {
   const account = await authManager.initialize();
-  const isAuthenticated = account !== null;
 
-  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
-  const requiresGuest = to.matched.some((record) => record.meta.requiresGuest);
-
-  if (requiresAuth && !isAuthenticated) {
+  if (to.meta.requiresAuth && !account) {
     return {
       name: "login",
       query: { redirect: to.fullPath },
     };
   }
 
-  if (requiresGuest && isAuthenticated) {
+  if (to.meta.guestOnly && account) {
     return { name: "profile" };
   }
 
