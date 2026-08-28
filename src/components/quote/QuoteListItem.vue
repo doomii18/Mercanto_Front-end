@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import type { QuoteAggregateResponse, QuoteStatus } from "../../api/services/quote/types";
-import { organizationApi } from "../../api";
+import { organizationApi, productApi } from "../../api";
 import type { PublicProviderDto } from "../../api/services/organization/types";
+import ProductImage from "../product/ProductImage.vue";
+import ProviderLogo from "../organization/ProviderLogo.vue";
 
 const props = defineProps<{
   quoteAggregate: QuoteAggregateResponse;
@@ -12,14 +14,17 @@ const emit = defineEmits<{
   (e: "select", quoteId: string): void;
 }>();
 
-
 const providerCache = new Map<string, Promise<PublicProviderDto>>();
+const productBlobCache = new Map<string, Promise<string | null>>();
 
 const provider = ref<PublicProviderDto | null>(null);
-const isLoadingProvider = ref(false);
+const itemBlobIds = ref<Record<string, string | null>>({});
 
 const quote = computed(() => props.quoteAggregate.quote);
 const items = computed(() => props.quoteAggregate.items);
+
+const previewItems = computed(() => items.value.slice(0, 2));
+const remainingCount = computed(() => Math.max(0, items.value.length - 2));
 
 const totalUnits = computed(() => {
   return items.value.reduce((acc, item) => acc + item.quantity, 0);
@@ -45,6 +50,19 @@ const formattedDate = computed(() => {
   });
 });
 
+const statusDateLabel = computed(() => {
+  if (!quote.value.updated_at) return "";
+  const dateStr = new Date(quote.value.updated_at).toLocaleDateString("es-NI", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+  const status = quote.value.status as QuoteStatus;
+  if (status === "fulfilled") return `Recibido el ${dateStr}`;
+  if (status === "accepted" || status === "paid") return `En proceso desde ${dateStr}`;
+  return `Actualizado el ${dateStr}`;
+});
+
 const formatCurrency = (amount: number) => {
   return `C$ ${amount.toLocaleString("es-NI", {
     minimumFractionDigits: 2,
@@ -57,9 +75,9 @@ const statusConfig = computed(() => {
   const configs: Record<QuoteStatus, { label: string; class: string; icon: string }> = {
     draft: { label: "Borrador", class: "status-draft", icon: "fa-regular fa-file-lines" },
     pending_provider: { label: "Pendiente", class: "status-pending", icon: "fa-regular fa-clock" },
-    accepted: { label: "Aceptado", class: "status-accepted", icon: "fa-solid fa-circle-check" },
+    accepted: { label: "En proceso", class: "status-accepted", icon: "fa-regular fa-clock" },
     paid: { label: "Pagado", class: "status-paid", icon: "fa-solid fa-receipt" },
-    fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-solid fa-box-open" },
+    fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-solid fa-circle-check" },
     rejected: { label: "Rechazado", class: "status-rejected", icon: "fa-solid fa-circle-xmark" },
     cancelled: { label: "Cancelado", class: "status-cancelled", icon: "fa-solid fa-ban" },
   };
@@ -67,25 +85,47 @@ const statusConfig = computed(() => {
   return configs[status] || { label: status, class: "status-draft", icon: "fa-solid fa-circle-info" };
 });
 
-const loadProviderMetadata = async () => {
-  const providerId = quote.value.provider_id;
-  if (!providerId) return;
-
-  isLoadingProvider.value = true;
-  try {
-    if (!providerCache.has(providerId)) {
-      providerCache.set(providerId, organizationApi.getOrganization(providerId));
-    }
-    provider.value = await providerCache.get(providerId)!;
-  } catch (err) {
-    console.error(`Failed to load provider metadata for ${providerId}:`, err);
-  } finally {
-    isLoadingProvider.value = false;
+const loadProductBlobId = async (productId: string): Promise<string | null> => {
+  if (productBlobCache.has(productId)) {
+    return productBlobCache.get(productId)!;
   }
+
+  const promise = (async () => {
+    try {
+      const prod = await productApi.getProduct(productId);
+      return prod.image_blob_ids?.[0] ?? null;
+    } catch {
+      return null;
+    }
+  })();
+
+  productBlobCache.set(productId, promise);
+  return promise;
+};
+
+const loadMetadata = async () => {
+  const providerId = quote.value.provider_id;
+  if (providerId) {
+    try {
+      if (!providerCache.has(providerId)) {
+        providerCache.set(providerId, organizationApi.getOrganization(providerId));
+      }
+      provider.value = await providerCache.get(providerId)!;
+    } catch (err) {
+      console.error(`Failed to load provider metadata for ${providerId}:`, err);
+    }
+  }
+
+  await Promise.all(
+    previewItems.value.map(async (item) => {
+      const blobId = await loadProductBlobId(item.product_id);
+      itemBlobIds.value[item.product_id] = blobId;
+    })
+  );
 };
 
 onMounted(() => {
-  loadProviderMetadata();
+  loadMetadata();
 });
 </script>
 
@@ -101,31 +141,38 @@ onMounted(() => {
       </p>
     </div>
 
-    <div class="quote-provider">
-      <div class="provider-info-left">
+    <div class="quote-center">
+      <div class="provider-meta-group">
         <div class="provider-avatar">
-          <i v-if="isLoadingProvider" class="fa-solid fa-spinner fa-spin"></i>
-          <span v-else>{{ provider?.company_name?.charAt(0).toUpperCase() || 'P' }}</span>
+          <ProviderLogo
+            :blob-id="provider?.logo_blob_id"
+            :alt="provider?.company_name"
+            :fallback-text="provider?.company_name"
+          />
         </div>
-        <div class="provider-meta">
-          <p class="provider-name">{{ provider?.company_name || 'Cargando proveedor...' }}</p>
-          <span class="provider-kind">{{ provider?.kind || 'Proveedor' }}</span>
+        <div class="provider-text">
+          <p class="provider-name">{{ provider?.company_name || 'Proveedor' }}</p>
+          <a href="#" class="provider-link" @click.prevent>ver proveedor</a>
         </div>
       </div>
 
-      <div class="quote-items-preview">
+      <div class="products-preview-group">
         <div
-          v-for="item in items.slice(0, 2)"
+          v-for="item in previewItems"
           :key="item.product_id"
-          class="item-pill"
+          class="product-thumb-card"
           :title="item.product_title_snapshot"
         >
-          <i class="fa-solid fa-box"></i>
-          <span class="item-title">{{ item.product_title_snapshot }}</span>
-          <span class="item-qty">x{{ item.quantity }}</span>
+          <ProductImage
+            :blob-id="itemBlobIds[item.product_id]"
+            :alt="item.product_title_snapshot"
+            fallback-icon="fa-solid fa-box"
+            object-fit="contain"
+          />
         </div>
-        <div v-if="items.length > 2" class="more-items-pill">
-          +{{ items.length - 2 }} más
+
+        <div v-if="remainingCount > 0" class="more-products-pill">
+          +{{ remainingCount }}
         </div>
       </div>
     </div>
@@ -135,12 +182,13 @@ onMounted(() => {
         <i :class="statusConfig.icon"></i>
         <span>{{ statusConfig.label }}</span>
       </div>
+      <p v-if="statusDateLabel" class="status-date-subtext">{{ statusDateLabel }}</p>
       <button
         type="button"
         class="btn-outline-teal"
         @click="emit('select', quote.id)"
       >
-        Ver detalles
+        ver detalles
       </button>
     </div>
   </div>
@@ -153,7 +201,7 @@ onMounted(() => {
   border-radius: 16px;
   padding: 1.5rem 2rem;
   display: grid;
-  grid-template-columns: 1.2fr 2.2fr 1fr;
+  grid-template-columns: 1.2fr 2.4fr 1fr;
   align-items: center;
   gap: 1.5rem;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -166,144 +214,162 @@ onMounted(() => {
 
 .quote-details h4 {
   color: var(--primary-blue, #083c5a);
-  font-size: 1.1rem;
-  margin-bottom: 0.3rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
   font-family: 'Lora', serif;
 }
 
 .quote-date {
   color: #94a3b8;
   font-size: 0.85rem;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
 }
 
 .quote-total-label {
   color: #64748b;
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 500;
+  margin-bottom: 0.15rem;
 }
 
 .quote-amount {
-  color: var(--primary-orange, #ff6a00);
-  font-size: 1.25rem;
+  color: var(--primary-blue, #083c5a);
+  font-size: 1.15rem;
   font-weight: 700;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
 }
 
 .quote-count {
-  color: #64748b;
-  font-size: 0.85rem;
+  color: #94a3b8;
+  font-size: 0.82rem;
 }
 
-.quote-provider {
+.quote-center {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
   padding: 0 1.5rem;
   border-left: 1px solid var(--border-gray, #e0e0e0);
   border-right: 1px solid var(--border-gray, #e0e0e0);
 }
 
-.provider-info-left {
+.provider-meta-group {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.85rem;
+  min-width: 170px;
 }
 
 .provider-avatar {
-  width: 44px;
-  height: 44px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: #e2f4f2;
-  color: var(--light-teal, #189c94);
+  border: 1.5px solid var(--border-gray, #e0e0e0);
+  background: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+  color: var(--light-teal, #189c94);
   font-weight: 700;
   font-size: 1.1rem;
+  flex-shrink: 0;
 }
 
 .provider-name {
   font-weight: 700;
   color: var(--primary-blue, #083c5a);
   font-size: 0.95rem;
+  line-height: 1.25;
 }
 
-.provider-kind {
-  font-size: 0.78rem;
-  color: #64748b;
-  text-transform: capitalize;
-}
-
-.quote-items-preview {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.item-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--bg-gray, #f5f7f9);
-  padding: 0.3rem 0.65rem;
-  border-radius: 8px;
-  font-size: 0.8rem;
-  color: var(--primary-blue, #083c5a);
-  max-width: 180px;
-}
-
-.item-title {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.item-qty {
-  font-weight: 700;
+.provider-link {
+  font-size: 0.82rem;
   color: var(--light-teal, #189c94);
+  text-decoration: none;
+  font-weight: 500;
 }
 
-.more-items-pill {
-  font-size: 0.78rem;
-  color: #64748b;
+.provider-link:hover {
+  text-decoration: underline;
+}
+
+.products-preview-group {
   display: flex;
   align-items: center;
+  gap: 0.6rem;
+}
+
+.product-thumb-card {
+  width: 54px;
+  height: 54px;
+  border: 1px solid var(--border-gray, #e0e0e0);
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.more-products-pill {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid var(--border-gray, #e0e0e0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #64748b;
+  background: #ffffff;
 }
 
 .quote-status-action {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 
 .status-badge {
-  padding: 0.45rem 1.2rem;
+  padding: 0.4rem 1.1rem;
   border-radius: 20px;
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.45rem;
 }
 
 .status-draft { background-color: #f1f5f9; color: #475569; }
 .status-pending { background-color: #fff7ed; color: #ea580c; }
-.status-accepted { background-color: #eff6ff; color: #2563eb; }
+.status-accepted { background-color: #fde8db; color: #ff6a00; }
 .status-paid { background-color: #f0fdf4; color: #16a34a; }
 .status-fulfilled { background-color: #d8f1ef; color: #00a896; }
 .status-rejected { background-color: #fef2f2; color: #dc2626; }
 .status-cancelled { background-color: #f3f4f6; color: #6b7280; }
 
+.status-date-subtext {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin: 0;
+  text-align: center;
+}
+
 .btn-outline-teal {
   background-color: transparent;
   color: var(--light-teal, #189c94);
   border: 1.5px solid var(--light-teal, #189c94);
-  padding: 0.45rem 1.3rem;
+  padding: 0.4rem 1.4rem;
   border-radius: 20px;
   font-weight: 600;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -313,16 +379,18 @@ onMounted(() => {
   color: #ffffff;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .quote-card {
     grid-template-columns: 1fr;
+    gap: 1.25rem;
   }
-  .quote-provider {
+  .quote-center {
     border-left: none;
     border-right: none;
-    border-top: 1px solid var(--border-gray);
-    border-bottom: 1px solid var(--border-gray);
+    border-top: 1px solid var(--border-gray, #e0e0e0);
+    border-bottom: 1px solid var(--border-gray, #e0e0e0);
     padding: 1rem 0;
+    flex-wrap: wrap;
   }
 }
 </style>

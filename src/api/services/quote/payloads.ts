@@ -29,7 +29,7 @@ export const QuoteResponseSchema = z.object({
   payment_preference: PaymentMethodSchema,
   buyer_notes: z.string().optional().nullable(),
   shipping_address: z.string(),
-  updated_at: z.string().datetime(),
+  updated_at: z.iso.datetime(),
 });
 
 export const QuoteItemResponseSchema = z.object({
