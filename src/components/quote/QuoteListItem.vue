@@ -5,6 +5,7 @@ import { organizationApi, productApi } from "../../api";
 import type { PublicProviderDto } from "../../api/services/organization/types";
 import ProductImage from "../product/ProductImage.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
+import QuoteIdBadge from "./QuoteIdBadge.vue";
 
 const props = defineProps<{
   quoteAggregate: QuoteAggregateResponse;
@@ -35,10 +36,6 @@ const calculatedTotal = computed(() => {
     (acc, item) => acc + item.quantity * item.unit_price_snapshot,
     0
   );
-});
-
-const formattedCode = computed(() => {
-  return `MC-${quote.value.id.slice(0, 8).toUpperCase()}`;
 });
 
 const formattedDate = computed(() => {
@@ -77,7 +74,7 @@ const statusConfig = computed(() => {
     pending_provider: { label: "Pendiente", class: "status-pending", icon: "fa-regular fa-clock" },
     accepted: { label: "En proceso", class: "status-accepted", icon: "fa-regular fa-clock" },
     paid: { label: "Pagado", class: "status-paid", icon: "fa-solid fa-receipt" },
-    fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-solid fa-circle-check" },
+    fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-regular fa-circle-check" },
     rejected: { label: "Rechazado", class: "status-rejected", icon: "fa-solid fa-circle-xmark" },
     cancelled: { label: "Cancelado", class: "status-cancelled", icon: "fa-solid fa-ban" },
   };
@@ -131,16 +128,26 @@ onMounted(() => {
 
 <template>
   <div class="quote-card">
+    <!-- Columna 1: Datos Generales e ID -->
     <div class="quote-details">
-      <h4>Pedido #{{ formattedCode }}</h4>
+      <div class="quote-header-row">
+        <h4 class="quote-order-title">Pedido</h4>
+        <QuoteIdBadge :quote-id="quote.id" size="sm" />
+      </div>
+
       <p class="quote-date">{{ formattedDate }}</p>
-      <p class="quote-total-label">Total</p>
-      <h3 class="quote-amount">{{ formatCurrency(calculatedTotal) }}</h3>
+
+      <div class="quote-total-group">
+        <p class="quote-total-label">Total</p>
+        <h3 class="quote-amount">{{ formatCurrency(calculatedTotal) }}</h3>
+      </div>
+
       <p class="quote-count">
         {{ totalUnits }} {{ totalUnits === 1 ? 'producto' : 'productos' }}
       </p>
     </div>
 
+    <!-- Columna 2: Proveedor y Previsualización -->
     <div class="quote-center">
       <div class="provider-meta-group">
         <div class="provider-avatar">
@@ -151,7 +158,9 @@ onMounted(() => {
           />
         </div>
         <div class="provider-text">
-          <p class="provider-name">{{ provider?.company_name || 'Proveedor' }}</p>
+          <p class="provider-name" :title="provider?.company_name">
+            {{ provider?.company_name || 'Proveedor' }}
+          </p>
           <a href="#" class="provider-link" @click.prevent>ver proveedor</a>
         </div>
       </div>
@@ -177,6 +186,7 @@ onMounted(() => {
       </div>
     </div>
 
+    <!-- Columna 3: Estado y Acción -->
     <div class="quote-status-action">
       <div :class="['status-badge', statusConfig.class]">
         <i :class="statusConfig.icon"></i>
@@ -201,7 +211,7 @@ onMounted(() => {
   border-radius: 16px;
   padding: 1.5rem 2rem;
   display: grid;
-  grid-template-columns: 1.2fr 2.4fr 1fr;
+  grid-template-columns: minmax(210px, 1.35fr) 2.1fr minmax(135px, 0.95fr);
   align-items: center;
   gap: 1.5rem;
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
@@ -212,54 +222,80 @@ onMounted(() => {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
 }
 
-.quote-details h4 {
+/* Columna 1 */
+.quote-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.quote-header-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  margin-bottom: 0.25rem;
+}
+
+.quote-order-title {
   color: var(--primary-blue, #083c5a);
   font-size: 1.05rem;
   font-weight: 700;
-  margin-bottom: 0.25rem;
   font-family: 'Lora', serif;
+  margin: 0;
 }
 
 .quote-date {
   color: #94a3b8;
-  font-size: 0.85rem;
-  margin-bottom: 0.6rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.4rem;
+}
+
+.quote-total-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 0.15rem;
 }
 
 .quote-total-label {
   color: #64748b;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 500;
-  margin-bottom: 0.15rem;
+  margin: 0;
 }
 
 .quote-amount {
   color: var(--primary-blue, #083c5a);
   font-size: 1.15rem;
   font-weight: 700;
-  margin-bottom: 0.2rem;
+  margin: 0.1rem 0;
 }
 
 .quote-count {
   color: #94a3b8;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
+  margin: 0;
 }
 
+/* Columna 2 */
 .quote-center {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
+  gap: 1.25rem;
   padding: 0 1.5rem;
   border-left: 1px solid var(--border-gray, #e0e0e0);
   border-right: 1px solid var(--border-gray, #e0e0e0);
+  min-width: 0;
 }
 
 .provider-meta-group {
   display: flex;
   align-items: center;
   gap: 0.85rem;
-  min-width: 170px;
+  min-width: 0;
+  flex: 1;
 }
 
 .provider-avatar {
@@ -278,11 +314,21 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+.provider-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .provider-name {
   font-weight: 700;
   color: var(--primary-blue, #083c5a);
   font-size: 0.95rem;
   line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
 }
 
 .provider-link {
@@ -290,6 +336,7 @@ onMounted(() => {
   color: var(--light-teal, #189c94);
   text-decoration: none;
   font-weight: 500;
+  margin-top: 0.1rem;
 }
 
 .provider-link:hover {
@@ -299,12 +346,13 @@ onMounted(() => {
 .products-preview-group {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
+  flex-shrink: 0;
 }
 
 .product-thumb-card {
-  width: 54px;
-  height: 54px;
+  width: 52px;
+  height: 52px;
   border: 1px solid var(--border-gray, #e0e0e0);
   border-radius: 8px;
   background: #ffffff;
@@ -317,19 +365,20 @@ onMounted(() => {
 }
 
 .more-products-pill {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: 1px solid var(--border-gray, #e0e0e0);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: #64748b;
   background: #ffffff;
 }
 
+/* Columna 3 */
 .quote-status-action {
   display: flex;
   flex-direction: column;
@@ -345,6 +394,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
+  white-space: nowrap;
 }
 
 .status-draft { background-color: #f1f5f9; color: #475569; }
@@ -372,6 +422,7 @@ onMounted(() => {
   font-size: 0.85rem;
   cursor: pointer;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .btn-outline-teal:hover {
@@ -379,11 +430,13 @@ onMounted(() => {
   color: #ffffff;
 }
 
-@media (max-width: 960px) {
+/* Responsividad */
+@media (max-width: 990px) {
   .quote-card {
     grid-template-columns: 1fr;
     gap: 1.25rem;
   }
+
   .quote-center {
     border-left: none;
     border-right: none;
@@ -391,6 +444,16 @@ onMounted(() => {
     border-bottom: 1px solid var(--border-gray, #e0e0e0);
     padding: 1rem 0;
     flex-wrap: wrap;
+  }
+
+  .quote-status-action {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .status-date-subtext {
+    text-align: left;
   }
 }
 </style>
