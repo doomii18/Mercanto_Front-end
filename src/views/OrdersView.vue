@@ -1,13 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { quoteApi, organizationApi } from "../api";
-import type { QuoteAggregateResponse, QuoteStatus } from "../api/services/quote/types";
+import type {
+  QuoteAggregateResponse,
+  QuoteStatus,
+  AccountQuoteFiltersQuery,
+} from "../api/services/quote/types";
 import type { PublicProviderDto } from "../api/services/organization/types";
 import QuoteListItem from "../components/quote/QuoteListItem.vue";
 import QuoteSearchBox from "../components/quote/QuoteSearchBox.vue";
 
-const EXCLUDED_STATUSES: QuoteStatus[] = ["cancelled", "rejected", "draft"];
+const ALLOWED_STATUSES: QuoteStatus[] = [
+  "pending_provider",
+  "accepted",
+  "paid",
+  "fulfilled",
+];
 
 type AllowedStatus = Exclude<QuoteStatus, "cancelled" | "rejected" | "draft">;
 type FilterTab = "all" | AllowedStatus;
@@ -33,55 +42,75 @@ const providersMap = ref<Map<string, PublicProviderDto>>(new Map());
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 
-const visibleQuotes = computed(() => {
-  return quotes.value.filter(
-    (item) => !EXCLUDED_STATUSES.includes(item.quote.status as QuoteStatus)
-  );
-});
+let lastRequestId = 0;
 
-const filteredQuotes = computed(() => {
-  if (currentFilter.value === "all") {
-    return visibleQuotes.value;
-  }
-  return visibleQuotes.value.filter(
-    (item) => item.quote.status === currentFilter.value
-  );
-});
+const visibleQuotes = computed(() => quotes.value);
+const filteredQuotes = computed(() => quotes.value);
 
 const loadOrders = async () => {
+  const currentRequestId = ++lastRequestId;
   isLoading.value = true;
   errorMessage.value = null;
 
+  const params: AccountQuoteFiltersQuery = {
+    limit: 20,
+    offset: 0,
+    statuses:
+      currentFilter.value === "all"
+        ? ALLOWED_STATUSES
+        : [currentFilter.value],
+  };
+
   try {
-    const response = await quoteApi.getMyQuotes({ limit: 100, offset: 0 });
-    quotes.value = response.data;
+    const response = await quoteApi.getMyQuotes(params);
 
-    const uniqueProviderIds = Array.from(
-      new Set(response.data.map((item) => item.quote.provider_id).filter(Boolean))
-    );
+    if (currentRequestId === lastRequestId) {
+      quotes.value = response.data;
 
-    const providerEntries = await Promise.allSettled(
-      uniqueProviderIds.map(async (id) => {
-        const prov = await organizationApi.getOrganization(id);
-        return [id, prov] as const;
-      })
-    );
+      const uniqueProviderIds = Array.from(
+        new Set(
+          response.data
+            .map((item) => item.quote.provider_id)
+            .filter((id): id is string => Boolean(id) && !providersMap.value.has(id))
+        )
+      );
 
-    const nextMap = new Map<string, PublicProviderDto>();
-    for (const result of providerEntries) {
-      if (result.status === "fulfilled") {
-        const [id, prov] = result.value;
-        nextMap.set(id, prov);
+      if (uniqueProviderIds.length > 0) {
+        const providerEntries = await Promise.allSettled(
+          uniqueProviderIds.map(async (id) => {
+            const prov = await organizationApi.getOrganization(id);
+            return [id, prov] as const;
+          })
+        );
+
+        if (currentRequestId === lastRequestId) {
+          const nextMap = new Map(providersMap.value);
+          for (const result of providerEntries) {
+            if (result.status === "fulfilled") {
+              const [id, prov] = result.value;
+              nextMap.set(id, prov);
+            }
+          }
+          providersMap.value = nextMap;
+        }
       }
     }
-    providersMap.value = nextMap;
   } catch (err: any) {
-    console.error("Failed to fetch orders:", err);
-    errorMessage.value = err.message || "Error al cargar la lista de pedidos.";
+    if (currentRequestId === lastRequestId) {
+      console.error("Failed to fetch orders:", err);
+      errorMessage.value = err.message || "Error al cargar la lista de pedidos.";
+      quotes.value = [];
+    }
   } finally {
-    isLoading.value = false;
+    if (currentRequestId === lastRequestId) {
+      isLoading.value = false;
+    }
   }
 };
+
+watch(currentFilter, () => {
+  loadOrders();
+});
 
 const handleSelectQuote = (quoteId: string) => {
   router.push({ name: "quote-detail", params: { id: quoteId } });
