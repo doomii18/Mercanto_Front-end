@@ -3,13 +3,13 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { quoteApi, organizationApi } from "../api";
 import type { QuoteAggregateResponse, QuoteStatus } from "../api/services/quote/types";
-import type { OrganizationResponse } from "../api/services/organization/types";
+import type { PublicProviderDto } from "../api/services/organization/types";
 
 const route = useRoute();
 const router = useRouter();
 
 const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
-const provider = ref<OrganizationResponse | null>(null);
+const provider = ref<PublicProviderDto | null>(null);
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 
@@ -224,10 +224,6 @@ onMounted(() => {
             </div>
             <h5>{{ provider?.company_name || 'Proveedor' }}</h5>
             <p class="side-provider-meta">{{ provider?.kind || 'Distribuidor' }}</p>
-            <!-- <p v-if="provider?.phone_number" class="side-provider-phone">
-              <i class="fa-solid fa-phone"></i> {{ provider.phone_number }}
-              TODO: agregar numero ruc y numero de telefono
-              </p> -->
           </div>
 
           <div class="side-detail-card address-box">

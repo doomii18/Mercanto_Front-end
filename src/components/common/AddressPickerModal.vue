@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { ref, watch, nextTick, onMounted, onBeforeUnmount } from "vue";
+import { ref, watch } from "vue";
+import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
+import "leaflet/dist/leaflet.css";
 import BaseModal from "./BaseModal.vue";
 import { GeocodingService } from "../../modules/geo";
 import { geographyApi } from "../../api";
@@ -30,65 +32,29 @@ const emit = defineEmits<{
   (e: "cancel"): void;
 }>();
 
-const DEFAULT_CENTER = [12.1328, -86.2504];
+const DEFAULT_CENTER = [12.1328, -86.2504] as [number, number];
 
-const mapContainer = ref<HTMLElement | null>(null);
-let mapInstance: any = null;
-let markerInstance: any = null;
+const zoom = ref(13);
+const center = ref<[number, number]>(
+  props.initialLat && props.initialLng
+    ? [props.initialLat, props.initialLng]
+    : DEFAULT_CENTER
+);
+const markerPosition = ref<[number, number] | null>(
+  props.initialLat && props.initialLng
+    ? [props.initialLat, props.initialLng]
+    : null
+);
 
 const isLocating = ref(false);
-const mapAddressText = ref("Ninguna ubicación seleccionada");
-const tempLat = ref<number | null>(null);
-const tempLng = ref<number | null>(null);
-const tempAddress = ref("");
+const mapAddressText = ref(props.initialAddress || "Ninguna ubicación seleccionada");
+const tempAddress = ref(props.initialAddress || "");
 const tempMunicipalityId = ref<string | null>(null);
 
-const ensureLeafletAssets = (): Promise<void> => {
-  return new Promise((resolve) => {
-    if (!document.getElementById("leaflet-css")) {
-      const link = document.createElement("link");
-      link.id = "leaflet-css";
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
-    if ((window as any).L) {
-      resolve();
-      return;
-    }
-
-    if (!document.getElementById("leaflet-js")) {
-      const script = document.createElement("script");
-      script.id = "leaflet-js";
-      script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-      script.onload = () => resolve();
-      document.head.appendChild(script);
-    } else {
-      const existingScript = document.getElementById("leaflet-js") as HTMLScriptElement;
-      existingScript.addEventListener("load", () => resolve(), { once: true });
-    }
-  });
-};
-
-const updateMapMarker = async (lat: number, lng: number) => {
-  const L = (window as any).L;
-  if (!L || !mapInstance) return;
-
-  tempLat.value = lat;
-  tempLng.value = lng;
-
-  if (markerInstance) {
-    markerInstance.setLatLng([lat, lng]);
-  } else {
-    markerInstance = L.marker([lat, lng], { draggable: true }).addTo(mapInstance);
-    markerInstance.on("dragend", (e: any) => {
-      const pos = e.target.getLatLng();
-      updateMapMarker(pos.lat, pos.lng);
-    });
-  }
-
+const updateMarker = async (lat: number, lng: number) => {
+  markerPosition.value = [lat, lng];
   mapAddressText.value = "Obteniendo dirección y municipio...";
+
   try {
     tempAddress.value = await GeocodingService.reverseGeocode(lat, lng);
     mapAddressText.value = tempAddress.value;
@@ -96,70 +62,38 @@ const updateMapMarker = async (lat: number, lng: number) => {
     const geoRes = await geographyApi.getMunicipalityByCoordinates({ lat, lng });
     tempMunicipalityId.value = geoRes.id;
   } catch (error) {
-    console.error("Geocoding / Municipality resolution failed:", error);
+    console.error("Geocoding failed:", error);
     tempMunicipalityId.value = null;
-    mapAddressText.value = `${tempAddress.value || "Ubicación seleccionada"} (Fuera de cobertura municipal)`;
+    mapAddressText.value = `${tempAddress.value || "Ubicación seleccionada"} (Fuera de cobertura)`;
   }
 };
 
-const initMap = async () => {
-  await ensureLeafletAssets();
-  await nextTick();
-
-  const L = (window as any).L;
-  if (!L || !mapContainer.value) return;
-
-  const lat = props.initialLat || DEFAULT_CENTER[0];
-  const lng = props.initialLng || DEFAULT_CENTER[1];
-
-  if (!mapInstance) {
-    mapInstance = L.map(mapContainer.value).setView([lat, lng], 13);
-    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: "&copy; OpenStreetMap",
-      maxZoom: 19,
-    }).addTo(mapInstance);
-
-    mapInstance.on("click", (e: any) => updateMapMarker(e.latlng.lat, e.latlng.lng));
-  } else {
-    mapInstance.invalidateSize();
-  }
-
-  if (props.initialLat && props.initialLng) {
-    mapInstance.setView([props.initialLat, props.initialLng], 15);
-    updateMapMarker(props.initialLat, props.initialLng);
-  } else if (props.initialAddress) {
-    mapAddressText.value = props.initialAddress;
-  }
+const handleMapClick = (e: any) => {
+  const { lat, lng } = e.latlng;
+  updateMarker(lat, lng);
 };
 
-const destroyMap = () => {
-  if (markerInstance) {
-    markerInstance = null;
-  }
-  if (mapInstance) {
-    mapInstance.remove();
-    mapInstance = null;
-  }
+const handleMarkerMove = (e: any) => {
+  const { lat, lng } = e.target.getLatLng();
+  updateMarker(lat, lng);
 };
 
 const useCurrentLocation = () => {
   if (!navigator.geolocation) {
-    alert("Geolocalización no soportada por el navegador.");
+    alert("Geolocalización no soportada.");
     return;
   }
-
   isLocating.value = true;
   navigator.geolocation.getCurrentPosition(
-    async (pos) => {
+    (pos) => {
       const { latitude, longitude } = pos.coords;
-      if (mapInstance) {
-        mapInstance.setView([latitude, longitude], 16);
-        await updateMapMarker(latitude, longitude);
-      }
+      center.value = [latitude, longitude];
+      zoom.value = 16;
+      updateMarker(latitude, longitude);
       isLocating.value = false;
     },
     () => {
-      alert("Permiso denegado o error al obtener la ubicación actual.");
+      alert("Permiso denegado o error al obtener ubicación.");
       isLocating.value = false;
     },
     { enableHighAccuracy: true, timeout: 10000 }
@@ -172,11 +106,10 @@ const handleCancel = () => {
 };
 
 const handleConfirm = () => {
-  if (tempLat.value === null || tempLng.value === null || !tempMunicipalityId.value) return;
-
+  if (!markerPosition.value || !tempMunicipalityId.value) return;
   emit("confirm", {
-    latitude: tempLat.value,
-    longitude: tempLng.value,
+    latitude: markerPosition.value[0],
+    longitude: markerPosition.value[1],
     address: tempAddress.value,
     municipalityId: tempMunicipalityId.value,
   });
@@ -187,24 +120,20 @@ watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen) {
-      tempLat.value = props.initialLat ?? null;
-      tempLng.value = props.initialLng ?? null;
+      const lat = props.initialLat ?? DEFAULT_CENTER[0];
+      const lng = props.initialLng ?? DEFAULT_CENTER[1];
+      center.value = [lat, lng];
+      zoom.value = props.initialLat && props.initialLng ? 15 : 13;
+      markerPosition.value = props.initialLat && props.initialLng ? [lat, lng] : null;
       tempAddress.value = props.initialAddress || "";
       mapAddressText.value = props.initialAddress || "Ninguna ubicación seleccionada";
-      setTimeout(initMap, 50);
-    } else {
-      destroyMap();
+      tempMunicipalityId.value = null;
+      if (props.initialLat && props.initialLng) {
+        updateMarker(lat, lng);
+      }
     }
   }
 );
-
-onMounted(() => {
-  ensureLeafletAssets();
-});
-
-onBeforeUnmount(() => {
-  destroyMap();
-});
 </script>
 
 <template>
@@ -228,7 +157,27 @@ onBeforeUnmount(() => {
       <span>{{ isLocating ? "Obteniendo..." : "Usar mi ubicación actual" }}</span>
     </button>
 
-    <div ref="mapContainer" class="map-container-wrapper"></div>
+    <div style="height: 320px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-gray);">
+      <l-map
+        v-model:zoom="zoom"
+        :center="center"
+        :use-global-leaflet="false"
+        @click="handleMapClick"
+      >
+        <l-tile-layer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution="&copy; OpenStreetMap"
+          layer-type="base"
+          name="OpenStreetMap"
+        />
+        <l-marker
+          v-if="markerPosition"
+          :lat-lng="markerPosition"
+          draggable
+          @moveend="handleMarkerMove"
+        />
+      </l-map>
+    </div>
 
     <label class="map-address-label">Dirección detectada:</label>
     <div class="map-address-box">
@@ -237,11 +186,7 @@ onBeforeUnmount(() => {
 
     <template #footer>
       <div class="map-modal-actions">
-        <button
-          type="button"
-          class="btn-secondary"
-          @click="handleCancel"
-        >
+        <button type="button" class="btn-secondary" @click="handleCancel">
           Cancelar
         </button>
         <button
