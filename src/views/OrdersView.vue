@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { quoteApi, organizationApi } from "../api";
 import type { QuoteAggregateResponse, QuoteStatus } from "../api/services/quote/types";
-import type { OrganizationResponse } from "../api/services/organization/types";
+import type { PublicProviderDto } from "../api/services/organization/types";
 import QuoteListItem from "../components/quote/QuoteListItem.vue";
 
 type TabFilter = "all" | "pending_provider" | "accepted" | "paid" | "fulfilled";
@@ -15,8 +15,8 @@ const activeTab = ref<TabFilter>("all");
 const searchQuery = ref("");
 const isSearchDropdownOpen = ref(false);
 
-const providerCache = new Map<string, OrganizationResponse>();
-const loadedProviders = ref<Record<string, OrganizationResponse>>({});
+const providerCache = new Map<string, PublicProviderDto>();
+const loadedProviders = ref<Record<string, PublicProviderDto>>({});
 
 const formatCode = (id: string): string => {
   return `MC-${id.slice(0, 8).toUpperCase()}`;
@@ -35,7 +35,7 @@ const calcUnits = (items: QuoteAggregateResponse["items"]): number => {
   return items.reduce((acc, item) => acc + item.quantity, 0);
 };
 
-const fetchProvider = async (providerId: string): Promise<OrganizationResponse | null> => {
+const fetchProvider = async (providerId: string): Promise<PublicProviderDto | null> => {
   if (!providerId) return null;
   if (providerCache.has(providerId)) {
     return providerCache.get(providerId)!;
@@ -451,3 +451,4 @@ onMounted(() => {
   }
 }
 </style>
+```[cite: 1]

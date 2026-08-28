@@ -79,6 +79,7 @@ export class IdentityService {
     this.tokenProvider.setAccessToken(null);
     this.tokenProvider.setRefreshToken(null);
   }
+
   async logoutAll(): Promise<void> {
     await this.client.request("/logout-all", { method: "POST" });
     this.tokenProvider.setAccessToken(null);

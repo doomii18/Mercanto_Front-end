@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import type { QuoteAggregateResponse, QuoteStatus } from "../../api/services/quote/types";
-
 import { organizationApi } from "../../api";
-import type { OrganizationResponse } from "../../api/services/organization/types";
+import type { PublicProviderDto } from "../../api/services/organization/types";
 
 const props = defineProps<{
   quoteAggregate: QuoteAggregateResponse;
@@ -13,10 +12,10 @@ const emit = defineEmits<{
   (e: "select", quoteId: string): void;
 }>();
 
-// Module-level memoization cache for provider metadata across cards
-const providerCache = new Map<string, Promise<OrganizationResponse>>();
 
-const provider = ref<OrganizationResponse | null>(null);
+const providerCache = new Map<string, Promise<PublicProviderDto>>();
+
+const provider = ref<PublicProviderDto | null>(null);
 const isLoadingProvider = ref(false);
 
 const quote = computed(() => props.quoteAggregate.quote);

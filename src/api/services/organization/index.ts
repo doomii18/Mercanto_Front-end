@@ -1,33 +1,33 @@
 import type { ApiClient } from "../../client";
 import { z } from "zod";
 import {
-  OrganizationResponseSchema,
+  AssetUploadRequestSchema,
+  UploadUrlResponseSchema,
+} from "../../shared/schemas";
+import {
+  PublicProviderDtoSchema,
+  OrganizationDetailsDtoSchema,
   PaginatedOrganizationsResponseSchema,
-  RegisterOrganizationRequestSchema,
-  OrganizationPatchRequestSchema,
+  RegisterProviderRequestSchema,
+  ProviderOrganizationPatchSchema,
   UpdateMemberRoleRequestSchema,
 } from "./payloads";
 import type {
-  OrganizationResponse,
+  PublicProviderDto,
+  OrganizationDetailsDto,
   PaginatedOrganizationsResponse,
-  RegisterOrganizationRequest,
-  OrganizationPatchRequest,
+  RegisterProviderRequest,
+  ProviderOrganizationPatchRequest,
   UpdateMemberRoleRequest,
+  OrganizationFilters,
 } from "./types";
 
 export class OrganizationService {
   constructor(private readonly client: ApiClient) {}
 
-  async getOrganizations(params?: {
-    limit?: number;
-    offset?: number;
-    search_term?: string;
-    municipality_id?: string;
-    sort_by?: "id" | "distance";
-    sort_dir?: "asc" | "desc";
-    lat?: number;
-    lng?: number;
-  }): Promise<PaginatedOrganizationsResponse> {
+  async getOrganizations(
+    params?: OrganizationFilters,
+  ): Promise<PaginatedOrganizationsResponse> {
     const queryParams = new URLSearchParams();
     if (params?.limit !== undefined)
       queryParams.append("limit", params.limit.toString());
@@ -51,41 +51,52 @@ export class OrganizationService {
     return PaginatedOrganizationsResponseSchema.parse(data);
   }
 
-  async getOrganization(id: string): Promise<OrganizationResponse> {
+  async getPublicProvider(id: string): Promise<PublicProviderDto> {
     const data = await this.client.request(`/providers/${id}`, {
       method: "GET",
     });
-    return OrganizationResponseSchema.parse(data);
+    return PublicProviderDtoSchema.parse(data);
+  }
+
+  async getTenantOrganization(id: string): Promise<OrganizationDetailsDto> {
+    const data = await this.client.request(`/organizations/${id}`, {
+      method: "GET",
+    });
+    return OrganizationDetailsDtoSchema.parse(data);
+  }
+
+  async getOrganization(id: string): Promise<PublicProviderDto> {
+    return this.getPublicProvider(id);
   }
 
   async registerOrganization(
-    payload: RegisterOrganizationRequest,
-  ): Promise<OrganizationResponse> {
-    const validatedPayload = RegisterOrganizationRequestSchema.parse(payload);
-    const data = await this.client.request("/providers", {
+    payload: RegisterProviderRequest,
+  ): Promise<OrganizationDetailsDto> {
+    const validatedPayload = RegisterProviderRequestSchema.parse(payload);
+    const data = await this.client.request("/organizations", {
       method: "POST",
       body: JSON.stringify(validatedPayload),
     });
-    return OrganizationResponseSchema.parse(data);
+    return OrganizationDetailsDtoSchema.parse(data);
   }
 
   async updateOrganization(
     id: string,
-    payload: OrganizationPatchRequest,
-  ): Promise<OrganizationResponse> {
-    const validatedPayload = OrganizationPatchRequestSchema.parse(payload);
-    const data = await this.client.request(`/providers/${id}`, {
+    payload: ProviderOrganizationPatchRequest,
+  ): Promise<OrganizationDetailsDto> {
+    const validatedPayload = ProviderOrganizationPatchSchema.parse(payload);
+    const data = await this.client.request(`/organizations/${id}`, {
       method: "PATCH",
       body: JSON.stringify(validatedPayload),
     });
-    return OrganizationResponseSchema.parse(data);
+    return OrganizationDetailsDtoSchema.parse(data);
   }
 
-  async getMyOrganizations(): Promise<OrganizationResponse[]> {
-    const data = await this.client.request("/memberships/me/providers", {
+  async getMyOrganizations(): Promise<OrganizationDetailsDto[]> {
+    const data = await this.client.request("/memberships/me/organizations", {
       method: "GET",
     });
-    return z.array(OrganizationResponseSchema).parse(data);
+    return z.array(OrganizationDetailsDtoSchema).parse(data);
   }
 
   async updateMemberRole(
@@ -95,7 +106,7 @@ export class OrganizationService {
   ): Promise<void> {
     const validatedPayload = UpdateMemberRoleRequestSchema.parse(payload);
     await this.client.request(
-      `/providers/${organizationId}/members/${accountId}/role`,
+      `/organizations/${organizationId}/members/${accountId}/role`,
       {
         method: "PATCH",
         body: JSON.stringify(validatedPayload),
@@ -105,8 +116,50 @@ export class OrganizationService {
 
   async revokeMember(organizationId: string, accountId: string): Promise<void> {
     await this.client.request(
-      `/providers/${organizationId}/members/${accountId}`,
+      `/organizations/${organizationId}/members/${accountId}`,
       { method: "DELETE" },
     );
+  }
+
+  async getOrganizationLogoBlob(blobId: string): Promise<Blob> {
+    return this.client.downloadBlob(`/providers/logo/${blobId}`);
+  }
+
+  async getOrganizationLogoBlobUrl(blobId: string): Promise<string> {
+    const blob = await this.getOrganizationLogoBlob(blobId);
+    return URL.createObjectURL(blob);
+  }
+
+  async uploadOrganizationLogo(
+    organizationId: string,
+    file: File,
+  ): Promise<void> {
+    const payload = AssetUploadRequestSchema.parse({
+      mime_type: file.type,
+      size_bytes: file.size,
+    });
+    const initData = UploadUrlResponseSchema.parse(
+      await this.client.request(`/providers/${organizationId}/logo/upload`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }),
+    );
+    const storageResponse = await fetch(initData.presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!storageResponse.ok) throw new Error("Logo upload failed");
+
+    await this.client.request(
+      `/providers/${organizationId}/logo/${initData.blob_id}/confirm`,
+      { method: "POST" },
+    );
+  }
+
+  async deleteOrganizationLogo(organizationId: string): Promise<void> {
+    await this.client.request(`/providers/${organizationId}/logo`, {
+      method: "DELETE",
+    });
   }
 }

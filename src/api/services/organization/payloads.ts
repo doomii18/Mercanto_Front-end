@@ -1,70 +1,63 @@
 import { z } from "zod";
 import {
   ProviderKindSchema,
+  OrganizationStatusSchema,
+  OrganizationMemberRoleSchema,
   GeoPointSchema,
   companyNameSchema,
   taxIdSchema,
   companyDescriptionSchema,
   addressSchema,
+  phoneNumberSchema,
 } from "./domain";
 import { PaginatedResponseSchema } from "../../shared/schemas";
 
-export const OrganizationMemberRoleSchema = z.enum([
-  "owner",
-  "admin",
-  "publisher",
-  "viewer",
-]);
+export { OrganizationMemberRoleSchema };
 
 export const UpdateMemberRoleRequestSchema = z.object({
   new_role: OrganizationMemberRoleSchema,
 });
 
-export const InternalOrganizationDtoSchema = z.object({
-  type: z.literal("Internal"),
+export const PublicProviderDtoSchema = z.object({
+  id: z.uuid(),
+  company_name: z.string(),
+  location: GeoPointSchema,
+  company_description: z.string().nullable().optional(),
+  logo_blob_id: z.uuid().nullable().optional(),
+  kind: ProviderKindSchema,
+});
+
+export const OrganizationDetailsDtoSchema = z.object({
   id: z.uuid(),
   company_name: z.string(),
   tax_id: z.string(),
   location: GeoPointSchema,
-  company_description: z.string().optional().nullable(),
-  phone_number: z.string().optional().nullable(),
-  logo_blob_id: z.uuid().optional().nullable(),
-  status: z.string(),
+  company_description: z.string().nullable().optional(),
+  phone_number: z.string().nullable().optional(),
+  logo_blob_id: z.uuid().nullable().optional(),
+  status: OrganizationStatusSchema.or(z.string()),
   kind: ProviderKindSchema,
 });
 
-export const PublicOrganizationDtoSchema = z.object({
-  type: z.literal("Public"),
-  id: z.uuid(),
-  company_name: z.string(),
-  location: GeoPointSchema,
-  company_description: z.string().optional().nullable(),
-  logo_blob_id: z.uuid().optional().nullable(),
-  kind: ProviderKindSchema,
-});
+export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(
+  PublicProviderDtoSchema,
+);
 
-export const OrganizationResponseSchema = z.discriminatedUnion("type", [
-  InternalOrganizationDtoSchema,
-  PublicOrganizationDtoSchema,
-]);
-
-export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(OrganizationResponseSchema);
-
-export const RegisterOrganizationRequestSchema = z.object({
+export const RegisterProviderRequestSchema = z.object({
   company_name: companyNameSchema,
   tax_id: taxIdSchema,
   location: GeoPointSchema,
-  company_description: companyDescriptionSchema.optional().nullable(),
-  phone_number: z.string().optional().nullable(),
+  company_description: companyDescriptionSchema.nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
   municipality_id: z.uuid(),
   address: addressSchema,
   kind: ProviderKindSchema,
 });
 
-export const OrganizationPatchRequestSchema = z.object({
-  company_name: companyNameSchema.optional().nullable(),
-  tax_id: taxIdSchema.optional().nullable(),
-  location: GeoPointSchema.optional().nullable(),
-  company_description: companyDescriptionSchema.optional().nullable(),
-  phone_number: z.string().optional().nullable(),
+export const ProviderOrganizationPatchSchema = z.object({
+  company_name: companyNameSchema.nullable().optional(),
+  tax_id: taxIdSchema.nullable().optional(),
+  location: GeoPointSchema.nullable().optional(),
+  company_description: companyDescriptionSchema.nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
 });
