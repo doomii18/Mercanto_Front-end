@@ -36,11 +36,24 @@ export class AuthManager {
     }
 
     const tokens = await identityApi.refresh({ refresh_token: refreshToken });
+    if (tokens?.access_token) {
+      tokenProvider.setAccessToken(tokens.access_token);
+    }
+    if (tokens?.refresh_token) {
+      tokenProvider.setRefreshToken(tokens.refresh_token);
+    }
     return tokens.access_token;
   }
 
   async login(credentials: LoginRequest): Promise<AccountResponse> {
-    await identityApi.login(credentials);
+    const authResponse = await identityApi.login(credentials);
+    if (authResponse?.access_token) {
+      tokenProvider.setAccessToken(authResponse.access_token);
+    }
+    if (authResponse?.refresh_token) {
+      tokenProvider.setRefreshToken(authResponse.refresh_token);
+    }
+
     const account = await identityApi.getMyAccount();
     this.currentAccount = account;
     this.isInitialized = true;
@@ -61,12 +74,22 @@ export class AuthManager {
       }
 
       try {
-        this.currentAccount = await identityApi.getMyAccount();
+        if (!tokenProvider.getAccessToken()) {
+          await this.refreshAccessToken();
+        }
+
+        try {
+          this.currentAccount = await identityApi.getMyAccount();
+        } catch {
+          await this.refreshAccessToken();
+          this.currentAccount = await identityApi.getMyAccount();
+        }
       } catch (error) {
-        this.initPromise = null;
-        this.currentAccount = null;
+        this.handleSessionExpired();
+        return null;
       } finally {
         this.isInitialized = true;
+        this.initPromise = null;
         this.notify();
       }
 
