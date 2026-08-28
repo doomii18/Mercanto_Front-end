@@ -6,6 +6,7 @@ import type { PublicProviderDto } from "../../api/services/organization/types";
 import ProductImage from "../product/ProductImage.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
 import QuoteIdBadge from "./QuoteIdBadge.vue";
+import QuoteStatusBadge from "./QuoteStatusBadge.vue";
 
 const props = defineProps<{
   quoteAggregate: QuoteAggregateResponse;
@@ -67,21 +68,6 @@ const formatCurrency = (amount: number) => {
   })}`;
 };
 
-const statusConfig = computed(() => {
-  const status = quote.value.status as QuoteStatus;
-  const configs: Record<QuoteStatus, { label: string; class: string; icon: string }> = {
-    draft: { label: "Borrador", class: "status-draft", icon: "fa-regular fa-file-lines" },
-    pending_provider: { label: "Pendiente", class: "status-pending", icon: "fa-regular fa-clock" },
-    accepted: { label: "En proceso", class: "status-accepted", icon: "fa-regular fa-clock" },
-    paid: { label: "Pagado", class: "status-paid", icon: "fa-solid fa-receipt" },
-    fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-regular fa-circle-check" },
-    rejected: { label: "Rechazado", class: "status-rejected", icon: "fa-solid fa-circle-xmark" },
-    cancelled: { label: "Cancelado", class: "status-cancelled", icon: "fa-solid fa-ban" },
-  };
-
-  return configs[status] || { label: status, class: "status-draft", icon: "fa-solid fa-circle-info" };
-});
-
 const loadProductBlobId = async (productId: string): Promise<string | null> => {
   if (productBlobCache.has(productId)) {
     return productBlobCache.get(productId)!;
@@ -128,7 +114,6 @@ onMounted(() => {
 
 <template>
   <div class="quote-card">
-    <!-- Columna 1: Datos Generales e ID -->
     <div class="quote-details">
       <div class="quote-header-row">
         <h4 class="quote-order-title">Pedido</h4>
@@ -147,7 +132,6 @@ onMounted(() => {
       </p>
     </div>
 
-    <!-- Columna 2: Proveedor y Previsualización -->
     <div class="quote-center">
       <div class="provider-meta-group">
         <div class="provider-avatar">
@@ -186,12 +170,8 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Columna 3: Estado y Acción -->
     <div class="quote-status-action">
-      <div :class="['status-badge', statusConfig.class]">
-        <i :class="statusConfig.icon"></i>
-        <span>{{ statusConfig.label }}</span>
-      </div>
+      <QuoteStatusBadge :status="quote.status" size="sm" />
       <p v-if="statusDateLabel" class="status-date-subtext">{{ statusDateLabel }}</p>
       <button
         type="button"
@@ -222,7 +202,6 @@ onMounted(() => {
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
 }
 
-/* Columna 1 */
 .quote-details {
   display: flex;
   flex-direction: column;
@@ -278,7 +257,6 @@ onMounted(() => {
   margin: 0;
 }
 
-/* Columna 2 */
 .quote-center {
   display: flex;
   align-items: center;
@@ -378,32 +356,12 @@ onMounted(() => {
   background: #ffffff;
 }
 
-/* Columna 3 */
 .quote-status-action {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
 }
-
-.status-badge {
-  padding: 0.4rem 1.1rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  white-space: nowrap;
-}
-
-.status-draft { background-color: #f1f5f9; color: #475569; }
-.status-pending { background-color: #fff7ed; color: #ea580c; }
-.status-accepted { background-color: #fde8db; color: #ff6a00; }
-.status-paid { background-color: #f0fdf4; color: #16a34a; }
-.status-fulfilled { background-color: #d8f1ef; color: #00a896; }
-.status-rejected { background-color: #fef2f2; color: #dc2626; }
-.status-cancelled { background-color: #f3f4f6; color: #6b7280; }
 
 .status-date-subtext {
   font-size: 0.76rem;
@@ -430,7 +388,6 @@ onMounted(() => {
   color: #ffffff;
 }
 
-/* Responsividad */
 @media (max-width: 990px) {
   .quote-card {
     grid-template-columns: 1fr;

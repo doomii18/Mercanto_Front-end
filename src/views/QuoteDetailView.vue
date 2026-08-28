@@ -2,12 +2,13 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { quoteApi, organizationApi, productApi, userProfileApi } from "../api";
-import type { QuoteAggregateResponse, QuoteStatus } from "../api/services/quote/types";
+import type { QuoteAggregateResponse } from "../api/services/quote/types";
 import type { PublicProviderDto } from "../api/services/organization/types";
 import type { UserProfileResponse } from "../api/services/user_profile/types";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import QuoteIdBadge from "../components/quote/QuoteIdBadge.vue";
+import QuoteStatusBadge from "../components/quote/QuoteStatusBadge.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -20,16 +21,6 @@ const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 
 const productBlobCache = new Map<string, Promise<string | null>>();
-
-const STATUS_CONFIG: Record<QuoteStatus, { label: string; class: string; icon: string }> = {
-  draft: { label: "Borrador", class: "status-draft", icon: "fa-regular fa-file-lines" },
-  pending_provider: { label: "Pendiente", class: "status-pending", icon: "fa-regular fa-clock" },
-  accepted: { label: "Aceptado", class: "status-accepted", icon: "fa-solid fa-circle-check" },
-  paid: { label: "Pagado", class: "status-paid", icon: "fa-solid fa-receipt" },
-  fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-regular fa-circle-check" },
-  rejected: { label: "Rechazado", class: "status-rejected", icon: "fa-solid fa-circle-xmark" },
-  cancelled: { label: "Cancelado", class: "status-cancelled", icon: "fa-solid fa-ban" },
-};
 
 const PAYMENT_LABELS: Record<string, string> = {
   card: "Tarjeta de crédito / débito",
@@ -185,11 +176,7 @@ onMounted(() => {
           <div>
             <div class="details-order-heading-wrapper">
               <span class="heading-title-text">Detalles del Pedido</span>
-              <QuoteIdBadge
-                :quote-id="quoteAggregate.quote.id"
-                :updated-at="quoteAggregate.quote.updated_at"
-                size="lg"
-              />
+              <QuoteIdBadge :quote-id="quoteAggregate.quote.id" size="lg" />
             </div>
             <p class="details-order-subdate">
               Realizado el {{ formatDate(quoteAggregate.quote.updated_at) }}
@@ -197,10 +184,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div :class="['status-badge', STATUS_CONFIG[quoteAggregate.quote.status as QuoteStatus]?.class || 'status-draft']">
-          <i :class="STATUS_CONFIG[quoteAggregate.quote.status as QuoteStatus]?.icon || 'fa-regular fa-circle-check'"></i>
-          <span>{{ STATUS_CONFIG[quoteAggregate.quote.status as QuoteStatus]?.label || quoteAggregate.quote.status }}</span>
-        </div>
+        <QuoteStatusBadge :status="quoteAggregate.quote.status" size="md" />
       </div>
 
       <div class="order-summary-card">
@@ -429,24 +413,6 @@ onMounted(() => {
   font-size: 0.88rem;
   margin-top: 0.2rem;
 }
-
-.status-badge {
-  padding: 0.4rem 1.2rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.88rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.status-draft { background-color: #f1f5f9; color: #475569; }
-.status-pending { background-color: #fff7ed; color: #ea580c; }
-.status-accepted { background-color: #eff6ff; color: #2563eb; }
-.status-paid { background-color: #f0fdf4; color: #16a34a; }
-.status-fulfilled { background-color: #d8f1ef; color: #00a896; }
-.status-rejected { background-color: #fef2f2; color: #dc2626; }
-.status-cancelled { background-color: #f3f4f6; color: #6b7280; }
 
 .order-summary-card {
   background-color: #f0faf9;

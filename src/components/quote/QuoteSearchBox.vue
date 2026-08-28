@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import type { QuoteAggregateResponse, QuoteStatus } from "../../api/services/quote/types";
+import type { QuoteAggregateResponse } from "../../api/services/quote/types";
 import type { PublicProviderDto } from "../../api/services/organization/types";
-import QuoteIdBadge from "./QuoteIdBadge.vue";
+import QuoteStatusBadge from "./QuoteStatusBadge.vue";
 import { uuidToCrockford } from "../../utils/formatters";
 
 const props = withDefaults(
@@ -22,16 +22,6 @@ const router = useRouter();
 const searchBoxRef = ref<HTMLElement | null>(null);
 const searchQuery = ref("");
 const isDropdownOpen = ref(false);
-
-const STATUS_CONFIG: Record<QuoteStatus, { label: string; class: string; icon: string }> = {
-  draft: { label: "Borrador", class: "status-draft", icon: "fa-regular fa-file-lines" },
-  pending_provider: { label: "Pendiente", class: "status-pending", icon: "fa-regular fa-clock" },
-  accepted: { label: "En proceso", class: "status-accepted", icon: "fa-regular fa-clock" },
-  paid: { label: "Pagado", class: "status-paid", icon: "fa-solid fa-receipt" },
-  fulfilled: { label: "Recibido", class: "status-fulfilled", icon: "fa-regular fa-circle-check" },
-  rejected: { label: "Rechazado", class: "status-rejected", icon: "fa-solid fa-circle-xmark" },
-  cancelled: { label: "Cancelado", class: "status-cancelled", icon: "fa-solid fa-ban" },
-};
 
 const searchResults = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
@@ -53,6 +43,19 @@ const searchResults = computed(() => {
     );
   });
 });
+
+const getShortId = (quoteId: string): string => {
+  const crockford = uuidToCrockford(quoteId);
+  return crockford.slice(0, 5);
+};
+
+const getQuoteTotal = (aggregate: QuoteAggregateResponse): string => {
+  const total = aggregate.items.reduce(
+    (acc, item) => acc + item.quantity * item.unit_price_snapshot,
+    0
+  );
+  return `C$ ${total.toLocaleString("es-NI")}`;
+};
 
 const handleSelectOrder = (quoteId: string) => {
   isDropdownOpen.value = false;
@@ -109,6 +112,7 @@ onBeforeUnmount(() => {
     <div
       v-if="isDropdownOpen && searchQuery.trim().length > 0"
       class="search-results-dropdown"
+      role="listbox"
     >
       <div v-if="searchResults.length === 0" class="dropdown-empty-state">
         <i class="fa-regular fa-folder-open"></i>
@@ -119,23 +123,41 @@ onBeforeUnmount(() => {
         v-for="item in searchResults"
         :key="item.quote.id"
         class="dropdown-result-item"
+        role="option"
+        tabindex="0"
         @click="handleSelectOrder(item.quote.id)"
+        @keydown.enter="handleSelectOrder(item.quote.id)"
       >
-        <div class="result-top-line">
-          <QuoteIdBadge :quote-id="item.quote.id" size="sm" />
-          <span :class="['result-status-pill', STATUS_CONFIG[item.quote.status as QuoteStatus]?.class || 'status-draft']">
-            <i :class="STATUS_CONFIG[item.quote.status as QuoteStatus]?.icon"></i>
-            {{ STATUS_CONFIG[item.quote.status as QuoteStatus]?.label || item.quote.status }}
-          </span>
+        <!-- Icon Anchor -->
+        <div class="result-icon-box">
+          <i class="fa-solid fa-box-open"></i>
         </div>
 
-        <div class="result-details">
-          <span class="result-provider">
-            {{ providersMap.get(item.quote.provider_id)?.company_name || 'Proveedor' }}
-          </span>
-          <span class="result-item-names">
-            {{ item.items.map((i) => i.product_title_snapshot).join(", ") }}
-          </span>
+        <!-- Middle Content -->
+        <div class="result-main-col">
+          <div class="result-top-row">
+            <span class="product-lead-title" :title="item.items[0]?.product_title_snapshot">
+              {{ item.items[0]?.product_title_snapshot || 'Pedido sin productos' }}
+            </span>
+            <span v-if="item.items.length > 1" class="items-count-tag">
+              +{{ item.items.length - 1 }}
+            </span>
+          </div>
+
+          <div class="result-sub-row">
+            <span class="provider-text">
+              {{ providersMap.get(item.quote.provider_id)?.company_name || 'Proveedor' }}
+            </span>
+            <span class="row-sep">•</span>
+            <span class="short-id-tag">#{{ getShortId(item.quote.id) }}</span>
+            <span class="row-sep">•</span>
+            <span class="amount-text">{{ getQuoteTotal(item) }}</span>
+          </div>
+        </div>
+
+        <!-- Trailing Status -->
+        <div class="result-status-col">
+          <QuoteStatusBadge :status="item.quote.status" size="sm" />
         </div>
       </div>
     </div>
@@ -146,14 +168,14 @@ onBeforeUnmount(() => {
 .search-container {
   position: relative;
   width: 100%;
-  max-width: 380px;
+  max-width: 420px;
 }
 
 .search-input-wrapper {
   display: flex;
   align-items: center;
-  border: 1px solid var(--border-gray, #e0e0e0);
-  border-radius: 10px;
+  border: 1.5px solid var(--border-gray, #e0e0e0);
+  border-radius: 12px;
   background-color: #ffffff;
   padding: 0.55rem 0.85rem;
   gap: 0.6rem;
@@ -176,6 +198,7 @@ onBeforeUnmount(() => {
   width: 100%;
   font-size: 0.9rem;
   color: var(--text-dark, #1e293b);
+  background: transparent;
 }
 
 .btn-clear-search {
@@ -193,30 +216,33 @@ onBeforeUnmount(() => {
   color: var(--text-dark, #1e293b);
 }
 
-/* Floating Results Dropdown */
+/* Dropdown Shell */
 .search-results-dropdown {
   position: absolute;
-  top: calc(100% + 6px);
+  top: calc(100% + 8px);
   left: 0;
   right: 0;
   background-color: #ffffff;
   border: 1px solid var(--border-gray, #e0e0e0);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  max-height: 320px;
+  border-radius: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  max-height: 360px;
   overflow-y: auto;
   z-index: 100;
   display: flex;
   flex-direction: column;
+  padding: 0.35rem 0;
 }
 
+/* Result Row Layout */
 .dropdown-result-item {
-  padding: 0.8rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  cursor: pointer;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  border-bottom: 1px solid #f8fafc;
+  outline: none;
   transition: background-color 0.15s ease;
 }
 
@@ -224,63 +250,108 @@ onBeforeUnmount(() => {
   border-bottom: none;
 }
 
-.dropdown-result-item:hover {
-  background-color: var(--bg-gray, #f5f7f9);
+.dropdown-result-item:hover,
+.dropdown-result-item:focus-visible {
+  background-color: #f1f5f9;
 }
 
-.result-top-line {
+/* Anchor Icon */
+.result-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background-color: #e6f7f5;
+  color: var(--light-teal, #189c94);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
-.result-status-pill {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 0.2rem 0.55rem;
-  border-radius: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  white-space: nowrap;
-}
-
-/* Status variants */
-.status-draft { background-color: #f1f5f9; color: #475569; }
-.status-pending { background-color: #fff7ed; color: #ea580c; }
-.status-accepted { background-color: #fde8db; color: #ff6a00; }
-.status-paid { background-color: #f0fdf4; color: #16a34a; }
-.status-fulfilled { background-color: #d8f1ef; color: #00a896; }
-.status-rejected { background-color: #fef2f2; color: #dc2626; }
-.status-cancelled { background-color: #f3f4f6; color: #6b7280; }
-
-.result-details {
+/* Middle Details */
+.result-main-col {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.2rem;
 }
 
-.result-provider {
-  font-size: 0.82rem;
-  font-weight: 600;
+.result-top-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.product-lead-title {
+  font-weight: 700;
+  font-size: 0.88rem;
   color: var(--primary-blue, #083c5a);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.result-item-names {
-  font-size: 0.78rem;
+.items-count-tag {
+  background-color: #e2e8f0;
+  color: #475569;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.35rem;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+.result-sub-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
   color: #64748b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.provider-text {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.row-sep {
+  color: #cbd5e1;
+}
+
+.short-id-tag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-weight: 700;
+  color: var(--primary-blue, #083c5a);
+}
+
+.amount-text {
+  font-weight: 700;
+  color: var(--primary-orange, #ff6a00);
+}
+
+.result-status-col {
+  flex-shrink: 0;
+}
+
+/* Empty State */
 .dropdown-empty-state {
-  padding: 1.5rem;
+  padding: 1.75rem 1rem;
   text-align: center;
   color: #94a3b8;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  gap: 0.4rem;
   font-size: 0.88rem;
+}
+
+.dropdown-empty-state i {
+  font-size: 1.4rem;
 }
 </style>
