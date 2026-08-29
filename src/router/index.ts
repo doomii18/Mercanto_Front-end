@@ -74,6 +74,24 @@ const routes: RouteRecordRaw[] = [
         meta: { requiresAuth: true },
       },
       {
+        path: "provider-products",
+        name: "provider-products",
+        component: () => import("../views/ProviderProductsView.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "provider-products/add",
+        name: "provider-add-product",
+        component: () => import("../views/ProviderAddProductView.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "messages",
+        name: "messages",
+        component: () => import("../views/MessagesView.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
         path: "smart-search",
         name: "smart-search",
         component: () => import("../views/SmartSearchView.vue"),
