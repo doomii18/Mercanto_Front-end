@@ -1,13 +1,53 @@
 :root {
-  --primary-orange: #ff6a00;
-  --primary-orange-hover: #e66000;
-  --primary-blue: #083c5a;
-  --light-teal: #189c94;
-  --bg-light: #fefcfb;
-  --bg-gray: #f5f7f9;
-  --border-gray: #e0e0e0;
-  --text-dark: #1e293b;
-  --shadow-sm: 0 4px 15px rgba(0, 0, 0, 0.05);
+  /* Brand: Azul Oscuro */
+  --color-blue-50: #e6eff4;
+  --color-blue-100: #cce0eb;
+  --color-blue-200: #99bfd7;
+  --color-blue-400: #34749f;
+  --color-blue-500: #023859;
+  --color-blue-600: #022e49;
+  --color-blue-700: #012237;
+  --color-blue-contrast: #ffffff;
+
+  /* Brand: Naranja de Seguridad */
+  --color-orange-50: #fff0e6;
+  --color-orange-100: #ffd8bd;
+  --color-orange-200: #ffb98a;
+  --color-orange-400: #ff8533;
+  --color-orange-500: #ff6a00;
+  --color-orange-600: #e65f00;
+  --color-orange-700: #cc5400;
+  --color-orange-contrast: #ffffff;
+
+  /* Brand: Verde Persa */
+  --color-teal-50: #e6f6f5;
+  --color-teal-100: #c2ece7;
+  --color-teal-200: #8fe0d6;
+  --color-teal-400: #26baa9;
+  --color-teal-500: #00a896;
+  --color-teal-600: #009484;
+  --color-teal-700: #007a6d;
+  --color-teal-contrast: #ffffff;
+
+  /* Neutrals & Surfaces */
+  --color-white: #ffffff;
+  --color-neutral-warm: #fefcfb;
+  --color-neutral-50: #f8fafc;
+  --color-neutral-100: #f1f5f9;
+  --color-neutral-200: #e2e8f0;
+  --color-neutral-300: #cbd5e1;
+  --color-neutral-500: #64748b;
+  --color-neutral-900: #1e293b;
+
+  /* Legacy Aliases (Maintains backward compatibility across existing components) */
+  --primary-blue: var(--color-blue-500);
+  --primary-orange: var(--color-orange-500);
+  --primary-orange-hover: var(--color-orange-600);
+  --light-teal: var(--color-teal-500);
+  --bg-light: var(--color-neutral-warm);
+  --bg-gray: var(--color-neutral-100);
+  --border-gray: var(--color-neutral-200);
+  --text-dark: var(--color-neutral-900);
 }
 
 *, *::before, *::after {
