@@ -1,22 +1,50 @@
-import { z } from "zod";
+import type { z } from "zod";
 import type {
-  InternalOrganizationDtoSchema,
-  PublicOrganizationDtoSchema,
-  OrganizationResponseSchema,
+  PublicProviderDtoSchema,
+  OrganizationDetailsDtoSchema,
   PaginatedOrganizationsResponseSchema,
-  RegisterOrganizationRequestSchema,
-  OrganizationPatchRequestSchema,
-  OrganizationMemberRoleSchema,
+  RegisterProviderRequestSchema,
+  ProviderOrganizationPatchSchema,
   UpdateMemberRoleRequestSchema,
 } from "./payloads";
-import type { ProviderKindSchema } from "./domain";
+import type {
+  ProviderKindSchema,
+  OrganizationStatusSchema,
+  OrganizationMemberRoleSchema,
+  GeoPointSchema,
+} from "./domain";
 
-export type InternalOrganizationDto = z.infer<typeof InternalOrganizationDtoSchema>;
-export type PublicOrganizationDto = z.infer<typeof PublicOrganizationDtoSchema>;
-export type OrganizationResponse = z.infer<typeof OrganizationResponseSchema>;
-export type PaginatedOrganizationsResponse = z.infer<typeof PaginatedOrganizationsResponseSchema>;
-export type RegisterOrganizationRequest = z.infer<typeof RegisterOrganizationRequestSchema>;
-export type OrganizationPatchRequest = z.infer<typeof OrganizationPatchRequestSchema>;
-export type OrganizationMemberRole = z.infer<typeof OrganizationMemberRoleSchema>;
-export type UpdateMemberRoleRequest = z.infer<typeof UpdateMemberRoleRequestSchema>;
+export type PublicProviderDto = z.infer<typeof PublicProviderDtoSchema>;
+export type OrganizationDetailsDto = z.infer<
+  typeof OrganizationDetailsDtoSchema
+>;
+export type PaginatedOrganizationsResponse = z.infer<
+  typeof PaginatedOrganizationsResponseSchema
+>;
+export type RegisterProviderRequest = z.infer<
+  typeof RegisterProviderRequestSchema
+>;
+export type ProviderOrganizationPatchRequest = z.infer<
+  typeof ProviderOrganizationPatchSchema
+>;
+export type UpdateMemberRoleRequest = z.infer<
+  typeof UpdateMemberRoleRequestSchema
+>;
+
 export type ProviderKind = z.infer<typeof ProviderKindSchema>;
+export type OrganizationStatus = z.infer<typeof OrganizationStatusSchema>;
+export type OrganizationMemberRole = z.infer<
+  typeof OrganizationMemberRoleSchema
+>;
+export type GeoPoint = z.infer<typeof GeoPointSchema>;
+
+export interface OrganizationFilters {
+  limit?: number;
+  offset?: number;
+  search_term?: string;
+  municipality_id?: string;
+  sort_by?: "id" | "distance";
+  sort_dir?: "asc" | "desc";
+  lat?: number;
+  lng?: number;
+}

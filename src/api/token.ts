@@ -3,33 +3,42 @@ export interface TokenProvider {
   setAccessToken(accessToken: string | null): void;
   getRefreshToken(): string | null;
   setRefreshToken(refreshToken: string | null): void;
+  clear(): void;
 }
 
 export class LocalStorageTokenProvider implements TokenProvider {
-  private refreshToken: string | null = null;
-  private accessToken: string | null = null;
+  private readonly ACCESS_TOKEN_KEY = "access_token";
+  private readonly REFRESH_TOKEN_KEY = "refresh_token";
 
   getAccessToken(): string | null {
-    return this.accessToken;
+    return localStorage.getItem(this.ACCESS_TOKEN_KEY) ?? localStorage.getItem("accessToken");
   }
 
   setAccessToken(accessToken: string | null): void {
-    this.accessToken = accessToken;
+    if (accessToken) {
+      localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
+    } else {
+      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
+      localStorage.removeItem("accessToken");
+    }
   }
 
   getRefreshToken(): string | null {
-    if (this.refreshToken == null) {
-      this.refreshToken = localStorage.getItem('refreshToken');
-    }
-    return this.refreshToken;
+    return localStorage.getItem(this.REFRESH_TOKEN_KEY) ?? localStorage.getItem("refreshToken");
   }
 
   setRefreshToken(refreshToken: string | null): void {
-    this.refreshToken = refreshToken;
     if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
+      localStorage.removeItem("refreshToken");
     } else {
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+      localStorage.removeItem("refreshToken");
     }
+  }
+
+  clear(): void {
+    this.setAccessToken(null);
+    this.setRefreshToken(null);
   }
 }

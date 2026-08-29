@@ -26,16 +26,13 @@ import type {
 export class ProductService {
   constructor(private readonly client: ApiClient) {}
 
+  async getProductImageBlob(blobId: string): Promise<Blob> {
+    return this.client.downloadBlob(`/products/images/${blobId}`);
+  }
+
   async getProductImageBlobUrl(blobId: string): Promise<string> {
-    const response = await fetch(
-      `${this.client.getBaseUrl()}/products/images/${blobId}`,
-      { method: "GET" },
-    );
-
-    if (!response.ok)
-      throw new Error(`Failed to fetch product image: ${response.statusText}`);
-
-    return URL.createObjectURL(await response.blob());
+    const blob = await this.getProductImageBlob(blobId);
+    return URL.createObjectURL(blob);
   }
 
   async uploadProductImage(productId: string, file: File): Promise<void> {

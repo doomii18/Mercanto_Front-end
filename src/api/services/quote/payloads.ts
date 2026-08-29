@@ -29,7 +29,7 @@ export const QuoteResponseSchema = z.object({
   payment_preference: PaymentMethodSchema,
   buyer_notes: z.string().optional().nullable(),
   shipping_address: z.string(),
-  updated_at: z.string().datetime(),
+  updated_at: z.iso.datetime(),
 });
 
 export const QuoteItemResponseSchema = z.object({
@@ -48,3 +48,29 @@ export const QuoteAggregateResponseSchema = z.object({
 export const PaginatedQuoteAggregateResponseSchema = PaginatedResponseSchema(
   QuoteAggregateResponseSchema,
 );
+
+export const AccountQuoteFiltersQuerySchema = z.object({
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().nonnegative().optional(),
+  provider_id: z.uuid().optional(),
+  quote_group_id: z.uuid().optional(),
+  statuses: z.array(QuoteStatusSchema).optional(),
+  payment_preference: PaymentMethodSchema.optional(),
+  shipping_preference: ShippingMethodSchema.optional(),
+  created_after: z.iso.datetime().optional(),
+  created_before: z.iso.datetime().optional(),
+  search_term: z.string().optional(),
+});
+
+export const ProviderQuoteFiltersQuerySchema = z.object({
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().nonnegative().optional(),
+  buyer_id: z.uuid().optional(),
+  quote_group_id: z.uuid().optional(),
+  statuses: z.array(QuoteStatusSchema).optional(),
+  payment_preference: PaymentMethodSchema.optional(),
+  shipping_preference: ShippingMethodSchema.optional(),
+  created_after: z.iso.datetime().optional(),
+  created_before: z.iso.datetime().optional(),
+  search_term: z.string().optional(),
+});
