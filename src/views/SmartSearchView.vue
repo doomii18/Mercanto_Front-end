@@ -1,14 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { GeocodingService } from "../modules/geo";
 
-// Assets
 import mochilaImg from "../assets/mochila.png";
 import utensiliosImg from "../assets/utensilios.png";
 import tabletaImg from "../assets/tableta.png";
 import paletaImg from "../assets/paleta.png";
 
-// Available Catalog for Modal Selection
+const router = useRouter();
+const route = useRoute();
+
 interface CatalogProduct {
   id: string;
   name: string;
@@ -93,7 +95,6 @@ const availableCatalog = ref<CatalogProduct[]>([
   },
 ]);
 
-// Selected User Products in Smart Search
 interface SelectedProductItem {
   id: string;
   name: string;
@@ -102,24 +103,20 @@ interface SelectedProductItem {
   image: string;
 }
 
-// Initial View Mode: 'config' (Initial screen matching the screenshot)
-const viewMode = ref<"config" | "results">("config");
+const viewMode = computed<"config" | "results">(() => {
+  return route.query.step === "results" ? "results" : "config";
+});
 
-// Selected products list starts empty to show the initial empty state from screenshot
 const selectedProducts = ref<SelectedProductItem[]>([]);
-
-// Location and Preferences State
 const deliveryAddress = ref("Managua, Nicaragua");
 const pricePreference = ref(70);
 const distancePreference = computed(() => 100 - pricePreference.value);
 
-// Modals State
 const showProductModal = ref(false);
 const showGpsModal = ref(false);
 const showDetailModal = ref(false);
 const selectedOptionDetail = ref<any>(null);
 
-// Product Modal Filtering
 const productSearchFilter = ref("");
 const filteredCatalog = computed(() => {
   const q = productSearchFilter.value.trim().toLowerCase();
@@ -132,7 +129,6 @@ const filteredCatalog = computed(() => {
   );
 });
 
-// GPS Map Leaflet State
 const mapContainer = ref<HTMLElement | null>(null);
 let mapInstance: any = null;
 let markerInstance: any = null;
@@ -142,7 +138,6 @@ const tempLng = ref<number | null>(-86.2504);
 const isLocating = ref(false);
 const DEFAULT_CENTER = [12.1328, -86.2504];
 
-// Dynamic calculations based on selected products and preferences
 const primaryOption = computed(() => {
   const total = 28150;
   const original = 31600;
@@ -186,7 +181,6 @@ const alternativeOption = computed(() => {
   };
 });
 
-// Stepper / Remove / Add Handlers
 const removeProduct = (index: number) => {
   selectedProducts.value.splice(index, 1);
 };
@@ -209,7 +203,6 @@ const addProductFromCatalog = (product: CatalogProduct) => {
 
 const executeSearch = () => {
   if (selectedProducts.value.length === 0) {
-    // If user clicks without products, prefill default 3 products
     selectedProducts.value = [
       {
         id: "laptop-adventure",
@@ -234,16 +227,21 @@ const executeSearch = () => {
       },
     ];
   }
-  viewMode.value = "results";
+  router.push({
+    name: "smart-search",
+    query: { ...route.query, step: "results" },
+  });
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
 const goToConfigView = () => {
-  viewMode.value = "config";
+  router.push({
+    name: "smart-search",
+    query: { ...route.query, step: "config" },
+  });
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-// Leaflet Lifecycle & Map Methods
 onMounted(() => {
   window.scrollTo({ top: 0, behavior: "smooth" });
   if (!document.getElementById("leaflet-css")) {
@@ -286,7 +284,6 @@ const openGpsModal = async () => {
     }).addTo(mapInstance);
 
     mapInstance.on("click", (e: any) => updateMapMarker(e.latlng.lat, e.latlng.lng));
-
     updateMapMarker(initialLat, initialLng);
   } else {
     mapInstance.invalidateSize();
@@ -361,7 +358,6 @@ const confirmAndOrder = () => {
 
 <template>
   <div class="smart-search-view-container">
-    <!-- Header Banner / Título e Info -->
     <div class="smart-header-banner">
       <div class="header-title-col">
         <h1 class="main-title">
@@ -384,9 +380,7 @@ const confirmAndOrder = () => {
       </div>
     </div>
 
-    <!-- VISTA 1: CONFIGURACIÓN INICIAL (ESTADO VACÍO / IMAGEN 1) -->
     <div v-if="viewMode === 'config'" class="config-view-layout">
-      <!-- Barra de Pasos -->
       <div class="steps-progress-box">
         <span class="steps-box-label">SIGUE ESTOS PASOS PARA COMENZAR</span>
         <div class="steps-cards-row">
@@ -416,15 +410,12 @@ const confirmAndOrder = () => {
         </div>
       </div>
 
-      <!-- Dos Paneles Principales -->
       <div class="two-columns-panels">
-        <!-- Panel 1: Lista de Productos -->
         <div class="panel-box">
           <h3 class="panel-box-title">
             <i class="fa-solid fa-list-check"></i> 1. Agrega los productos que necesitas
           </h3>
 
-          <!-- Estado Vacío -->
           <div v-if="selectedProducts.length === 0" class="empty-products-wrapper">
             <div class="empty-icon-badge">
               <i class="fa-regular fa-clipboard"></i>
@@ -436,7 +427,6 @@ const confirmAndOrder = () => {
             </button>
           </div>
 
-          <!-- Lista con productos agregados -->
           <div v-else class="added-products-list">
             <div
               v-for="(prod, idx) in selectedProducts"
@@ -473,7 +463,6 @@ const confirmAndOrder = () => {
           </div>
         </div>
 
-        <!-- Panel 2: Ubicación y Preferencias -->
         <div class="panel-box">
           <h3 class="panel-box-title">
             <i class="fa-solid fa-location-dot"></i> 2. Selecciona tu ubicación de entrega
@@ -509,7 +498,6 @@ const confirmAndOrder = () => {
             </div>
             <p class="pref-subtitle">Ajusta lo que es más importante para ti en la búsqueda.</p>
 
-            <!-- Slider 1: Precio -->
             <div class="pref-range-control">
               <div class="range-labels">
                 <span>Precio</span>
@@ -524,7 +512,6 @@ const confirmAndOrder = () => {
               />
             </div>
 
-            <!-- Slider 2: Distancia -->
             <div class="pref-range-control">
               <div class="range-labels">
                 <span>Distancia</span>
@@ -545,7 +532,6 @@ const confirmAndOrder = () => {
         </div>
       </div>
 
-      <!-- Botón Central de Búsqueda Inteligente -->
       <div class="action-submit-zone">
         <button type="button" class="btn-orange-search-large" @click="executeSearch">
           <i class="fa-solid fa-magnifying-glass-dollar"></i> Búsqueda Inteligente
@@ -556,12 +542,9 @@ const confirmAndOrder = () => {
       </div>
     </div>
 
-    <!-- VISTA 2: RESULTADOS Y COMPARATIVA (IMAGEN 2) -->
     <div v-else class="results-view-layout">
       <div class="results-grid-structure">
-        <!-- Columna Lateral Izquierda (Ajustes y Lista) -->
         <aside class="results-sidebar-col">
-          <!-- Tarjeta 1: Lista de Productos -->
           <div class="side-info-card">
             <div class="side-card-top-title">
               <i class="fa-regular fa-clipboard side-icon-heading"></i>
@@ -603,7 +586,6 @@ const confirmAndOrder = () => {
             </button>
           </div>
 
-          <!-- Tarjeta 2: Ubicación de Entrega -->
           <div class="side-info-card">
             <h4>Ubicación de entrega</h4>
             <p class="side-card-sublabel">Selecciona tu ubicación para calcular el envío</p>
@@ -618,7 +600,6 @@ const confirmAndOrder = () => {
             </button>
           </div>
 
-          <!-- Tarjeta 3: Preferencias -->
           <div class="side-info-card">
             <h4>Preferencias</h4>
             <p class="side-card-sublabel">¿Qué es más importante para ti?</p>
@@ -651,9 +632,7 @@ const confirmAndOrder = () => {
           </div>
         </aside>
 
-        <!-- Columna Principal Derecha (Tarjetas y Comparativa) -->
         <main class="results-main-area">
-          <!-- Encabezado de Resultados y Ahorro -->
           <div class="results-top-banner">
             <div class="results-title-block">
               <h2>
@@ -674,7 +653,6 @@ const confirmAndOrder = () => {
             </div>
           </div>
 
-          <!-- Tarjeta 1: La Mejor Opción Para Ti -->
           <div class="provider-card-box best-recommendation">
             <div class="provider-tag-label best-tag">La mejor opción para ti</div>
 
@@ -734,7 +712,6 @@ const confirmAndOrder = () => {
             </div>
           </div>
 
-          <!-- Tarjeta 2: Opción Alternativa -->
           <div class="provider-card-box alt-recommendation">
             <div class="provider-tag-label alt-tag">Opción alternativa</div>
 
@@ -794,7 +771,6 @@ const confirmAndOrder = () => {
             </div>
           </div>
 
-          <!-- Tabla Comparativa Detallada -->
           <div class="comparison-matrix-card">
             <table class="comparison-data-table">
               <thead>
@@ -855,7 +831,6 @@ const confirmAndOrder = () => {
       </div>
     </div>
 
-    <!-- MODAL 1: Catálogo de Productos Web -->
     <div v-if="showProductModal" class="modal-overlay-bg" @click.self="showProductModal = false">
       <div class="modal-window-box modal-catalog-size">
         <div class="modal-top-bar">
@@ -899,7 +874,6 @@ const confirmAndOrder = () => {
       </div>
     </div>
 
-    <!-- MODAL 2: Mapa GPS con Leaflet -->
     <div v-if="showGpsModal" class="modal-overlay-bg" @click.self="showGpsModal = false">
       <div class="modal-window-box modal-gps-size">
         <div class="modal-top-bar">
@@ -943,7 +917,6 @@ const confirmAndOrder = () => {
       </div>
     </div>
 
-    <!-- MODAL 3: Detalle de la Opción Seleccionada -->
     <div v-if="showDetailModal" class="modal-overlay-bg" @click.self="showDetailModal = false">
       <div class="modal-window-box modal-details-size">
         <div class="modal-top-bar">
@@ -1095,9 +1068,6 @@ const confirmAndOrder = () => {
   margin: 0;
 }
 
-/* ==========================================================================
-   VISTA 1: CONFIGURACIÓN INICIAL (IMAGEN 1)
-   ========================================================================== */
 .config-view-layout {
   display: flex;
   flex-direction: column;
@@ -1177,7 +1147,6 @@ const confirmAndOrder = () => {
   margin: 0;
 }
 
-/* Dos Columnas */
 .two-columns-panels {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1341,7 +1310,6 @@ const confirmAndOrder = () => {
   border-radius: 10px;
 }
 
-/* Input de Ubicación */
 .location-picker-group {
   display: flex;
   gap: 0.65rem;
@@ -1400,7 +1368,6 @@ const confirmAndOrder = () => {
   color: var(--light-teal, #189c94);
 }
 
-/* Preferencias */
 .preferences-container {
   display: flex;
   flex-direction: column;
@@ -1506,9 +1473,6 @@ const confirmAndOrder = () => {
   gap: 0.35rem;
 }
 
-/* ==========================================================================
-   VISTA 2: RESULTADOS Y COMPARATIVA (IMAGEN 2)
-   ========================================================================== */
 .results-view-layout {
   display: flex;
   flex-direction: column;
@@ -1748,7 +1712,6 @@ const confirmAndOrder = () => {
   color: var(--primary-blue, #083c5a);
 }
 
-/* Main Results Area */
 .results-main-area {
   display: flex;
   flex-direction: column;
@@ -1808,7 +1771,6 @@ const confirmAndOrder = () => {
   color: #0d9488;
 }
 
-/* Provider Recommendation Cards */
 .provider-card-box {
   background: #ffffff;
   border-radius: 20px;
@@ -2006,7 +1968,6 @@ const confirmAndOrder = () => {
   color: #ffffff;
 }
 
-/* Tabla Comparativa */
 .comparison-matrix-card {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
@@ -2086,9 +2047,6 @@ const confirmAndOrder = () => {
   color: var(--primary-blue, #083c5a);
 }
 
-/* ==========================================================================
-   Modales
-   ========================================================================== */
 .modal-overlay-bg {
   position: fixed;
   inset: 0;
@@ -2230,7 +2188,6 @@ const confirmAndOrder = () => {
   width: 100%;
 }
 
-/* GPS Modal Frame */
 .gps-modal-content-area {
   padding: 1.2rem 1.6rem;
   display: flex;
@@ -2327,7 +2284,6 @@ const confirmAndOrder = () => {
   cursor: pointer;
 }
 
-/* Order Details Modal */
 .order-detail-modal-body {
   padding: 1.4rem 1.6rem;
   display: flex;
@@ -2421,7 +2377,6 @@ const confirmAndOrder = () => {
   margin-top: 0.35rem;
 }
 
-/* Responsividad */
 @media (max-width: 1024px) {
   .results-grid-structure {
     grid-template-columns: 1fr;
@@ -2459,3 +2414,4 @@ const confirmAndOrder = () => {
   }
 }
 </style>
+```[cite: 1]

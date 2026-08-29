@@ -1,12 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import echLogoImg from "../assets/ech-logo.png";
 import logoImg from "../assets/logo.png";
+
+const router = useRouter();
+const route = useRoute();
 
 const STORAGE_KEY_INFO = "mercanto_provider_info";
 const STORAGE_KEY_LOGO = "mercanto_provider_logo";
 
-const currentView = ref<"profile" | "edit">("profile");
+const currentView = computed<"profile" | "edit">(() => {
+  return route.query.mode === "edit" ? "edit" : "profile";
+});
+
 const isAvatarDropdownOpen = ref(false);
 const showViewPhotoModal = ref(false);
 
@@ -47,14 +54,27 @@ onMounted(() => {
 
 const openEditView = () => {
   editForm.value = { ...providerData.value };
-  currentView.value = "edit";
+  router.push({
+    name: "provider-profile",
+    query: { ...route.query, mode: "edit" },
+  });
   window.scrollTo({ top: 0, behavior: "smooth" });
+};
+
+const cancelEdit = () => {
+  router.push({
+    name: "provider-profile",
+    query: { ...route.query, mode: undefined },
+  });
 };
 
 const saveEditView = () => {
   providerData.value = { ...editForm.value };
   localStorage.setItem(STORAGE_KEY_INFO, JSON.stringify(providerData.value));
-  currentView.value = "profile";
+  router.push({
+    name: "provider-profile",
+    query: { ...route.query, mode: undefined },
+  });
 };
 
 const handleLogoFileChange = (e: Event) => {
@@ -96,24 +116,24 @@ const deleteLogo = () => {
       <!-- Sidebar -->
       <aside class="sidebar">
         <nav class="sidebar-menu">
-          <a href="#" class="menu-item active">
+          <router-link :to="{ name: 'provider-profile' }" class="menu-item active">
             <i class="fa-regular fa-circle-user"></i> Mi Perfil
-          </a>
-          <a href="#" class="menu-item">
+          </router-link>
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-solid fa-bag-shopping"></i> Mis Productos
-          </a>
+          </router-link>
           <router-link :to="{ name: 'orders' }" class="menu-item">
             <i class="fa-solid fa-cart-shopping"></i> Pedidos
           </router-link>
-          <a href="#" class="menu-item">
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-regular fa-comment-dots"></i> Mensajes
-          </a>
-          <a href="#" class="menu-item">
+          </router-link>
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-solid fa-gear"></i> Configuración
-          </a>
-          <a href="#" class="menu-item">
+          </router-link>
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-regular fa-circle-question"></i> Ayuda
-          </a>
+          </router-link>
         </nav>
         <router-link :to="{ name: 'home' }" class="logout">
           <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar sesión
@@ -187,7 +207,7 @@ const deleteLogo = () => {
               <div class="stat-info">
                 <span class="stat-title">Productos Publicados</span>
                 <strong class="stat-number">23</strong>
-                <a href="#" class="stat-link">Ver mis productos</a>
+                <router-link :to="{ name: 'home' }" class="stat-link">Ver mis productos</router-link>
               </div>
             </div>
             <div class="stat-divider"></div>
@@ -218,7 +238,7 @@ const deleteLogo = () => {
                     <i class="fa-regular fa-star star-empty"></i>
                   </div>
                 </div>
-                <a href="#" class="stat-link">Ver opiniones</a>
+                <router-link :to="{ name: 'home' }" class="stat-link">Ver opiniones</router-link>
               </div>
             </div>
           </div>
@@ -313,7 +333,7 @@ const deleteLogo = () => {
         <div v-else class="edit-inline-view">
           <div class="card edit-inline-card">
             <div class="edit-inline-header">
-              <button type="button" class="btn-edit-back" @click="currentView = 'profile'">
+              <button type="button" class="btn-edit-back" @click="cancelEdit">
                 <i class="fa-solid fa-arrow-left"></i>
               </button>
               <h2 class="edit-inline-title">Editar Información General</h2>
@@ -423,7 +443,7 @@ const deleteLogo = () => {
             </div>
 
             <div class="edit-inline-actions">
-              <button type="button" class="btn-inline-cancel" @click="currentView = 'profile'">Cancelar</button>
+              <button type="button" class="btn-inline-cancel" @click="cancelEdit">Cancelar</button>
               <button type="button" class="btn-inline-save" @click="saveEditView">
                 <i class="fa-solid fa-check"></i> Actualizar
               </button>
@@ -1083,3 +1103,4 @@ const deleteLogo = () => {
   }
 }
 </style>
+```[cite: 1]

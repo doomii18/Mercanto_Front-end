@@ -37,12 +37,12 @@ const handleLogout = async () => {
           >
             <i class="fa-solid fa-bag-shopping"></i> Pedidos
           </router-link>
-          <a href="#" class="menu-item">
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-solid fa-cart-shopping"></i> Favoritos
-          </a>
-          <a href="#" class="menu-item">
+          </router-link>
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-regular fa-comment-dots"></i> Mensajes
-          </a>
+          </router-link>
           <router-link
             :to="{ name: 'smart-search' }"
             class="menu-item"
@@ -50,12 +50,12 @@ const handleLogout = async () => {
           >
             <i class="fa-solid fa-magnifying-glass"></i> Búsqueda Inteligente
           </router-link>
-          <a href="#" class="menu-item">
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-solid fa-gear"></i> Configuración
-          </a>
-          <a href="#" class="menu-item">
+          </router-link>
+          <router-link :to="{ name: 'home' }" class="menu-item">
             <i class="fa-regular fa-circle-question"></i> Ayuda
-          </a>
+          </router-link>
         </nav>
 
         <button type="button" class="logout-btn" @click="handleLogout">
@@ -69,6 +69,8 @@ const handleLogout = async () => {
     </div>
   </div>
 </template>
+
+
 
 <style scoped>
 .dashboard-shell {

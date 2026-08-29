@@ -1,8 +1,4 @@
-import {
-  createRouter,
-  createWebHistory,
-  type RouteRecordRaw,
-} from "vue-router";
+import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 import { authManager } from "../modules/auth";
 
 const routes: RouteRecordRaw[] = [
@@ -10,16 +6,6 @@ const routes: RouteRecordRaw[] = [
     path: "/",
     name: "home",
     component: () => import("../views/HomeView.vue"),
-  },
-  {
-    path: "/category",
-    name: "category",
-    component: () => import("../views/CategoryView.vue"),
-  },
-  {
-    path: "/products/:id",
-    name: "product-detail",
-    component: () => import("../views/ProductDetailView.vue"),
   },
   {
     path: "/login",
@@ -46,6 +32,16 @@ const routes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
+    path: "/category",
+    name: "category",
+    component: () => import("../views/CategoryView.vue"),
+  },
+  {
+    path: "/product/:id",
+    name: "product-detail",
+    component: () => import("../views/ProductDetailView.vue"),
+  },
+  {
     path: "/provider/profile",
     name: "provider-profile",
     component: () => import("../views/ProviderProfileView.vue"),
@@ -54,7 +50,6 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/dashboard",
     component: () => import("../views/DashboardLayout.vue"),
-    meta: { requiresAuth: true },
     children: [
       {
         path: "",
@@ -64,16 +59,25 @@ const routes: RouteRecordRaw[] = [
         path: "profile",
         name: "profile",
         component: () => import("../views/ProfileView.vue"),
+        meta: { requiresAuth: true },
       },
       {
         path: "orders",
         name: "orders",
         component: () => import("../views/OrdersView.vue"),
+        meta: { requiresAuth: true },
       },
       {
         path: "orders/:id",
         name: "quote-detail",
         component: () => import("../views/QuoteDetailView.vue"),
+        meta: { requiresAuth: true },
+      },
+      {
+        path: "smart-search",
+        name: "smart-search",
+        component: () => import("../views/SmartSearchView.vue"),
+        meta: { requiresAuth: true },
       },
     ],
   },
@@ -108,31 +112,31 @@ const routes: RouteRecordRaw[] = [
   },
 ];
 
-const router = createRouter({
+export const router = createRouter({
   history: createWebHistory(),
   routes,
   scrollBehavior(to, _from, savedPosition) {
-    if (savedPosition) return savedPosition;
-    if (to.hash) return { el: to.hash, behavior: "smooth" };
-    return { top: 0 };
+    if (savedPosition) {
+      return savedPosition;
+    }
+    if (to.hash) {
+      return { el: to.hash, behavior: "smooth" };
+    }
+    return { top: 0, behavior: "smooth" };
   },
 });
 
-router.beforeEach(async (to) => {
+router.beforeEach(async (to, _from) => {
   const account = await authManager.initialize();
+  const isAuthenticated = Boolean(account);
 
-  if (to.meta.requiresAuth && !account) {
-    return {
-      name: "login",
-      query: { redirect: to.fullPath },
-    };
+  if (to.matched.some((record) => record.meta.requiresAuth) && !isAuthenticated) {
+    return { name: "login", query: { redirect: to.fullPath } };
   }
 
-  if (to.meta.guestOnly && account) {
+  if (to.matched.some((record) => record.meta.guestOnly) && isAuthenticated) {
     return { name: "profile" };
   }
-
-  return true;
 });
 
 export default router;
