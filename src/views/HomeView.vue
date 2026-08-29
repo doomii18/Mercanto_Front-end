@@ -1,20 +1,13 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
 import { useAuthStore } from "../modules/auth";
-import { healthApi, categoryApi } from "../api";
-import type { ProductCategoryResponse } from "../api/services/category/types";
-import CategoryImage from "../components/category/CategoryImage.vue";
+import { healthApi } from "../api";
+import CategoriesSection from "../components/category/CategoriesSection.vue";
 import TopProductsSection from "../components/product/TopProductsSection.vue";
 import AppFooter from "../components/common/AppFooter.vue";
 
-interface CategoryViewItem extends ProductCategoryResponse {
-  productCount: number;
-}
-
 const authStore = useAuthStore();
 const isMenuOpen = ref(false);
-const carousel = ref<HTMLElement | null>(null);
-const categories = ref<CategoryViewItem[]>([]);
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -24,28 +17,9 @@ const closeMenu = () => {
   isMenuOpen.value = false;
 };
 
-const scrollCarousel = (direction: "left" | "right") => {
-  if (!carousel.value) return;
-  const scrollAmount = 280;
-  carousel.value.scrollBy({
-    left: direction === "left" ? -scrollAmount : scrollAmount,
-    behavior: "smooth",
-  });
-};
-
 onMounted(async () => {
   await authStore.initialize();
   await healthApi.getReadiness().catch(() => null);
-
-  try {
-    const response = await categoryApi.getCategories({ limit: 50 });
-    categories.value = response.data.map((cat) => ({
-      ...cat,
-      productCount: Math.floor(Math.random() * 600) + 50,
-    }));
-  } catch (err) {
-    console.error("Failed to load categories:", err);
-  }
 });
 </script>
 
@@ -165,52 +139,8 @@ onMounted(async () => {
           <span>Ahórrate el viaje</span>
         </div>
       </section>
-
-      <section id="categorias" class="categories container">
-        <div class="categories-header">
-          <h2>Categorías</h2>
-          <p>Explora todas nuestras categorías de productos para ti</p>
-        </div>
-
-        <div class="carousel-wrapper">
-          <button
-            class="carousel-nav-btn prev"
-            @click="scrollCarousel('left')"
-            aria-label="Anterior"
-          >
-            <i class="fa-solid fa-chevron-left"></i>
-          </button>
-
-          <div ref="carousel" class="categories-box">
-            <router-link
-              v-for="cat in categories"
-              :key="cat.id"
-              :to="{ name: 'category' }"
-              class="category-card"
-              style="text-decoration: none;"
-            >
-              <CategoryImage
-                :blob-id="cat.image_blob_id"
-                :alt="cat.name"
-              />
-              <p class="category-name">{{ cat.name }}</p>
-              <span class="product-count">{{ cat.productCount }} Productos</span>
-            </router-link>
-          </div>
-
-          <button
-            class="carousel-nav-btn next"
-            @click="scrollCarousel('right')"
-            aria-label="Siguiente"
-          >
-            <i class="fa-solid fa-chevron-right"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- Extracted Top Sellers Component -->
+      <CategoriesSection/>
       <TopProductsSection />
-
       <section id="proveedores" class="top-providers container">
         <h2>Nuestros proveedores más <span class="highlight-orange">TOP</span></h2>
         <div class="providers-grid">
@@ -521,110 +451,6 @@ onMounted(async () => {
   background-color: var(--border-gray);
 }
 
-.categories {
-  margin-bottom: 5rem;
-}
-
-.categories-header {
-  text-align: center;
-  margin-bottom: 2rem;
-}
-
-.categories-header h2 {
-  font-size: 2.2rem;
-  color: var(--primary-blue);
-  margin-bottom: 0.4rem;
-}
-
-.categories-header p {
-  color: #718096;
-}
-
-.carousel-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.categories-box {
-  background-color: var(--light-teal);
-  padding: 1.8rem;
-  border-radius: 24px;
-  display: flex;
-  gap: 1.25rem;
-  overflow-x: auto;
-  scroll-behavior: smooth;
-  width: 100%;
-  scrollbar-width: none;
-}
-
-.categories-box::-webkit-scrollbar {
-  display: none;
-}
-
-.category-card {
-  flex: 0 0 220px;
-  background-color: #ffffff;
-  border-radius: 18px;
-  padding: 1.5rem 1rem;
-  text-align: center;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.06);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  aspect-ratio: 3 / 4;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
-}
-
-.category-name {
-  font-weight: 600;
-  color: var(--primary-blue);
-  font-size: 0.95rem;
-  margin-bottom: 0.25rem;
-}
-
-.product-count {
-  color: #a0aec0;
-  font-size: 0.8rem;
-}
-
-.carousel-nav-btn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: #ffffff;
-  border: 1px solid var(--border-gray);
-  color: var(--primary-blue);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 10;
-  transition: transform 0.2s ease;
-}
-
-.carousel-nav-btn:hover {
-  transform: translateY(-50%) scale(1.08);
-}
-
-.carousel-nav-btn.prev {
-  left: -20px;
-}
-
-.carousel-nav-btn.next {
-  right: -20px;
-}
-
 .top-providers {
   text-align: center;
   margin-bottom: 5rem;
@@ -889,9 +715,6 @@ onMounted(async () => {
   }
   .steps-grid {
     grid-template-columns: 1fr;
-  }
-  .carousel-nav-btn {
-    display: none;
   }
 }
 </style>
