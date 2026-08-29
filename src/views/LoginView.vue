@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { authManager } from "../modules/auth";
+import { useAuthStore } from "../modules/auth";
 
 const router = useRouter();
 const route = useRoute();
+const authStore = useAuthStore();
+
 const email = ref("");
 const password = ref("");
 const showPassword = ref(false);
@@ -12,11 +14,11 @@ const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
 
 onMounted(async () => {
-    await authManager.initialize();
+  await authStore.initialize();
 });
 
 const togglePassword = () => {
-    showPassword.value = !showPassword.value;
+  showPassword.value = !showPassword.value;
 };
 
 const handleLogin = async () => {
@@ -26,14 +28,15 @@ const handleLogin = async () => {
   errorMessage.value = null;
 
   try {
-    await authManager.login({
+    await authStore.login({
       email: email.value,
       password: password.value,
     });
 
-    const redirectPath = typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
-      ? route.query.redirect
-      : { name: "profile" };
+    const redirectPath =
+      typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
+        ? route.query.redirect
+        : { name: "profile" };
 
     router.push(redirectPath);
   } catch (error: any) {

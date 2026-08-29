@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
-import { authManager } from "../modules/auth";
+import { useAuthStore } from "../modules/auth";
 
 const routes: RouteRecordRaw[] = [
   {
@@ -126,17 +126,26 @@ export const router = createRouter({
   },
 });
 
-router.beforeEach(async (to, _from) => {
-  const account = await authManager.initialize();
-  const isAuthenticated = Boolean(account);
+router.beforeEach(async (to) => {
+  const authStore = useAuthStore();
 
-  if (to.matched.some((record) => record.meta.requiresAuth) && !isAuthenticated) {
+
+  if (!authStore.isInitialized) {
+    await authStore.initialize();
+  }
+
+  const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  const guestOnly = to.matched.some((record) => record.meta.guestOnly);
+
+  if (requiresAuth && !authStore.isAuthenticated) {
     return { name: "login", query: { redirect: to.fullPath } };
   }
 
-  if (to.matched.some((record) => record.meta.guestOnly) && isAuthenticated) {
+  if (guestOnly && authStore.isAuthenticated) {
     return { name: "profile" };
   }
+
+  return true;
 });
 
 export default router;

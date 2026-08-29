@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
-import { authManager } from "../modules/auth";
+import { useAuthStore } from "../modules/auth";
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 const handleLogout = async () => {
-  await authManager.logout();
+  await authStore.logout();
   router.push({ name: "login" });
 };
 </script>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from "vue";
-import { authManager } from "../modules/auth";
+import { useAuthStore } from "../modules/auth";
 import { healthApi, categoryApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
 import CategoryImage from "../components/category/CategoryImage.vue";
@@ -10,6 +10,7 @@ interface CategoryViewItem extends ProductCategoryResponse {
   productCount: number;
 }
 
+const authStore = useAuthStore();
 const isMenuOpen = ref(false);
 const carousel = ref<HTMLElement | null>(null);
 const categories = ref<CategoryViewItem[]>([]);
@@ -32,7 +33,7 @@ const scrollCarousel = (direction: "left" | "right") => {
 };
 
 onMounted(async () => {
-  await authManager.initialize();
+  await authStore.initialize();
   await healthApi.getReadiness().catch(() => null);
 
   try {

@@ -16,20 +16,20 @@ import { UserProfileService } from "./services/user_profile";
 import { VerificationRequestService } from "./services/verification_request";
 import { VerificationRequestDocumentService } from "./services/verification_request_document";
 import { WalletService } from "./services/wallet";
-import { LocalStorageTokenProvider } from "./token";
-import { authManager } from "../modules/auth";
+import { tokenProvider } from "./token";
+import { useAuthStore } from "../modules/auth/authStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 if (!API_BASE_URL)
   throw new Error("FATAL CONFIGURATION ERROR: VITE_API_BASE_URL is missing.");
 
-export const tokenProvider = new LocalStorageTokenProvider();
+export { tokenProvider };
 
 export const apiClient = new ApiClient(
   {
     baseUrl: API_BASE_URL,
-    refreshTokenHandler: () => authManager.refreshAccessToken(),
-    onSessionExpired: () => authManager.handleSessionExpired(),
+    refreshTokenHandler: () => useAuthStore().refreshAccessToken(),
+    onSessionExpired: () => useAuthStore().handleSessionExpired(),
   },
   tokenProvider,
 );
@@ -52,7 +52,6 @@ export const chatApi = new ChatService(apiClient);
 export const verificationRequestApi = new VerificationRequestService(apiClient);
 export const verificationRequestDocumentApi = new VerificationRequestDocumentService(apiClient);
 
-export { authManager };
 export * from "../modules/auth";
 export * from "./services/cart/types.d";
 export * from "./services/category/types.d";

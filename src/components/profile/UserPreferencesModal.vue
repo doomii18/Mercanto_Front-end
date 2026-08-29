@@ -291,7 +291,7 @@ const handleSave = async () => {
   color: var(--primary-blue);
   line-height: 1.25;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+
   -webkit-box-orient: vertical;
   overflow: hidden;
   text-overflow: ellipsis;

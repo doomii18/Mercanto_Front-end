@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { authManager } from "../modules/auth";
+import { useAuthStore } from "../modules/auth";
 import { bootstrapGeo, getGeoManager } from "../modules/geo";
 import type { Department } from "../modules/geo/types";
 import { userProfileApi } from "../api";
-import type { AccountResponse } from "../api/services/identity/types";
 import type { UserProfileResponse } from "../api/services/user_profile/types";
 import BaseModal from "../components/common/BaseModal.vue";
 import ConfirmModal from "../components/common/ConfirmModal.vue";
 import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 
-const account = ref<AccountResponse | null>(null);
+const authStore = useAuthStore();
+const account = computed(() => authStore.account);
 const profile = ref<UserProfileResponse | null>(null);
 const departments = ref<Department[]>([]);
 const isLoading = ref(true);
@@ -83,7 +83,9 @@ const loadProfile = async () => {
 
 onMounted(async () => {
   try {
-    account.value = authManager.getAccount();
+    if (!authStore.isInitialized) {
+      await authStore.initialize();
+    }
     await bootstrapGeo();
     const geo = getGeoManager();
     if (geo) {

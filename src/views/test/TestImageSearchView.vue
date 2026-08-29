@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { authManager } from '../../modules/auth';
+import { useAuthStore } from '../../modules/auth';
 import { productApi } from '../../api';
 import type { ProductImageSearchHit } from '../../api/services/product/types';
 
@@ -8,6 +8,7 @@ interface DisplayHit extends ProductImageSearchHit {
   imageUrls: string[];
 }
 
+const authStore = useAuthStore();
 const fileInput = ref<HTMLInputElement | null>(null);
 const currentFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
@@ -16,7 +17,7 @@ const statusMessage = ref("");
 const results = ref<DisplayHit[]>([]);
 
 onMounted(async () => {
-  await authManager.initialize();
+  await authStore.initialize();
 });
 
 const handleFileSelect = (e: Event) => {
@@ -58,20 +59,24 @@ const executeSearch = async () => {
 
     // Process hits and fetch images concurrently
     const sorted = res.data.slice().sort((a, b) => a.distance - b.distance);
-    const enriched = await Promise.all(sorted.map(async (hit) => {
-      const urls: string[] = [];
-      if (hit.product.image_blob_ids?.length) {
-        await Promise.all(hit.product.image_blob_ids.map(async (blobId) => {
-          try {
-            const url = await productApi.getProductImageBlobUrl(blobId);
-            urls.push(url);
-          } catch (err) {
-            console.warn(`Failed image load ${blobId}`);
-          }
-        }));
-      }
-      return { ...hit, imageUrls: urls };
-    }));
+    const enriched = await Promise.all(
+      sorted.map(async (hit) => {
+        const urls: string[] = [];
+        if (hit.product.image_blob_ids?.length) {
+          await Promise.all(
+            hit.product.image_blob_ids.map(async (blobId) => {
+              try {
+                const url = await productApi.getProductImageBlobUrl(blobId);
+                urls.push(url);
+              } catch (err) {
+                console.warn(`Failed image load ${blobId}`);
+              }
+            })
+          );
+        }
+        return { ...hit, imageUrls: urls };
+      })
+    );
 
     results.value = enriched;
     statusMessage.value = `Done. Found ${res.total} matches.`;

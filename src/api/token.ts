@@ -6,21 +6,16 @@ export interface TokenProvider {
   clear(): void;
 }
 
-export class LocalStorageTokenProvider implements TokenProvider {
-  private readonly ACCESS_TOKEN_KEY = "access_token";
+export class HybridTokenProvider implements TokenProvider {
+  private accessToken: string | null = null;
   private readonly REFRESH_TOKEN_KEY = "refresh_token";
 
   getAccessToken(): string | null {
-    return localStorage.getItem(this.ACCESS_TOKEN_KEY) ?? localStorage.getItem("accessToken");
+    return this.accessToken;
   }
 
   setAccessToken(accessToken: string | null): void {
-    if (accessToken) {
-      localStorage.setItem(this.ACCESS_TOKEN_KEY, accessToken);
-    } else {
-      localStorage.removeItem(this.ACCESS_TOKEN_KEY);
-      localStorage.removeItem("accessToken");
-    }
+    this.accessToken = accessToken;
   }
 
   getRefreshToken(): string | null {
@@ -30,7 +25,6 @@ export class LocalStorageTokenProvider implements TokenProvider {
   setRefreshToken(refreshToken: string | null): void {
     if (refreshToken) {
       localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-      localStorage.removeItem("refreshToken");
     } else {
       localStorage.removeItem(this.REFRESH_TOKEN_KEY);
       localStorage.removeItem("refreshToken");
@@ -38,7 +32,12 @@ export class LocalStorageTokenProvider implements TokenProvider {
   }
 
   clear(): void {
-    this.setAccessToken(null);
-    this.setRefreshToken(null);
+    this.accessToken = null;
+    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
+    localStorage.removeItem("refreshToken");
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("accessToken");
   }
 }
+
+export const tokenProvider: TokenProvider = new HybridTokenProvider();

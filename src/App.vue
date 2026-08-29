@@ -1,25 +1,29 @@
 <script setup lang="ts">
-import { onMounted } from "vue";
-import { authManager } from "./modules/auth";
+import { onMounted, watch } from "vue";
+import { useAuthStore } from "./modules/auth/authStore";
 import { usePreferencesGuard } from "./modules/auth/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 
+const authStore = useAuthStore();
 const { showPrompt, currentPreferences, checkPreferences } = usePreferencesGuard();
 
 onMounted(async () => {
-  await authManager.initialize();
-  if (authManager.isAuthenticated()) {
+  await authStore.initialize();
+  if (authStore.isAuthenticated) {
     await checkPreferences();
   }
 });
 
-authManager.subscribe((account) => {
-  if (account) {
-    checkPreferences();
-  } else {
-    showPrompt.value = false;
+watch(
+  () => authStore.account,
+  (account) => {
+    if (account) {
+      checkPreferences();
+    } else {
+      showPrompt.value = false;
+    }
   }
-});
+);
 </script>
 
 <template>
