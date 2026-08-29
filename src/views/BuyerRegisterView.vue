@@ -3,18 +3,15 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
 import { bootstrapGeo, getGeoManager } from "../modules/geo";
 import type { Department, Municipality } from "../modules/geo/types";
-import { categoryApi, identityApi, userProfileApi, geographyApi } from "../api";
-import type { ProductCategoryResponse } from "../api/services/category/types";
+import { identityApi, userProfileApi, geographyApi } from "../api";
 import ConfirmModal from "../components/common/ConfirmModal.vue";
 import CreatePasswordModal from "../components/CreatePasswordModal.vue";
 
 const router = useRouter();
 
-// Multi-Step Wizard State Machine
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2;
 const currentStep = ref<WizardStep>(1);
 
-// Form Model State
 const form = ref({
     firstName: "",
     lastName: "",
@@ -26,34 +23,32 @@ const form = ref({
     termsAccepted: false,
 });
 
-// Geo State
 const isGeoLoading = ref(false);
 const departments = ref<Department[]>([]);
 const municipalities = computed<Municipality[]>(() => {
     if (!form.value.departmentId) return [];
     const geo = getGeoManager();
-    return geo ? geo.getMunicipalitiesByDepartment(form.value.departmentId) : [];
+    return geo
+        ? geo.getMunicipalitiesByDepartment(form.value.departmentId)
+        : [];
 });
 
-watch(() => form.value.departmentId, () => {
-    if (!municipalities.value.some((m) => m.id === form.value.municipalityId)) {
-        form.value.municipalityId = "";
-    }
-});
+watch(
+    () => form.value.departmentId,
+    () => {
+        if (
+            !municipalities.value.some(
+                (m) => m.id === form.value.municipalityId,
+            )
+        ) {
+            form.value.municipalityId = "";
+        }
+    },
+);
 
-// Categories & Interests State
-interface CategoryOption extends ProductCategoryResponse {
-    imageUrl?: string | null;
-}
-const categories = ref<CategoryOption[]>([]);
-const selectedInterests = ref<Set<string>>(new Set());
-const isCategoriesLoading = ref(false);
-
-// Avatar Asset State
 const avatarFile = ref<File | null>(null);
 const avatarPreviewUrl = ref<string | null>(null);
 
-// Modals & Process State
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
 const showSuccessModal = ref(false);
@@ -77,7 +72,6 @@ onBeforeUnmount(() => {
     }
 });
 
-// Geolocation Detection
 const handleAutoDetectLocation = () => {
     if (!navigator.geolocation) {
         alert("Geolocalización no soportada por el navegador.");
@@ -89,12 +83,17 @@ const handleAutoDetectLocation = () => {
         async (position) => {
             try {
                 const { latitude, longitude } = position.coords;
-                const res = await geographyApi.getMunicipalityByCoordinates({ lat: latitude, lng: longitude });
+                const res = await geographyApi.getMunicipalityByCoordinates({
+                    lat: latitude,
+                    lng: longitude,
+                });
                 form.value.departmentId = res.department_id;
                 form.value.municipalityId = res.id;
             } catch (err) {
                 console.error("Reverse geocoding failed:", err);
-                alert("No se pudo detectar el municipio correspondiente a su ubicación.");
+                alert(
+                    "No se pudo detectar el municipio correspondiente a su ubicación.",
+                );
             } finally {
                 isGeoLoading.value = false;
             }
@@ -103,43 +102,10 @@ const handleAutoDetectLocation = () => {
             isGeoLoading.value = false;
             alert("Permiso denegado para geolocalización.");
         },
-        { enableHighAccuracy: true, timeout: 10000 }
+        { enableHighAccuracy: true, timeout: 10000 },
     );
 };
 
-// Category Operations
-const loadCategories = async () => {
-    if (categories.value.length > 0) return;
-    isCategoriesLoading.value = true;
-    try {
-        const res = await categoryApi.getCategories({ limit: 50 });
-        categories.value = res.data.map((cat) => ({ ...cat, imageUrl: undefined }));
-
-        res.data.forEach((cat, idx) => {
-            if (!cat.image_blob_id) {
-                categories.value[idx].imageUrl = null;
-                return;
-            }
-            categoryApi.getCategoryImageBlobUrl(cat.image_blob_id)
-                .then((url) => { categories.value[idx].imageUrl = url; })
-                .catch(() => { categories.value[idx].imageUrl = null; });
-        });
-    } catch (err) {
-        console.error("Failed to fetch categories:", err);
-    } finally {
-        isCategoriesLoading.value = false;
-    }
-};
-
-const toggleInterest = (categoryId: string) => {
-    if (selectedInterests.value.has(categoryId)) {
-        selectedInterests.value.delete(categoryId);
-    } else {
-        selectedInterests.value.add(categoryId);
-    }
-};
-
-// Asset Upload Handlers
 const handleAvatarSelection = (event: Event) => {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files[0]) {
@@ -169,10 +135,25 @@ const clearAvatar = () => {
     avatarPreviewUrl.value = null;
 };
 
-// Step Navigation & Validation
 const validateStep1 = (): boolean => {
-    const { firstName, lastName, nationalId, phoneNumber, departmentId, municipalityId, email } = form.value;
-    if (!firstName || !lastName || !nationalId || !phoneNumber || !departmentId || !municipalityId || !email) {
+    const {
+        firstName,
+        lastName,
+        nationalId,
+        phoneNumber,
+        departmentId,
+        municipalityId,
+        email,
+    } = form.value;
+    if (
+        !firstName ||
+        !lastName ||
+        !nationalId ||
+        !phoneNumber ||
+        !departmentId ||
+        !municipalityId ||
+        !email
+    ) {
         alert("Por favor completa todos los campos requeridos.");
         return false;
     }
@@ -180,15 +161,14 @@ const validateStep1 = (): boolean => {
 };
 
 const goToStep = (step: WizardStep) => {
-    if (step === 2) {
-        if (!validateStep1()) return;
-        loadCategories();
-    }
+    if (step === 2 && !validateStep1()) return;
     currentStep.value = step;
 };
 
-// Registration Pipeline
-const handleRegistration = async (credentials: { password: string; passwordConfirm: string }) => {
+const handleRegistration = async (credentials: {
+    password: string;
+    passwordConfirm: string;
+}) => {
     isSubmitting.value = true;
     try {
         await identityApi.register({
@@ -199,7 +179,7 @@ const handleRegistration = async (credentials: { password: string; passwordConfi
             municipality_id: form.value.municipalityId,
             email: form.value.email.trim(),
             password: credentials.password,
-            interests: Array.from(selectedInterests.value),
+            interests: [],
         });
 
         if (avatarFile.value) {
@@ -228,7 +208,11 @@ const finishRegistration = () => {
     <div class="buyer-register-page">
         <header class="top-header">
             <div class="logo">
-                <img src="../assets/logo.png" alt="Mercanto" class="logo-icon" />
+                <img
+                    src="../assets/logo.png"
+                    alt="Mercanto"
+                    class="logo-icon"
+                />
             </div>
             <router-link :to="{ name: 'home' }" class="home-icon">
                 <i class="fa-solid fa-house"></i>
@@ -238,23 +222,37 @@ const finishRegistration = () => {
         <main class="wizard-container">
             <div class="wizard-header">
                 <h1>Registro de Comprador</h1>
-                <p>Completa la información requerida para crear una cuenta de comprador en la plataforma.</p>
+                <p>
+                    Completa la información requerida para crear una cuenta de
+                    comprador en la plataforma.
+                </p>
             </div>
 
             <!-- Stepper Indicator -->
             <div class="stepper">
-                <div :class="['step', { active: currentStep === 1, completed: currentStep > 1 }]">
+                <div
+                    :class="[
+                        'step',
+                        {
+                            active: currentStep === 1,
+                            completed: currentStep > 1,
+                        },
+                    ]"
+                >
                     <div class="step-circle">1</div>
                     <span class="step-label">Información</span>
                 </div>
                 <div :class="['step-line', { active: currentStep >= 2 }]"></div>
-                <div :class="['step', { active: currentStep === 2, completed: currentStep > 2 }]">
+                <div
+                    :class="[
+                        'step',
+                        {
+                            active: currentStep === 2,
+                            completed: currentStep === 2,
+                        },
+                    ]"
+                >
                     <div class="step-circle">2</div>
-                    <span class="step-label">Intereses</span>
-                </div>
-                <div :class="['step-line', { active: currentStep >= 3 }]"></div>
-                <div :class="['step', { active: currentStep === 3, completed: currentStep === 3 }]">
-                    <div class="step-circle">3</div>
                     <span class="step-label">Revisión</span>
                 </div>
             </div>
@@ -265,19 +263,42 @@ const finishRegistration = () => {
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Nombres <span class="required">*</span></label>
-                        <input v-model="form.firstName" type="text" placeholder="Héctor Raúl" required />
+                        <input
+                            v-model="form.firstName"
+                            type="text"
+                            placeholder="Héctor Raúl"
+                            required
+                        />
                     </div>
                     <div class="form-group">
                         <label>Apellidos <span class="required">*</span></label>
-                        <input v-model="form.lastName" type="text" placeholder="Hernández López" required />
+                        <input
+                            v-model="form.lastName"
+                            type="text"
+                            placeholder="Hernández López"
+                            required
+                        />
                     </div>
                     <div class="form-group">
-                        <label>Cédula de identidad <span class="required">*</span></label>
-                        <input v-model="form.nationalId" type="text" placeholder="401-241200-1006E" required />
+                        <label
+                            >Cédula de identidad
+                            <span class="required">*</span></label
+                        >
+                        <input
+                            v-model="form.nationalId"
+                            type="text"
+                            placeholder="401-241200-1006E"
+                            required
+                        />
                     </div>
                     <div class="form-group">
                         <label>Teléfono <span class="required">*</span></label>
-                        <input v-model="form.phoneNumber" type="tel" placeholder="8730 9208" required />
+                        <input
+                            v-model="form.phoneNumber"
+                            type="tel"
+                            placeholder="8730 9208"
+                            required
+                        />
                     </div>
 
                     <div class="form-group full-width auto-geo-wrapper">
@@ -287,17 +308,38 @@ const finishRegistration = () => {
                             :disabled="isGeoLoading"
                             @click="handleAutoDetectLocation"
                         >
-                            <i :class="isGeoLoading ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-location-crosshairs'"></i>
-                            <span>{{ isGeoLoading ? "Detectando..." : "Auto-detectar ubicación" }}</span>
+                            <i
+                                :class="
+                                    isGeoLoading
+                                        ? 'fa-solid fa-spinner fa-spin'
+                                        : 'fa-solid fa-location-crosshairs'
+                                "
+                            ></i>
+                            <span>{{
+                                isGeoLoading
+                                    ? "Detectando..."
+                                    : "Auto-detectar ubicación"
+                            }}</span>
                         </button>
                     </div>
 
                     <div class="form-group">
-                        <label>Departamento <span class="required">*</span></label>
+                        <label
+                            >Departamento <span class="required">*</span></label
+                        >
                         <div class="select-wrapper">
-                            <select v-model="form.departmentId" :disabled="departments.length === 0">
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option v-for="dept in departments" :key="dept.id" :value="dept.id">
+                            <select
+                                v-model="form.departmentId"
+                                :disabled="departments.length === 0"
+                            >
+                                <option value="" disabled selected>
+                                    Seleccione...
+                                </option>
+                                <option
+                                    v-for="dept in departments"
+                                    :key="dept.id"
+                                    :value="dept.id"
+                                >
                                     {{ dept.name }}
                                 </option>
                             </select>
@@ -308,9 +350,18 @@ const finishRegistration = () => {
                     <div class="form-group">
                         <label>Municipio <span class="required">*</span></label>
                         <div class="select-wrapper">
-                            <select v-model="form.municipalityId" :disabled="!form.departmentId">
-                                <option value="" disabled selected>Seleccione...</option>
-                                <option v-for="mun in municipalities" :key="mun.id" :value="mun.id">
+                            <select
+                                v-model="form.municipalityId"
+                                :disabled="!form.departmentId"
+                            >
+                                <option value="" disabled selected>
+                                    Seleccione...
+                                </option>
+                                <option
+                                    v-for="mun in municipalities"
+                                    :key="mun.id"
+                                    :value="mun.id"
+                                >
                                     {{ mun.name }}
                                 </option>
                             </select>
@@ -319,8 +370,16 @@ const finishRegistration = () => {
                     </div>
 
                     <div class="form-group full-width">
-                        <label>Correo electrónico <span class="required">*</span></label>
-                        <input v-model="form.email" type="email" placeholder="ejemplo@gmail.com" required />
+                        <label
+                            >Correo electrónico
+                            <span class="required">*</span></label
+                        >
+                        <input
+                            v-model="form.email"
+                            type="email"
+                            placeholder="ejemplo@gmail.com"
+                            required
+                        />
                     </div>
 
                     <div class="form-group full-width">
@@ -331,17 +390,28 @@ const finishRegistration = () => {
                             @dragover.prevent
                             @drop.prevent="handleAvatarDrop"
                         >
-                            <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
+                            <i
+                                class="fa-solid fa-cloud-arrow-up cloud-icon"
+                            ></i>
                             <p>Arrastra una imagen aquí</p>
                             <span>o</span>
                             <label class="btn-outline">
                                 Seleccionar archivo
-                                <input type="file" accept="image/png, image/jpeg" style="display: none;" @change="handleAvatarSelection" />
+                                <input
+                                    type="file"
+                                    accept="image/png, image/jpeg"
+                                    style="display: none"
+                                    @change="handleAvatarSelection"
+                                />
                             </label>
                         </div>
                         <div v-else class="preview-container">
                             <img :src="avatarPreviewUrl" alt="Foto de perfil" />
-                            <button type="button" class="btn-remove-photo" @click="clearAvatar">
+                            <button
+                                type="button"
+                                class="btn-remove-photo"
+                                @click="clearAvatar"
+                            >
                                 <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
@@ -349,70 +419,49 @@ const finishRegistration = () => {
                 </div>
 
                 <div class="step-actions right-align">
-                    <router-link :to="{ name: 'register' }" class="btn-orange">Cancelar</router-link>
+                    <router-link :to="{ name: 'register' }" class="btn-orange"
+                        >Cancelar</router-link
+                    >
                     <button type="button" class="btn-teal" @click="goToStep(2)">
                         Continuar <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- STEP 2: Interests -->
+            <!-- STEP 2: Review -->
             <div v-if="currentStep === 2" class="wizard-card">
-                <div class="step-subheading">
-                    <h3 class="step-title">Selecciona tus intereses</h3>
-                    <p>Obtén recomendaciones sobre las categorías seleccionadas para mejorar tu experiencia.</p>
-                </div>
-
-                <div v-if="isCategoriesLoading" class="loading-state">
-                    <i class="fa-solid fa-spinner fa-spin"></i> Cargando categorías...
-                </div>
-                <div v-else class="categories-grid">
-                    <div
-                        v-for="cat in categories"
-                        :key="cat.id"
-                        :class="['category-selectable-card', { selected: selectedInterests.has(cat.id) }]"
-                        @click="toggleInterest(cat.id)"
-                    >
-                        <img v-if="cat.imageUrl" :src="cat.imageUrl" :alt="cat.name" />
-                        <div v-else class="category-placeholder">
-                            <i class="fa-solid fa-image"></i>
-                        </div>
-                        <p>{{ cat.name }}</p>
-                    </div>
-                </div>
-
-                <div class="step-actions right-align">
-                    <button type="button" class="btn-orange" @click="goToStep(1)">
-                        <i class="fa-solid fa-arrow-left"></i> Atrás
-                    </button>
-                    <button type="button" class="btn-teal" @click="goToStep(3)">
-                        Continuar <i class="fa-solid fa-arrow-right"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- STEP 3: Review -->
-            <div v-if="currentStep === 3" class="wizard-card">
-                <h3 class="step-title section-title">Información del Comprador</h3>
+                <h3 class="step-title section-title">
+                    Información del Comprador
+                </h3>
                 <div class="review-grid">
                     <div class="review-logo-area">
                         <div class="review-logo-circle">
-                            <img v-if="avatarPreviewUrl" :src="avatarPreviewUrl" alt="Avatar" />
+                            <img
+                                v-if="avatarPreviewUrl"
+                                :src="avatarPreviewUrl"
+                                alt="Avatar"
+                            />
                             <i v-else class="fa-solid fa-user"></i>
                         </div>
                     </div>
                     <div class="review-data-area">
                         <div class="review-item">
                             <span class="label">Nombres</span>
-                            <span class="value">{{ form.firstName || "-" }}</span>
+                            <span class="value">{{
+                                form.firstName || "-"
+                            }}</span>
                         </div>
                         <div class="review-item">
                             <span class="label">Apellidos</span>
-                            <span class="value">{{ form.lastName || "-" }}</span>
+                            <span class="value">{{
+                                form.lastName || "-"
+                            }}</span>
                         </div>
                         <div class="review-item">
                             <span class="label">Cédula de Identidad</span>
-                            <span class="value">{{ form.nationalId || "-" }}</span>
+                            <span class="value">{{
+                                form.nationalId || "-"
+                            }}</span>
                         </div>
                         <div class="review-item">
                             <span class="label">Correo electrónico</span>
@@ -422,35 +471,52 @@ const finishRegistration = () => {
                 </div>
 
                 <div class="checkbox-container">
-                    <input v-model="form.termsAccepted" type="checkbox" id="confirm-check" />
+                    <input
+                        v-model="form.termsAccepted"
+                        type="checkbox"
+                        id="confirm-check"
+                    />
                     <label for="confirm-check">
-                        Confirmo que la información enviada es correcta y acepto las
+                        Confirmo que la información enviada es correcta y acepto
+                        las
                         <a href="#">Políticas de Privacidad</a>.
                     </label>
                 </div>
 
                 <div class="step-actions center-align">
-                    <button type="button" class="btn-orange" @click="goToStep(2)">
+                    <button
+                        type="button"
+                        class="btn-orange"
+                        @click="goToStep(1)"
+                    >
                         <i class="fa-solid fa-arrow-left"></i> Atrás
                     </button>
-                    <button type="button" class="btn-teal" :disabled="!form.termsAccepted" @click="showConfirmModal = true">
+                    <button
+                        type="button"
+                        class="btn-teal"
+                        :disabled="!form.termsAccepted"
+                        @click="showConfirmModal = true"
+                    >
                         Guardar Registro <i class="fa-solid fa-arrow-right"></i>
                     </button>
                 </div>
             </div>
         </main>
 
-        <!-- Standardized Confirmation Modal -->
         <ConfirmModal
             v-model="showConfirmModal"
             title="¿Deseas enviar tu información?"
             confirm-text="Continuar"
             cancel-text="Cancelar"
             :loading="isSubmitting"
-            @confirm="() => { showConfirmModal = false; showPasswordModal = true; }"
+            @confirm="
+                () => {
+                    showConfirmModal = false;
+                    showPasswordModal = true;
+                }
+            "
         />
 
-        <!-- Password Modal Component -->
         <CreatePasswordModal
             v-model="showPasswordModal"
             :email="form.email"
@@ -459,7 +525,6 @@ const finishRegistration = () => {
             @cancel="showPasswordModal = false"
         />
 
-        <!-- Standardized Success Modal -->
         <ConfirmModal
             v-model="showSuccessModal"
             title="¡Información Enviada!"
@@ -469,7 +534,11 @@ const finishRegistration = () => {
             @confirm="finishRegistration"
         >
             <template #footer>
-                <button type="button" class="btn-teal full-width" @click="finishRegistration">
+                <button
+                    type="button"
+                    class="btn-teal full-width"
+                    @click="finishRegistration"
+                >
                     Continuar <i class="fa-solid fa-arrow-right"></i>
                 </button>
             </template>
@@ -527,7 +596,6 @@ const finishRegistration = () => {
     font-size: 1rem;
 }
 
-/* Stepper */
 .stepper {
     display: flex;
     justify-content: center;
@@ -543,7 +611,8 @@ const finishRegistration = () => {
     transition: opacity 0.2s ease;
 }
 
-.step.active, .step.completed {
+.step.active,
+.step.completed {
     opacity: 1;
 }
 
@@ -586,7 +655,6 @@ const finishRegistration = () => {
     background-color: var(--light-teal);
 }
 
-/* Wizard Card */
 .wizard-card {
     background: #ffffff;
     border: 1px solid var(--border-gray);
@@ -601,15 +669,6 @@ const finishRegistration = () => {
     color: var(--primary-blue);
     margin-bottom: 1.8rem;
     font-weight: 700;
-}
-
-.step-subheading {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.step-subheading p {
-    color: #64748b;
 }
 
 .form-grid {
@@ -697,7 +756,6 @@ const finishRegistration = () => {
     color: #ffffff;
 }
 
-/* File Uploader */
 .drag-drop-zone {
     border: 2px dashed var(--border-gray);
     border-radius: 10px;
@@ -750,66 +808,6 @@ const finishRegistration = () => {
     cursor: pointer;
 }
 
-/* Categories Grid */
-.categories-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 1.25rem;
-    margin-bottom: 2rem;
-}
-
-.category-selectable-card {
-    border: 2px solid var(--border-gray);
-    border-radius: 12px;
-    padding: 1.25rem 0.8rem;
-    text-align: center;
-    cursor: pointer;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6rem;
-    transition: all 0.2s ease;
-}
-
-.category-selectable-card:hover {
-    border-color: var(--light-teal);
-}
-
-.category-selectable-card.selected {
-    border-color: var(--primary-orange);
-    background-color: #fffaf5;
-}
-
-.category-selectable-card img,
-.category-placeholder {
-    width: 55px;
-    height: 55px;
-    object-fit: contain;
-}
-
-.category-placeholder {
-    background: var(--bg-gray);
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #94a3b8;
-}
-
-.category-selectable-card p {
-    font-weight: 600;
-    font-size: 0.85rem;
-    color: var(--primary-blue);
-}
-
-.loading-state {
-    text-align: center;
-    padding: 3rem 0;
-    color: #64748b;
-}
-
-/* Review Section */
 .review-grid {
     display: flex;
     gap: 2rem;
@@ -886,7 +884,6 @@ const finishRegistration = () => {
     text-decoration: underline;
 }
 
-/* Actions */
 .step-actions {
     display: flex;
     align-items: center;
@@ -940,7 +937,8 @@ const finishRegistration = () => {
 }
 
 @media (max-width: 768px) {
-    .form-grid, .review-data-area {
+    .form-grid,
+    .review-data-area {
         grid-template-columns: 1fr;
     }
     .stepper {

@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { watch, onBeforeUnmount } from "vue";
 
@@ -6,12 +5,14 @@ interface Props {
   modelValue: boolean;
   maxWidth?: string;
   closeOnBackdrop?: boolean;
+  closeOnEsc?: boolean;
   showCloseButton?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   maxWidth: "480px",
   closeOnBackdrop: true,
+  closeOnEsc: true,
   showCloseButton: true,
 });
 
@@ -30,7 +31,9 @@ const handleBackdropClick = () => {
 };
 
 const handleKeydown = (event: KeyboardEvent) => {
-  if (event.key === "Escape" && props.modelValue) close();
+  if (event.key === "Escape" && props.modelValue && props.closeOnEsc) {
+    close();
+  }
 };
 
 watch(
@@ -89,9 +92,7 @@ onBeforeUnmount(() => {
       </div>
     </Transition>
   </Teleport>
-</template>
-
-<style scoped>
+</template><style scoped>
 .modal-backdrop {
   position: fixed;
   inset: 0;
