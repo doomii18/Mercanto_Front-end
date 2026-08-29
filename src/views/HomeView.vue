@@ -4,6 +4,7 @@ import { useAuthStore } from "../modules/auth";
 import { healthApi, categoryApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
 import CategoryImage from "../components/category/CategoryImage.vue";
+import TopProductsSection from "../components/product/TopProductsSection.vue";
 import AppFooter from "../components/common/AppFooter.vue";
 
 interface CategoryViewItem extends ProductCategoryResponse {
@@ -207,119 +208,8 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section class="top-sellers container">
-        <div class="top-sellers-header">
-          <div class="top-sellers-title">
-            <span class="badge-orange">
-              <i class="fa-solid fa-fire"></i> Los más vendidos
-            </span>
-            <h2>
-              Los productos<br />
-              <span class="highlight-orange">más exitosos</span><br />
-              del momento
-            </h2>
-            <p>Invierte en los productos más solicitados</p>
-            <div class="benefits-badges">
-              <div class="benefit-badge teal">
-                <i class="fa-solid fa-store"></i>
-                <span>Productos con excelente rotación y aceptación</span>
-              </div>
-              <div class="benefit-badge orange">
-                <i class="fa-solid fa-chart-simple"></i>
-                <span>Productos con mayor volumen de ventas</span>
-              </div>
-            </div>
-          </div>
-          <div class="top-sellers-image">
-            <img
-              src="../assets/top-sellers-hero.png"
-              alt="Productos destacados"
-            />
-          </div>
-        </div>
-
-        <div class="products-grid">
-          <router-link
-            :to="{ name: 'product-detail', params: { id: 'mochila-adventure' } }"
-            class="product-card"
-          >
-            <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
-            <img src="../assets/mochila.png" alt="Mochila Adventure" />
-            <p class="product-category">Bolsos & Maletas</p>
-            <div class="product-info">
-              <h4>Mochila Adventure</h4>
-              <span class="price">C$ 350</span>
-            </div>
-            <p class="min-order">Pedido mín. 1 und</p>
-            <div class="provider-info">
-              <i class="fa-solid fa-certificate badge-verified"></i>
-              <span>Megaboutique S.A</span>
-              <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
-            </div>
-            <div class="ranking-bubble orange">1</div>
-          </router-link>
-
-          <router-link
-            :to="{ name: 'product-detail', params: { id: 'set-de-ollas' } }"
-            class="product-card"
-          >
-            <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
-            <img src="../assets/utensilios.png" alt="Set de ollas 9 piezas" />
-            <p class="product-category">Cocina</p>
-            <div class="product-info">
-              <h4>Set de ollas 9 piezas</h4>
-              <span class="price">C$ 350</span>
-            </div>
-            <p class="min-order">Pedido mín. 1 und</p>
-            <div class="provider-info">
-              <i class="fa-solid fa-certificate badge-verified"></i>
-              <span>Megaboutique S.A</span>
-              <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
-            </div>
-            <div class="ranking-bubble teal">2</div>
-          </router-link>
-
-          <router-link
-            :to="{ name: 'product-detail', params: { id: 'tablet-para-ninos' } }"
-            class="product-card"
-          >
-            <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
-            <img src="../assets/tableta.png" alt="Tablet para niños" />
-            <p class="product-category">Artículos tecnológicos</p>
-            <div class="product-info">
-              <h4>Tablet para niños</h4>
-              <span class="price">C$ 950</span>
-            </div>
-            <p class="min-order">Pedido mín. 1 und</p>
-            <div class="provider-info">
-              <i class="fa-solid fa-certificate badge-verified"></i>
-              <span>Megaboutique S.A</span>
-              <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
-            </div>
-            <div class="ranking-bubble blue">3</div>
-          </router-link>
-
-          <router-link
-            :to="{ name: 'product-detail', params: { id: 'paleta-de-sombras' } }"
-            class="product-card"
-          >
-            <span class="badge-orange small"><i class="fa-solid fa-fire"></i> Los más vendidos</span>
-            <img src="../assets/paleta.png" alt="Paleta de sombras" />
-            <p class="product-category">Makeup & Cuidado personal</p>
-            <div class="product-info">
-              <h4>Paleta de sombras</h4>
-              <span class="price">C$ 350</span>
-            </div>
-            <p class="min-order">Pedido mín. 1 und</p>
-            <div class="provider-info">
-              <i class="fa-solid fa-certificate badge-verified"></i>
-              <span>Megaboutique S.A</span>
-              <span class="rating">4.5 <i class="fa-solid fa-star"></i></span>
-            </div>
-            <div class="ranking-bubble grey">4</div>
-          </router-link>
-        </div>
-      </section>
+      <!-- Extracted Top Sellers Component -->
+      <TopProductsSection />
 
       <section id="proveedores" class="top-providers container">
         <h2>Nuestros proveedores más <span class="highlight-orange">TOP</span></h2>
@@ -735,220 +625,6 @@ onMounted(async () => {
   right: -20px;
 }
 
-.top-sellers {
-  margin-bottom: 5rem;
-}
-
-.top-sellers-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2.5rem;
-  gap: 2rem;
-}
-
-.top-sellers-title {
-  flex: 1.2;
-}
-
-.badge-orange {
-  background-color: #ffe8d6;
-  color: var(--primary-orange);
-  padding: 0.35rem 0.85rem;
-  border-radius: 20px;
-  font-weight: 700;
-  font-size: 0.85rem;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.75rem;
-}
-
-.badge-orange.small {
-  font-size: 0.72rem;
-  padding: 0.2rem 0.6rem;
-  margin-bottom: 0.5rem;
-}
-
-.top-sellers-title h2 {
-  font-size: 2.5rem;
-  color: var(--primary-blue);
-  line-height: 1.15;
-  margin-bottom: 0.75rem;
-}
-
-.highlight-orange {
-  color: var(--primary-orange);
-}
-
-.top-sellers-title p {
-  color: #718096;
-  margin-bottom: 1.5rem;
-}
-
-.benefits-badges {
-  display: flex;
-  gap: 1rem;
-}
-
-.benefit-badge {
-  padding: 0.85rem 1.1rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  max-width: 220px;
-  line-height: 1.35;
-}
-
-.benefit-badge i {
-  font-size: 1.4rem;
-}
-
-.benefit-badge.teal {
-  background-color: #d8f1ef;
-  color: var(--primary-blue);
-  border: 1.5px solid var(--light-teal);
-}
-
-.benefit-badge.orange {
-  background-color: #ffe8d6;
-  color: var(--primary-orange);
-  border: 1.5px solid #ffcca3;
-}
-
-.top-sellers-image {
-  flex: 0.8;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.top-sellers-image img {
-  max-width: 100%;
-  max-height: 320px;
-  object-fit: contain;
-}
-
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.product-card {
-  background: #ffffff;
-  border: 2px solid var(--primary-orange);
-  border-radius: 18px;
-  padding: 1.25rem;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(255, 106, 0, 0.15);
-}
-
-.product-card img {
-  width: 100%;
-  height: 160px;
-  object-fit: contain;
-  margin-bottom: 0.75rem;
-}
-
-.product-category {
-  font-size: 0.72rem;
-  color: #718096;
-  text-align: center;
-  margin-bottom: 0.4rem;
-}
-
-.product-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.35rem;
-}
-
-.product-info h4 {
-  font-size: 0.9rem;
-  color: var(--primary-blue);
-  font-weight: 600;
-}
-
-.product-info .price {
-  color: var(--primary-orange);
-  font-weight: 700;
-}
-
-.min-order {
-  font-size: 0.72rem;
-  color: #718096;
-  text-align: right;
-  margin-bottom: 0.75rem;
-}
-
-.provider-info {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.75rem;
-  color: #4a5568;
-  border-top: 1px solid var(--border-gray);
-  padding-top: 0.75rem;
-  margin-top: auto;
-}
-
-.badge-verified {
-  color: #0284c7;
-}
-
-.provider-info .rating {
-  margin-left: auto;
-  font-weight: 700;
-  color: var(--text-dark);
-}
-
-.provider-info .rating i {
-  color: var(--primary-orange);
-}
-
-.ranking-bubble {
-  position: absolute;
-  bottom: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.ranking-bubble.orange {
-  background-color: var(--primary-orange);
-}
-.ranking-bubble.teal {
-  background-color: #0d9488;
-}
-.ranking-bubble.blue {
-  background-color: var(--primary-blue);
-}
-.ranking-bubble.grey {
-  background-color: #64748b;
-}
-
 .top-providers {
   text-align: center;
   margin-bottom: 5rem;
@@ -958,6 +634,10 @@ onMounted(async () => {
   font-size: 2.2rem;
   color: var(--primary-blue);
   margin-bottom: 2.5rem;
+}
+
+.highlight-orange {
+  color: var(--primary-orange);
 }
 
 .providers-grid {
@@ -1113,9 +793,6 @@ onMounted(async () => {
   .hero-text h1 {
     font-size: 2.6rem;
   }
-  .products-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .providers-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1197,16 +874,6 @@ onMounted(async () => {
     height: 1px;
   }
 
-  .top-sellers-header {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .benefits-badges {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
   .providers-grid {
     grid-template-columns: 1fr;
   }
@@ -1219,9 +886,6 @@ onMounted(async () => {
 @media (max-width: 480px) {
   .hero-text h1 {
     font-size: 1.8rem;
-  }
-  .products-grid {
-    grid-template-columns: 1fr;
   }
   .steps-grid {
     grid-template-columns: 1fr;
