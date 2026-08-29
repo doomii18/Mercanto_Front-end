@@ -13,6 +13,7 @@ import ProviderProfileView from "../views/ProviderProfileView.vue";
 import DashboardLayout from "../views/DashboardLayout.vue";
 import ProfileView from "../views/ProfileView.vue";
 import OrdersView from "../views/OrdersView.vue";
+import SmartSearchView from "../views/SmartSearchView.vue";
 import TestLayout from "../views/test/TestLayout.vue";
 import TestChatView from "../views/test/TestChatView.vue";
 import TestEventsView from "../views/test/TestEventsView.vue";
@@ -40,6 +41,16 @@ const routes: RouteRecordRaw[] = [
     path: "/product/:id?",
     name: "product-detail",
     component: ProductDetailView,
+  },
+  {
+    path: "/orders",
+    name: "orders",
+    component: OrdersView,
+  },
+  {
+    path: "/pedidos",
+    name: "pedidos",
+    component: OrdersView,
   },
   {
     path: "/login",
@@ -84,6 +95,11 @@ const routes: RouteRecordRaw[] = [
         path: "orders",
         name: "orders",
         component: OrdersView,
+      },
+      {
+        path: "smart-search",
+        name: "smart-search",
+        component: SmartSearchView,
       },
     ],
   },

@@ -169,10 +169,11 @@ const toggleWishlist = (product: ProductItem) => {
         </router-link>
       </div>
       <nav class="nav-links">
-        <router-link :to="{ name: 'home', hash: '#inicio' }">Inicio</router-link>
-        <router-link :to="{ name: 'home', hash: '#categorias' }">Categorías</router-link>
+        <router-link :to="{ name: 'home' }">Inicio</router-link>
+        <router-link :to="{ name: 'category' }">Categorías</router-link>
         <router-link :to="{ name: 'home', hash: '#proveedores' }">Proveedores</router-link>
         <router-link :to="{ name: 'home', hash: '#como-funciona' }">Cómo funciona</router-link>
+        <router-link :to="{ name: 'orders' }">Pedidos</router-link>
       </nav>
       <div class="auth-buttons">
         <router-link :to="{ name: 'login' }" class="login-btn">Iniciar sesión</router-link>
@@ -337,14 +338,33 @@ const toggleWishlist = (product: ProductItem) => {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  align-items: center;
+  gap: 0.75rem;
 }
 
 .nav-links a {
   text-decoration: none;
   color: #023859;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 0.95rem;
+  padding: 0.5rem 1.1rem;
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.nav-links a:hover {
+  background-color: #ffebd9;
+  color: #ff6a00;
+  box-shadow: 0 3px 10px rgba(255, 106, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.nav-links a.router-link-active,
+.nav-links a.router-link-exact-active {
+  background-color: #ffd8bd;
+  color: #ff6a00;
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(255, 106, 0, 0.2);
 }
 
 .auth-buttons {

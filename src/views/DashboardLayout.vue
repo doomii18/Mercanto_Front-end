@@ -43,9 +43,13 @@ const handleLogout = async () => {
           <a href="#" class="menu-item">
             <i class="fa-regular fa-comment-dots"></i> Mensajes
           </a>
-          <a href="#" class="menu-item">
+          <router-link
+            :to="{ name: 'smart-search' }"
+            class="menu-item"
+            exact-active-class="active"
+          >
             <i class="fa-solid fa-magnifying-glass"></i> Búsqueda Inteligente
-          </a>
+          </router-link>
           <a href="#" class="menu-item">
             <i class="fa-solid fa-gear"></i> Configuración
           </a>
@@ -130,22 +134,23 @@ const handleLogout = async () => {
   font-weight: 600;
   font-size: 0.95rem;
   border-radius: 12px;
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-.menu-item i {
-  font-size: 1.15rem;
-  width: 22px;
-  text-align: center;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .menu-item:hover {
-  background-color: #e2e8f0;
+  background-color: #ffeedf;
+  color: var(--primary-orange, #ff6a00);
+  box-shadow: 0 3px 10px rgba(255, 106, 0, 0.12);
+  transform: translateX(4px);
 }
 
-.menu-item.active {
-  background-color: #e2e8f0;
-  color: var(--light-teal);
+.menu-item.active,
+.menu-item.router-link-active,
+.menu-item.router-link-exact-active {
+  background-color: #ffd8bd;
+  color: var(--primary-orange, #ff6a00);
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(255, 106, 0, 0.18);
 }
 
 .logout-btn {

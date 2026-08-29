@@ -74,10 +74,11 @@ onMounted(async () => {
         </button>
 
         <nav :class="['nav-links', { open: isMenuOpen }]">
-          <a href="#inicio" @click="closeMenu">Inicio</a>
-          <a href="#categorias" @click="closeMenu">Categorías</a>
-          <a href="#proveedores" @click="closeMenu">Proveedores</a>
-          <a href="#como-funciona" @click="closeMenu">Cómo funciona</a>
+          <router-link :to="{ name: 'home' }" class="nav-btn" @click="closeMenu">Inicio</router-link>
+          <router-link :to="{ name: 'category' }" class="nav-btn" @click="closeMenu">Categorías</router-link>
+          <a href="#proveedores" class="nav-btn" @click="closeMenu">Proveedores</a>
+          <a href="#como-funciona" class="nav-btn" @click="closeMenu">Como funciona</a>
+          <router-link :to="{ name: 'orders' }" class="nav-btn" @click="closeMenu">Pedidos</router-link>
         </nav>
 
         <div :class="['auth-buttons', { open: isMenuOpen }]">
@@ -439,19 +440,36 @@ onMounted(async () => {
 
 .nav-links {
   display: flex;
-  gap: 2rem;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.nav-links a {
+.nav-links a,
+.nav-links .nav-btn {
   text-decoration: none;
   color: var(--primary-blue);
   font-weight: 600;
   font-size: 0.95rem;
-  transition: color 0.2s ease;
+  padding: 0.5rem 1.1rem;
+  border-radius: 12px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
 }
 
-.nav-links a:hover {
+.nav-links a:hover,
+.nav-links .nav-btn:hover {
+  background-color: #ffebd9;
   color: var(--primary-orange);
+  box-shadow: 0 3px 10px rgba(255, 106, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+.nav-links a.active-nav-highlight,
+.nav-links a.router-link-exact-active {
+  background-color: #ffd8bd;
+  color: var(--primary-orange);
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(255, 106, 0, 0.2);
 }
 
 .auth-buttons {
