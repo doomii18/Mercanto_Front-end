@@ -81,8 +81,8 @@ const handleSave = async () => {
   try {
     if (props.saveHandler) {
       await props.saveHandler(payload);
-    } else if (typeof (userProfileApi as any).updatePreferences === "function") {
-      await (userProfileApi as any).updatePreferences(payload);
+    } else {
+      await userProfileApi.setMyInterests({ category_ids: payload });
     }
     emit("saved", payload);
     emit("update:modelValue", false);

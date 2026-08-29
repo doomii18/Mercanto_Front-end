@@ -44,6 +44,15 @@ export class UserProfileService {
     return z.array(UserInterestSchema).parse(data);
   }
 
+  async setMyInterests(payload: UserInterestsRequest): Promise<void> {
+    const validatedPayload = UserInterestsRequestSchema.parse(payload);
+    await this.client.request("/me/interests", {
+      method: "PUT",
+      body: JSON.stringify(validatedPayload),
+    });
+  }
+
+
   async addMyInterests(payload: UserInterestsRequest): Promise<void> {
     const validatedPayload = UserInterestsRequestSchema.parse(payload);
     await this.client.request("/me/interests", {

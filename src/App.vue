@@ -5,7 +5,8 @@ import { usePreferencesGuard } from "./modules/auth/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 
 const authStore = useAuthStore();
-const { showPrompt, currentPreferences, checkPreferences } = usePreferencesGuard();
+const { showPrompt, currentPreferences, checkPreferences, savePreferences } =
+  usePreferencesGuard();
 
 onMounted(async () => {
   await authStore.initialize();
@@ -33,5 +34,6 @@ watch(
     v-model="showPrompt"
     :initial-preferences="currentPreferences"
     :is-mandatory="true"
+    :save-handler="savePreferences"
   />
 </template>
