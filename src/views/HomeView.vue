@@ -298,7 +298,6 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 3.5rem 1.5rem;
   position: relative;
   gap: 2rem;
 }
@@ -388,7 +387,7 @@ onMounted(async () => {
   padding: 1.8rem 2rem;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  margin: 2rem auto 0 auto;
+
   border: 1px solid var(--border-gray);
 }
 
