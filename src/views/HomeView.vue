@@ -4,6 +4,7 @@ import { useAuthStore } from "../modules/auth";
 import { healthApi } from "../api";
 import CategoriesSection from "../components/category/CategoriesSection.vue";
 import TopProductsSection from "../components/product/TopProductsSection.vue";
+import TopProvidersSection from "../components/organization/TopProvidersSection.vue";
 import AppFooter from "../components/common/AppFooter.vue";
 
 const authStore = useAuthStore();
@@ -77,7 +78,7 @@ onMounted(async () => {
     </header>
 
     <main>
-      <section id="inicio" class="hero container">
+      <section id="inicio" class="hero container section-spaced">
         <div class="hero-text">
           <h1>
             Encuentra los<br />mejores<br />
@@ -110,7 +111,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section class="features container">
+      <section class="features container section-spaced">
         <div class="feature-item">
           <div class="icon-circle">
             <i class="fa-solid fa-shield-halved"></i>
@@ -139,59 +140,20 @@ onMounted(async () => {
           <span>Ahórrate el viaje</span>
         </div>
       </section>
-      <CategoriesSection/>
-      <TopProductsSection />
-      <section id="proveedores" class="top-providers container">
-        <h2>Nuestros proveedores más <span class="highlight-orange">TOP</span></h2>
-        <div class="providers-grid">
-          <div class="provider-card">
-            <div class="provider-avatar"><i class="fa-solid fa-user"></i></div>
-            <h4>Megaboutique S.A.R</h4>
-            <div class="verified-icon"><i class="fa-solid fa-certificate"></i></div>
-            <p class="provider-status">Proveedor verificado</p>
-            <div class="provider-rating">
-              <span class="score">4.5</span>
-              <i class="fa-solid fa-star"></i>
-            </div>
-            <p class="provider-location">San Ramón, Matagalpa</p>
-            <button class="btn-orange">Ver catálogo</button>
-          </div>
 
-          <div class="provider-card">
-            <div class="provider-avatar"><i class="fa-solid fa-user"></i></div>
-            <h4>Global Textiles Ltd</h4>
-            <div class="verified-icon"><i class="fa-solid fa-certificate"></i></div>
-            <p class="provider-status">Proveedor verificado</p>
-            <div class="provider-rating">
-              <span class="score">4.2</span>
-              <i class="fa-solid fa-star"></i>
-            </div>
-            <p class="provider-location">San Ramón, Matagalpa</p>
-            <button class="btn-orange">Ver catálogo</button>
-          </div>
+      <div class="section-spaced">
+        <CategoriesSection />
+      </div>
 
-          <div class="provider-card">
-            <div class="provider-avatar"><i class="fa-solid fa-user"></i></div>
-            <h4>Nacional Textiles Ltd</h4>
-            <div class="verified-icon"><i class="fa-solid fa-certificate"></i></div>
-            <p class="provider-status">Proveedor verificado</p>
-            <div class="provider-rating">
-              <span class="score">4.0</span>
-              <i class="fa-solid fa-star"></i>
-            </div>
-            <p class="provider-location">San Ramón, Matagalpa</p>
-            <button class="btn-orange">Ver catálogo</button>
-          </div>
-        </div>
+      <div class="section-spaced">
+        <TopProductsSection />
+      </div>
 
-        <div class="view-all-wrapper">
-          <a href="#" class="btn-outline">
-            Ver todos <i class="fa-solid fa-arrow-right"></i>
-          </a>
-        </div>
-      </section>
+      <div class="section-spaced">
+        <TopProvidersSection />
+      </div>
 
-      <section id="como-funciona" class="how-it-works container">
+      <section id="como-funciona" class="how-it-works container section-spaced">
         <h2>¿Cómo funciona la plataforma?</h2>
         <div class="steps-grid">
           <div class="step-card">
@@ -228,6 +190,11 @@ onMounted(async () => {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1.5rem;
+}
+
+/* Section spacing utility */
+.section-spaced {
+  margin-bottom: 5rem;
 }
 
 .header {
@@ -421,7 +388,7 @@ onMounted(async () => {
   padding: 1.8rem 2rem;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-  margin: 2rem auto 4rem auto;
+  margin: 2rem auto 0 auto;
   border: 1px solid var(--border-gray);
 }
 
@@ -451,128 +418,8 @@ onMounted(async () => {
   background-color: var(--border-gray);
 }
 
-.top-providers {
-  text-align: center;
-  margin-bottom: 5rem;
-}
-
-.top-providers h2 {
-  font-size: 2.2rem;
-  color: var(--primary-blue);
-  margin-bottom: 2.5rem;
-}
-
-.highlight-orange {
-  color: var(--primary-orange);
-}
-
-.providers-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.provider-card {
-  background: #ffffff;
-  border: 2px solid var(--primary-orange);
-  border-radius: 24px;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  transition: transform 0.2s ease;
-}
-
-.provider-card:hover {
-  transform: translateY(-4px);
-}
-
-.provider-avatar {
-  width: 72px;
-  height: 72px;
-  background-color: #f1f5f9;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2.4rem;
-  color: #64748b;
-  margin-bottom: 1rem;
-}
-
-.provider-card h4 {
-  font-size: 1.15rem;
-  color: var(--primary-blue);
-  margin-bottom: 0.4rem;
-}
-
-.verified-icon {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  font-size: 1.5rem;
-  color: #0284c7;
-}
-
-.provider-status {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 0.6rem;
-}
-
-.provider-rating {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-blue);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
-}
-
-.provider-rating i {
-  color: var(--primary-orange);
-  font-size: 1.2rem;
-}
-
-.provider-location {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 1.2rem;
-}
-
-.btn-orange {
-  background-color: var(--primary-orange);
-  color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 24px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-}
-
-.view-all-wrapper {
-  text-align: right;
-}
-
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--light-teal);
-  border: 2px solid var(--light-teal);
-  padding: 0.5rem 1.4rem;
-  border-radius: 20px;
-  text-decoration: none;
-  font-weight: 600;
-}
-
 .how-it-works {
   text-align: center;
-  margin-bottom: 5rem;
 }
 
 .how-it-works h2 {
@@ -618,9 +465,6 @@ onMounted(async () => {
 @media (max-width: 1024px) {
   .hero-text h1 {
     font-size: 2.6rem;
-  }
-  .providers-grid {
-    grid-template-columns: repeat(2, 1fr);
   }
   .steps-grid {
     grid-template-columns: repeat(2, 1fr);
@@ -698,14 +542,6 @@ onMounted(async () => {
   .feature-divider {
     width: 100%;
     height: 1px;
-  }
-
-  .providers-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .view-all-wrapper {
-    text-align: center;
   }
 }
 
