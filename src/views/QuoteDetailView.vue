@@ -106,7 +106,7 @@ const loadQuoteDetails = async () => {
       quoteAggregate.value = detail.value;
 
       if (detail.value.quote.provider_id) {
-        provider.value = await organizationApi.getOrganization(detail.value.quote.provider_id);
+        provider.value = await organizationApi.getPublicProvider(detail.value.quote.provider_id);
       }
 
       await Promise.all(

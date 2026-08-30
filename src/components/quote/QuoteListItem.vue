@@ -91,7 +91,7 @@ const loadMetadata = async () => {
   if (providerId) {
     try {
       if (!providerCache.has(providerId)) {
-        providerCache.set(providerId, organizationApi.getOrganization(providerId));
+        providerCache.set(providerId, organizationApi.getPublicProvider(providerId));
       }
       provider.value = await providerCache.get(providerId)!;
     } catch (err) {

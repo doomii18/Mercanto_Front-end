@@ -66,6 +66,9 @@ export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(
   PublicProviderDtoSchema,
 );
 
+// Backward-compatible alias
+export const PaginatedOrganizationResponseSchema = PaginatedOrganizationsResponseSchema;
+
 export const RegisterProviderRequestSchema = z.object({
   company_name: companyNameSchema,
   tax_id: taxIdSchema,

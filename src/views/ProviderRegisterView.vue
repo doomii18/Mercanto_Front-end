@@ -145,7 +145,7 @@ const handleFinalSubmit = async (credentials: { password: string; passwordConfir
       "Agricultura y Ganadería": "manufacturer",
     };
 
-    const org = await organizationApi.registerOrganization({
+    const org = await organizationApi.createOrganization({
       company_name: businessForm.value.companyName.trim(),
       tax_id: businessForm.value.ruc.trim(),
       location: {

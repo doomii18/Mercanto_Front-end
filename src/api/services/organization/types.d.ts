@@ -29,3 +29,9 @@ export type OrganizationDetailsDto = z.infer<typeof OrganizationDetailsDtoSchema
 export type PaginatedOrganizationsResponse = z.infer<typeof PaginatedOrganizationsResponseSchema>;
 export type RegisterProviderRequest = z.infer<typeof RegisterProviderRequestSchema>;
 export type ProviderOrganizationPatch = z.infer<typeof ProviderOrganizationPatchSchema>;
+
+// Backward-compatible aliases
+export type CreateOrganizationRequest = RegisterProviderRequest;
+export type PatchOrganizationRequest = ProviderOrganizationPatch;
+export type OrganizationResponse = OrganizationDetailsDto;
+export type PaginatedOrganizationResponse = PaginatedOrganizationsResponse;

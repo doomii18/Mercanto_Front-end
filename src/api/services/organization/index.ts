@@ -71,6 +71,11 @@ export class OrganizationService {
     return OrganizationDetailsDtoSchema.parse(data);
   }
 
+  // Alias for compatibility with components calling createOrganization
+  async createOrganization(payload: RegisterProviderRequest): Promise<OrganizationDetailsDto> {
+    return this.registerProvider(payload);
+  }
+
   async patchOrganization(
     organizationId: string,
     payload: ProviderOrganizationPatch,
