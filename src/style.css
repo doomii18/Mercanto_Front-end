@@ -1,3 +1,6 @@
+@import "tailwindcss";
+@plugin "daisyui";
+
 :root {
   /* Brand: Azul Oscuro */
   --color-blue-50: #e6eff4;
