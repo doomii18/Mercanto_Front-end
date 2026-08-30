@@ -39,3 +39,32 @@ export function crockfordToUuid(crockford: string): string {
   const hex = num.toString(16).padStart(32, "0");
   return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
 }
+
+
+/**
+ * Extracts the 48-bit UTC millisecond timestamp from a UUIDv7 string.
+ */
+export function uuidv7ToDate(uuid: string): Date {
+  const cleanHex = uuid.replace(/-/g, "").slice(0, 12);
+  const timestampMs = parseInt(cleanHex, 16);
+  return new Date(timestampMs);
+}
+
+/**
+ * Parses a UUIDv7 or ISO timestamp, converts from UTC epoch, and formats to local time.
+ */
+export function formatUuidv7ToLocalTime(uuidOrIso: string): string {
+  if (!uuidOrIso) return "";
+
+  const cleanHex = uuidOrIso.replace(/-/g, "");
+  const isUuid = cleanHex.length === 32;
+
+  const date = isUuid ? uuidv7ToDate(uuidOrIso) : new Date(uuidOrIso);
+  if (isNaN(date.getTime())) return "";
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(date);
+}

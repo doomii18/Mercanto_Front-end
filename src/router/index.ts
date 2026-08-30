@@ -108,11 +108,6 @@ const routes: RouteRecordRaw[] = [
         redirect: { name: "test-chat" },
       },
       {
-        path: "chat",
-        name: "test-chat",
-        component: () => import("../views/test/TestChatView.vue"),
-      },
-      {
         path: "events",
         name: "test-events",
         component: () => import("../views/test/TestEventsView.vue"),

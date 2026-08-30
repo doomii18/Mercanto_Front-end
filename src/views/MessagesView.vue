@@ -1,158 +1,195 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { chatApi, notificationsApi } from "../api";
+import { useAuthStore } from "../modules/auth";
+import { formatUuidv7ToLocalTime } from "../utils/formatters";
+import { NewChatMessageEventSchema } from "../api/services/notifications/payloads";
+import type { ChatThreadResponse, ChatMessageResponse } from "../api/services/chat/types";
 
-/* ─── Types ─────────────────────────────────────────────── */
-interface Message {
-  id: number;
-  text: string;
-  time: string;
-  fromMe: boolean;
-}
+const authStore = useAuthStore();
 
-interface Conversation {
-  id: number;
-  name: string;
-  role: string;
-  initials: string;
-  avatarColor: string;
-  logoText: string;
-  preview: string;
-  time: string;
-  online: boolean;
-  messages: Message[];
-}
+const threads = ref<ChatThreadResponse[]>([]);
+const activeThreadId = ref<string | null>(null);
+const currentMessages = ref<ChatMessageResponse[]>([]);
+const threadPreviews = ref<Record<string, { preview: string; time: string; hasUnread: boolean }>>({});
 
-/* ─── Data ───────────────────────────────────────────────── */
-const conversations = ref<Conversation[]>([
-  {
-    id: 1,
-    name: "E. Chamorro S.A",
-    role: "Proveedor",
-    initials: "ECh",
-    avatarColor: "#189c94",
-    logoText: "ECh",
-    preview: "¡Gracias por tu interés! Estamos para ayudarte.",
-    time: "11:11 a.m.",
-    online: true,
-    messages: [
-      {
-        id: 1,
-        text: "Hola. Buenos días. Realicé el pedido #MC-2024-0012 y quería confirmar cuándo será enviado.",
-        time: "1:30 p.m.",
-        fromMe: true,
-      },
-      {
-        id: 2,
-        text: "¡Hola! Buenos días. Gracias por tu compra. Ya recibimos tu pedido y actualmente estamos preparando los productos para el envío.",
-        time: "1:50 p.m.",
-        fromMe: false,
-      },
-      {
-        id: 3,
-        text: "Perfecto, muchas gracias. ¿Podrían indicarme la fecha estimada de entrega?",
-        time: "2:00 p.m.",
-        fromMe: true,
-      },
-      {
-        id: 4,
-        text: "Claro. Tenemos programado despacharlo mañana por la mañana. El tiempo estimado de entrega es de 2 a 3 días hábiles, dependiendo de la ubicación.",
-        time: "2:20 p.m.",
-        fromMe: false,
-      },
-      {
-        id: 5,
-        text: "Excelente. ¿Cuando sea enviado recibiré un número de seguimiento?",
-        time: "2:24 p.m.",
-        fromMe: true,
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Dicegsa",
-    role: "Proveedor",
-    initials: "D",
-    avatarColor: "#083c5a",
-    logoText: "Dicegsa",
-    preview: "¡Gracias por tu interés! Estamos para ayudarte.",
-    time: "11:11 a.m.",
-    online: false,
-    messages: [
-      {
-        id: 1,
-        text: "Buenos días, quisiera saber si tienen disponibilidad del producto Aceite Industrial 5L.",
-        time: "10:00 a.m.",
-        fromMe: true,
-      },
-      {
-        id: 2,
-        text: "¡Gracias por tu interés! Estamos para ayudarte.",
-        time: "11:11 a.m.",
-        fromMe: false,
-      },
-    ],
-  },
-]);
-
-const activeConvId = ref<number>(1);
 const searchQuery = ref("");
 const activeTab = ref<"todos" | "no-leidos">("todos");
 const newMessage = ref("");
 
-const activeConv = computed(
-  () => conversations.value.find((c) => c.id === activeConvId.value)!
-);
+const isLoadingThreads = ref(true);
+const isLoadingMessages = ref(false);
+const messagesContainer = ref<HTMLElement | null>(null);
 
-const filteredConvs = computed(() => {
-  return conversations.value.filter((c) =>
-    c.name.toLowerCase().includes(searchQuery.value.toLowerCase())
-  );
+let unsubs: (() => void)[] = [];
+
+function getAvatarColor(id: string): string {
+  const colors = ["#189c94", "#083c5a", "#ff6a00", "#7c3aed", "#0284c7"];
+  let hash = 0;
+  for (let i = 0; i < id.length; i++) {
+    hash = id.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
+
+function scrollToBottom() {
+  nextTick(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight;
+    }
+  });
+}
+
+const activeThread = computed(() => {
+  return threads.value.find((t) => t.id === activeThreadId.value) ?? null;
 });
 
-function selectConv(id: number) {
-  activeConvId.value = id;
+const filteredThreads = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase();
+  return threads.value.filter((t) => {
+    const matchesSearch = t.id.toLowerCase().includes(query) || t.quote_group_id.toLowerCase().includes(query);
+    const meta = threadPreviews.value[t.id];
+    const matchesTab = activeTab.value === "todos" || (activeTab.value === "no-leidos" && meta?.hasUnread);
+    return matchesSearch && matchesTab;
+  });
+});
+
+async function selectThread(threadId: string) {
+  if (activeThreadId.value === threadId) return;
+  activeThreadId.value = threadId;
+  isLoadingMessages.value = true;
+  currentMessages.value = [];
+
+  try {
+    const res = await chatApi.getThreadMessages(threadId, { limit: 50, offset: 0 });
+    currentMessages.value = res.data.reverse();
+
+    if (threadPreviews.value[threadId]) {
+      threadPreviews.value[threadId].hasUnread = false;
+      const lastMsg = currentMessages.value[currentMessages.value.length - 1];
+      if (lastMsg) {
+        threadPreviews.value[threadId].time = formatUuidv7ToLocalTime(lastMsg.id);
+      }
+    }
+
+    const unreadIds = currentMessages.value
+      .filter((m) => !m.is_read && m.sender_id !== authStore.account?.id)
+      .map((m) => m.id);
+
+    if (unreadIds.length > 0) {
+      chatApi.markMessagesAsRead({ message_ids: unreadIds }).catch(console.error);
+    }
+
+    scrollToBottom();
+  } catch (err) {
+    console.error("Failed to load thread messages:", err);
+  } finally {
+    isLoadingMessages.value = false;
+  }
 }
 
-function sendMessage() {
+async function sendMessage() {
   const text = newMessage.value.trim();
-  if (!text) return;
-  const conv = conversations.value.find((c) => c.id === activeConvId.value);
-  if (!conv) return;
-  const now = new Date();
-  const h = now.getHours();
-  const m = now.getMinutes().toString().padStart(2, "0");
-  const ampm = h >= 12 ? "p.m." : "a.m.";
-  const hour = h % 12 || 12;
-  conv.messages.push({
-    id: Date.now(),
-    text,
-    time: `${hour}:${m} ${ampm}`,
-    fromMe: true,
-  });
-  conv.preview = text;
-  conv.time = `${hour}:${m} ${ampm}`;
+  if (!text || !activeThreadId.value) return;
+
+  const targetThreadId = activeThreadId.value;
   newMessage.value = "";
+
+  try {
+    const sentMsg = await chatApi.publishChatMessage(targetThreadId, { content: text });
+
+    if (!currentMessages.value.some((m) => m.id === sentMsg.id)) {
+      currentMessages.value.push(sentMsg);
+    }
+
+    threadPreviews.value[targetThreadId] = {
+      preview: text,
+      time: formatUuidv7ToLocalTime(sentMsg.id),
+      hasUnread: false,
+    };
+
+    scrollToBottom();
+  } catch (err) {
+    console.error("Failed to send chat message:", err);
+  }
 }
+
+onMounted(async () => {
+  try {
+    await authStore.initialize();
+    await notificationsApi.connect();
+
+    const unsub = notificationsApi.subscribe("NewChatMessage", (rawEvent) => {
+      try {
+        const event = NewChatMessageEventSchema.parse(rawEvent);
+
+        threadPreviews.value[event.thread_id] = {
+          preview: event.content_preview,
+          time: formatUuidv7ToLocalTime(event.message_id),
+          hasUnread: activeThreadId.value !== event.thread_id,
+        };
+
+        if (activeThreadId.value === event.thread_id) {
+          if (!currentMessages.value.some((m) => m.id === event.message_id)) {
+            currentMessages.value.push({
+              id: event.message_id,
+              thread_id: event.thread_id,
+              sender_id: event.sender_id,
+              content: event.content_preview,
+              is_read: true,
+            });
+            scrollToBottom();
+          }
+          chatApi.markMessagesAsRead({ message_ids: [event.message_id] }).catch(console.error);
+        }
+      } catch (err) {
+        console.error("Malformed NewChatMessage payload:", err);
+      }
+    });
+    unsubs.push(unsub);
+
+    const res = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });
+    threads.value = res.data;
+
+    threads.value.forEach((t) => {
+      threadPreviews.value[t.id] = {
+        preview: `Cotización: ${t.quote_group_id.substring(0, 8)}...`,
+        time: formatUuidv7ToLocalTime(t.updated_at),
+        hasUnread: false,
+      };
+    });
+
+    if (threads.value.length > 0) {
+      await selectThread(threads.value[0].id);
+    }
+  } catch (err) {
+    console.error("Failed to initialize chat:", err);
+  } finally {
+    isLoadingThreads.value = false;
+  }
+});
+
+onBeforeUnmount(() => {
+  unsubs.forEach((fn) => fn());
+});
 </script>
 
 <template>
   <div class="messages-shell">
-    <!-- ── Conversations panel ─────────────────────── -->
+    <!-- Conversations panel -->
     <aside class="conv-panel">
       <h2 class="conv-title">Mensajes</h2>
 
-      <!-- Search -->
       <div class="search-wrap">
         <input
           v-model="searchQuery"
           class="search-input"
-          placeholder="Buscar conversación"
+          placeholder="Buscar conversación por ID"
           type="text"
         />
         <i class="fa-solid fa-magnifying-glass search-icon"></i>
       </div>
 
-      <!-- Tabs -->
       <div class="tabs">
         <button
           class="tab-btn"
@@ -170,107 +207,126 @@ function sendMessage() {
         </button>
       </div>
 
-      <!-- Conversation list -->
       <ul class="conv-list">
+        <li v-if="isLoadingThreads" class="empty-hint">Cargando conversaciones...</li>
+        <li v-else-if="filteredThreads.length === 0" class="empty-hint">No hay conversaciones</li>
+
         <li
-          v-for="conv in filteredConvs"
+          v-for="conv in filteredThreads"
           :key="conv.id"
           class="conv-item"
-          :class="{ 'conv-item--active': conv.id === activeConvId }"
-          @click="selectConv(conv.id)"
+          :class="{ 'conv-item--active': conv.id === activeThreadId }"
+          @click="selectThread(conv.id)"
         >
           <div
             class="conv-avatar"
-            :style="{ backgroundColor: conv.avatarColor }"
+            :style="{ backgroundColor: getAvatarColor(conv.id) }"
           >
-            {{ conv.initials }}
+            {{ conv.id.substring(0, 2).toUpperCase() }}
           </div>
           <div class="conv-info">
             <div class="conv-name-row">
-              <span class="conv-name">{{ conv.name }}</span>
-              <span class="conv-time">{{ conv.time }}</span>
+              <span class="conv-name" :title="conv.id">{{ conv.id }}</span>
+              <span class="conv-time">{{ threadPreviews[conv.id]?.time }}</span>
             </div>
-            <span class="conv-preview">{{ conv.preview }}</span>
+            <span class="conv-preview">{{ threadPreviews[conv.id]?.preview }}</span>
           </div>
         </li>
       </ul>
     </aside>
 
-    <!-- ── Chat panel ──────────────────────────────── -->
+    <!-- Chat panel -->
     <section class="chat-panel">
-      <!-- Chat header -->
-      <div class="chat-header">
-        <div
-          class="chat-avatar"
-          :style="{ backgroundColor: activeConv.avatarColor }"
-        >
-          {{ activeConv.initials }}
-        </div>
-        <div class="chat-contact">
-          <span class="chat-name">{{ activeConv.name }}</span>
-          <span class="chat-meta">
-            {{ activeConv.role }}
-            <span class="status-dot" :class="{ online: activeConv.online }"></span>
-            <span class="status-label">{{
-              activeConv.online ? "En línea" : "Desconectado"
-            }}</span>
-          </span>
-        </div>
-      </div>
-
-      <div class="chat-divider"></div>
-
-      <!-- Messages -->
-      <div class="chat-messages">
-        <div class="date-separator">09 de julio de 2026</div>
-
-        <div
-          v-for="msg in activeConv.messages"
-          :key="msg.id"
-          class="msg-wrap"
-          :class="msg.fromMe ? 'msg-wrap--me' : 'msg-wrap--them'"
-        >
-          <div class="msg-bubble" :class="msg.fromMe ? 'bubble-me' : 'bubble-them'">
-            <p class="msg-text">{{ msg.text }}</p>
-            <span class="msg-time">{{ msg.time }}</span>
+      <template v-if="activeThread">
+        <div class="chat-header">
+          <div
+            class="chat-avatar"
+            :style="{ backgroundColor: getAvatarColor(activeThread.id) }"
+          >
+            {{ activeThread.id.substring(0, 2).toUpperCase() }}
+          </div>
+          <div class="chat-contact">
+            <span class="chat-name">{{ activeThread.id }}</span>
+            <span class="chat-meta">
+              Quote Group: {{ activeThread.quote_group_id }}
+              <span class="status-dot online"></span>
+              <span class="status-label">En línea</span>
+            </span>
           </div>
         </div>
-      </div>
 
-      <!-- Input -->
-      <div class="chat-input-bar">
-        <button class="attach-btn" title="Adjuntar archivo">
-          <i class="fa-solid fa-paperclip"></i>
-        </button>
-        <input
-          v-model="newMessage"
-          class="chat-input"
-          placeholder="Escribe tu mensaje..."
-          type="text"
-          @keyup.enter="sendMessage"
-        />
-        <button class="send-btn" @click="sendMessage" title="Enviar">
-          <i class="fa-solid fa-paper-plane"></i>
-        </button>
+        <div class="chat-divider"></div>
+
+        <div ref="messagesContainer" class="chat-messages">
+          <div class="date-separator">Canal Seguro</div>
+
+          <div v-if="isLoadingMessages" class="empty-hint">Cargando mensajes...</div>
+          <div v-else-if="currentMessages.length === 0" class="empty-hint">No hay mensajes aún.</div>
+
+          <div
+            v-for="msg in currentMessages"
+            :key="msg.id"
+            class="msg-wrap"
+            :class="msg.sender_id === authStore.account?.id ? 'msg-wrap--me' : 'msg-wrap--them'"
+          >
+            <div
+              class="msg-bubble"
+              :class="msg.sender_id === authStore.account?.id ? 'bubble-me' : 'bubble-them'"
+            >
+              <p class="msg-text">{{ msg.content }}</p>
+              <span class="msg-time">{{ formatUuidv7ToLocalTime(msg.id) }}</span>
+            </div>
+          </div>
+        </div>
+
+        <form class="chat-input-bar" @submit.prevent="sendMessage">
+          <button type="button" class="attach-btn" title="Adjuntar archivo">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <input
+            v-model="newMessage"
+            class="chat-input"
+            placeholder="Escribe tu mensaje..."
+            type="text"
+          />
+          <button type="submit" class="send-btn" title="Enviar" :disabled="!newMessage.trim()">
+            <i class="fa-solid fa-paper-plane"></i>
+          </button>
+        </form>
+      </template>
+
+      <div v-else class="no-thread-selected">
+        <i class="fa-regular fa-comments empty-chat-icon"></i>
+        <p>Selecciona una conversación para ver los mensajes</p>
       </div>
     </section>
   </div>
 </template>
 
 <style scoped>
-/* ── Shell ──────────────────────────────────────────── */
+/* Shell */
 .messages-shell {
   display: flex;
   height: calc(100vh - 64px);
+  max-height: calc(100vh - 64px);
   margin: -2.5rem -3rem;
   background: #fde8e4;
   overflow: hidden;
+  position: relative;
 }
 
-/* ── Conversations panel ────────────────────────────── */
+/* Parent container overflow suppression */
+:global(body:has(.messages-shell)),
+:global(main:has(.messages-shell)),
+:global(.content:has(.messages-shell)) {
+  overflow: hidden !important;
+}
+
+/* Conversations panel */
 .conv-panel {
   width: 370px;
   min-width: 260px;
+  min-height: 0;
   background: #ffffff;
   border-right: 1px solid #eee;
   display: flex;
@@ -285,11 +341,12 @@ function sendMessage() {
   font-weight: 700;
   color: #083c5a;
   margin: 0;
+  flex-shrink: 0;
 }
 
-/* Search */
 .search-wrap {
   position: relative;
+  flex-shrink: 0;
 }
 
 .search-input {
@@ -318,12 +375,12 @@ function sendMessage() {
   font-size: 0.85rem;
 }
 
-/* Tabs */
 .tabs {
   display: flex;
   gap: 1.5rem;
   border-bottom: 1.5px solid #eee;
   padding-bottom: 0.5rem;
+  flex-shrink: 0;
 }
 
 .tab-btn {
@@ -345,12 +402,12 @@ function sendMessage() {
   border-bottom-color: #189c94;
 }
 
-/* Conversation list */
 .conv-list {
   list-style: none;
   padding: 0;
   margin: 0;
   overflow-y: auto;
+  min-height: 0;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -365,6 +422,7 @@ function sendMessage() {
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.18s;
+  flex-shrink: 0;
 }
 
 .conv-item:hover {
@@ -391,6 +449,7 @@ function sendMessage() {
 
 .conv-info {
   flex: 1;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -404,12 +463,17 @@ function sendMessage() {
   font-weight: 700;
   font-size: 0.9rem;
   color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .conv-time {
   font-size: 0.75rem;
   color: #999;
   white-space: nowrap;
+  margin-left: 0.5rem;
+  flex-shrink: 0;
 }
 
 .conv-preview {
@@ -422,21 +486,23 @@ function sendMessage() {
   margin-top: 0.15rem;
 }
 
-/* ── Chat panel ─────────────────────────────────────── */
+/* Chat panel */
 .chat-panel {
   flex: 1;
+  min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #ffffff;
   overflow: hidden;
 }
 
-/* Chat header */
 .chat-header {
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 1.1rem 1.5rem;
+  flex-shrink: 0;
 }
 
 .chat-avatar {
@@ -455,12 +521,17 @@ function sendMessage() {
 .chat-contact {
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
 }
 
 .chat-name {
   font-weight: 700;
   font-size: 1rem;
   color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .chat-meta {
@@ -470,6 +541,9 @@ function sendMessage() {
   align-items: center;
   gap: 0.4rem;
   margin-top: 0.1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .status-dot {
@@ -478,6 +552,7 @@ function sendMessage() {
   border-radius: 50%;
   background: #ccc;
   display: inline-block;
+  flex-shrink: 0;
 }
 
 .status-dot.online {
@@ -492,11 +567,12 @@ function sendMessage() {
   height: 1px;
   background: #eee;
   margin: 0 1.5rem;
+  flex-shrink: 0;
 }
 
-/* Messages area */
 .chat-messages {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 1.5rem 2rem;
   display: flex;
@@ -511,6 +587,7 @@ function sendMessage() {
   color: #aaa;
   margin: 0.5rem 0;
   position: relative;
+  flex-shrink: 0;
 }
 
 .date-separator::before,
@@ -531,9 +608,9 @@ function sendMessage() {
   right: 0;
 }
 
-/* Message wrappers */
 .msg-wrap {
   display: flex;
+  flex-shrink: 0;
 }
 
 .msg-wrap--me {
@@ -544,7 +621,6 @@ function sendMessage() {
   justify-content: flex-start;
 }
 
-/* Bubbles */
 .msg-bubble {
   max-width: 58%;
   padding: 0.75rem 1rem;
@@ -566,6 +642,7 @@ function sendMessage() {
   margin: 0 0 0.35rem;
   font-size: 0.88rem;
   line-height: 1.5;
+  word-break: break-word;
 }
 
 .bubble-me .msg-text {
@@ -590,7 +667,6 @@ function sendMessage() {
   color: #aaa;
 }
 
-/* Input bar */
 .chat-input-bar {
   display: flex;
   align-items: center;
@@ -598,6 +674,7 @@ function sendMessage() {
   padding: 1rem 1.5rem;
   border-top: 1px solid #eee;
   background: #fff;
+  flex-shrink: 0;
 }
 
 .attach-btn {
@@ -648,12 +725,39 @@ function sendMessage() {
   transition: background 0.2s, transform 0.15s;
 }
 
-.send-btn:hover {
+.send-btn:hover:not(:disabled) {
   background: #147d76;
   transform: scale(1.05);
 }
 
-/* ── Responsive ─────────────────────────────────────── */
+.send-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.no-thread-selected {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  color: #888;
+}
+
+.empty-chat-icon {
+  font-size: 3rem;
+  color: #cbd5e1;
+}
+
+.empty-hint {
+  text-align: center;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  padding: 1.5rem 0;
+}
+
+/* Responsive */
 @media (max-width: 900px) {
   .messages-shell {
     margin: -2.5rem -1.5rem;
@@ -674,13 +778,13 @@ function sendMessage() {
   .conv-panel {
     width: 100%;
     min-width: unset;
-    height: 45%;
+    height: 40%;
     border-right: none;
     border-bottom: 1px solid #eee;
   }
 
   .chat-panel {
-    height: 55%;
+    height: 60%;
   }
 
   .msg-bubble {
