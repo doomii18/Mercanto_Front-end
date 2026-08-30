@@ -58,14 +58,12 @@ export class VerificationRequestDocumentService {
     });
   }
 
-  async getVerificationDocumentUrl(blobId: string): Promise<string> {
-    const response = await fetch(
-      `${this.client.getBaseUrl()}/assets/verification-document/${blobId}`,
-      { method: "GET" },
-    );
-    if (!response.ok)
-      throw new Error(`Failed to fetch document: ${response.statusText}`);
+  async getVerificationDocumentBlob(blobId: string): Promise<Blob> {
+    return this.client.downloadBlob(`/assets/verification-document/${blobId}`);
+  }
 
-    return URL.createObjectURL(await response.blob());
+  async getVerificationDocumentUrl(blobId: string): Promise<string> {
+    const blob = await this.getVerificationDocumentBlob(blobId);
+    return URL.createObjectURL(blob);
   }
 }

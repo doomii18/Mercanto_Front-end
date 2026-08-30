@@ -15,6 +15,27 @@ import { PaginatedResponseSchema } from "../../shared/schemas";
 
 export { OrganizationMemberRoleSchema };
 
+export const OrganizationSortFieldSchema = z.enum([
+  "id",
+  "score",
+  "rating",
+  "distance",
+]);
+
+export const SortDirectionSchema = z.enum(["asc", "desc"]);
+
+export const OrganizationFiltersRequestSchema = z.object({
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().nonnegative().optional(),
+  search_term: z.string().optional(),
+  municipality_id: z.uuid().optional(),
+  min_rating: z.number().optional(),
+  sort_by: OrganizationSortFieldSchema.optional(),
+  sort_dir: SortDirectionSchema.optional(),
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+});
+
 export const UpdateMemberRoleRequestSchema = z.object({
   new_role: OrganizationMemberRoleSchema,
 });

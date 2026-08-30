@@ -4,5 +4,6 @@ export const TransactionTypeSchema = z.enum([
   "deposit",
   "withdrawal",
   "payment",
-  "refund"
+  "refund",
+  "commission",
 ]);
