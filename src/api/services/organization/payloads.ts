@@ -4,6 +4,7 @@ import {
   OrganizationStatusSchema,
   OrganizationMemberRoleSchema,
   GeoPointSchema,
+  RatingSummarySchema,
   companyNameSchema,
   taxIdSchema,
   companyDescriptionSchema,
@@ -22,9 +23,11 @@ export const PublicProviderDtoSchema = z.object({
   id: z.uuid(),
   company_name: z.string(),
   location: GeoPointSchema,
+  municipality_id: z.uuid(),
   company_description: z.string().nullable().optional(),
   logo_blob_id: z.uuid().nullable().optional(),
   kind: ProviderKindSchema,
+  rating: RatingSummarySchema,
 });
 
 export const OrganizationDetailsDtoSchema = z.object({

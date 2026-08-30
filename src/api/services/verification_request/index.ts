@@ -86,7 +86,7 @@ export class VerificationRequestService {
     if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
 
     const qs = queryParams.toString();
-    const endpoint = `/organizations/${organizationId}/verification-requests${qs ? `?${qs}` : ""}`;
+    const endpoint = `/providers/${organizationId}/verification-requests${qs ? `?${qs}` : ""}`;
 
     const data = await this.client.request(endpoint, { method: "GET" });
     return PaginatedVerificationRequestResponseSchema.parse(data);

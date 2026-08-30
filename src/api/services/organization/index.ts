@@ -37,6 +37,8 @@ export class OrganizationService {
       queryParams.append("search_term", params.search_term);
     if (params?.municipality_id)
       queryParams.append("municipality_id", params.municipality_id);
+    if (params?.min_rating !== undefined)
+      queryParams.append("min_rating", params.min_rating.toString());
     if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params?.sort_dir) queryParams.append("sort_dir", params.sort_dir);
     if (params?.lat !== undefined)

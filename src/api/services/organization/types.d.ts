@@ -12,6 +12,7 @@ import type {
   OrganizationStatusSchema,
   OrganizationMemberRoleSchema,
   GeoPointSchema,
+  RatingSummarySchema,
 } from "./domain";
 
 export type PublicProviderDto = z.infer<typeof PublicProviderDtoSchema>;
@@ -37,13 +38,15 @@ export type OrganizationMemberRole = z.infer<
   typeof OrganizationMemberRoleSchema
 >;
 export type GeoPoint = z.infer<typeof GeoPointSchema>;
+export type RatingSummary = z.infer<typeof RatingSummarySchema>;
 
 export interface OrganizationFilters {
   limit?: number;
   offset?: number;
   search_term?: string;
   municipality_id?: string;
-  sort_by?: "id" | "distance";
+  min_rating?: number;
+  sort_by?: "id" | "distance" | "rating" | "score";
   sort_dir?: "asc" | "desc";
   lat?: number;
   lng?: number;
