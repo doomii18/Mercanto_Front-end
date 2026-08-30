@@ -19,6 +19,22 @@ export const UnitOfMeasureSchema = z.enum([
   "contract",
 ]);
 
+export const ProductSortFieldSchema = z.enum([
+  "created_at",
+  "updated_at",
+  "title",
+  "price",
+  "score",
+  "id",
+]);
+
+export const SortDirectionSchema = z.enum(["asc", "desc"]);
+
+export const RatingSummarySchema = z.object({
+  average_score: z.number(),
+  review_count: z.number().int().nonnegative(),
+});
+
 export const PhysicalSpecSchema = z.object({
   min_order_quantity: z.number().int().min(1),
 });

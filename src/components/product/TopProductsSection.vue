@@ -14,6 +14,7 @@ interface TopProductItem {
   imageBlobId: string | null;
   providerName: string;
   rating: number;
+  reviewCount: number;
   rank: number;
   bubbleClass: "orange" | "teal" | "blue" | "grey";
 }
@@ -28,20 +29,6 @@ const BUBBLE_CLASSES: TopProductItem["bubbleClass"][] = [
   "grey",
 ];
 
-function hashSeed(str: string): number {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = (hash << 5) - hash + str.charCodeAt(i);
-    hash |= 0;
-  }
-  return Math.abs(hash);
-}
-
-function deriveSeededRating(productId: string): number {
-  const seed = hashSeed(productId);
-  return Number((4.2 + (seed % 7) * 0.1).toFixed(1));
-}
-
 function resolveMinOrder(spec: ProductResponse["spec"]): number {
   if ("Physical" in spec && spec.Physical?.min_order_quantity) {
     return spec.Physical.min_order_quantity;
@@ -52,7 +39,12 @@ function resolveMinOrder(spec: ProductResponse["spec"]): number {
 async function loadTopProducts() {
   isLoading.value = true;
   try {
-    const res = await productApi.getProducts({ limit: 4, offset: 0 });
+    const res = await productApi.getProducts({
+      limit: 4,
+      offset: 0,
+      sort_by: "score",
+      sort_direction: "desc",
+    });
     const rawItems = res.data;
 
     const providerMap = new Map<string, string>();
@@ -64,7 +56,7 @@ async function loadTopProducts() {
           const org = await organizationApi.getPublicProvider(id);
           providerMap.set(id, org.company_name);
         } catch {
-          providerMap.set(id, "Megaboutique S.A");
+          providerMap.set(id, "Proveedor aliado");
         }
       })
     );
@@ -76,8 +68,9 @@ async function loadTopProducts() {
       price: prod.base_price,
       minOrder: resolveMinOrder(prod.spec),
       imageBlobId: prod.image_blob_ids?.[0] ?? null,
-      providerName: providerMap.get(prod.provider_id) || "Megaboutique S.A",
-      rating: deriveSeededRating(prod.id),
+      providerName: providerMap.get(prod.provider_id) || "Proveedor aliado",
+      rating: prod.rating?.average_score ?? 0,
+      reviewCount: prod.rating?.review_count ?? 0,
       rank: index + 1,
       bubbleClass: BUBBLE_CLASSES[index % BUBBLE_CLASSES.length],
     }));
@@ -122,7 +115,20 @@ onMounted(() => {
       </div>
     </div>
 
-    <div v-if="!isLoading" class="products-grid">
+    <!-- Skeleton Loading State -->
+    <div v-if="isLoading" class="products-grid">
+      <div v-for="n in 4" :key="n" class="product-card skeleton-card" aria-hidden="true">
+        <div class="skeleton-badge skeleton-pulse"></div>
+        <div class="skeleton-image skeleton-pulse"></div>
+        <div class="skeleton-text skeleton-category skeleton-pulse"></div>
+        <div class="skeleton-text skeleton-title skeleton-pulse"></div>
+        <div class="skeleton-text skeleton-sub skeleton-pulse"></div>
+        <div class="skeleton-footer skeleton-pulse"></div>
+      </div>
+    </div>
+
+    <!-- Product Grid -->
+    <div v-else class="products-grid">
       <router-link
         v-for="product in topProducts"
         :key="product.id"
@@ -155,8 +161,9 @@ onMounted(() => {
             <i class="fa-solid fa-certificate badge-verified"></i>
             <span class="provider-name">{{ product.providerName }}</span>
           </div>
-          <span class="rating">
-            {{ product.rating.toFixed(1) }} <i class="fa-solid fa-star"></i>
+          <span class="rating" :title="`${product.reviewCount} valoraciones`">
+            {{ product.rating > 0 ? product.rating.toFixed(1) : "0.0" }}
+            <i class="fa-solid fa-star"></i>
           </span>
         </div>
 
@@ -276,7 +283,6 @@ onMounted(() => {
   object-fit: contain;
 }
 
-/* Products Grid - prevents column blowout */
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -437,6 +443,70 @@ onMounted(() => {
 }
 .ranking-bubble.grey {
   background-color: #64748b;
+}
+
+/* Skeleton Loading */
+.skeleton-card {
+  pointer-events: none;
+  border-color: var(--border-gray, #e2e8f0);
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+.skeleton-badge {
+  width: 90px;
+  height: 18px;
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 160px;
+  border-radius: 12px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-text {
+  border-radius: 6px;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-category {
+  width: 40%;
+  height: 0.75rem;
+  margin: 0 auto 0.4rem;
+}
+
+.skeleton-title {
+  width: 80%;
+  height: 1rem;
+}
+
+.skeleton-sub {
+  width: 50%;
+  height: 0.75rem;
+  margin-left: auto;
+}
+
+.skeleton-footer {
+  width: 100%;
+  height: 1.25rem;
+  margin-top: auto;
+  border-radius: 6px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @media (max-width: 1024px) {

@@ -10,6 +10,11 @@ import {
   ProductImageSearchHitSchema,
   PaginatedProductImageSearchResponseSchema,
 } from "./payloads";
+import {
+  ProductSortFieldSchema,
+  SortDirectionSchema,
+  RatingSummarySchema,
+} from "./domain";
 
 export type CreateProductRequest = z.infer<typeof CreateProductRequestSchema>;
 export type PatchProductRequest = z.infer<typeof PatchProductRequestSchema>;
@@ -21,3 +26,7 @@ export type SearchProductsByImageRequest = z.infer<typeof SearchProductsByImageS
 
 export type ProductImageSearchHit = z.infer<typeof ProductImageSearchHitSchema>;
 export type PaginatedProductImageSearchResponse = z.infer<typeof PaginatedProductImageSearchResponseSchema>;
+
+export type ProductSortField = z.infer<typeof ProductSortFieldSchema>;
+export type SortDirection = z.infer<typeof SortDirectionSchema>;
+export type RatingSummary = z.infer<typeof RatingSummarySchema>;

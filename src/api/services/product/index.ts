@@ -80,8 +80,14 @@ export class ProductService {
       queryParams.append("min_price", params.min_price.toString());
     if (params?.max_price !== undefined)
       queryParams.append("max_price", params.max_price.toString());
+    if (params?.min_score !== undefined)
+      queryParams.append("min_score", params.min_score.toString());
     if (params?.search_term)
       queryParams.append("search_term", params.search_term);
+    if (params?.sort_by)
+      queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_direction)
+      queryParams.append("sort_direction", params.sort_direction);
 
     const queryString = queryParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
@@ -121,6 +127,7 @@ export class ProductService {
   async deleteProduct(id: string): Promise<void> {
     await this.client.request(`/products/${id}`, { method: "DELETE" });
   }
+
   async searchProductsByImage(
     file: File,
   ): Promise<PaginatedProductImageSearchResponse> {

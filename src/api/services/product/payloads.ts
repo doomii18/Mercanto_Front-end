@@ -7,6 +7,9 @@ import {
   ProductSpecSchema,
   ProductSpecUpdateSchema,
   CategorySummarySchema,
+  ProductSortFieldSchema,
+  SortDirectionSchema,
+  RatingSummarySchema,
 } from "./domain";
 import { PaginatedResponseSchema } from "../../shared/schemas";
 import { ShippingMethodSchema } from "../quote/domain";
@@ -38,7 +41,10 @@ export const ProductFiltersRequestSchema = z.object({
   category_id: z.uuid().optional(),
   min_price: z.number().optional(),
   max_price: z.number().optional(),
+  min_score: z.number().optional(),
   search_term: z.string().optional(),
+  sort_by: ProductSortFieldSchema.optional(),
+  sort_direction: SortDirectionSchema.optional(),
 });
 
 export const ProductResponseSchema = z.object({
@@ -55,14 +61,15 @@ export const ProductResponseSchema = z.object({
   category: CategorySummarySchema,
   shipping_methods: z.array(ShippingMethodSchema),
   image_blob_ids: z.array(z.uuid()),
+  rating: RatingSummarySchema,
 });
 
 export const PaginatedProductResponseSchema =
   PaginatedResponseSchema(ProductResponseSchema);
 
-
 export const ProductImageSearchHitSchema = z.object({
-  product: ProductResponseSchema, distance: z.number(),
+  product: ProductResponseSchema,
+  distance: z.number(),
 });
 
 export const PaginatedProductImageSearchResponseSchema =
