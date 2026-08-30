@@ -4,14 +4,13 @@ import {
   OrganizationStatusSchema,
   OrganizationMemberRoleSchema,
   GeoPointSchema,
-  RatingSummarySchema,
   companyNameSchema,
   taxIdSchema,
   companyDescriptionSchema,
   addressSchema,
   phoneNumberSchema,
 } from "./domain";
-import { PaginatedResponseSchema } from "../../shared/schemas";
+import { PaginatedResponseSchema, RatingSummarySchema } from "../../shared/schemas";
 
 export { OrganizationMemberRoleSchema };
 

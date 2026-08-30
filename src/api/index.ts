@@ -52,7 +52,7 @@ export const chatApi = new ChatService(apiClient);
 export const verificationRequestApi = new VerificationRequestService(apiClient);
 export const verificationRequestDocumentApi = new VerificationRequestDocumentService(apiClient);
 
-export * from "../modules/auth";
+export * from "./shared/types.d";
 export * from "./services/cart/types.d";
 export * from "./services/category/types.d";
 export * from "./services/chat/types.d";

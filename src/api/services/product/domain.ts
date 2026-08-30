@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { RatingSummarySchema, SortDirectionSchema } from "../../shared/schemas";
+
+export { RatingSummarySchema, SortDirectionSchema };
 
 export const CategoryNameSchema = z.string().min(1).max(100);
 export const CategoryDescriptionSchema = z.string().min(1).max(2000);
@@ -27,13 +30,6 @@ export const ProductSortFieldSchema = z.enum([
   "score",
   "id",
 ]);
-
-export const SortDirectionSchema = z.enum(["asc", "desc"]);
-
-export const RatingSummarySchema = z.object({
-  average_score: z.number(),
-  review_count: z.number().int().nonnegative(),
-});
 
 export const PhysicalSpecSchema = z.object({
   min_order_quantity: z.number().int().min(1),

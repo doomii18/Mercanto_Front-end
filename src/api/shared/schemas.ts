@@ -11,18 +11,19 @@ export const ErrorKindSchema = z.enum([
   "unavailable",
   "not_implemented",
 ]);
+
 export const ErrorPayloadSchema = z.object({
   kind: ErrorKindSchema,
   message: z.string(),
 });
 
-
-export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) => z.object({
-  data: z.array(itemSchema),
-  total: z.number().int().nonnegative(),
-  limit: z.number().int().nonnegative(),
-  offset: z.number().int().nonnegative(),
-});
+export const PaginatedResponseSchema = <T extends z.ZodTypeAny>(itemSchema: T) =>
+  z.object({
+    data: z.array(itemSchema),
+    total: z.number().int().nonnegative(),
+    limit: z.number().int().nonnegative(),
+    offset: z.number().int().nonnegative(),
+  });
 
 export const UploadUrlResponseSchema = z.object({
   blob_id: z.uuid(),
@@ -32,4 +33,12 @@ export const UploadUrlResponseSchema = z.object({
 export const AssetUploadRequestSchema = z.object({
   mime_type: z.string(),
   size_bytes: z.number().int().positive(),
+});
+
+// Shared domain schemas
+export const SortDirectionSchema = z.enum(["asc", "desc"]);
+
+export const RatingSummarySchema = z.object({
+  average_score: z.number(),
+  review_count: z.number().int().nonnegative(),
 });

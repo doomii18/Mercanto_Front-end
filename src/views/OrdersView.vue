@@ -78,7 +78,7 @@ const loadOrders = async () => {
       if (uniqueProviderIds.length > 0) {
         const providerEntries = await Promise.allSettled(
           uniqueProviderIds.map(async (id) => {
-            const prov = await organizationApi.getOrganization(id);
+            const prov = await organizationApi.getPublicProvider(id);
             return [id, prov] as const;
           })
         );
