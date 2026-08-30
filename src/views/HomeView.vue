@@ -299,6 +299,7 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   position: relative;
+  margin: 4rem 0;
   gap: 2rem;
 }
 

@@ -1,26 +1,46 @@
 {
   "compilerOptions": {
-    "target": "es2023",
-    "module": "esnext",
-    "lib": ["ES2023", "DOM"],
+    "target": "ES2023",
+    "module": "ESNext",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    "allowArbitraryExtensions": true,
     "skipLibCheck": true,
-    "allowJs": true,
+
+    /* JavaScript Disablement */
+    "allowJs": false,
     "checkJs": false,
 
-    /* Bundler mode */
+    /* Strict Type Checking */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+    "strictFunctionTypes": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+
+    /* Bundler Resolution & Module Handling */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "isolatedModules": true,
 
-    /* Linting */
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": false,
-    "noFallthroughCasesInSwitch": true
+    /* Vue SFC & JSX Support */
+    "jsx": "preserve",
+    "jsxImportSource": "vue",
+
+    /* Path Aliases (Resolved relative to tsconfig.json) */
+    "paths": {
+      "@/*": ["./src/*"]
+    }
   },
-  "include": ["src"]
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.tsx",
+    "src/**/*.vue"
+  ],
+  "exclude": ["node_modules", "dist"]
 }
