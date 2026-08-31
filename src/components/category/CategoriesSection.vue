@@ -68,19 +68,19 @@ onMounted(async () => {
         </template>
 
         <template v-else>
-          <router-link
-            v-for="cat in categories"
-            :key="cat.id"
-            :to="{ name: 'category' }"
-            class="category-card"
-            style="text-decoration: none;"
-          >
-              <div class="h-24 w-24 mb-4">
-                <CategoryImage :blob-id="cat.image_blob_id" :alt="cat.name" />
-              </div>
-            <p class="category-name">{{ cat.name }}</p>
-            <span class="product-count">{{ cat.productCount }} Productos</span>
-          </router-link>
+        <router-link
+          v-for="cat in categories"
+          :key="cat.id"
+          :to="{ name: 'category', query: { category_id: cat.id } }"
+          class="category-card"
+          style="text-decoration: none;"
+        >
+          <div class="h-24 w-24 mb-4">
+            <CategoryImage :blob-id="cat.image_blob_id" :alt="cat.name" />
+          </div>
+          <p class="category-name">{{ cat.name }}</p>
+          <span class="product-count">{{ cat.productCount }} Productos</span>
+        </router-link>
         </template>
       </div>
 

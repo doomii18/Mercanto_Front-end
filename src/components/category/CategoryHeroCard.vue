@@ -1,129 +1,50 @@
 <script setup lang="ts">
-import audifonosImg from "../../assets/audifonos.png";
+import CategoryImage from "./CategoryImage.vue";
 
 interface Props {
-  title?: string;
-  description?: string;
+  name: string;
+  description?: string | null;
+  imageBlobId?: string | null;
   productCount?: number;
-  imageSrc?: string;
 }
 
 withDefaults(defineProps<Props>(), {
-  title: "Artículos Tecnológicos",
-  description: "Encuentra los mejores artículos tecnológicos al por mayor para tu negocio",
-  productCount: 200,
-  imageSrc: audifonosImg,
+  description: null,
+  imageBlobId: null,
+  productCount: 0,
 });
 </script>
 
 <template>
-  <section class="category-hero">
-    <div class="hero-left">
-      <img :src="imageSrc" :alt="title" class="hero-image-main" />
+  <section class="mb-8 grid grid-cols-1 items-center gap-8 rounded-[20px] border border-[#dcdcdc] bg-white p-10 shadow-[0_4px_15px_rgba(0,0,0,0.05)] md:grid-cols-[1fr_2fr_1fr]">
+    <!-- Left: Category Image -->
+    <div class="flex justify-center">
+      <div class="h-36 w-36 overflow-hidden">
+        <CategoryImage :blob-id="imageBlobId" :alt="name" />
+      </div>
     </div>
-    <div class="hero-center">
-      <h1>{{ title }}</h1>
-      <p>{{ description }}</p>
-      <div class="badge-products">
+
+    <!-- Center: Details & Badge -->
+    <div class="text-center md:text-left">
+      <h1 class="mb-3 font-serif text-3xl font-bold text-[#023859] md:text-4xl">
+        {{ name }}
+      </h1>
+      <p v-if="description" class="mb-6 text-base text-slate-500 md:text-lg">
+        {{ description }}
+      </p>
+      <div class="inline-flex items-center gap-2 rounded-full bg-[#e2f4f2] px-4 py-2 text-sm font-semibold text-[#00a896]">
         <i class="fa-solid fa-bag-shopping"></i>
         <span>{{ productCount }} Productos disponibles</span>
       </div>
     </div>
-    <div class="hero-right">
-      <div class="circles-graphic">
-        <div class="circle circle-teal"></div>
-        <div class="circle circle-orange"></div>
-        <div class="circle circle-darkblue"></div>
+
+    <!-- Right: Visual Graphic -->
+    <div class="flex justify-center md:justify-end">
+      <div class="relative h-30 w-30">
+        <div class="absolute top-5 left-2 z-20 h-10 w-10 rounded-full bg-[#00a896]"></div>
+        <div class="absolute top-1 left-10 z-10 h-10 w-10 rounded-full bg-[#ff6a00]"></div>
+        <div class="absolute top-10 left-10 z-30 h-10 w-10 rounded-full bg-[#023859]"></div>
       </div>
     </div>
   </section>
 </template>
-
-<style scoped>
-.category-hero {
-  background-color: #ffffff;
-  border: 1px solid #dcdcdc;
-  border-radius: 20px;
-  padding: 2.5rem;
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  align-items: center;
-  gap: 2rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
-}
-
-.hero-left {
-  display: flex;
-  justify-content: center;
-}
-
-.hero-image-main {
-  max-height: 150px;
-  object-fit: contain;
-}
-
-.hero-center h1 {
-  font-size: 2.2rem;
-  color: #023859;
-  margin-bottom: 0.8rem;
-  font-weight: 700;
-}
-
-.hero-center p {
-  color: #666;
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-}
-
-.badge-products {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #e2f4f2;
-  color: #00a896;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.hero-right {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.circles-graphic {
-  position: relative;
-  width: 120px;
-  height: 120px;
-}
-
-.circle {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-}
-
-.circle-teal {
-  background-color: #00a896;
-  top: 25px;
-  left: 10px;
-  z-index: 2;
-}
-
-.circle-orange {
-  background-color: #ff6a00;
-  top: 5px;
-  left: 45px;
-  z-index: 1;
-}
-
-.circle-darkblue {
-  background-color: #023859;
-  top: 50px;
-  left: 45px;
-  z-index: 3;
-}
-</style>

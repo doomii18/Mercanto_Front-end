@@ -1,164 +1,346 @@
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import logoImg from "../assets/logo.png";
-import tabletaImg from "../assets/tableta.png";
-import AppFooter from "../components/common/AppFooter.vue";
+import { ref, computed, watch, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { categoryApi, productApi } from "../api";
+import type { ProductCategoryResponse } from "../api/services/category/types";
+import type { ProductResponse } from "../api/services/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
+import AppFooter from "../components/common/AppFooter.vue";
 
-const router = useRouter();
+import logoImg from "../assets/logo.png";
+import mochilaImg from "../assets/mochila.png";
+import tabletaImg from "../assets/tableta.png";
+import utensiliosImg from "../assets/utensilios.png";
+import paletaImg from "../assets/paleta.png";
+import audifonosImg from "../assets/audifonos.png";
+import joyeriaImg from "../assets/joyeria.png";
 
-const goToProduct = (product: ProductItem) => {
-  const param = product.id === 1 ? "laptop-adventure" : product.id.toString();
-  router.push({ name: "product-detail", params: { id: param } });
-};
+interface RawProduct {
+  id: string;
+  title: string;
+  categoryName: string;
+  categoryId?: string;
+  price: number;
+  minOrder: number;
+  imageBlobId?: string | null;
+  staticImage?: string;
+  providerName: string;
+  rating: number;
+}
 
-interface ProductItem {
-  id: number;
+interface ProductCardItem {
+  id: string;
   title: string;
   category: string;
+  categoryId?: string;
   price: string;
   minOrder: string;
+  image: string;
   provider: string;
   rating: number;
-  image: string;
   rank: number;
   isWishlist: boolean;
 }
 
-const activeCategoryIndex = ref(0);
-const searchFilter = ref("");
-const categoriesList = ref([
-  { id: 1, icon: "fa-solid fa-screwdriver-wrench" },
-  { id: 2, icon: "fa-solid fa-plug" },
-  { id: 3, icon: "fa-solid fa-ring" },
-  { id: 4, icon: "fa-solid fa-shirt" },
-  { id: 5, icon: "fa-solid fa-user-tie" },
-  { id: 6, icon: "fa-solid fa-horse" },
-  { id: 7, icon: "fa-solid fa-utensils" },
-]);
+interface ProviderItem {
+  id: string;
+  name: string;
+  rating: number;
+  location: string;
+  categoryId?: string;
+  categoryName?: string;
+}
 
-const products = ref<ProductItem[]>([
+const route = useRoute();
+const router = useRouter();
+
+const searchFilter = ref<string>("");
+const wishlistSet = ref<Set<string>>(new Set());
+
+// Mock Products Catalog
+const mockProducts = ref<RawProduct[]>([
   {
-    id: 1,
-    title: "Laptop Adventure",
-    category: "Artículos tecnológicos",
-    price: "C$ 2350",
-    minOrder: "Pedido mín. 1 und",
-    provider: "NicaTech S.A.",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=400&q=80",
-    rank: 1,
-    isWishlist: false,
+    id: "prod-1",
+    title: "Audífonos Bluetooth Sony WH-CH520",
+    categoryName: "Artículos Tecnológicos",
+    categoryId: "cat-tech",
+    price: 1850,
+    minOrder: 6,
+    staticImage: audifonosImg,
+    providerName: "NicaTech S.A",
+    rating: 4.8,
   },
   {
-    id: 2,
-    title: "Samsung S26 Ultra",
-    category: "Artículos tecnológicos",
-    price: "C$ 23350",
-    minOrder: "Pedido mín. 1 und",
-    provider: "Mangua Labs S.A.",
+    id: "prod-2",
+    title: "Tablet para niños 10 Pulgadas",
+    categoryName: "Artículos Tecnológicos",
+    categoryId: "cat-tech",
+    price: 950,
+    minOrder: 5,
+    staticImage: tabletaImg,
+    providerName: "Managua Labs S.A",
     rating: 4.5,
-    image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=400&q=80",
-    rank: 2,
-    isWishlist: false,
   },
   {
-    id: 3,
-    title: "Tablet para niños",
-    category: "Artículos tecnológicos",
-    price: "C$ 950",
-    minOrder: "Pedido mín. 1 und",
-    provider: "Mangua Labs S.A.",
-    rating: 4.5,
-    image: tabletaImg,
-    rank: 3,
-    isWishlist: false,
+    id: "prod-3",
+    title: "Mochila Adventure Resistente",
+    categoryName: "Bolsos & Maletas",
+    categoryId: "cat-bags",
+    price: 350,
+    minOrder: 12,
+    staticImage: mochilaImg,
+    providerName: "Megaboutique S.A",
+    rating: 4.7,
   },
   {
-    id: 4,
-    title: "Smart Watch Apple",
-    category: "Artículos tecnológicos",
-    price: "C$ 350",
-    minOrder: "Pedido mín. 1 und",
-    provider: "Apante Software",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=400&q=80",
-    rank: 4,
-    isWishlist: false,
+    id: "prod-4",
+    title: "Set de ollas 9 piezas acero",
+    categoryName: "Hogar y Cocina",
+    categoryId: "cat-home",
+    price: 1200,
+    minOrder: 3,
+    staticImage: utensiliosImg,
+    providerName: "Distribuidora Central",
+    rating: 4.9,
   },
   {
-    id: 5,
-    title: "Consola de video",
-    category: "Artículos tecnológicos",
-    price: "C$ 850",
-    minOrder: "Pedido mín. 1 und",
-    provider: "Apante Software",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1605901309584-818e25960a8f?w=400&q=80",
-    rank: 1,
-    isWishlist: false,
+    id: "prod-5",
+    title: "Paleta de Sombras Profesional",
+    categoryName: "Belleza & Cuidado",
+    categoryId: "cat-beauty",
+    price: 420,
+    minOrder: 10,
+    staticImage: paletaImg,
+    providerName: "Cosméticos de Nicaragua",
+    rating: 4.6,
   },
   {
-    id: 6,
-    title: "Set de cámaras",
-    category: "Artículos tecnológicos",
-    price: "C$ 660",
-    minOrder: "Pedido mín. 1 und",
-    provider: "NicaTech S.A.",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1557862921-37829c790f19?w=400&q=80",
-    rank: 2,
-    isWishlist: false,
-  },
-  {
-    id: 7,
-    title: "Usb 64Gb - HP",
-    category: "Artículos tecnológicos",
-    price: "C$ 250",
-    minOrder: "Pedido mín. 1 und",
-    provider: "Mangua Labs S.A.",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1622535056705-4171a824b7a4?w=400&q=80",
-    rank: 3,
-    isWishlist: false,
-  },
-  {
-    id: 8,
-    title: "Cargador Samsung",
-    category: "Artículos tecnológicos",
-    price: "C$ 150",
-    minOrder: "Pedido mín. 1 und",
-    provider: "NicaTech S.A.",
-    rating: 4.5,
-    image: "https://images.unsplash.com/photo-1628149455678-16f37bc392f4?w=400&q=80",
-    rank: 4,
-    isWishlist: false,
+    id: "prod-6",
+    title: "Set de Joyería Fina en Acero",
+    categoryName: "Joyería y Accesorios",
+    categoryId: "cat-jewelry",
+    price: 280,
+    minOrder: 24,
+    staticImage: joyeriaImg,
+    providerName: "Accesorios Express",
+    rating: 4.4,
   },
 ]);
 
-const featuredProviders = ref([
+// Mock Providers Catalog
+const mockProviders = ref<ProviderItem[]>([
   {
-    name: "NicaTech S.A.",
-    rating: "4.5",
-    location: "León, El viejo",
+    id: "prov-1",
+    name: "NicaTech S.A",
+    rating: 4.9,
+    location: "Managua, Nicaragua",
+    categoryId: "cat-tech",
+    categoryName: "Artículos Tecnológicos",
   },
   {
-    name: "Apante Software",
-    rating: "4.2",
-    location: "San Ramón, Matagalpa",
+    id: "prov-2",
+    name: "Managua Labs S.A",
+    rating: 4.8,
+    location: "Carretera Norte, Managua",
+    categoryId: "cat-tech",
+    categoryName: "Artículos Tecnológicos",
   },
   {
-    name: "Mangua Labs S.A.",
-    rating: "4.0",
-    location: "Managua, Managua",
+    id: "prov-3",
+    name: "Distribuidora Central",
+    rating: 4.7,
+    location: "Mercado Oriental, Managua",
+    categoryId: "cat-home",
+    categoryName: "Hogar y Cocina",
+  },
+  {
+    id: "prov-4",
+    name: "Megaboutique S.A",
+    rating: 4.8,
+    location: "Altamira, Managua",
+    categoryId: "cat-bags",
+    categoryName: "Bolsos & Maletas",
+  },
+  {
+    id: "prov-5",
+    name: "Cosméticos de Nicaragua",
+    rating: 4.6,
+    location: "Los Robles, Managua",
+    categoryId: "cat-beauty",
+    categoryName: "Belleza & Cuidado",
   },
 ]);
 
-const toggleWishlist = (product: ProductItem) => {
-  product.isWishlist = !product.isWishlist;
-};
+const categories = ref<ProductCategoryResponse[]>([]);
+const apiProducts = ref<ProductResponse[]>([]);
+const isLoadingCategories = ref<boolean>(false);
+const isLoadingProducts = ref<boolean>(false);
+
+const selectedCategoryId = ref<string | null>(
+  (route.query.category_id as string) || null
+);
+
+const currentCategory = computed<ProductCategoryResponse | null>(() => {
+  if (!selectedCategoryId.value) return null;
+  return categories.value.find((c) => c.id === selectedCategoryId.value) ?? null;
+});
+
+const heroTitle = computed<string>(() => {
+  return currentCategory.value?.name ?? "Artículos Tecnológicos";
+});
+
+const heroDescription = computed<string | null>(() => {
+  return (
+    currentCategory.value?.description ??
+    "Explora los mejores productos mayoristas al mejor precio."
+  );
+});
+
+const heroImageBlobId = computed<string | null>(() => {
+  return currentCategory.value?.image_blob_id ?? null;
+});
+
+// Normalized & Filtered Products matching template schema
+const products = computed<ProductCardItem[]>(() => {
+  let sourceList: RawProduct[] = [];
+
+  if (apiProducts.value.length > 0) {
+    sourceList = apiProducts.value.map((p) => ({
+      id: p.id,
+      title: p.title,
+      categoryName: p.category?.name || "General",
+      categoryId: p.category_id,
+      price: p.base_price,
+      minOrder: "Physical" in p.spec ? p.spec.Physical.min_order_quantity : 1,
+      imageBlobId: p.image_blob_ids?.[0] ?? null,
+      providerName: "Proveedor aliado",
+      rating: p.rating?.average_score ?? 4.5,
+    }));
+  } else {
+    sourceList = mockProducts.value;
+  }
+
+  // Filter by Category
+  if (selectedCategoryId.value) {
+    const catName = currentCategory.value?.name.toLowerCase() || "";
+    const filtered = sourceList.filter(
+      (p) =>
+        p.categoryId === selectedCategoryId.value ||
+        p.categoryName.toLowerCase().includes(catName)
+    );
+    if (filtered.length > 0) {
+      sourceList = filtered;
+    }
+  }
+
+  // Filter by Search Input
+  if (searchFilter.value.trim() !== "") {
+    const query = searchFilter.value.toLowerCase().trim();
+    sourceList = sourceList.filter(
+      (p) =>
+        p.title.toLowerCase().includes(query) ||
+        p.categoryName.toLowerCase().includes(query) ||
+        p.providerName.toLowerCase().includes(query)
+    );
+  }
+
+  return sourceList.map((p, index) => ({
+    id: p.id,
+    title: p.title,
+    category: p.categoryName,
+    categoryId: p.categoryId,
+    price: `C$ ${p.price.toLocaleString()}`,
+    minOrder: `Min. ${p.minOrder} uds`,
+    image: p.staticImage || audifonosImg,
+    provider: p.providerName,
+    rating: p.rating,
+    rank: (index % 4) + 1,
+    isWishlist: wishlistSet.value.has(p.id),
+  }));
+});
+
+const totalProducts = computed<number>(() => products.value.length);
+
+// Featured Providers matching selected category or fallback
+const featuredProviders = computed<ProviderItem[]>(() => {
+  if (selectedCategoryId.value) {
+    const catName = currentCategory.value?.name.toLowerCase() || "";
+    const matched = mockProviders.value.filter(
+      (prov) =>
+        prov.categoryId === selectedCategoryId.value ||
+        prov.categoryName?.toLowerCase().includes(catName)
+    );
+    if (matched.length > 0) return matched;
+  }
+  return mockProviders.value.slice(0, 3);
+});
+
+function toggleWishlist(prod: ProductCardItem): void {
+  if (wishlistSet.value.has(prod.id)) {
+    wishlistSet.value.delete(prod.id);
+  } else {
+    wishlistSet.value.add(prod.id);
+  }
+}
+
+function goToProduct(prod: ProductCardItem): void {
+  router.push({ name: "product-detail", params: { id: prod.id } });
+}
+
+async function loadCategories(): Promise<void> {
+  isLoadingCategories.value = true;
+  try {
+    const res = await categoryApi.getCategories({ limit: 100 });
+    categories.value = res.data;
+  } catch (err) {
+    console.warn("Using default category definitions:", err);
+  } finally {
+    isLoadingCategories.value = false;
+  }
+}
+
+async function loadProducts(): Promise<void> {
+  isLoadingProducts.value = true;
+  try {
+    const res = await productApi.getProducts({
+      limit: 50,
+      offset: 0,
+      category_id: selectedCategoryId.value || undefined,
+      provider_id: (route.query.provider_id as string) || undefined,
+    });
+    apiProducts.value = res.data;
+  } catch (err) {
+    console.warn("Using fallback mock products:", err);
+    apiProducts.value = [];
+  } finally {
+    isLoadingProducts.value = false;
+  }
+}
+
+function handleCategorySelect(category: ProductCategoryResponse): void {
+  if (selectedCategoryId.value === category.id) return;
+  selectedCategoryId.value = category.id;
+  router.push({
+    name: "category",
+    query: {
+      ...route.query,
+      category_id: category.id,
+    },
+  });
+}
+
+watch(
+  () => route.query.category_id,
+  (newCatId) => {
+    selectedCategoryId.value = (newCatId as string) || null;
+    loadProducts();
+  }
+);
+
+onMounted(async () => {
+  await Promise.all([loadCategories(), loadProducts()]);
+});
 </script>
 
 <template>
@@ -183,17 +365,24 @@ const toggleWishlist = (product: ProductItem) => {
     </header>
 
     <main class="category-page-container">
-      <CategoryHeroCard />
+      <CategoryHeroCard
+        :name="heroTitle"
+        :description="heroDescription"
+        :image-blob-id="heroImageBlobId"
+        :product-count="totalProducts"
+      />
 
       <CategoryPicker
-        v-model="activeCategoryIndex"
-        :categories="categoriesList"
+        v-model="selectedCategoryId"
+        :categories="categories"
+        title="Explora otras categorías"
+        @select="handleCategorySelect"
       />
 
       <section class="search-sort-bar">
         <div class="search-box-wrapper">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input v-model="searchFilter" type="text" placeholder="Buscar en Artículos Tecnológicos" />
+          <input v-model="searchFilter" type="text" :placeholder="`Buscar en ${heroTitle}`" />
           <button type="button" class="btn-orange">Buscar productos</button>
         </div>
         <div class="sort-filter-wrapper">
@@ -206,7 +395,7 @@ const toggleWishlist = (product: ProductItem) => {
 
       <section class="products-catalog">
         <div class="catalog-header">
-          <span>Mostrando 1-8 de 200 productos</span>
+          <span>Mostrando 1-{{ products.length }} de {{ totalProducts }} productos</span>
         </div>
 
         <div class="products-grid">
@@ -257,7 +446,7 @@ const toggleWishlist = (product: ProductItem) => {
       </section>
 
       <section class="featured-providers">
-        <h2>Proveedores destacados de Artículos Tecnológicos</h2>
+        <h2>Proveedores destacados de {{ heroTitle }}</h2>
         <div class="providers-grid">
           <div v-for="(prov, idx) in featuredProviders" :key="idx" class="provider-card">
             <div class="provider-avatar">
