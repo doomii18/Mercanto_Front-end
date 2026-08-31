@@ -474,7 +474,7 @@ const navigateToCategory = () => {
                             <ProductImage
                                 :blob-id="product.imageBlobId"
                                 :alt="product.title"
-                                object-fit="contain"
+
                             />
                         </div>
                         <div class="gallery-favorite-star">
@@ -497,14 +497,10 @@ const navigateToCategory = () => {
                         <div class="provider-pill-row">
                             <div class="provider-avatar-circle">
                                 <ProviderLogo
-                                    v-if="product.provider.logoBlobId"
                                     :blob-id="product.provider.logoBlobId"
                                     :alt="product.provider.name"
-                                    :fallback-text="product.provider.name"
+                                     class="rounded-full"
                                 />
-                                <span v-else>{{
-                                    product.provider.initial || "-"
-                                }}</span>
                             </div>
                             <span class="provider-title-text">{{
                                 product.provider.name
@@ -615,16 +611,11 @@ const navigateToCategory = () => {
                         <h3 class="box-heading">Tu proveedor</h3>
 
                         <div class="provider-profile-summary">
-                            <div class="provider-avatar-circle large">
+                            <div class="h-10 w-10 overflow-hidden rounded-full bg-blue-400">
                                 <ProviderLogo
-                                    v-if="product.provider.logoBlobId"
                                     :blob-id="product.provider.logoBlobId"
                                     :alt="product.provider.name"
-                                    :fallback-text="product.provider.name"
                                 />
-                                <span v-else>{{
-                                    product.provider.initial || "-"
-                                }}</span>
                             </div>
                             <div class="provider-name-wrapper">
                                 <span class="provider-name-bold">{{

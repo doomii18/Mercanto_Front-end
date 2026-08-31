@@ -15,13 +15,7 @@
 
         <main class="test-container">
             <div class="test-menu">
-                <router-link
-                    :to="{ name: 'test-chat' }"
-                    class="menu-item"
-                    active-class="active"
-                >
-                    <i class="fa-regular fa-comments"></i> Chat WS
-                </router-link>
+
                 <router-link
                     :to="{ name: 'test-events' }"
                     class="menu-item"

@@ -2,90 +2,38 @@
 import { useBlobUrl } from "../../modules/blob/useBlob";
 import { productApi } from "../../api";
 
-interface Props {
+const props = defineProps<{
   blobId?: string | null;
   alt?: string;
-  fallbackIcon?: string;
-  objectFit?: "contain" | "cover" | "fill" | "none" | "scale-down";
-}
+}>();
 
-const props = withDefaults(defineProps<Props>(), {
-  blobId: null,
-  alt: "Imagen del producto",
-  fallbackIcon: "fa-solid fa-box",
-  objectFit: "contain",
-});
-
-const { url, isLoading, error } = useBlobUrl(
+const { url, isLoading } = useBlobUrl(
   () => props.blobId,
   (id) => productApi.getProductImageBlob(id)
 );
-
-defineExpose({
-  url,
-  isLoading,
-  error,
-});
 </script>
 
 <template>
-  <div class="product-image-wrapper">
-    <div v-if="isLoading" class="product-image-skeleton"></div>
+  <div class="relative flex aspect-square h-full w-full items-center justify-center overflow-hidden">
+    <div
+      v-if="isLoading"
+      class="h-full w-full animate-pulse rounded-md bg-slate-200"
+      aria-hidden="true"
+    ></div>
+
     <img
       v-else-if="url"
       :src="url"
-      :alt="alt"
-      :style="{ objectFit }"
-      class="product-img"
+      :alt="alt || 'Imagen del producto'"
+      class="h-full w-full object-contain"
     />
-    <div v-else class="product-image-fallback">
-      <i :class="fallbackIcon"></i>
+
+    <div
+      v-else
+      class="flex h-full w-full items-center justify-center text-2xl text-slate-300"
+      aria-hidden="true"
+    >
+      <i class="fa-solid fa-box"></i>
     </div>
   </div>
 </template>
-
-<style scoped>
-.product-image-wrapper {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  overflow: hidden;
-  background-color: #ffffff;
-}
-
-.product-img {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.product-image-skeleton {
-  width: 100%;
-  height: 100%;
-  background-color: #edf2f7;
-  border-radius: 4px;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.product-image-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #cbd5e1;
-  font-size: 1.2rem;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-</style>

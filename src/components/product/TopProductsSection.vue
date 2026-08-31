@@ -143,7 +143,6 @@ onMounted(() => {
           <ProductImage
             :blob-id="product.imageBlobId"
             :alt="product.title"
-            object-fit="contain"
           />
         </div>
 

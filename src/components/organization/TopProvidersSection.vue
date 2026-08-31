@@ -101,7 +101,6 @@ onMounted(async () => {
                     <ProviderLogo
                         :blob-id="provider.logoBlobId"
                         :alt="provider.name"
-                        :fallback-text="provider.name"
                     />
                 </div>
 
