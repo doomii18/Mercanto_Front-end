@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
 import BaseModal from "../common/BaseModal.vue";
-import CategoryImage from "../category/CategoryImage.vue";
+import CategorySelectCard from "../category/CategorySelectCard.vue";
 import { categoryApi, userProfileApi } from "../../api";
 import type { ProductCategoryResponse } from "../../api/services/category/types";
 
@@ -128,21 +128,16 @@ const handleSave = async () => {
         <span>Cargando categorías...</span>
       </div>
 
-      <div v-else class="categories-grid">
-        <div
+      <div v-else class="grid max-h-105 grid-cols-2 gap-4  overflow-y-auto p-1 sm:grid-cols-3 md:grid-cols-4">
+        <CategorySelectCard
           v-for="cat in categories"
           :key="cat.id"
-          :class="['category-card', { selected: selectedInterests.has(cat.id) }]"
-          @click="toggleInterest(cat.id)"
-        >
-          <div class="category-image-wrap">
-            <CategoryImage :blob-id="cat.image_blob_id" :alt="cat.name" />
-          </div>
-          <p class="category-name">{{ cat.name }}</p>
-          <div class="check-indicator">
-            <i class="fa-solid fa-check"></i>
-          </div>
-        </div>
+          :id="cat.id"
+          :name="cat.name"
+          :image-blob-id="cat.image_blob_id"
+          :selected="selectedInterests.has(cat.id)"
+          @toggle="toggleInterest"
+        />
       </div>
     </div>
 
@@ -171,6 +166,7 @@ const handleSave = async () => {
     </template>
   </BaseModal>
 </template>
+
 <style scoped>
 .preferences-modal {
   padding: 0.5rem;
@@ -229,93 +225,6 @@ const handleSave = async () => {
   font-size: 0.95rem;
 }
 
-.categories-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  max-height: 420px;
-  overflow-y: auto;
-  padding: 0.25rem;
-}
-
-.category-card {
-  aspect-ratio: 1 / 1;
-  border: 2px solid var(--border-gray);
-  border-radius: 16px;
-  padding: 0.75rem 0.6rem;
-  text-align: center;
-  cursor: pointer;
-  background-color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  transition: border-color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
-  box-sizing: border-box;
-}
-
-.category-card:hover {
-  border-color: var(--light-teal);
-  transform: translateY(-2px);
-}
-
-.category-card.selected {
-  border-color: var(--primary-orange);
-  background-color: #fffaf5;
-}
-
-.category-image-wrap {
-  width: 100%;
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 0.5rem;
-}
-
-.category-image-wrap :deep(.category-image-container) {
-  height: 100% !important;
-  margin-bottom: 0 !important;
-}
-
-.category-image-wrap :deep(.category-img) {
-  max-height: 52px;
-  max-width: 100%;
-  object-fit: contain;
-}
-
-.category-name {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--primary-blue);
-  line-height: 1.25;
-  display: -webkit-box;
-
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.check-indicator {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: var(--primary-orange);
-  color: #ffffff;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.7rem;
-}
-
-.category-card.selected .check-indicator {
-  display: flex;
-}
-
 .modal-actions {
   display: flex;
   justify-content: flex-end;
@@ -355,11 +264,5 @@ const handleSave = async () => {
 .btn-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-@media (max-width: 640px) {
-  .categories-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
 }
 </style>

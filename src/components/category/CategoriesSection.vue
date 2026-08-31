@@ -75,10 +75,9 @@ onMounted(async () => {
             class="category-card"
             style="text-decoration: none;"
           >
-            <CategoryImage
-              :blob-id="cat.image_blob_id"
-              :alt="cat.name"
-            />
+              <div class="h-24 w-24 mb-4">
+                <CategoryImage :blob-id="cat.image_blob_id" :alt="cat.name" />
+              </div>
             <p class="category-name">{{ cat.name }}</p>
             <span class="product-count">{{ cat.productCount }} Productos</span>
           </router-link>

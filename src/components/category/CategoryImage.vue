@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { useBlobUrl } from "../../modules/blob/useBlob";
 import { categoryApi } from "../../api";
@@ -15,61 +14,26 @@ const { url, isLoading } = useBlobUrl(
 </script>
 
 <template>
-  <div class="category-image-container">
-    <div v-if="isLoading" class="category-skeleton"></div>
+  <div class="relative flex aspect-square h-full w-full items-center justify-center overflow-hidden">
+    <div
+      v-if="isLoading"
+      class="h-full w-full animate-pulse rounded-md bg-slate-200"
+      aria-hidden="true"
+    ></div>
+
     <img
       v-else-if="url"
       :src="url"
       :alt="alt || 'Categoría'"
-      class="category-img"
+      class="h-full w-full object-contain"
     />
-    <div v-else class="category-fallback">
+
+    <div
+      v-else
+      class="flex h-full w-full items-center justify-center text-2xl text-slate-300"
+      aria-hidden="true"
+    >
       <i class="fa-solid fa-image"></i>
     </div>
   </div>
 </template>
-
-<style scoped>
-.category-image-container {
-  width: 100%;
-  height: 120px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-
-.category-img {
-  max-width: 75%;
-  max-height: 120px;
-  object-fit: contain;
-}
-
-.category-skeleton {
-  width: 80px;
-  height: 80px;
-  background-color: #edf2f7;
-  border-radius: 50%;
-  animation: pulse 1.5s infinite ease-in-out;
-}
-
-.category-fallback {
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2rem;
-  color: #cbd5e1;
-}
-
-@keyframes pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
-}
-</style>
