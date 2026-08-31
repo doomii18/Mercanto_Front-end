@@ -94,7 +94,7 @@ function scroll(direction: "left" | "right"): void {
       <!-- Carousel List -->
       <div
         ref="carouselRef"
-        class="flex flex-1 items-center gap-3.5 overflow-x-auto py-1.5 scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        class="flex flex-1 items-center gap-3.5 overflow-x-auto py-1.5 scroll-smooth scrollbar-none [&::-webkit-scrollbar]:hidden"
       >
         <!-- Skeleton Loading -->
         <template v-if="isLoading">

@@ -375,7 +375,6 @@ onMounted(async () => {
     </main>
   </div>
 </template>
-
 <style scoped>
 .category-view {
   min-height: 100vh;
@@ -532,17 +531,19 @@ onMounted(async () => {
 }
 
 .product-img-wrapper {
-  height: 160px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+  aspect-ratio: 1 / 1;
   margin-bottom: 1rem;
+  overflow: hidden;
+  border-radius: 20px;
 }
 
-.product-img-wrapper :deep(img) {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+.product-img-wrapper :deep(img),
+.product-img-wrapper :deep(svg) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .card-info {
@@ -781,3 +782,4 @@ onMounted(async () => {
   }
 }
 </style>
+```[cite: 1]
