@@ -62,8 +62,29 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "provider",
-        name: "provider-register",
-        component: () => import("../views/ProviderRegisterView.vue"),
+        component: () => import("../views/register/ProviderRegisterView.vue"),
+        children: [
+          {
+            path: "",
+            name: "provider-register",
+            redirect: { name: "provider-step-1" },
+          },
+          {
+            path: "step-1",
+            name: "provider-step-1",
+            component: () => import("../views/register/ProviderStep1View.vue"),
+          },
+          {
+            path: "step-2",
+            name: "provider-step-2",
+            component: () => import("../views/register/ProviderStep2View.vue"),
+          },
+          {
+            path: "step-3",
+            name: "provider-step-3",
+            component: () => import("../views/register/ProviderStep3View.vue"),
+          },
+        ],
       },
     ],
   },
