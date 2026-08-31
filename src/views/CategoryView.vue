@@ -2,9 +2,10 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import logoImg from "../assets/logo.png";
-import audifonosImg from "../assets/audifonos.png";
 import tabletaImg from "../assets/tableta.png";
 import AppFooter from "../components/common/AppFooter.vue";
+import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
+import CategoryPicker from "../components/category/CategoryPicker.vue";
 
 const router = useRouter();
 
@@ -182,46 +183,12 @@ const toggleWishlist = (product: ProductItem) => {
     </header>
 
     <main class="category-page-container">
-      <section class="category-hero">
-        <div class="hero-left">
-          <img :src="audifonosImg" alt="Artículos Tecnológicos" class="hero-image-main" />
-        </div>
-        <div class="hero-center">
-          <h1>Artículos Tecnológicos</h1>
-          <p>Encuentra los mejores artículos tecnológicos al por mayor para tu negocio</p>
-          <div class="badge-products">
-            <i class="fa-solid fa-bag-shopping"></i>
-            <span>200 Productos disponibles</span>
-          </div>
-        </div>
-        <div class="hero-right">
-          <div class="circles-graphic">
-            <div class="circle circle-teal"></div>
-            <div class="circle circle-orange"></div>
-            <div class="circle circle-darkblue"></div>
-          </div>
-        </div>
-      </section>
+      <CategoryHeroCard />
 
-      <section class="explore-categories">
-        <h3>Explora otras categorías</h3>
-        <div class="categories-carousel-wrapper">
-          <button type="button" class="carousel-arrow"><i class="fa-solid fa-chevron-left"></i></button>
-          <div class="categories-list">
-            <div
-              v-for="(cat, idx) in categoriesList"
-              :key="cat.id"
-              :class="['category-icon-item', { active: activeCategoryIndex === idx }]"
-              @click="activeCategoryIndex = idx"
-            >
-              <div class="icon-circle">
-                <i :class="cat.icon"></i>
-              </div>
-            </div>
-          </div>
-          <button type="button" class="carousel-arrow"><i class="fa-solid fa-chevron-right"></i></button>
-        </div>
-      </section>
+      <CategoryPicker
+        v-model="activeCategoryIndex"
+        :categories="categoriesList"
+      />
 
       <section class="search-sort-bar">
         <div class="search-box-wrapper">
@@ -394,152 +361,6 @@ const toggleWishlist = (product: ProductItem) => {
   padding: 2rem 1.5rem;
 }
 
-.category-hero {
-  background-color: #ffffff;
-  border: 1px solid #dcdcdc;
-  border-radius: 20px;
-  padding: 2.5rem;
-  display: grid;
-  grid-template-columns: 1fr 2fr 1fr;
-  align-items: center;
-  gap: 2rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  margin-bottom: 2rem;
-}
-
-.hero-left {
-  display: flex;
-  justify-content: center;
-}
-
-.hero-image-main {
-  max-height: 150px;
-  object-fit: contain;
-}
-
-.hero-center h1 {
-  font-size: 2.2rem;
-  color: #023859;
-  margin-bottom: 0.8rem;
-  font-weight: 700;
-}
-
-.hero-center p {
-  color: #666;
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-}
-
-.badge-products {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #e2f4f2;
-  color: #00a896;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.hero-right {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.circles-graphic {
-  position: relative;
-  width: 120px;
-  height: 120px;
-}
-
-.circle {
-  position: absolute;
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-}
-
-.circle-teal {
-  background-color: #00a896;
-  top: 25px;
-  left: 10px;
-  z-index: 2;
-}
-
-.circle-orange {
-  background-color: #ff6a00;
-  top: 5px;
-  left: 45px;
-  z-index: 1;
-}
-
-.circle-darkblue {
-  background-color: #023859;
-  top: 50px;
-  left: 45px;
-  z-index: 3;
-}
-
-.explore-categories {
-  background-color: #f5f7f9;
-  border-radius: 12px;
-  padding: 1.5rem 2rem;
-  margin-bottom: 2rem;
-}
-
-.explore-categories h3 {
-  font-size: 1rem;
-  color: #023859;
-  margin-bottom: 1rem;
-  font-weight: 600;
-}
-
-.categories-carousel-wrapper {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-}
-
-.carousel-arrow {
-  background: transparent;
-  border: none;
-  color: #ff6a00;
-  font-size: 1.5rem;
-  cursor: pointer;
-}
-
-.categories-list {
-  flex: 1;
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  overflow-x: auto;
-}
-
-.category-icon-item {
-  cursor: pointer;
-}
-
-.category-icon-item .icon-circle {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  background-color: #cdece8;
-  color: #00a896;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.2rem;
-  transition: all 0.2s;
-}
-
-.category-icon-item.active .icon-circle {
-  background-color: #00a896;
-  color: #ffffff;
-}
-
 .search-sort-bar {
   display: flex;
   justify-content: space-between;
@@ -662,27 +483,27 @@ const toggleWishlist = (product: ProductItem) => {
 }
 
 .btn-wishlist:hover {
-  transform: scale(1.2);
+  transform: scale(1.15);
 }
 
 .product-img-wrapper {
-  height: 150px;
+  height: 160px;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   margin-bottom: 1rem;
 }
 
 .product-img-wrapper img {
-  max-height: 100%;
   max-width: 100%;
+  max-height: 100%;
   object-fit: contain;
 }
 
 .card-info {
-  flex: 1;
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .category-label {
@@ -694,58 +515,61 @@ const toggleWishlist = (product: ProductItem) => {
 .product-title {
   font-size: 0.95rem;
   color: #023859;
-  margin-bottom: 0.8rem;
+  margin-bottom: 0.6rem;
   font-weight: 600;
-  min-height: 38px;
 }
 
 .price-min-order {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
+  align-items: baseline;
+  margin-bottom: 0.8rem;
 }
 
 .price {
-  font-size: 1.1rem;
   font-weight: 700;
   color: #ff6a00;
+  font-size: 1.05rem;
 }
 
 .min-order {
   font-size: 0.75rem;
-  color: #666;
+  color: #888;
 }
 
 .provider-info {
-  border-top: 1px solid #eee;
-  padding-top: 0.8rem;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
+  border-top: 1px solid #f0f0f0;
+  padding-top: 0.6rem;
+  margin-top: auto;
 }
 
 .provider-details {
   display: flex;
   align-items: center;
   gap: 0.3rem;
+  font-size: 0.8rem;
+  color: #555;
 }
 
 .verified-icon {
-  color: #00a8ff;
-}
-
-.provider-name {
-  color: #555;
-  font-weight: 500;
+  color: #00a896;
+  font-size: 0.85rem;
 }
 
 .rating-info {
   display: flex;
   align-items: center;
   gap: 0.3rem;
-  color: #777;
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.rating {
+  font-weight: 600;
+  color: #333;
 }
 
 .star-filled {
@@ -754,44 +578,47 @@ const toggleWishlist = (product: ProductItem) => {
 
 .rank-badge {
   position: absolute;
-  bottom: -15px;
+  bottom: -10px;
   left: 50%;
   transform: translateX(-50%);
-  width: 30px;
-  height: 30px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
   align-items: center;
   color: white;
   font-weight: 700;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  font-size: 0.75rem;
 }
 
 .rank-1 { background-color: #ff6a00; }
 .rank-2 { background-color: #00a896; }
 .rank-3 { background-color: #023859; }
-.rank-4 { background-color: #888888; }
+.rank-4 { background-color: #718096; }
 
 .load-more-wrapper {
-  display: flex;
-  justify-content: center;
-  margin-top: 3rem;
+  text-align: center;
+  margin-top: 2rem;
 }
 
 .btn-load-more {
-  background: #ffffff;
-  border: 1px solid #00a896;
+  background-color: #ffffff;
+  border: 2px solid #00a896;
+  padding: 0.65rem 2rem;
+  border-radius: 25px;
   color: #00a896;
-  padding: 0.8rem 2.5rem;
-  border-radius: 30px;
   font-weight: 600;
+  font-size: 0.95rem;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-load-more:hover {
+  background-color: #e6f6f5;
 }
 
 .featured-providers {
@@ -799,7 +626,7 @@ const toggleWishlist = (product: ProductItem) => {
 }
 
 .featured-providers h2 {
-  font-size: 1.6rem;
+  font-size: 1.8rem;
   color: #023859;
   text-align: center;
   margin-bottom: 2.5rem;
@@ -812,11 +639,14 @@ const toggleWishlist = (product: ProductItem) => {
 }
 
 .provider-card {
+  background: #ffffff;
   border: 2px solid #ff6a00;
   border-radius: 20px;
-  padding: 2rem;
+  padding: 2.2rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
-  background: #ffffff;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
 }
 
@@ -824,67 +654,65 @@ const toggleWishlist = (product: ProductItem) => {
   width: 70px;
   height: 70px;
   border-radius: 50%;
+  background-color: #f5f7f9;
   border: 2px solid #023859;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 2rem;
-  margin: 0 auto 1.5rem auto;
   color: #023859;
+  margin-bottom: 1rem;
 }
 
 .provider-card h4 {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: #023859;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.4rem;
   font-weight: 700;
 }
 
 .verified-badge {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 0.4rem;
-  color: #00a8ff;
-  font-size: 0.85rem;
-  margin-bottom: 0.8rem;
+  gap: 0.35rem;
+  color: #00a896;
+  font-size: 0.8rem;
   font-weight: 600;
+  margin-bottom: 0.8rem;
 }
 
 .provider-rating {
+  font-size: 1.2rem;
+  color: #023859;
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 0.3rem;
-  font-size: 1.1rem;
   margin-bottom: 0.5rem;
 }
 
 .provider-location {
-  color: #666;
-  font-size: 0.9rem;
+  color: #888;
+  font-size: 0.85rem;
   margin-bottom: 1.5rem;
 }
 
 .btn-catalog {
-  width: 100%;
   background-color: #ff6a00;
   color: white;
   border: none;
-  padding: 0.8rem;
+  padding: 0.75rem 2rem;
   border-radius: 20px;
   font-weight: 600;
   cursor: pointer;
-  font-size: 0.95rem;
+  width: 100%;
+  transition: opacity 0.2s ease;
 }
 
-@media (max-width: 900px) {
-  .category-hero {
-    grid-template-columns: 1fr;
-    text-align: center;
-  }
-  .hero-right {
-    justify-content: center;
-  }
+.btn-catalog:hover {
+  opacity: 0.92;
+}
+
+@media (max-width: 992px) {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -893,20 +721,22 @@ const toggleWishlist = (product: ProductItem) => {
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 576px) {
+  .products-grid {
+    grid-template-columns: 1fr;
+  }
   .top-header {
-    padding: 1rem;
     flex-direction: column;
     gap: 1rem;
+    padding: 1rem;
   }
   .nav-links {
-    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
   }
   .search-sort-bar {
     flex-direction: column;
-  }
-  .products-grid {
-    grid-template-columns: 1fr;
+    gap: 1rem;
   }
 }
 </style>
