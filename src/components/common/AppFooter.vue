@@ -3,146 +3,73 @@ import imagotipoImg from "../../assets/1.1 Imagotipo variacion.png";
 </script>
 
 <template>
-  <footer class="footer">
-    <div class="container footer-content">
-      <div class="footer-info">
-        <img
-          :src="imagotipoImg"
-          alt="Mercanto"
-          class="footer-logo"
-        />
-        <p><i class="fa-regular fa-envelope"></i> mercanto@gmail.com</p>
-        <p><i class="fa-brands fa-whatsapp"></i> +505 88662233</p>
-        <p><i class="fa-solid fa-location-dot"></i> Managua, Nicaragua</p>
+  <footer class="w-full bg-[#083c5a] text-white pt-10 pb-6 px-4">
+    <div class="max-w-7xl mx-auto flex flex-col">
+      <!-- Main Content Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 items-center">
+        <!-- Column 1: Info & Contacts -->
+        <div class="flex flex-col gap-4 md:pr-10">
+          <img
+            :src="imagotipoImg"
+            alt="Mercanto"
+            class="h-12 w-auto object-contain self-start"
+          />
+          <div class="flex flex-col gap-2.5 text-sm text-slate-200">
+            <a href="mailto:mercanto@gmail.com" class="flex items-center gap-3 hover:underline">
+              <i class="fa-regular fa-envelope text-lg"></i>
+              <span>mercanto@gmail.com</span>
+            </a>
+            <a href="https://wa.me/50588662233" class="flex items-center gap-3 hover:underline">
+              <i class="fa-brands fa-whatsapp text-lg"></i>
+              <span>+505 88662233</span>
+            </a>
+            <div class="flex items-center gap-3">
+              <i class="fa-solid fa-location-dot text-lg"></i>
+              <span>Managua, Nicaragua</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Navigation Links -->
+        <div class="flex flex-col gap-2.5 md:px-10 border-t md:border-t-0 md:border-x-2 border-orange-500 pt-6 md:pt-0">
+          <a href="#" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+            Política de privacidad
+          </a>
+          <router-link :to="{ name: 'home', hash: '#categorias' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+            Categorías
+          </router-link>
+          <router-link :to="{ name: 'home', hash: '#proveedores' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+            Proveedores
+          </router-link>
+          <router-link :to="{ name: 'home', hash: '#inicio' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+            Productos
+          </router-link>
+          <router-link :to="{ name: 'home', hash: '#como-funciona' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+            Cómo funciona la plataforma
+          </router-link>
+        </div>
+
+        <!-- Column 3: CTA Button -->
+        <div class="flex flex-col items-center text-center gap-3 md:pl-10 border-t md:border-t-0 border-orange-500 pt-6 md:pt-0">
+          <h4 class="text-orange-500 font-bold text-base tracking-wide uppercase">
+            CONVIÉRTETE EN PROVEEDOR
+          </h4>
+          <p class="text-sm text-slate-200">
+            ¿Eres exportador o distribuidor mayorista?
+          </p>
+          <router-link
+            :to="{ name: 'provider-register' }"
+            class="mt-2 inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 px-8 rounded-full shadow-lg transition-colors duration-200"
+          >
+            Regístrate hoy
+          </router-link>
+        </div>
       </div>
 
-      <div class="footer-links">
-        <a href="#">Política de privacidad</a>
-        <router-link :to="{ name: 'home', hash: '#categorias' }">Categorías</router-link>
-        <router-link :to="{ name: 'home', hash: '#proveedores' }">Proveedores</router-link>
-        <router-link :to="{ name: 'home', hash: '#inicio' }">Productos</router-link>
-        <router-link :to="{ name: 'home', hash: '#como-funciona' }">Cómo funciona la plataforma</router-link>
+      <!-- Copyright Bottom Bar -->
+      <div class="mt-12 text-center text-xs sm:text-sm text-slate-300">
+        <p>Mercanto S.A 2026. Todos los derechos reservados.</p>
       </div>
-
-      <div class="footer-cta">
-        <h4>CONVIÉRTETE EN PROVEEDOR</h4>
-        <p>¿Eres exportador o distribuidor mayorista?</p>
-        <router-link :to="{ name: 'provider-register' }" class="btn-cta">
-          Regístrate hoy
-        </router-link>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      <p>Mercanto S.A 2026. Todos los derechos reservados.</p>
     </div>
   </footer>
 </template>
-
-<style scoped>
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-.footer {
-  background-color: var(--primary-blue, #083c5a);
-  color: #ffffff;
-  padding: 3.5rem 0 1.5rem;
-  width: 100%;
-}
-
-.footer-content {
-  display: flex;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-bottom: 2.5rem;
-}
-
-.footer-info {
-  max-width: 320px;
-}
-
-.footer-logo {
-  height: 48px;
-  margin-bottom: 1.25rem;
-}
-
-.footer-info p {
-  display: flex;
-  align-items: center;
-  gap: 0.8rem;
-  margin-bottom: 0.75rem;
-  color: #cbd5e1;
-  font-size: 0.9rem;
-}
-
-.footer-links {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.footer-links a {
-  color: #cbd5e1;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease;
-}
-
-.footer-links a:hover {
-  color: var(--primary-orange, #ff6a00);
-}
-
-.footer-cta {
-  text-align: center;
-}
-
-.footer-cta h4 {
-  color: var(--primary-orange, #ff6a00);
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  font-size: 1rem;
-}
-
-.footer-cta p {
-  color: #cbd5e1;
-  margin-bottom: 1.25rem;
-  font-size: 0.9rem;
-}
-
-.btn-cta {
-  background-color: var(--primary-orange, #ff6a00);
-  color: #ffffff;
-  padding: 0.65rem 1.6rem;
-  border-radius: 20px;
-  text-decoration: none;
-  font-weight: 600;
-  display: inline-block;
-  transition: background-color 0.2s ease;
-}
-
-.btn-cta:hover {
-  background-color: var(--primary-orange-hover, #e66000);
-}
-
-.footer-bottom {
-  text-align: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.12);
-  padding-top: 1.5rem;
-  color: #94a3b8;
-  font-size: 0.85rem;
-}
-
-@media (max-width: 768px) {
-  .footer-content {
-    flex-direction: column;
-    text-align: center;
-    gap: 2rem;
-  }
-
-  .footer-info p {
-    justify-content: center;
-  }
-}
-</style>
