@@ -22,6 +22,7 @@ interface ProductCardItem {
   provider: string;
   rating: number | string;
   rank: number;
+  rankTheme: string;
   isWishlist: boolean;
 }
 
@@ -41,50 +42,6 @@ const router = useRouter();
 
 const searchFilter = ref<string>("");
 const wishlistSet = ref<Set<string>>(new Set());
-
-// Mock Providers Catalog (Fallback for featured section)
-const mockProviders = ref<ProviderItem[]>([
-  {
-    id: "prov-1",
-    name: "NicaTech S.A",
-    rating: 4.9,
-    location: "Managua, Nicaragua",
-    categoryId: "cat-tech",
-    categoryName: "Artículos Tecnológicos",
-  },
-  {
-    id: "prov-2",
-    name: "Managua Labs S.A",
-    rating: 4.8,
-    location: "Carretera Norte, Managua",
-    categoryId: "cat-tech",
-    categoryName: "Artículos Tecnológicos",
-  },
-  {
-    id: "prov-3",
-    name: "Distribuidora Central",
-    rating: 4.7,
-    location: "Mercado Oriental, Managua",
-    categoryId: "cat-home",
-    categoryName: "Hogar y Cocina",
-  },
-  {
-    id: "prov-4",
-    name: "Megaboutique S.A",
-    rating: 4.8,
-    location: "Altamira, Managua",
-    categoryId: "cat-bags",
-    categoryName: "Bolsos & Maletas",
-  },
-  {
-    id: "prov-5",
-    name: "Cosméticos de Nicaragua",
-    rating: 4.6,
-    location: "Los Robles, Managua",
-    categoryId: "cat-beauty",
-    categoryName: "Belleza & Cuidado",
-  },
-]);
 
 const categories = ref<ProductCategoryResponse[]>([]);
 const apiProducts = ref<ProductResponse[]>([]);
@@ -129,7 +86,6 @@ const totalProducts = computed<number>(() => {
   return totalApiProducts.value;
 });
 
-// Normalized & Filtered Products matching template schema
 const products = computed<ProductCardItem[]>(() => {
   let items = apiProducts.value.map((p, index) => {
     const categoryName = p.category?.name || "General";
@@ -148,12 +104,12 @@ const products = computed<ProductCardItem[]>(() => {
       imageBlobId: p.image_blob_ids?.[0] ?? null,
       provider: providerName,
       rating: averageScore > 0 ? averageScore.toFixed(1) : "0.0",
-      rank: (index % 4) + 1,
+      rank: index + 1,
+      rankTheme: `rank-${(index % 4) + 1}`,
       isWishlist: wishlistSet.value.has(p.id),
     };
   });
 
-  // Local filtering by search text
   if (searchFilter.value.trim() !== "") {
     const query = searchFilter.value.toLowerCase().trim();
     items = items.filter(
@@ -168,16 +124,37 @@ const products = computed<ProductCardItem[]>(() => {
 });
 
 const featuredProviders = computed<ProviderItem[]>(() => {
-  if (selectedCategoryId.value) {
-    const catName = currentCategory.value?.name.toLowerCase() || "";
-    const matched = mockProviders.value.filter(
-      (prov) =>
-        prov.categoryId === selectedCategoryId.value ||
-        prov.categoryName?.toLowerCase().includes(catName)
-    );
-    if (matched.length > 0) return matched;
-  }
-  return mockProviders.value.slice(0, 3);
+  if (apiProducts.value.length === 0) return [];
+
+  const providerStats = new Map<string, { scoreSum: number; count: number }>();
+
+  apiProducts.value.forEach((p) => {
+    const score = p.rating?.average_score ?? 0;
+    const stats = providerStats.get(p.provider_id) || { scoreSum: 0, count: 0 };
+    stats.scoreSum += score;
+    stats.count += 1;
+    providerStats.set(p.provider_id, stats);
+  });
+
+  return Array.from(providerStats.entries())
+    .map(([id, stats]) => {
+      const avgRating = stats.count > 0 ? stats.scoreSum / stats.count : 0;
+      return {
+        id,
+        name: providersMap.value.get(id) || "Proveedor aliado",
+        rating: Number(avgRating.toFixed(1)),
+        location: "Nicaragua",
+        count: stats.count
+      };
+    })
+    .sort((a, b) => b.rating - a.rating || b.count - a.count)
+    .slice(0, 3)
+    .map(({ id, name, rating, location }) => ({
+      id,
+      name,
+      rating,
+      location
+    }));
 });
 
 function toggleWishlist(prod: ProductCardItem): void {
@@ -266,7 +243,6 @@ function loadMore(): void {
 }
 
 function handleCategorySelect(category: ProductCategoryResponse): void {
-  // Update the URL to trigger the router watcher which re-fetches products
   router.push({
     name: "category",
     query: {
@@ -280,7 +256,7 @@ watch(
   () => route.query.category_id,
   (newCatId) => {
     selectedCategoryId.value = (newCatId as string) || null;
-    loadProducts(false); // Reloads the product data when the category URL query changes
+    loadProducts(false);
   }
 );
 
@@ -341,10 +317,15 @@ onMounted(async () => {
 
       <section class="products-catalog">
         <div class="catalog-header">
-          <span>Mostrando 1-{{ products.length }} de {{ totalProducts }} productos</span>
+          <span>Mostrando {{ products.length > 0 ? 1 : 0 }}-{{ products.length }} de {{ totalProducts }} productos</span>
         </div>
 
-        <div class="products-grid">
+        <div v-if="products.length === 0" class="empty-products-msg">
+          <i class="fa-solid fa-box-open"></i>
+          <h3>No hay productos disponibles en esta categoría.</h3>
+        </div>
+
+        <div v-else class="products-grid">
           <div
             v-for="prod in products"
             :key="prod.id"
@@ -380,11 +361,11 @@ onMounted(async () => {
                 </div>
               </div>
             </div>
-            <div :class="['rank-badge', `rank-${prod.rank}`]">{{ prod.rank }}</div>
+            <div :class="['rank-badge', prod.rankTheme]">{{ prod.rank }}</div>
           </div>
         </div>
 
-        <div v-if="hasMore" class="load-more-wrapper">
+        <div v-if="hasMore && products.length > 0" class="load-more-wrapper">
           <button type="button" class="btn-load-more" :disabled="isLoadingMore" @click="loadMore">
             {{ isLoadingMore ? 'Cargando...' : 'Cargar más productos' }}
             <i :class="isLoadingMore ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-chevron-down'"></i>
@@ -392,7 +373,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section class="featured-providers">
+      <section v-if="products.length > 0 && featuredProviders.length > 0" class="featured-providers">
         <h2>Proveedores destacados de {{ heroTitle }}</h2>
         <div class="providers-grid">
           <div v-for="(prov, idx) in featuredProviders" :key="idx" class="provider-card">
@@ -585,6 +566,23 @@ onMounted(async () => {
 .catalog-header {
   margin-bottom: 1.5rem;
   font-weight: 600;
+  color: #023859;
+}
+
+.empty-products-msg {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #888;
+}
+
+.empty-products-msg i {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  color: #cbd5e1;
+}
+
+.empty-products-msg h3 {
+  font-size: 1.2rem;
   color: #023859;
 }
 
