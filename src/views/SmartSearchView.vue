@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { GeocodingService } from "../modules/geo";
+import { GeocodingService, useGeoStore } from "../modules/geo";
 
 import mochilaImg from "../assets/mochila.png";
 import utensiliosImg from "../assets/utensilios.png";
@@ -10,6 +10,7 @@ import paletaImg from "../assets/paleta.png";
 
 const router = useRouter();
 const route = useRoute();
+const geoStore = useGeoStore();
 
 interface CatalogProduct {
   id: string;
@@ -242,8 +243,15 @@ const goToConfigView = () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-onMounted(() => {
+onMounted(async () => {
   window.scrollTo({ top: 0, behavior: "smooth" });
+
+  if (!geoStore.isInitialized) {
+    await geoStore.initialize().catch((err) => {
+      console.error("Failed to initialize geo store:", err);
+    });
+  }
+
   if (!document.getElementById("leaflet-css")) {
     const link = document.createElement("link");
     link.id = "leaflet-css";

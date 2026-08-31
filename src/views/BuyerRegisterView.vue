@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter } from "vue-router";
-import { bootstrapGeo, getGeoManager } from "../modules/geo";
-import type { Department, Municipality } from "../modules/geo/types";
+import { useGeoStore } from "../modules/geo/geoStore";
+import type { Municipality } from "../modules/geo";
 import { identityApi, userProfileApi, geographyApi } from "../api";
 import ConfirmModal from "../components/common/ConfirmModal.vue";
 import CreatePasswordModal from "../components/CreatePasswordModal.vue";
 
 const router = useRouter();
+const geoStore = useGeoStore();
 
 type WizardStep = 1 | 2;
 const currentStep = ref<WizardStep>(1);
@@ -24,15 +25,16 @@ const form = ref({
 });
 
 const isGeoLoading = ref(false);
-const departments = ref<Department[]>([]);
+
+// Derive reactive lists directly from the Pinia store
+const departments = computed(() => geoStore.departmentList);
+
 const municipalities = computed<Municipality[]>(() => {
     if (!form.value.departmentId) return [];
-    const geo = getGeoManager();
-    return geo
-        ? geo.getMunicipalitiesByDepartment(form.value.departmentId)
-        : [];
+    return geoStore.getMunicipalitiesByDepartment(form.value.departmentId);
 });
 
+// Reset municipality if selected department changes
 watch(
     () => form.value.departmentId,
     () => {
@@ -56,13 +58,9 @@ const isSubmitting = ref(false);
 
 onMounted(async () => {
     try {
-        await bootstrapGeo();
-        const geo = getGeoManager();
-        if (geo) {
-            departments.value = geo.getDepartments();
-        }
+        await geoStore.initialize();
     } catch (err) {
-        console.error("Failed to bootstrap geo metadata:", err);
+        console.error("Failed to initialize geo store:", err);
     }
 });
 
@@ -82,11 +80,17 @@ const handleAutoDetectLocation = () => {
     navigator.geolocation.getCurrentPosition(
         async (position) => {
             try {
+                // Ensure geo store is initialized before auto-selecting dropdowns
+                if (!geoStore.isInitialized) {
+                    await geoStore.initialize();
+                }
+
                 const { latitude, longitude } = position.coords;
                 const res = await geographyApi.getMunicipalityByCoordinates({
                     lat: latitude,
                     lng: longitude,
                 });
+
                 form.value.departmentId = res.department_id;
                 form.value.municipalityId = res.id;
             } catch (err) {

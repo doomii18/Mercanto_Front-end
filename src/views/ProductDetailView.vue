@@ -3,9 +3,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { productApi, organizationApi, cartApi } from "../api";
 import { useAuthStore } from "../modules/auth";
-import { bootstrapGeo, getGeoManager } from "../modules/geo";
-import type { ProductResponse } from "../api/services/product/types";
-
+import { useGeoStore } from "../modules/geo";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import AppFooter from "../components/common/AppFooter.vue";
@@ -47,6 +45,7 @@ interface ProductDetailData {
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const geoStore = useGeoStore();
 
 const isMenuOpen = ref(false);
 const showAddedToast = ref(false);
@@ -75,6 +74,7 @@ const BRANDS = [
     "Chef Master",
     "Genérico",
 ];
+
 const PREP_TIMES = [
     "12 horas",
     "24 horas",
@@ -117,16 +117,13 @@ function hashString(str: string): number {
 
 function resolveLocationText(municipalityId?: string): string {
     if (!municipalityId) return "Managua, Nicaragua";
-    const geo = getGeoManager();
-    if (!geo) return "Managua, Nicaragua";
 
-    const municipality = geo.getMunicipalityById(municipalityId);
-    if (!municipality) return "Managua, Nicaragua";
+    const hierarchy = geoStore.resolveLocationHierarchy(municipalityId);
+    if (!hierarchy) return "Managua, Nicaragua";
 
-    const department = geo.getDepartmentById(municipality.departmentId);
-    return department
-        ? `${municipality.name}, ${department.name}`
-        : municipality.name;
+    return hierarchy.department
+        ? `${hierarchy.municipality.name}, ${hierarchy.department.name}`
+        : hierarchy.municipality.name;
 }
 
 function resolveShippingMethods(
@@ -204,12 +201,15 @@ async function loadProduct(id: string) {
     const hash = hashString(id);
 
     try {
-        let prodRes: ProductResponse | null = null;
-        try {
-            prodRes = await productApi.getProduct(id);
-        } catch (apiErr) {
-            console.warn("Backend getProduct request failed:", apiErr);
-        }
+        const [prodRes] = await Promise.all([
+            productApi.getProduct(id).catch((apiErr) => {
+                console.warn("Backend getProduct request failed:", apiErr);
+                return null;
+            }),
+            geoStore.initialize().catch((geoErr) => {
+                console.warn("Geo initialization failed during product load:", geoErr);
+            }),
+        ]);
 
         if (prodRes) {
             let providerName = "Proveedor aliado";
@@ -220,9 +220,7 @@ async function loadProduct(id: string) {
             let logoBlobId: string | null = null;
 
             try {
-                const org = await organizationApi.getPublicProvider(
-                    prodRes.provider_id,
-                );
+                const org = await organizationApi.getPublicProvider(prodRes.provider_id);
                 providerName = org.company_name;
                 providerInitial = org.company_name.charAt(0).toUpperCase();
                 providerLocation = resolveLocationText(org.municipality_id);
@@ -303,15 +301,8 @@ watch(
     { immediate: true },
 );
 
-onMounted(async () => {
+onMounted(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
-    try {
-        if (!getGeoManager()) {
-            await bootstrapGeo();
-        }
-    } catch (err) {
-        console.warn("Geo bootstrap warning:", err);
-    }
 });
 
 const selectedShipping = computed(() => {

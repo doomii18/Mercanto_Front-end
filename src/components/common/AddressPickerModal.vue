@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, onMounted } from "vue";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import BaseModal from "./BaseModal.vue";
-import { GeocodingService } from "../../modules/geo";
+import { GeocodingService, useGeoStore } from "../../modules/geo";
 import { geographyApi } from "../../api";
 
 export interface AddressPickerResult {
@@ -32,6 +32,8 @@ const emit = defineEmits<{
   (e: "cancel"): void;
 }>();
 
+const geoStore = useGeoStore();
+
 const DEFAULT_CENTER = [12.1328, -86.2504] as [number, number];
 
 const zoom = ref(13);
@@ -57,10 +59,16 @@ const updateMarker = async (lat: number, lng: number) => {
 
   try {
     tempAddress.value = await GeocodingService.reverseGeocode(lat, lng);
-    mapAddressText.value = tempAddress.value;
 
     const geoRes = await geographyApi.getMunicipalityByCoordinates({ lat, lng });
     tempMunicipalityId.value = geoRes.id;
+
+    const hierarchy = geoStore.resolveLocationHierarchy(geoRes.id);
+    if (hierarchy?.municipality && hierarchy?.department) {
+      mapAddressText.value = `${tempAddress.value} (${hierarchy.municipality.name}, ${hierarchy.department.name})`;
+    } else {
+      mapAddressText.value = tempAddress.value;
+    }
   } catch (error) {
     console.error("Geocoding failed:", error);
     tempMunicipalityId.value = null;
@@ -115,6 +123,12 @@ const handleConfirm = () => {
   });
   emit("update:modelValue", false);
 };
+
+onMounted(async () => {
+  if (!geoStore.isInitialized) {
+    await geoStore.initialize();
+  }
+});
 
 watch(
   () => props.modelValue,
@@ -219,14 +233,6 @@ watch(
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-}
-
-.map-container-wrapper {
-  height: 320px;
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid var(--border-gray);
-  z-index: 1;
 }
 
 .map-address-label {
