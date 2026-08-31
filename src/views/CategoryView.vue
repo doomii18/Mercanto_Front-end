@@ -1,33 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { categoryApi, productApi } from "../api";
+import { categoryApi, productApi, organizationApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
 import type { ProductResponse } from "../api/services/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
+import ProductImage from "../components/product/ProductImage.vue";
 import AppFooter from "../components/common/AppFooter.vue";
 
 import logoImg from "../assets/logo.png";
-import mochilaImg from "../assets/mochila.png";
-import tabletaImg from "../assets/tableta.png";
-import utensiliosImg from "../assets/utensilios.png";
-import paletaImg from "../assets/paleta.png";
-import audifonosImg from "../assets/audifonos.png";
-import joyeriaImg from "../assets/joyeria.png";
-
-interface RawProduct {
-  id: string;
-  title: string;
-  categoryName: string;
-  categoryId?: string;
-  price: number;
-  minOrder: number;
-  imageBlobId?: string | null;
-  staticImage?: string;
-  providerName: string;
-  rating: number;
-}
 
 interface ProductCardItem {
   id: string;
@@ -36,9 +18,9 @@ interface ProductCardItem {
   categoryId?: string;
   price: string;
   minOrder: string;
-  image: string;
+  imageBlobId: string | null;
   provider: string;
-  rating: number;
+  rating: number | string;
   rank: number;
   isWishlist: boolean;
 }
@@ -52,83 +34,15 @@ interface ProviderItem {
   categoryName?: string;
 }
 
+const PAGE_SIZE = 12;
+
 const route = useRoute();
 const router = useRouter();
 
 const searchFilter = ref<string>("");
 const wishlistSet = ref<Set<string>>(new Set());
 
-// Mock Products Catalog
-const mockProducts = ref<RawProduct[]>([
-  {
-    id: "prod-1",
-    title: "Audífonos Bluetooth Sony WH-CH520",
-    categoryName: "Artículos Tecnológicos",
-    categoryId: "cat-tech",
-    price: 1850,
-    minOrder: 6,
-    staticImage: audifonosImg,
-    providerName: "NicaTech S.A",
-    rating: 4.8,
-  },
-  {
-    id: "prod-2",
-    title: "Tablet para niños 10 Pulgadas",
-    categoryName: "Artículos Tecnológicos",
-    categoryId: "cat-tech",
-    price: 950,
-    minOrder: 5,
-    staticImage: tabletaImg,
-    providerName: "Managua Labs S.A",
-    rating: 4.5,
-  },
-  {
-    id: "prod-3",
-    title: "Mochila Adventure Resistente",
-    categoryName: "Bolsos & Maletas",
-    categoryId: "cat-bags",
-    price: 350,
-    minOrder: 12,
-    staticImage: mochilaImg,
-    providerName: "Megaboutique S.A",
-    rating: 4.7,
-  },
-  {
-    id: "prod-4",
-    title: "Set de ollas 9 piezas acero",
-    categoryName: "Hogar y Cocina",
-    categoryId: "cat-home",
-    price: 1200,
-    minOrder: 3,
-    staticImage: utensiliosImg,
-    providerName: "Distribuidora Central",
-    rating: 4.9,
-  },
-  {
-    id: "prod-5",
-    title: "Paleta de Sombras Profesional",
-    categoryName: "Belleza & Cuidado",
-    categoryId: "cat-beauty",
-    price: 420,
-    minOrder: 10,
-    staticImage: paletaImg,
-    providerName: "Cosméticos de Nicaragua",
-    rating: 4.6,
-  },
-  {
-    id: "prod-6",
-    title: "Set de Joyería Fina en Acero",
-    categoryName: "Joyería y Accesorios",
-    categoryId: "cat-jewelry",
-    price: 280,
-    minOrder: 24,
-    staticImage: joyeriaImg,
-    providerName: "Accesorios Express",
-    rating: 4.4,
-  },
-]);
-
-// Mock Providers Catalog
+// Mock Providers Catalog (Fallback for featured section)
 const mockProviders = ref<ProviderItem[]>([
   {
     id: "prov-1",
@@ -176,6 +90,12 @@ const categories = ref<ProductCategoryResponse[]>([]);
 const apiProducts = ref<ProductResponse[]>([]);
 const isLoadingCategories = ref<boolean>(false);
 const isLoadingProducts = ref<boolean>(false);
+const isLoadingMore = ref<boolean>(false);
+
+const offset = ref(0);
+const totalApiProducts = ref(0);
+
+const providersMap = ref<Map<string, string>>(new Map());
 
 const selectedCategoryId = ref<string | null>(
   (route.query.category_id as string) || null
@@ -187,7 +107,7 @@ const currentCategory = computed<ProductCategoryResponse | null>(() => {
 });
 
 const heroTitle = computed<string>(() => {
-  return currentCategory.value?.name ?? "Artículos Tecnológicos";
+  return currentCategory.value?.name ?? "Catálogo General";
 });
 
 const heroDescription = computed<string | null>(() => {
@@ -201,68 +121,52 @@ const heroImageBlobId = computed<string | null>(() => {
   return currentCategory.value?.image_blob_id ?? null;
 });
 
-// Normalized & Filtered Products matching template schema
-const products = computed<ProductCardItem[]>(() => {
-  let sourceList: RawProduct[] = [];
-
-  if (apiProducts.value.length > 0) {
-    sourceList = apiProducts.value.map((p) => ({
-      id: p.id,
-      title: p.title,
-      categoryName: p.category?.name || "General",
-      categoryId: p.category_id,
-      price: p.base_price,
-      minOrder: "Physical" in p.spec ? p.spec.Physical.min_order_quantity : 1,
-      imageBlobId: p.image_blob_ids?.[0] ?? null,
-      providerName: "Proveedor aliado",
-      rating: p.rating?.average_score ?? 4.5,
-    }));
-  } else {
-    sourceList = mockProducts.value;
-  }
-
-  // Filter by Category
-  if (selectedCategoryId.value) {
-    const catName = currentCategory.value?.name.toLowerCase() || "";
-    const filtered = sourceList.filter(
-      (p) =>
-        p.categoryId === selectedCategoryId.value ||
-        p.categoryName.toLowerCase().includes(catName)
-    );
-    if (filtered.length > 0) {
-      sourceList = filtered;
-    }
-  }
-
-  // Filter by Search Input
-  if (searchFilter.value.trim() !== "") {
-    const query = searchFilter.value.toLowerCase().trim();
-    sourceList = sourceList.filter(
-      (p) =>
-        p.title.toLowerCase().includes(query) ||
-        p.categoryName.toLowerCase().includes(query) ||
-        p.providerName.toLowerCase().includes(query)
-    );
-  }
-
-  return sourceList.map((p, index) => ({
-    id: p.id,
-    title: p.title,
-    category: p.categoryName,
-    categoryId: p.categoryId,
-    price: `C$ ${p.price.toLocaleString()}`,
-    minOrder: `Min. ${p.minOrder} uds`,
-    image: p.staticImage || audifonosImg,
-    provider: p.providerName,
-    rating: p.rating,
-    rank: (index % 4) + 1,
-    isWishlist: wishlistSet.value.has(p.id),
-  }));
+const hasMore = computed<boolean>(() => {
+  return apiProducts.value.length < totalApiProducts.value;
 });
 
-const totalProducts = computed<number>(() => products.value.length);
+const totalProducts = computed<number>(() => {
+  return totalApiProducts.value;
+});
 
-// Featured Providers matching selected category or fallback
+// Normalized & Filtered Products matching template schema
+const products = computed<ProductCardItem[]>(() => {
+  let items = apiProducts.value.map((p, index) => {
+    const categoryName = p.category?.name || "General";
+    const priceValue = p.base_price;
+    const minOrderValue = "Physical" in p.spec ? p.spec.Physical.min_order_quantity : 1;
+    const providerName = providersMap.value.get(p.provider_id) || "Proveedor aliado";
+    const averageScore = p.rating?.average_score ?? 0;
+
+    return {
+      id: p.id,
+      title: p.title,
+      category: categoryName,
+      categoryId: p.category_id,
+      price: `C$ ${priceValue.toLocaleString("es-NI", { minimumFractionDigits: 2 })}`,
+      minOrder: `Min. ${minOrderValue} uds`,
+      imageBlobId: p.image_blob_ids?.[0] ?? null,
+      provider: providerName,
+      rating: averageScore > 0 ? averageScore.toFixed(1) : "0.0",
+      rank: (index % 4) + 1,
+      isWishlist: wishlistSet.value.has(p.id),
+    };
+  });
+
+  // Local filtering by search text
+  if (searchFilter.value.trim() !== "") {
+    const query = searchFilter.value.toLowerCase().trim();
+    items = items.filter(
+      (p) =>
+        p.title.toLowerCase().includes(query) ||
+        p.category.toLowerCase().includes(query) ||
+        p.provider.toLowerCase().includes(query)
+    );
+  }
+
+  return items;
+});
+
 const featuredProviders = computed<ProviderItem[]>(() => {
   if (selectedCategoryId.value) {
     const catName = currentCategory.value?.name.toLowerCase() || "";
@@ -288,6 +192,22 @@ function goToProduct(prod: ProductCardItem): void {
   router.push({ name: "product-detail", params: { id: prod.id } });
 }
 
+async function resolveProviderNames(items: ProductResponse[]): Promise<void> {
+  const missingIds = [...new Set(items.map((p) => p.provider_id).filter((id) => !providersMap.value.has(id)))];
+  if (missingIds.length === 0) return;
+
+  await Promise.allSettled(
+    missingIds.map(async (id) => {
+      try {
+        const org = await organizationApi.getPublicProvider(id);
+        providersMap.value.set(id, org.company_name);
+      } catch {
+        providersMap.value.set(id, "Proveedor aliado");
+      }
+    })
+  );
+}
+
 async function loadCategories(): Promise<void> {
   isLoadingCategories.value = true;
   try {
@@ -300,27 +220,53 @@ async function loadCategories(): Promise<void> {
   }
 }
 
-async function loadProducts(): Promise<void> {
-  isLoadingProducts.value = true;
+async function loadProducts(isAppend = false): Promise<void> {
+  if (isAppend) {
+    isLoadingMore.value = true;
+  } else {
+    isLoadingProducts.value = true;
+    offset.value = 0;
+  }
+
   try {
     const res = await productApi.getProducts({
-      limit: 50,
-      offset: 0,
+      limit: PAGE_SIZE,
+      offset: offset.value,
       category_id: selectedCategoryId.value || undefined,
       provider_id: (route.query.provider_id as string) || undefined,
+      sort_by: "created_at",
+      sort_direction: "desc",
     });
-    apiProducts.value = res.data;
+
+    totalApiProducts.value = res.total;
+
+    if (isAppend) {
+      apiProducts.value.push(...res.data);
+    } else {
+      apiProducts.value = res.data;
+    }
+
+    await resolveProviderNames(res.data);
+
   } catch (err) {
-    console.warn("Using fallback mock products:", err);
-    apiProducts.value = [];
+    console.error("Error loading products:", err);
+    if (!isAppend) {
+      apiProducts.value = [];
+    }
   } finally {
     isLoadingProducts.value = false;
+    isLoadingMore.value = false;
   }
 }
 
+function loadMore(): void {
+  if (isLoadingMore.value || !hasMore.value) return;
+  offset.value += PAGE_SIZE;
+  loadProducts(true);
+}
+
 function handleCategorySelect(category: ProductCategoryResponse): void {
-  if (selectedCategoryId.value === category.id) return;
-  selectedCategoryId.value = category.id;
+  // Update the URL to trigger the router watcher which re-fetches products
   router.push({
     name: "category",
     query: {
@@ -334,12 +280,12 @@ watch(
   () => route.query.category_id,
   (newCatId) => {
     selectedCategoryId.value = (newCatId as string) || null;
-    loadProducts();
+    loadProducts(false); // Reloads the product data when the category URL query changes
   }
 );
 
 onMounted(async () => {
-  await Promise.all([loadCategories(), loadProducts()]);
+  await Promise.all([loadCategories(), loadProducts(false)]);
 });
 </script>
 
@@ -414,7 +360,7 @@ onMounted(async () => {
               <i :class="prod.isWishlist ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
             </button>
             <div class="product-img-wrapper">
-              <img :src="prod.image" :alt="prod.title" />
+              <ProductImage :blob-id="prod.imageBlobId" :alt="prod.title" />
             </div>
             <div class="card-info">
               <span class="category-label">{{ prod.category }}</span>
@@ -438,9 +384,10 @@ onMounted(async () => {
           </div>
         </div>
 
-        <div class="load-more-wrapper">
-          <button type="button" class="btn-load-more">
-            Cargar más productos <i class="fa-solid fa-chevron-down"></i>
+        <div v-if="hasMore" class="load-more-wrapper">
+          <button type="button" class="btn-load-more" :disabled="isLoadingMore" @click="loadMore">
+            {{ isLoadingMore ? 'Cargando...' : 'Cargar más productos' }}
+            <i :class="isLoadingMore ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-chevron-down'"></i>
           </button>
         </div>
       </section>
@@ -683,7 +630,7 @@ onMounted(async () => {
   margin-bottom: 1rem;
 }
 
-.product-img-wrapper img {
+.product-img-wrapper :deep(img) {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
@@ -806,7 +753,12 @@ onMounted(async () => {
   transition: background-color 0.2s, color 0.2s;
 }
 
-.btn-load-more:hover {
+.btn-load-more:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-load-more:hover:not(:disabled) {
   background-color: #e6f6f5;
 }
 
