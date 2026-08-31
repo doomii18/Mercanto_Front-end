@@ -31,7 +31,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/register",
-    component: () => import("../views/account/RegisterLayout.vue"),
+    component: () => import("../views/register/RegisterLayout.vue"),
     meta: { guestOnly: true },
     children: [
       {
@@ -41,7 +41,7 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: "buyer",
-        component: () => import("../views/account/AccountRegisterView.vue"),
+        component: () => import("../views/register/AccountRegisterView.vue"),
         children: [
           {
             path: "",
@@ -51,12 +51,12 @@ const routes: RouteRecordRaw[] = [
           {
             path: "step-1",
             name: "account-step-1",
-            component: () => import("../views/account/AccountStep1View.vue"),
+            component: () => import("../views/register/AccountStep1View.vue"),
           },
           {
             path: "step-2",
             name: "account-step-2",
-            component: () => import("../views/account/AccountStep2View.vue"),
+            component: () => import("../views/register/AccountStep2View.vue"),
           },
         ],
       },
