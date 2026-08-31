@@ -1,22 +1,12 @@
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { onMounted } from "vue";
 import { useAuthStore } from "../modules/auth";
 import { healthApi } from "../api";
 import CategoriesSection from "../components/category/CategoriesSection.vue";
 import TopProductsSection from "../components/product/TopProductsSection.vue";
 import TopProvidersSection from "../components/organization/TopProvidersSection.vue";
-import AppFooter from "../components/common/AppFooter.vue";
 
 const authStore = useAuthStore();
-const isMenuOpen = ref(false);
-
-const toggleMenu = () => {
-  isMenuOpen.value = !isMenuOpen.value;
-};
-
-const closeMenu = () => {
-  isMenuOpen.value = false;
-};
 
 onMounted(async () => {
   await authStore.initialize();
@@ -26,57 +16,6 @@ onMounted(async () => {
 
 <template>
   <div class="home-page">
-    <header class="header">
-      <div class="container header-content">
-        <div class="logo">
-          <img
-            src="../assets/logo.png"
-            alt="Mercanto"
-            class="logo-img"
-          />
-        </div>
-
-        <button
-          class="mobile-menu-btn"
-          aria-label="Alternar navegación"
-          @click="toggleMenu"
-        >
-          <i
-            :class="
-              isMenuOpen
-                ? 'fa-solid fa-xmark'
-                : 'fa-solid fa-bars'
-            "
-          ></i>
-        </button>
-
-        <nav :class="['nav-links', { open: isMenuOpen }]">
-          <router-link :to="{ name: 'home' }" class="nav-btn" @click="closeMenu">Inicio</router-link>
-          <router-link :to="{ name: 'category' }" class="nav-btn" @click="closeMenu">Categorías</router-link>
-          <a href="#proveedores" class="nav-btn" @click="closeMenu">Proveedores</a>
-          <a href="#como-funciona" class="nav-btn" @click="closeMenu">Como funciona</a>
-          <router-link :to="{ name: 'orders' }" class="nav-btn" @click="closeMenu">Pedidos</router-link>
-        </nav>
-
-        <div :class="['auth-buttons', { open: isMenuOpen }]">
-          <router-link
-            :to="{ name: 'login' }"
-            class="login-link"
-            @click="closeMenu"
-          >
-            Iniciar sesión
-          </router-link>
-          <router-link
-            :to="{ name: 'register' }"
-            class="btn-primary"
-            @click="closeMenu"
-          >
-            Registrarse
-          </router-link>
-        </div>
-      </div>
-    </header>
-
     <main>
       <section id="inicio" class="hero container section-spaced">
         <div class="hero-text">
@@ -175,8 +114,6 @@ onMounted(async () => {
         </div>
       </section>
     </main>
-
-    <AppFooter />
   </div>
 </template>
 
@@ -192,85 +129,8 @@ onMounted(async () => {
   padding: 0 1.5rem;
 }
 
-/* Section spacing utility */
 .section-spaced {
   margin-bottom: 5rem;
-}
-
-.header {
-  background-color: #fff4ec;
-  padding: 1rem 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
-
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-img {
-  height: 42px;
-  display: block;
-}
-
-.mobile-menu-btn {
-  display: none;
-  background: none;
-  border: none;
-  font-size: 1.6rem;
-  color: var(--primary-blue);
-  cursor: pointer;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.nav-links a,
-.nav-links .nav-btn {
-  text-decoration: none;
-  color: var(--primary-blue);
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.5rem 1.1rem;
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
-}
-
-.nav-links a:hover,
-.nav-links .nav-btn:hover {
-  background-color: #ffebd9;
-  color: var(--primary-orange);
-  box-shadow: 0 3px 10px rgba(255, 106, 0, 0.15);
-  transform: translateY(-1px);
-}
-
-.nav-links a.active-nav-highlight,
-.nav-links a.router-link-exact-active {
-  background-color: #ffd8bd;
-  color: var(--primary-orange);
-  font-weight: 700;
-  box-shadow: 0 3px 12px rgba(255, 106, 0, 0.2);
-}
-
-.auth-buttons {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.login-link {
-  text-decoration: none;
-  color: var(--primary-blue);
-  font-weight: 600;
-  font-size: 0.95rem;
 }
 
 .btn-primary {
@@ -388,7 +248,6 @@ onMounted(async () => {
   padding: 1.8rem 2rem;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04);
-
   border: 1px solid var(--border-gray);
 }
 
@@ -473,44 +332,6 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
-  .header-content {
-    flex-wrap: wrap;
-  }
-
-  .nav-links {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-    gap: 1rem;
-    padding: 1rem 0;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
-    margin-top: 0.75rem;
-    order: 3;
-  }
-
-  .nav-links.open {
-    display: flex;
-  }
-
-  .auth-buttons {
-    display: none;
-    flex-direction: column;
-    width: 100%;
-    align-items: center;
-    gap: 0.75rem;
-    order: 4;
-    padding-bottom: 0.5rem;
-  }
-
-  .auth-buttons.open {
-    display: flex;
-  }
-
-  .mobile-menu-btn {
-    display: block;
-  }
-
   .hero {
     flex-direction: column-reverse;
     text-align: center;

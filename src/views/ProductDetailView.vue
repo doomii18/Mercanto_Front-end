@@ -6,8 +6,6 @@ import { useAuthStore } from "../modules/auth";
 import { useGeoStore } from "../modules/geo";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
-import AppFooter from "../components/common/AppFooter.vue";
-import logoImg from "../assets/logo.png";
 
 interface ShippingMethodOption {
     id: string;
@@ -47,7 +45,6 @@ const router = useRouter();
 const authStore = useAuthStore();
 const geoStore = useGeoStore();
 
-const isMenuOpen = ref(false);
 const showAddedToast = ref(false);
 const isLoading = ref(true);
 
@@ -333,14 +330,6 @@ const formatPrice = (val: number | null | undefined) => {
     return val.toLocaleString("es-NI");
 };
 
-const toggleMenu = () => {
-    isMenuOpen.value = !isMenuOpen.value;
-};
-
-const closeMenu = () => {
-    isMenuOpen.value = false;
-};
-
 const increaseQuantity = () => {
     quantity.value += 1;
 };
@@ -375,69 +364,6 @@ const navigateToCategory = () => {
 
 <template>
     <div class="product-detail-page">
-        <header class="header">
-            <div class="container header-content">
-                <div class="logo">
-                    <router-link :to="{ name: 'home' }">
-                        <img :src="logoImg" alt="Mercanto" class="logo-img" />
-                    </router-link>
-                </div>
-
-                <button
-                    class="mobile-menu-btn"
-                    aria-label="Alternar navegación"
-                    @click="toggleMenu"
-                >
-                    <i
-                        :class="
-                            isMenuOpen
-                                ? 'fa-solid fa-xmark'
-                                : 'fa-solid fa-bars'
-                        "
-                    ></i>
-                </button>
-
-                <nav :class="['nav-links', { open: isMenuOpen }]">
-                    <router-link :to="{ name: 'home' }" @click="closeMenu"
-                        >Inicio</router-link
-                    >
-                    <router-link :to="{ name: 'category' }" @click="closeMenu"
-                        >Categorías</router-link
-                    >
-                    <router-link
-                        :to="{ name: 'home', hash: '#proveedores' }"
-                        @click="closeMenu"
-                        >Proveedores</router-link
-                    >
-                    <router-link
-                        :to="{ name: 'home', hash: '#como-funciona' }"
-                        @click="closeMenu"
-                        >Como funciona</router-link
-                    >
-                    <router-link :to="{ name: 'orders' }" @click="closeMenu"
-                        >Pedidos</router-link
-                    >
-                </nav>
-
-                <div :class="['auth-buttons', { open: isMenuOpen }]">
-                    <router-link
-                        :to="{ name: 'login' }"
-                        class="login-link"
-                        @click="closeMenu"
-                    >
-                        Iniciar sesión
-                    </router-link>
-                    <router-link
-                        :to="{ name: 'register' }"
-                        class="btn-register"
-                        @click="closeMenu"
-                    >
-                        Registrarse
-                    </router-link>
-                </div>
-            </div>
-        </header>
-
         <main class="container main-content">
             <nav class="breadcrumbs-nav" aria-label="Breadcrumb">
                 <router-link :to="{ name: 'home' }">Inicio</router-link>
@@ -465,7 +391,6 @@ const navigateToCategory = () => {
                             <ProductImage
                                 :blob-id="product.imageBlobId"
                                 :alt="product.title"
-
                             />
                         </div>
                         <div class="gallery-favorite-star">
@@ -490,7 +415,7 @@ const navigateToCategory = () => {
                                 <ProviderLogo
                                     :blob-id="product.provider.logoBlobId"
                                     :alt="product.provider.name"
-                                     class="rounded-full"
+                                    class="rounded-full"
                                 />
                             </div>
                             <span class="provider-title-text">{{
@@ -788,8 +713,6 @@ const navigateToCategory = () => {
                 >
             </div>
         </transition>
-
-        <AppFooter />
     </div>
 </template>
 
@@ -807,92 +730,6 @@ const navigateToCategory = () => {
     margin: 0 auto;
     padding: 0 1.5rem;
     width: 100%;
-}
-
-.header {
-    background-color: #fff4ec;
-    padding: 1rem 0;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    position: sticky;
-    top: 0;
-    z-index: 100;
-}
-
-.header-content {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.logo-img {
-    height: 42px;
-    display: block;
-}
-
-.mobile-menu-btn {
-    display: none;
-    background: none;
-    border: none;
-    font-size: 1.6rem;
-    color: var(--primary-blue, #083c5a);
-    cursor: pointer;
-}
-
-.nav-links {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-}
-
-.nav-links a {
-    text-decoration: none;
-    color: var(--primary-blue, #083c5a);
-    font-weight: 600;
-    font-size: 0.95rem;
-    padding: 0.5rem 1.1rem;
-    border-radius: 12px;
-    transition: all 0.25s ease;
-}
-
-.nav-links a:hover {
-    background-color: #ffebd9;
-    color: var(--primary-orange, #ff6a00);
-}
-
-.auth-buttons {
-    display: flex;
-    align-items: center;
-    gap: 1.5rem;
-}
-
-.login-link {
-    text-decoration: none;
-    color: var(--primary-blue, #083c5a);
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.btn-register {
-    background-color: var(--primary-orange, #ff6a00);
-    color: #ffffff;
-    padding: 0.65rem 1.4rem;
-    border-radius: 20px;
-    text-decoration: none;
-    font-weight: 600;
-    border: none;
-    cursor: pointer;
-    font-size: 0.95rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    transition:
-        transform 0.2s ease,
-        background-color 0.2s ease;
-}
-
-.btn-register:hover {
-    background-color: var(--primary-orange-hover, #e66000);
-    transform: translateY(-2px);
 }
 
 .main-content {
@@ -1465,16 +1302,6 @@ const navigateToCategory = () => {
     .product-bottom-grid,
     .skeleton-grid-loader {
         grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 768px) {
-    .nav-links,
-    .auth-buttons {
-        display: none;
-    }
-    .mobile-menu-btn {
-        display: block;
     }
 }
 </style>

@@ -4,8 +4,24 @@ import { useAuthStore } from "../modules/auth";
 const routes: RouteRecordRaw[] = [
   {
     path: "/",
-    name: "home",
-    component: () => import("../views/HomeView.vue"),
+    component: () => import("../views/MainLayout.vue"),
+    children: [
+      {
+        path: "",
+        name: "home",
+        component: () => import("../views/HomeView.vue"),
+      },
+      {
+        path: "category",
+        name: "category",
+        component: () => import("../views/CategoryView.vue"),
+      },
+      {
+        path: "product/:id",
+        name: "product-detail",
+        component: () => import("../views/ProductDetailView.vue"),
+      },
+    ],
   },
   {
     path: "/login",
@@ -30,16 +46,6 @@ const routes: RouteRecordRaw[] = [
     name: "provider-register",
     component: () => import("../views/ProviderRegisterView.vue"),
     meta: { guestOnly: true },
-  },
-  {
-    path: "/category",
-    name: "category",
-    component: () => import("../views/CategoryView.vue"),
-  },
-  {
-    path: "/product/:id",
-    name: "product-detail",
-    component: () => import("../views/ProductDetailView.vue"),
   },
   {
     path: "/provider/profile",
@@ -141,7 +147,6 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore();
-
 
   if (!authStore.isInitialized) {
     await authStore.initialize();

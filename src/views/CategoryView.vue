@@ -7,9 +7,6 @@ import type { ProductResponse } from "../api/services/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
 import ProductImage from "../components/product/ProductImage.vue";
-import AppFooter from "../components/common/AppFooter.vue";
-
-import logoImg from "../assets/logo.png";
 
 interface ProductCardItem {
   id: string;
@@ -267,25 +264,6 @@ onMounted(async () => {
 
 <template>
   <div class="category-view">
-    <header class="top-header">
-      <div class="logo">
-        <router-link :to="{ name: 'home' }">
-          <img :src="logoImg" alt="Mercanto" class="logo-icon" />
-        </router-link>
-      </div>
-      <nav class="nav-links">
-        <router-link :to="{ name: 'home' }">Inicio</router-link>
-        <router-link :to="{ name: 'category' }">Categorías</router-link>
-        <router-link :to="{ name: 'home', hash: '#proveedores' }">Proveedores</router-link>
-        <router-link :to="{ name: 'home', hash: '#como-funciona' }">Cómo funciona</router-link>
-        <router-link :to="{ name: 'orders' }">Pedidos</router-link>
-      </nav>
-      <div class="auth-buttons">
-        <router-link :to="{ name: 'login' }" class="login-btn">Iniciar sesión</router-link>
-        <router-link :to="{ name: 'register' }" class="register-btn">Registrarse</router-link>
-      </div>
-    </header>
-
     <main class="category-page-container">
       <CategoryHeroCard
         :name="heroTitle"
@@ -395,8 +373,6 @@ onMounted(async () => {
         </div>
       </section>
     </main>
-
-    <AppFooter />
   </div>
 </template>
 
@@ -405,71 +381,6 @@ onMounted(async () => {
   min-height: 100vh;
   background-color: #ffffff;
   color: #023859;
-}
-
-.top-header {
-  background-color: #fdf5f4;
-  padding: 1.25rem 3rem;
-  border-bottom: 2px solid #dcdcdc;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-icon {
-  height: 48px;
-}
-
-.nav-links {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #023859;
-  font-weight: 600;
-  font-size: 0.95rem;
-  padding: 0.5rem 1.1rem;
-  border-radius: 12px;
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.nav-links a:hover {
-  background-color: #ffebd9;
-  color: #ff6a00;
-  box-shadow: 0 3px 10px rgba(255, 106, 0, 0.15);
-  transform: translateY(-1px);
-}
-
-.nav-links a.router-link-active,
-.nav-links a.router-link-exact-active {
-  background-color: #ffd8bd;
-  color: #ff6a00;
-  font-weight: 700;
-  box-shadow: 0 3px 12px rgba(255, 106, 0, 0.2);
-}
-
-.auth-buttons {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-}
-
-.login-btn {
-  text-decoration: none;
-  color: #023859;
-  font-weight: 600;
-}
-
-.register-btn {
-  text-decoration: none;
-  background-color: #ff6a00;
-  color: white;
-  padding: 0.6rem 1.5rem;
-  border-radius: 20px;
-  font-weight: 600;
 }
 
 .category-page-container {
@@ -863,15 +774,6 @@ onMounted(async () => {
 @media (max-width: 576px) {
   .products-grid {
     grid-template-columns: 1fr;
-  }
-  .top-header {
-    flex-direction: column;
-    gap: 1rem;
-    padding: 1rem;
-  }
-  .nav-links {
-    flex-wrap: wrap;
-    justify-content: center;
   }
   .search-sort-bar {
     flex-direction: column;
