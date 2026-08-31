@@ -242,7 +242,7 @@ const handleSubmit = () => {
   padding: 0.75rem 2.5rem;
   border: 1px solid var(--border-gray);
   border-radius: 8px;
-  font-family: "Inter", sans-serif;
+  font-family: "Lato", sans-serif;
   font-size: 0.95rem;
   outline: none;
   background: #ffffff;

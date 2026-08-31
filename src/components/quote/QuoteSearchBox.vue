@@ -325,7 +325,7 @@ onBeforeUnmount(() => {
 }
 
 .short-id-tag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: "Lato", sans-serif;
   font-weight: 700;
   color: var(--primary-blue, #083c5a);
 }

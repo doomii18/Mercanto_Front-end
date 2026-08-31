@@ -1009,7 +1009,7 @@ const confirmAndOrder = () => {
 }
 
 .main-title {
-  font-family: 'Lora', serif;
+  font-family: 'FreeSerif', serif;
   font-size: 1.9rem;
   font-weight: 700;
   color: var(--primary-blue, #083c5a);
@@ -1163,7 +1163,7 @@ const confirmAndOrder = () => {
 }
 
 .panel-box-title {
-  font-family: 'Lora', serif;
+  font-family: 'FreeSerif', serif;
   font-size: 1.18rem;
   font-weight: 700;
   color: var(--primary-blue, #083c5a);
@@ -1725,7 +1725,7 @@ const confirmAndOrder = () => {
 }
 
 .results-title-block h2 {
-  font-family: 'Lora', serif;
+  font-family: 'FreeSerif', serif;
   font-size: 1.65rem;
   color: var(--primary-blue, #083c5a);
   font-weight: 700;
@@ -1912,7 +1912,7 @@ const confirmAndOrder = () => {
 }
 
 .price-strong-orange {
-  font-family: 'Lora', serif;
+  font-family: 'FreeSerif', serif;
   font-size: 1.55rem;
   font-weight: 700;
   color: var(--primary-orange, #ff6a00);
@@ -1930,8 +1930,13 @@ const confirmAndOrder = () => {
 }
 
 .savings-green-pill {
+  display: inline-flex;
   font-size: 0.8rem;
   color: #0d9488;
+  background-color: #f0fdfa;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  width: fit-content;
   margin-bottom: 0.75rem;
 }
 
@@ -1939,12 +1944,12 @@ const confirmAndOrder = () => {
   background-color: var(--light-teal, #189c94);
   color: #ffffff;
   border: none;
-  padding: 0.6rem 1.25rem;
-  border-radius: 20px;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .btn-action-view-best:hover {
@@ -1952,84 +1957,64 @@ const confirmAndOrder = () => {
 }
 
 .btn-action-view-alt {
-  border: 1.5px solid var(--light-teal, #189c94);
-  background: transparent;
-  color: var(--light-teal, #189c94);
-  padding: 0.6rem 1.25rem;
-  border-radius: 20px;
+  background-color: #64748b;
+  color: #ffffff;
+  border: none;
+  padding: 0.65rem 1rem;
+  border-radius: 10px;
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .btn-action-view-alt:hover {
-  background-color: var(--light-teal, #189c94);
-  color: #ffffff;
+  background-color: #475569;
 }
 
 .comparison-matrix-card {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;
-  border-radius: 18px;
-  overflow: hidden;
+  border-radius: 20px;
+  padding: 1.5rem;
+  overflow-x: auto;
 }
 
 .comparison-data-table {
   width: 100%;
   border-collapse: collapse;
-  text-align: left;
+  font-size: 0.88rem;
 }
 
 .comparison-data-table th,
 .comparison-data-table td {
-  padding: 0.85rem 1.2rem;
+  padding: 0.75rem 1rem;
+  text-align: left;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 0.85rem;
-}
-
-.comparison-data-table th {
-  background-color: #f8fafc;
-  color: var(--primary-blue, #083c5a);
-  font-weight: 700;
-}
-
-.col-detail-th {
-  width: 25%;
-}
-
-.col-diff-th {
-  width: 20%;
 }
 
 .table-tag-badge {
-  display: block;
-  font-size: 0.65rem;
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  margin-left: 0.4rem;
   font-weight: 700;
-  border-radius: 10px;
-  padding: 0.12rem 0.45rem;
-  width: fit-content;
-  margin-top: 0.2rem;
 }
 
-.table-tag-badge.best-table-badge {
+.best-table-badge {
   background-color: #ccfbf1;
   color: #0d9488;
 }
 
-.table-tag-badge.alt-table-badge {
-  background-color: #f1f5f9;
-  color: #0284c7;
-}
-
-.td-category-name {
-  color: #475569;
-  font-weight: 500;
+.alt-table-badge {
+  background-color: #ffe4e6;
+  color: #e11d48;
 }
 
 .diff-favorable {
-  color: #0d9488;
-  font-weight: 700;
+  color: #16a34a;
+  font-weight: 600;
 }
 
 .diff-unfavorable {
@@ -2039,23 +2024,18 @@ const confirmAndOrder = () => {
 
 .table-total-row-highlight {
   background-color: #f8fafc;
-}
-
-.table-total-row-highlight td {
-  border-bottom: none;
-  font-size: 0.92rem;
-  color: var(--primary-blue, #083c5a);
+  border-top: 2px solid #e2e8f0;
 }
 
 .modal-overlay-bg {
   position: fixed;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
-  padding: 1.5rem;
+  padding: 1rem;
 }
 
 .modal-window-box {
@@ -2065,93 +2045,77 @@ const confirmAndOrder = () => {
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
 }
 
-.modal-catalog-size {
-  max-width: 680px;
-}
-
-.modal-gps-size {
-  max-width: 720px;
-}
-
-.modal-details-size {
-  max-width: 580px;
-}
+.modal-catalog-size { max-width: 800px; }
+.modal-gps-size { max-width: 650px; }
+.modal-details-size { max-width: 580px; }
 
 .modal-top-bar {
-  padding: 1.2rem 1.6rem;
-  border-bottom: 1px solid #e2e8f0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .modal-top-bar h3 {
   font-size: 1.15rem;
-  color: var(--primary-blue, #083c5a);
   font-weight: 700;
+  color: var(--primary-blue, #083c5a);
   display: flex;
   align-items: center;
-  gap: 0.55rem;
-  margin: 0;
+  gap: 0.5rem;
 }
 
 .btn-close-modal-icon {
   background: none;
   border: none;
   font-size: 1.25rem;
-  color: #64748b;
   cursor: pointer;
+  color: #94a3b8;
 }
 
 .modal-search-field-wrap {
-  padding: 0.9rem 1.6rem 0.4rem;
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  padding: 0.75rem 1.5rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  gap: 0.5rem;
 }
 
 .modal-search-field-wrap input {
-  flex: 1;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 20px;
-  padding: 0.5rem 1.1rem;
-  font-size: 0.9rem;
+  width: 100%;
+  border: none;
   outline: none;
+  background: transparent;
+  font-size: 0.9rem;
 }
 
 .modal-catalog-grid {
-  padding: 0.9rem 1.6rem 1.4rem;
-  overflow-y: auto;
+  padding: 1.5rem;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  overflow-y: auto;
 }
 
 .modal-catalog-card {
-  border: 1.5px solid #e2e8f0;
-  border-radius: 14px;
-  padding: 0.9rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 0.85rem;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
 }
 
 .modal-card-img {
-  height: 75px;
+  width: 100%;
+  height: 110px;
   object-fit: contain;
-  margin-bottom: 0.45rem;
-}
-
-.modal-card-info {
-  display: flex;
-  flex-direction: column;
-  gap: 0.12rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.5rem;
 }
 
 .card-category-label {
@@ -2161,60 +2125,61 @@ const confirmAndOrder = () => {
 
 .card-item-title {
   font-size: 0.88rem;
-  color: var(--primary-blue, #083c5a);
   font-weight: 700;
+  color: var(--primary-blue, #083c5a);
+  margin: 0.2rem 0;
 }
 
 .card-provider-name {
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: #94a3b8;
+  margin-bottom: 0.35rem;
 }
 
 .card-item-price {
   font-size: 0.95rem;
-  color: var(--primary-orange, #ff6a00);
   font-weight: 700;
+  color: var(--primary-orange, #ff6a00);
+  margin-bottom: 0.65rem;
 }
 
 .btn-add-to-search-list {
   background-color: var(--light-teal, #189c94);
   color: #ffffff;
   border: none;
-  padding: 0.45rem 1.1rem;
-  border-radius: 16px;
+  padding: 0.45rem;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 0.82rem;
   cursor: pointer;
-  width: 100%;
+  margin-top: auto;
 }
 
 .gps-modal-content-area {
-  padding: 1.2rem 1.6rem;
+  padding: 1.25rem 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
-  flex: 1;
+  gap: 1rem;
 }
 
 .gps-control-bar {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  gap: 0.9rem;
+  align-items: center;
 }
 
 .btn-detect-gps-now {
-  background-color: #f0fdfa;
-  border: 1.5px solid var(--light-teal, #189c94);
-  color: var(--light-teal, #189c94);
-  padding: 0.45rem 1.1rem;
-  border-radius: 20px;
+  background-color: var(--light-teal, #189c94);
+  color: #ffffff;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
   font-weight: 600;
   font-size: 0.85rem;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .gps-tip-text {
@@ -2223,53 +2188,39 @@ const confirmAndOrder = () => {
 }
 
 .map-view-frame {
-  height: 300px;
-  width: 100%;
-  border-radius: 14px;
-  border: 1.5px solid #cbd5e1;
+  height: 280px;
+  border-radius: 12px;
+  border: 1px solid #cbd5e1;
 }
 
 .gps-selected-address-badge {
   display: flex;
-  align-items: flex-start;
-  gap: 0.7rem;
+  align-items: center;
+  gap: 0.65rem;
   background-color: #f8fafc;
-  padding: 0.7rem 0.9rem;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
 }
 
 .pin-orange {
   color: var(--primary-orange, #ff6a00);
-  font-size: 1.15rem;
-  margin-top: 0.15rem;
-}
-
-.gps-selected-address-badge strong {
-  font-size: 0.85rem;
-  color: var(--primary-blue, #083c5a);
-}
-
-.gps-selected-address-badge p {
-  font-size: 0.8rem;
-  color: #475569;
-  margin: 0;
+  font-size: 1.2rem;
 }
 
 .modal-bottom-actions {
-  padding: 0.9rem 1.6rem;
+  padding: 1rem 1.5rem;
   border-top: 1px solid #e2e8f0;
   display: flex;
   justify-content: flex-end;
-  gap: 0.9rem;
+  gap: 0.75rem;
 }
 
 .btn-modal-cancel {
-  background: none;
-  border: 1.5px solid #cbd5e1;
-  color: #64748b;
+  background: transparent;
+  border: 1px solid #cbd5e1;
   padding: 0.55rem 1.25rem;
-  border-radius: 20px;
+  border-radius: 8px;
+  color: #64748b;
   font-weight: 600;
   cursor: pointer;
 }
@@ -2279,47 +2230,52 @@ const confirmAndOrder = () => {
   color: #ffffff;
   border: none;
   padding: 0.55rem 1.5rem;
-  border-radius: 20px;
+  border-radius: 8px;
   font-weight: 700;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .order-detail-modal-body {
-  padding: 1.4rem 1.6rem;
+  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 0.9rem;
+  gap: 1rem;
+  overflow-y: auto;
 }
 
 .confirmed-provider-box {
-  background-color: #f0fdfa;
-  border: 1.5px solid #99f6e4;
-  border-radius: 12px;
-  padding: 0.75rem 1.1rem;
   display: flex;
-  align-items: center;
   gap: 0.75rem;
+  background-color: #f0fdfa;
+  border: 1px solid #99f6e4;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
 }
 
 .check-teal-lg {
-  color: #0d9488;
-  font-size: 1.35rem;
+  color: var(--light-teal, #189c94);
+  font-size: 1.5rem;
+  margin-top: 0.2rem;
 }
 
 .order-items-scroll-box {
-  max-height: 180px;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 0.55rem;
+  gap: 0.5rem;
+  max-height: 180px;
+  overflow-y: auto;
 }
 
 .order-item-detail-row {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.45rem 0;
-  border-bottom: 1px solid #f1f5f9;
+  background: #f8fafc;
+  padding: 0.5rem;
+  border-radius: 8px;
 }
 
 .order-item-detail-row img {
@@ -2345,15 +2301,15 @@ const confirmAndOrder = () => {
 }
 
 .order-item-total-cost {
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--primary-blue, #083c5a);
-  font-size: 0.9rem;
 }
 
 .modal-split-line {
   border: none;
   border-top: 1px solid #e2e8f0;
-  margin: 0.45rem 0;
+  margin: 0;
 }
 
 .order-final-breakdown {
@@ -2365,53 +2321,29 @@ const confirmAndOrder = () => {
 .breakdown-line {
   display: flex;
   justify-content: space-between;
-  font-size: 0.88rem;
-  color: #475569;
+  font-size: 0.85rem;
+  color: #64748b;
 }
 
-.breakdown-line.final-total-strong {
+.final-total-strong {
   font-size: 1.05rem;
   color: var(--primary-blue, #083c5a);
-  border-top: 1.5px solid #cbd5e1;
-  padding-top: 0.55rem;
-  margin-top: 0.35rem;
+  border-top: 1px dashed #cbd5e1;
+  padding-top: 0.5rem;
 }
 
-@media (max-width: 1024px) {
-  .results-grid-structure {
-    grid-template-columns: 1fr;
-  }
-
-  .two-columns-panels {
-    grid-template-columns: 1fr;
-  }
-
+@media (max-width: 900px) {
   .steps-cards-row {
     grid-template-columns: 1fr;
   }
-
-  .provider-card-inner-grid {
+  .two-columns-panels {
     grid-template-columns: 1fr;
-    gap: 1.1rem;
   }
-}
-
-@media (max-width: 768px) {
-  .smart-header-banner {
-    flex-direction: column;
+  .results-grid-structure {
+    grid-template-columns: 1fr;
   }
-
-  .how-it-works-card {
-    max-width: 100%;
-  }
-
-  .location-picker-group {
-    flex-direction: column;
-  }
-
-  .modal-catalog-grid {
+  .provider-card-inner-grid {
     grid-template-columns: 1fr;
   }
 }
 </style>
-```[cite: 1]

@@ -81,9 +81,9 @@ const copyFullId = async () => {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: center;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: "Lato", sans-serif;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
   color: var(--primary-blue, #083c5a);
 }
 
