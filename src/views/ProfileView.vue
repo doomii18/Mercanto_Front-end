@@ -749,7 +749,6 @@ const saveCroppedAvatar = async () => {
     </BaseModal>
   </div>
 </template>
-
 <style scoped>
 .profile-container {
   display: flex;
@@ -767,7 +766,10 @@ const saveCroppedAvatar = async () => {
 
 .profile-card {
   display: flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
+  text-align: left;
   gap: 2.5rem;
 }
 
@@ -847,7 +849,8 @@ const saveCroppedAvatar = async () => {
 }
 
 .profile-info {
-  flex: 1;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .profile-header {
