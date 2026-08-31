@@ -38,8 +38,21 @@ const routes: RouteRecordRaw[] = [
   {
     path: "/register/buyer",
     name: "buyer-register",
-    component: () => import("../views/BuyerRegisterView.vue"),
+    redirect: { name: "account-step-1" },
+    component: () => import("../views/account/AccountRegisterView.vue"),
     meta: { guestOnly: true },
+    children: [
+      {
+        path: "step-1",
+        name: "account-step-1",
+        component: () => import("../views/account/AccountStep1View.vue"),
+      },
+      {
+        path: "step-2",
+        name: "account-step-2",
+        component: () => import("../views/account/AccountStep2View.vue"),
+      },
+    ],
   },
   {
     path: "/register/provider",
