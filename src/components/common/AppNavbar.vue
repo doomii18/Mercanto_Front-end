@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/modules/auth";
+import { userProfileApi } from "@/api";
+import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import logoImg from "@/assets/logo.png";
 
 const route = useRoute();
@@ -9,6 +11,9 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const isMenuOpen = ref(false);
+const avatarBlobId = ref<string | null>(null);
+const userFullName = ref<string>("");
+const isProfileLoading = ref(true);
 
 const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value;
@@ -24,20 +29,49 @@ const handleLogout = async () => {
   router.push({ name: "login" });
 };
 
-onMounted(() => {
-  if (!authStore.isInitialized) {
-    authStore.initialize();
+const fetchUserProfile = async () => {
+  if (!authStore.isAuthenticated) {
+    avatarBlobId.value = null;
+    userFullName.value = "";
+    isProfileLoading.value = false;
+    return;
   }
+
+  isProfileLoading.value = true;
+  try {
+    const profile = await userProfileApi.getMyProfile();
+    avatarBlobId.value = profile.avatar_blob_id ?? null;
+    userFullName.value = `${profile.first_name} ${profile.last_name}`;
+  } catch (err) {
+    console.warn("Failed to load navbar user profile:", err);
+  } finally {
+    isProfileLoading.value = false;
+  }
+};
+
+onMounted(async () => {
+  if (!authStore.isInitialized) {
+    await authStore.initialize();
+  }
+  await fetchUserProfile();
 });
+
+watch(
+  () => authStore.isAuthenticated,
+  async (isAuthenticated) => {
+    if (isAuthenticated) {
+      await fetchUserProfile();
+    } else {
+      avatarBlobId.value = null;
+      userFullName.value = "";
+      isProfileLoading.value = false;
+    }
+  }
+);
 
 const isHomeActive = computed(() => route.name === "home" && !route.hash);
 const isCategoryActive = computed(() => route.name === "category");
 const isOrdersActive = computed(() => route.name === "orders");
-
-const userDisplayName = computed(() => {
-  if (!authStore.account) return "";
-  return authStore.account.email.split("@")[0];
-});
 
 const roleLabel = computed(() => {
   const role = authStore.accountRole;
@@ -131,9 +165,20 @@ const profileRoute = computed(() => {
         <!-- Authenticated State -->
         <template v-if="authStore.isAuthenticated">
           <router-link :to="{ name: profileRoute }" class="user-profile-badge" @click="closeMenu">
-            <span class="provider-tag">{{ roleLabel }}</span>
-            <span class="user-name" :title="authStore.account?.email">{{ userDisplayName }}</span>
-            <i class="fa-regular fa-circle-user avatar-icon"></i>
+            <span class="provider-tag" v-if="authStore.accountRole != 'member'">{{ roleLabel }}</span>
+
+            <!-- Skeleton for Name / Avatar while profile is loading -->
+            <template v-if="isProfileLoading">
+              <div class="h-4 w-20 animate-pulse rounded bg-slate-200"></div>
+              <div class="h-7 w-7 animate-pulse rounded-full bg-slate-200"></div>
+            </template>
+
+            <template v-else>
+              <span class="user-name" :title="userFullName">{{ userFullName }}</span>
+              <div class="h-7 w-7 overflow-hidden rounded-full">
+                <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
+              </div>
+            </template>
           </router-link>
 
           <button type="button" class="btn-logout" title="Cerrar sesión" @click="handleLogout">
@@ -262,11 +307,6 @@ const profileRoute = computed(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.avatar-icon {
-  font-size: 1.1rem;
-  color: var(--primary-blue);
 }
 
 .btn-logout {
