@@ -1,9 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { useRoute } from "vue-router";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useAuthStore } from "@/modules/auth";
 import logoImg from "@/assets/logo.png";
 
 const route = useRoute();
+const router = useRouter();
+const authStore = useAuthStore();
+
 const isMenuOpen = ref(false);
 
 const toggleMenu = () => {
@@ -14,9 +18,41 @@ const closeMenu = () => {
   isMenuOpen.value = false;
 };
 
+const handleLogout = async () => {
+  closeMenu();
+  await authStore.logout();
+  router.push({ name: "login" });
+};
+
+onMounted(() => {
+  if (!authStore.isInitialized) {
+    authStore.initialize();
+  }
+});
+
 const isHomeActive = computed(() => route.name === "home" && !route.hash);
 const isCategoryActive = computed(() => route.name === "category");
 const isOrdersActive = computed(() => route.name === "orders");
+
+const userDisplayName = computed(() => {
+  if (!authStore.account) return "";
+  return authStore.account.email.split("@")[0];
+});
+
+const roleLabel = computed(() => {
+  const role = authStore.accountRole;
+  if (!role) return "Usuario";
+  const map: Record<string, string> = {
+    member: "Miembro",
+    admin: "Admin",
+    auditor: "Auditor",
+  };
+  return map[role] ?? role;
+});
+
+const profileRoute = computed(() => {
+  return authStore.accountRole === "member" ? "profile" : "provider-profile";
+});
 </script>
 
 <template>
@@ -78,7 +114,9 @@ const isOrdersActive = computed(() => route.name === "orders");
           Cómo funciona
         </router-link>
 
+        <!-- Only visible when user is authenticated -->
         <router-link
+          v-if="authStore.isAuthenticated"
           :to="{ name: 'orders' }"
           :class="['nav-btn', { 'nav-btn-active': isOrdersActive }]"
           exact-active-class=""
@@ -90,12 +128,28 @@ const isOrdersActive = computed(() => route.name === "orders");
       </nav>
 
       <div :class="['auth-buttons', { open: isMenuOpen }]">
-        <router-link :to="{ name: 'login' }" class="login-link" @click="closeMenu">
-          Iniciar sesión
-        </router-link>
-        <router-link :to="{ name: 'register' }" class="btn-primary" @click="closeMenu">
-          Registrarse
-        </router-link>
+        <!-- Authenticated State -->
+        <template v-if="authStore.isAuthenticated">
+          <router-link :to="{ name: profileRoute }" class="user-profile-badge" @click="closeMenu">
+            <span class="provider-tag">{{ roleLabel }}</span>
+            <span class="user-name" :title="authStore.account?.email">{{ userDisplayName }}</span>
+            <i class="fa-regular fa-circle-user avatar-icon"></i>
+          </router-link>
+
+          <button type="button" class="btn-logout" title="Cerrar sesión" @click="handleLogout">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+          </button>
+        </template>
+
+        <!-- Unauthenticated State -->
+        <template v-else>
+          <router-link :to="{ name: 'login' }" class="login-link" @click="closeMenu">
+            Iniciar sesión
+          </router-link>
+          <router-link :to="{ name: 'register' }" class="btn-primary" @click="closeMenu">
+            Registrarse
+          </router-link>
+        </template>
       </div>
     </div>
   </header>
@@ -170,7 +224,64 @@ const isOrdersActive = computed(() => route.name === "orders");
 .auth-buttons {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 1.25rem;
+}
+
+.user-profile-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.85rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border-gray);
+  border-radius: 24px;
+  text-decoration: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.user-profile-badge:hover {
+  border-color: var(--light-teal);
+  box-shadow: 0 2px 8px rgba(0, 168, 150, 0.15);
+}
+
+.provider-tag {
+  background-color: #d8f1ef;
+  color: var(--light-teal);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+}
+
+.user-name {
+  color: var(--primary-blue);
+  font-size: 0.88rem;
+  font-weight: 600;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar-icon {
+  font-size: 1.1rem;
+  color: var(--primary-blue);
+}
+
+.btn-logout {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.4rem;
+  border-radius: 8px;
+  transition: color 0.2s ease;
+}
+
+.btn-logout:hover {
+  color: #ef4444;
 }
 
 .login-link {

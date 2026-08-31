@@ -1,5 +1,15 @@
 <script setup lang="ts">
+import { onMounted } from "vue";
+import { useAuthStore } from "@/modules/auth";
 import imagotipoImg from "../../assets/1.1 Imagotipo variacion.png";
+
+const authStore = useAuthStore();
+
+onMounted(() => {
+  if (!authStore.isInitialized) {
+    authStore.initialize();
+  }
+});
 </script>
 
 <template>
@@ -49,20 +59,36 @@ import imagotipoImg from "../../assets/1.1 Imagotipo variacion.png";
           </router-link>
         </div>
 
-        <!-- Column 3: CTA Button -->
+        <!-- Column 3: CTA / User Section -->
         <div class="flex flex-col items-center text-center gap-3 md:pl-10 border-t md:border-t-0 border-orange-500 pt-6 md:pt-0">
-          <h4 class="text-orange-500 font-bold text-base tracking-wide uppercase">
-            CONVIÉRTETE EN PROVEEDOR
-          </h4>
-          <p class="text-sm text-slate-200">
-            ¿Eres exportador o distribuidor mayorista?
-          </p>
-          <router-link
-            :to="{ name: 'provider-register' }"
-            class="mt-2 inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 px-8 rounded-full shadow-lg transition-colors duration-200"
-          >
-            Regístrate hoy
-          </router-link>
+          <template v-if="authStore.isAuthenticated">
+            <h4 class="text-teal-400 font-bold text-base tracking-wide uppercase">
+              SESIÓN ACTIVA
+            </h4>
+            <p class="text-sm text-slate-200">
+              Explora tu panel y gestiona tus actividades con facilidad.
+            </p>
+            <router-link
+              :to="{ name: 'profile' }"
+              class="mt-2 inline-block bg-teal-600 hover:bg-teal-700 text-white font-semibold py-2.5 px-8 rounded-full shadow-lg transition-colors duration-200"
+            >
+              Ir al inicio
+            </router-link>
+          </template>
+          <template v-else>
+            <h4 class="text-orange-500 font-bold text-base tracking-wide uppercase">
+              CONVIÉRTETE EN PROVEEDOR
+            </h4>
+            <p class="text-sm text-slate-200">
+              ¿Eres exportador o distribuidor mayorista?
+            </p>
+            <router-link
+              :to="{ name: 'provider-register' }"
+              class="mt-2 inline-block bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 px-8 rounded-full shadow-lg transition-colors duration-200"
+            >
+              Regístrate hoy
+            </router-link>
+          </template>
         </div>
       </div>
 
