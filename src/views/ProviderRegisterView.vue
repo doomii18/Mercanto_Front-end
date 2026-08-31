@@ -192,15 +192,6 @@ const finishRegistration = () => {
 
 <template>
   <div class="provider-register-page">
-    <header class="top-header">
-      <div class="logo">
-        <img src="../assets/logo.png" alt="Mercanto" class="logo-icon" />
-      </div>
-      <router-link :to="{ name: 'home' }" class="home-icon">
-        <i class="fa-solid fa-house"></i>
-      </router-link>
-    </header>
-
     <main class="wizard-container">
       <div class="wizard-header">
         <h1>Registro de Proveedor</h1>
@@ -562,7 +553,6 @@ const finishRegistration = () => {
       </template>
     </ConfirmModal>
 
-    <!-- Refactored Address Picker Component -->
     <AddressPickerModal
       v-model="showMapModal"
       :initial-lat="businessForm.latitude"
@@ -575,30 +565,10 @@ const finishRegistration = () => {
 
 <style scoped>
 .provider-register-page {
-  min-height: 100vh;
+  min-height: 100%;
   background-color: #ffffff;
   color: var(--primary-blue);
   padding-bottom: 4rem;
-}
-
-.top-header {
-  background-color: var(--bg-gray);
-  padding: 1.25rem 2.5rem;
-  border-bottom: 1px solid var(--border-gray);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-icon {
-  height: 50px;
-  object-fit: contain;
-}
-
-.home-icon {
-  font-size: 1.5rem;
-  color: var(--primary-blue);
-  text-decoration: none;
 }
 
 .wizard-container {

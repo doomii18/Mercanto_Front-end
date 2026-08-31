@@ -1,10 +1,16 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import { useRoute } from "vue-router";
 import logoImg from "@/assets/logo.png";
+
+const route = useRoute();
+
+const showNavbar = computed(() => route.name !== "register");
 </script>
 
 <template>
   <div class="register-layout">
-    <header class="register-header">
+    <header v-if="showNavbar" class="register-header">
       <div class="logo">
         <router-link :to="{ name: 'home' }">
           <img :src="logoImg" alt="Mercanto" class="logo-icon" />

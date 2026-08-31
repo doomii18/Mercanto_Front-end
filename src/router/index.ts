@@ -31,34 +31,41 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: "/register",
-    name: "register",
-    component: () => import("../views/RegisterView.vue"),
-    meta: { guestOnly: true },
-  },
-  {
-    path: "/register/buyer",
-    name: "buyer-register",
-    redirect: { name: "account-step-1" },
-    component: () => import("../views/account/AccountRegisterView.vue"),
+    component: () => import("../views/account/RegisterLayout.vue"),
     meta: { guestOnly: true },
     children: [
       {
-        path: "step-1",
-        name: "account-step-1",
-        component: () => import("../views/account/AccountStep1View.vue"),
+        path: "",
+        name: "register",
+        component: () => import("../views/RegisterView.vue"),
       },
       {
-        path: "step-2",
-        name: "account-step-2",
-        component: () => import("../views/account/AccountStep2View.vue"),
+        path: "buyer",
+        component: () => import("../views/account/AccountRegisterView.vue"),
+        children: [
+          {
+            path: "",
+            name: "buyer-register",
+            redirect: { name: "account-step-1" },
+          },
+          {
+            path: "step-1",
+            name: "account-step-1",
+            component: () => import("../views/account/AccountStep1View.vue"),
+          },
+          {
+            path: "step-2",
+            name: "account-step-2",
+            component: () => import("../views/account/AccountStep2View.vue"),
+          },
+        ],
+      },
+      {
+        path: "provider",
+        name: "provider-register",
+        component: () => import("../views/ProviderRegisterView.vue"),
       },
     ],
-  },
-  {
-    path: "/register/provider",
-    name: "provider-register",
-    component: () => import("../views/ProviderRegisterView.vue"),
-    meta: { guestOnly: true },
   },
   {
     path: "/provider/profile",
