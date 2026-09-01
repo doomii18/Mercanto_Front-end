@@ -1,11 +1,11 @@
 import { z } from "zod";
 
 export const phoneNumberSchema = z
-  .string()
+  .string({ message: "El número de teléfono es obligatorio" })
   .trim()
-  .min(1)
-  .max(20)
-  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid E.164 phone number format");
+  .min(1, "El número de teléfono no puede estar vacío")
+  .max(20, "El número de teléfono no debe exceder los 20 caracteres")
+  .regex(/^\+?[1-9]\d{1,14}$/, "Formato inválido. Use formato E.164 (ej. +50588888888 o 88888888)");
 
 export const addressSchema = z
   .string()

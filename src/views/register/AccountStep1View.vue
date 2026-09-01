@@ -1,11 +1,19 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
+import { z } from "zod";
 import { useGeoStore } from "@/modules/geo";
 import type { Municipality } from "@/modules/geo";
 import { geographyApi } from "@/api";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
+import {
+    personNameSchema,
+    nationalIdSchema,
+    phoneNumberSchema,
+    emailSchema,
+    uuidSchema,
+} from "@/api/services/identity/domain";
 
 const router = useRouter();
 const geoStore = useGeoStore();
@@ -13,6 +21,17 @@ const registerStore = useAccountRegisterStore();
 const alertStore = useAlertStore();
 
 const isGeoLoading = ref(false);
+const errors = ref<Record<string, string>>({});
+
+const AccountStep1Schema = z.object({
+    firstName: personNameSchema,
+    lastName: personNameSchema,
+    nationalId: nationalIdSchema,
+    phoneNumber: phoneNumberSchema,
+    departmentId: uuidSchema,
+    municipalityId: uuidSchema,
+    email: emailSchema,
+});
 
 const departments = computed(() => geoStore.departmentList);
 
@@ -20,6 +39,12 @@ const municipalities = computed<Municipality[]>(() => {
     if (!registerStore.departmentId) return [];
     return geoStore.getMunicipalitiesByDepartment(registerStore.departmentId);
 });
+
+const clearFieldError = (field: string) => {
+    if (errors.value[field]) {
+        delete errors.value[field];
+    }
+};
 
 watch(
     () => registerStore.departmentId,
@@ -31,6 +56,14 @@ watch(
         ) {
             registerStore.municipalityId = null;
         }
+        clearFieldError("departmentId");
+    },
+);
+
+watch(
+    () => registerStore.municipalityId,
+    () => {
+        clearFieldError("municipalityId");
     },
 );
 
@@ -66,6 +99,8 @@ const handleAutoDetectLocation = () => {
 
                 registerStore.departmentId = res.department_id;
                 registerStore.municipalityId = res.id;
+                clearFieldError("departmentId");
+                clearFieldError("municipalityId");
             } catch (err) {
                 console.error("Reverse geocoding failed:", err);
                 alertStore.showError(
@@ -106,28 +141,34 @@ const handleAvatarDrop = (event: DragEvent) => {
 };
 
 const validateStep1 = (): boolean => {
-    const {
-        firstName,
-        lastName,
-        nationalId,
-        phoneNumber,
-        departmentId,
-        municipalityId,
-        email,
-    } = registerStore;
+    errors.value = {};
 
-    if (
-        !firstName.trim() ||
-        !lastName.trim() ||
-        !nationalId.trim() ||
-        !phoneNumber.trim() ||
-        !departmentId ||
-        !municipalityId ||
-        !email.trim()
-    ) {
-        alertStore.showError("Por favor completa todos los campos requeridos.", "Campos Incompletos");
+    registerStore.nationalId = registerStore.nationalId.trim().toUpperCase();
+    registerStore.phoneNumber = registerStore.phoneNumber.replace(/\s+/g, "");
+
+    const result = AccountStep1Schema.safeParse({
+        firstName: registerStore.firstName,
+        lastName: registerStore.lastName,
+        nationalId: registerStore.nationalId,
+        phoneNumber: registerStore.phoneNumber,
+        departmentId: registerStore.departmentId,
+        municipalityId: registerStore.municipalityId,
+        email: registerStore.email,
+    });
+
+    if (!result.success) {
+        const mappedErrors: Record<string, string> = {};
+        for (const issue of result.error.issues) {
+            const field = issue.path[0] as string;
+            if (!mappedErrors[field]) {
+                mappedErrors[field] = issue.message;
+            }
+        }
+        errors.value = mappedErrors;
+        alertStore.showError("Por favor corrige los campos con errores antes de continuar.", "Datos inválidos");
         return false;
     }
+
     return true;
 };
 
@@ -147,35 +188,46 @@ const handleContinue = () => {
                     v-model="registerStore.firstName"
                     type="text"
                     placeholder="Héctor Raúl"
-                    required
+                    :class="{ 'input-error': errors.firstName }"
+                    @input="clearFieldError('firstName')"
                 />
+                <span v-if="errors.firstName" class="field-error-msg">{{ errors.firstName }}</span>
             </div>
+
             <div class="form-group">
                 <label>Apellidos <span class="required">*</span></label>
                 <input
                     v-model="registerStore.lastName"
                     type="text"
                     placeholder="Hernández López"
-                    required
+                    :class="{ 'input-error': errors.lastName }"
+                    @input="clearFieldError('lastName')"
                 />
+                <span v-if="errors.lastName" class="field-error-msg">{{ errors.lastName }}</span>
             </div>
+
             <div class="form-group">
                 <label>Cédula de identidad <span class="required">*</span></label>
                 <input
                     v-model="registerStore.nationalId"
                     type="text"
                     placeholder="401-241200-1006E"
-                    required
+                    :class="{ 'input-error': errors.nationalId }"
+                    @input="clearFieldError('nationalId')"
                 />
+                <span v-if="errors.nationalId" class="field-error-msg">{{ errors.nationalId }}</span>
             </div>
+
             <div class="form-group">
                 <label>Teléfono <span class="required">*</span></label>
                 <input
                     v-model="registerStore.phoneNumber"
                     type="tel"
-                    placeholder="8730 9208"
-                    required
+                    placeholder="+50587309208"
+                    :class="{ 'input-error': errors.phoneNumber }"
+                    @input="clearFieldError('phoneNumber')"
                 />
+                <span v-if="errors.phoneNumber" class="field-error-msg">{{ errors.phoneNumber }}</span>
             </div>
 
             <div class="form-group full-width auto-geo-wrapper">
@@ -202,7 +254,7 @@ const handleContinue = () => {
 
             <div class="form-group">
                 <label>Departamento <span class="required">*</span></label>
-                <div class="select-wrapper">
+                <div class="select-wrapper" :class="{ 'input-error': errors.departmentId }">
                     <select
                         v-model="registerStore.departmentId"
                         :disabled="departments.length === 0"
@@ -220,11 +272,12 @@ const handleContinue = () => {
                     </select>
                     <i class="fa-solid fa-chevron-down"></i>
                 </div>
+                <span v-if="errors.departmentId" class="field-error-msg">{{ errors.departmentId }}</span>
             </div>
 
             <div class="form-group">
                 <label>Municipio <span class="required">*</span></label>
-                <div class="select-wrapper">
+                <div class="select-wrapper" :class="{ 'input-error': errors.municipalityId }">
                     <select
                         v-model="registerStore.municipalityId"
                         :disabled="!registerStore.departmentId"
@@ -242,6 +295,7 @@ const handleContinue = () => {
                     </select>
                     <i class="fa-solid fa-chevron-down"></i>
                 </div>
+                <span v-if="errors.municipalityId" class="field-error-msg">{{ errors.municipalityId }}</span>
             </div>
 
             <div class="form-group full-width">
@@ -250,8 +304,10 @@ const handleContinue = () => {
                     v-model="registerStore.email"
                     type="email"
                     placeholder="ejemplo@gmail.com"
-                    required
+                    :class="{ 'input-error': errors.email }"
+                    @input="clearFieldError('email')"
                 />
+                <span v-if="errors.email" class="field-error-msg">{{ errors.email }}</span>
             </div>
 
             <div class="form-group full-width">
@@ -351,6 +407,7 @@ const handleContinue = () => {
     outline: none;
     background: #ffffff;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .form-group input:focus,
@@ -374,6 +431,19 @@ const handleContinue = () => {
     transform: translateY(-50%);
     color: #94a3b8;
     pointer-events: none;
+}
+
+.input-error,
+.select-wrapper.input-error select {
+    border-color: #ef4444 !important;
+    background-color: #fffafb;
+}
+
+.field-error-msg {
+    color: #ef4444;
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin-top: 0.15rem;
 }
 
 .auto-geo-wrapper {
