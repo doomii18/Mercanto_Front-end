@@ -93,8 +93,8 @@ const finishRegistration = () => {
                 id="confirm-check"
             />
             <label for="confirm-check">
-                Confirmo que la información enviada es correcta y acepto las
-                <a href="#">Políticas de Privacidad</a>.
+                Confirmo que la información enviada es correcta y autorizo a Mercanto a
+                verificar los datos enviados, <router-link :to="{ name: 'home', hash: '#politicas' }" class="policy-link">de acuerdo con las Políticas de Privacidad</router-link>.
             </label>
         </div>
 
@@ -160,6 +160,17 @@ const finishRegistration = () => {
     color: var(--primary-blue);
     margin-bottom: 1.8rem;
     font-weight: 700;
+}
+
+.policy-link {
+    color: #0099ff;
+    text-decoration: underline;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.policy-link:hover {
+    color: #0077cc;
 }
 
 .review-grid {
