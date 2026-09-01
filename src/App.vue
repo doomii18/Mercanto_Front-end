@@ -17,10 +17,6 @@ onMounted(async () => {
     await checkPreferences();
   }
 
-  alertStore.showError(
-    "Esto es una prueba para verificar que el store global de alertas funciona correctamente.",
-    "Prueba de Alerta Global"
-  );
 });
 
 watch(
