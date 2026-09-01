@@ -41,10 +41,10 @@ export const UpdateMemberRoleRequestSchema = z.object({
 
 export const PublicProviderDtoSchema = z.object({
   id: z.uuid(),
-  company_name: z.string(),
+  company_name: companyNameSchema,
   location: GeoPointSchema,
   municipality_id: z.uuid(),
-  company_description: z.string().nullable().optional(),
+  company_description: companyDescriptionSchema.nullable().optional(),
   logo_blob_id: z.uuid().nullable().optional(),
   kind: ProviderKindSchema,
   rating: RatingSummarySchema,
@@ -52,11 +52,11 @@ export const PublicProviderDtoSchema = z.object({
 
 export const OrganizationDetailsDtoSchema = z.object({
   id: z.uuid(),
-  company_name: z.string(),
-  tax_id: z.string(),
+  company_name: companyNameSchema,
+  tax_id: taxIdSchema,
   location: GeoPointSchema,
-  company_description: z.string().nullable().optional(),
-  phone_number: z.string().nullable().optional(),
+  company_description: companyDescriptionSchema.nullable().optional(),
+  phone_number: phoneNumberSchema.nullable().optional(),
   logo_blob_id: z.uuid().nullable().optional(),
   status: OrganizationStatusSchema.or(z.string()),
   kind: ProviderKindSchema,
@@ -66,7 +66,6 @@ export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(
   PublicProviderDtoSchema,
 );
 
-// Backward-compatible alias
 export const PaginatedOrganizationResponseSchema = PaginatedOrganizationsResponseSchema;
 
 export const RegisterProviderRequestSchema = z.object({

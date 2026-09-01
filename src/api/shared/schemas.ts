@@ -1,5 +1,17 @@
 import { z } from "zod";
 
+export const phoneNumberSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(20)
+  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid E.164 phone number format");
+
+export const addressSchema = z
+  .string()
+  .trim()
+  .min(1, "Address cannot be empty");
+
 export const ErrorKindSchema = z.enum([
   "validation",
   "unauthorized",
@@ -31,11 +43,10 @@ export const UploadUrlResponseSchema = z.object({
 });
 
 export const AssetUploadRequestSchema = z.object({
-  mime_type: z.string(),
+  mime_type: z.string().trim().toLowerCase().min(1).max(100),
   size_bytes: z.number().int().positive(),
 });
 
-// Shared domain schemas
 export const SortDirectionSchema = z.enum(["asc", "desc"]);
 
 export const RatingSummarySchema = z.object({

@@ -1,16 +1,22 @@
 import { z } from "zod";
+export { phoneNumberSchema } from "../../shared/schemas";
 
 export const emailSchema = z
   .string()
   .trim()
+  .toLowerCase()
   .min(1)
   .max(255)
-  .email();
+  .regex(
+    /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/,
+    "Invalid email format"
+  );
 
 export const passwordSchema = z
   .string()
-  .min(8)
-  .max(128);
+  .trim()
+  .min(8, "Password must be at least 8 characters")
+  .max(128, "Password must not exceed 128 characters");
 
 export const securePasswordSchema = passwordSchema
   .regex(/[a-z]/, "Must contain at least one lowercase letter")
@@ -20,19 +26,13 @@ export const securePasswordSchema = passwordSchema
 export const personNameSchema = z
   .string()
   .trim()
-  .min(1)
-  .max(255);
+  .min(1, "Name cannot be empty")
+  .max(255, "Name must not exceed 255 characters");
 
 export const nationalIdSchema = z
   .string()
   .trim()
+  .toUpperCase()
   .regex(/^\d{3}-\d{6}-\d{4}[A-Z]$/, "Invalid National ID format");
-
-export const phoneNumberSchema = z
-  .string()
-  .trim()
-  .min(1)
-  .max(20)
-  .regex(/^\+?[1-9]\d{1,14}$/, "Invalid E.164 phone number format");
 
 export const uuidSchema = z.uuid();

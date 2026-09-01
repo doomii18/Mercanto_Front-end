@@ -1,5 +1,9 @@
 import { z } from "zod";
 import { PaginatedResponseSchema } from "../../shared/schemas";
+import {
+  reviewerNotesSchema,
+  documentLabelSchema,
+} from "../organization/domain";
 
 export const OrganizationVerificationStatusSchema = z.enum([
   "draft",
@@ -16,14 +20,14 @@ export const VerificationRequestResponseSchema = z.object({
   submitted_at: z.iso.datetime(),
   reviewed_by: z.uuid().nullable().optional(),
   reviewed_at: z.iso.datetime().nullable().optional(),
-  reviewer_notes: z.string().nullable().optional(),
+  reviewer_notes: reviewerNotesSchema.nullable().optional(),
   updated_at: z.iso.datetime(),
 });
 
 export const VerificationRequestDocumentResponseSchema = z.object({
   request_id: z.uuid(),
   blob_id: z.uuid(),
-  document_label: z.string().nullable().optional(),
+  document_label: documentLabelSchema.nullable().optional(),
   uploaded_at: z.iso.datetime(),
 });
 
@@ -45,9 +49,9 @@ export const SubmitVerificationRequestSchema = z.object({
 });
 
 export const ApproveVerificationRequestSchema = z.object({
-  reviewer_notes: z.string().nullable().optional(),
+  reviewer_notes: reviewerNotesSchema.nullable().optional(),
 });
 
 export const RejectVerificationRequestSchema = z.object({
-  reviewer_notes: z.string().nullable().optional(),
+  reviewer_notes: reviewerNotesSchema.nullable().optional(),
 });
