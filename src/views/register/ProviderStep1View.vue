@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { z } from "zod";
 import { geographyApi } from "@/api";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
@@ -8,6 +9,14 @@ import { useAlertStore } from "@/stores/alertStore";
 import AddressPickerModal, {
   type AddressPickerResult,
 } from "@/components/common/AddressPickerModal.vue";
+import {
+  companyNameSchema,
+  taxIdSchema,
+  ProviderKindSchema,
+  phoneNumberSchema,
+  addressSchema,
+  companyDescriptionSchema,
+} from "@/api/services/organization/domain";
 
 const router = useRouter();
 const providerStore = useProviderRegisterStore();
@@ -15,6 +24,24 @@ const accountStore = useAccountRegisterStore();
 const alertStore = useAlertStore();
 
 const showMapModal = ref(false);
+const errors = ref<Record<string, string>>({});
+
+const ProviderStep1Schema = z.object({
+  taxId: taxIdSchema,
+  companyName: companyNameSchema,
+  kind: ProviderKindSchema,
+  companyPhone: phoneNumberSchema,
+  companyDescription: companyDescriptionSchema.optional().or(z.literal("")),
+  address: addressSchema,
+  latitude: z.number({ message: "Debe seleccionar la ubicación en el mapa" }),
+  longitude: z.number({ message: "Debe seleccionar la ubicación en el mapa" }),
+});
+
+const clearFieldError = (field: string) => {
+  if (errors.value[field]) {
+    delete errors.value[field];
+  }
+};
 
 const handleLocationConfirmed = async (location: AddressPickerResult) => {
   providerStore.setLocation({
@@ -22,6 +49,9 @@ const handleLocationConfirmed = async (location: AddressPickerResult) => {
     lng: location.longitude,
     address: location.address,
   });
+  clearFieldError("address");
+  clearFieldError("latitude");
+  clearFieldError("longitude");
 
   try {
     const geoRes = await geographyApi.getMunicipalityByCoordinates({
@@ -61,24 +91,38 @@ const handleLogoDrop = (event: DragEvent) => {
 };
 
 const validateStep1 = (): boolean => {
-  const { companyName, taxId, kind, companyPhone, address, latitude, longitude } =
-    providerStore;
+  errors.value = {};
 
-  if (
-    !companyName.trim() ||
-    !taxId.trim() ||
-    !kind ||
-    !companyPhone.trim() ||
-    !address.trim() ||
-    latitude === null ||
-    longitude === null
-  ) {
+  providerStore.taxId = providerStore.taxId.trim().toUpperCase();
+  providerStore.companyPhone = providerStore.companyPhone.replace(/\s+/g, "");
+
+  const result = ProviderStep1Schema.safeParse({
+    taxId: providerStore.taxId,
+    companyName: providerStore.companyName,
+    kind: providerStore.kind,
+    companyPhone: providerStore.companyPhone,
+    companyDescription: providerStore.companyDescription,
+    address: providerStore.address,
+    latitude: providerStore.latitude,
+    longitude: providerStore.longitude,
+  });
+
+  if (!result.success) {
+    const mappedErrors: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as string;
+      if (!mappedErrors[field]) {
+        mappedErrors[field] = issue.message;
+      }
+    }
+    errors.value = mappedErrors;
     alertStore.showError(
-      "Por favor completa todos los campos obligatorios del negocio y selecciona la ubicación en el mapa.",
-      "Campos Incompletos"
+      "Por favor corrige los campos marcados en rojo antes de continuar.",
+      "Datos inválidos"
     );
     return false;
   }
+
   return true;
 };
 
@@ -93,30 +137,40 @@ const handleContinue = () => {
     <h3 class="step-title">Información del Negocio</h3>
 
     <div class="form-grid">
+      <!-- Número RUC -->
       <div class="form-group">
         <label>Número RUC <span class="required">*</span></label>
         <input
           v-model="providerStore.taxId"
           type="text"
-          placeholder="J0310000664348"
-          required
+          placeholder="J0000000000000"
+          :class="{ 'input-error': errors.taxId }"
+          @input="clearFieldError('taxId')"
         />
+        <span v-if="errors.taxId" class="field-error-msg">{{ errors.taxId }}</span>
       </div>
 
+      <!-- Nombre del Negocio -->
       <div class="form-group">
         <label>Nombre del Negocio <span class="required">*</span></label>
         <input
           v-model="providerStore.companyName"
           type="text"
-          placeholder="E. Chamorro Industrial S.A"
-          required
+          placeholder="Distribuidora Ejemplo S.A."
+          :class="{ 'input-error': errors.companyName }"
+          @input="clearFieldError('companyName')"
         />
+        <span v-if="errors.companyName" class="field-error-msg">{{ errors.companyName }}</span>
       </div>
 
+      <!-- Tipo de Negocio -->
       <div class="form-group">
         <label>Tipo de Negocio <span class="required">*</span></label>
-        <div class="select-wrapper">
-          <select v-model="providerStore.kind" required>
+        <div class="select-wrapper" :class="{ 'input-error': errors.kind }">
+          <select
+            v-model="providerStore.kind"
+            @change="clearFieldError('kind')"
+          >
             <option value="" disabled selected>Seleccione...</option>
             <option value="manufacturer">Industria Manufacturera</option>
             <option value="wholesaler">Comercio al por mayor</option>
@@ -126,30 +180,39 @@ const handleContinue = () => {
           </select>
           <i class="fa-solid fa-chevron-down"></i>
         </div>
+        <span v-if="errors.kind" class="field-error-msg">{{ errors.kind }}</span>
       </div>
 
+      <!-- Teléfono del Negocio -->
       <div class="form-group">
         <label>Teléfono del Negocio <span class="required">*</span></label>
         <input
           v-model="providerStore.companyPhone"
           type="tel"
-          placeholder="2222 7854"
-          required
+          placeholder="+50522220000"
+          :class="{ 'input-error': errors.companyPhone }"
+          @input="clearFieldError('companyPhone')"
         />
+        <span v-if="errors.companyPhone" class="field-error-msg">{{ errors.companyPhone }}</span>
       </div>
 
+      <!-- Descripción del Negocio -->
       <div class="form-group full-width">
         <label>Descripción del Negocio</label>
         <textarea
           v-model="providerStore.companyDescription"
           placeholder="Describe los productos o rubros que comercializa tu empresa..."
           rows="3"
+          :class="{ 'input-error': errors.companyDescription }"
+          @input="clearFieldError('companyDescription')"
         ></textarea>
+        <span v-if="errors.companyDescription" class="field-error-msg">{{ errors.companyDescription }}</span>
       </div>
 
+      <!-- Dirección y Mapa -->
       <div class="form-group full-width">
         <label>Dirección <span class="required">*</span></label>
-        <div class="input-with-button">
+        <div class="input-with-button" :class="{ 'input-error': errors.address || errors.latitude || errors.longitude }">
           <input
             :value="providerStore.address"
             type="text"
@@ -167,8 +230,12 @@ const handleContinue = () => {
             <i class="fa-solid fa-location-dot"></i> Mapa
           </button>
         </div>
+        <span v-if="errors.address || errors.latitude || errors.longitude" class="field-error-msg">
+          {{ errors.address || errors.latitude || errors.longitude }}
+        </span>
       </div>
 
+      <!-- Logo -->
       <div class="form-group full-width">
         <label>Logo del Negocio</label>
         <div
@@ -301,6 +368,20 @@ const handleContinue = () => {
   outline: none;
   padding: 0.75rem 1rem;
   font-size: 0.95rem;
+}
+
+.input-error,
+.select-wrapper.input-error select,
+.input-with-button.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fffafb;
+}
+
+.field-error-msg {
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.15rem;
 }
 
 .btn-mapa {

@@ -1,18 +1,40 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
+import { z } from "zod";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
+import {
+  nationalIdSchema,
+  personNameSchema,
+  emailSchema,
+  phoneNumberSchema,
+} from "@/api/services/identity/domain";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();
 const providerStore = useProviderRegisterStore();
 const alertStore = useAlertStore();
 
+const errors = ref<Record<string, string>>({});
 const verificationDocName = ref(
   providerStore.verificationDocumentFile?.name || ""
 );
+
+const ProviderStep2Schema = z.object({
+  nationalId: nationalIdSchema,
+  firstName: personNameSchema,
+  lastName: personNameSchema,
+  email: emailSchema,
+  phoneNumber: phoneNumberSchema,
+});
+
+const clearFieldError = (field: string) => {
+  if (errors.value[field]) {
+    delete errors.value[field];
+  }
+};
 
 const handleDocumentFile = (event: Event) => {
   const input = event.target as HTMLInputElement;
@@ -24,21 +46,35 @@ const handleDocumentFile = (event: Event) => {
 };
 
 const validateStep2 = (): boolean => {
-  const { nationalId, firstName, lastName, email, phoneNumber } = accountStore;
+  errors.value = {};
 
-  if (
-    !nationalId.trim() ||
-    !firstName.trim() ||
-    !lastName.trim() ||
-    !email.trim() ||
-    !phoneNumber.trim()
-  ) {
+  accountStore.nationalId = accountStore.nationalId.trim().toUpperCase();
+  accountStore.phoneNumber = accountStore.phoneNumber.replace(/\s+/g, "");
+
+  const result = ProviderStep2Schema.safeParse({
+    nationalId: accountStore.nationalId,
+    firstName: accountStore.firstName,
+    lastName: accountStore.lastName,
+    email: accountStore.email,
+    phoneNumber: accountStore.phoneNumber,
+  });
+
+  if (!result.success) {
+    const mappedErrors: Record<string, string> = {};
+    for (const issue of result.error.issues) {
+      const field = issue.path[0] as string;
+      if (!mappedErrors[field]) {
+        mappedErrors[field] = issue.message;
+      }
+    }
+    errors.value = mappedErrors;
     alertStore.showError(
-      "Por favor completa todos los campos obligatorios del propietario.",
-      "Campos Incompletos"
+      "Por favor corrige los campos marcados en rojo antes de continuar.",
+      "Datos inválidos"
     );
     return false;
   }
+
   return true;
 };
 
@@ -53,14 +89,18 @@ const handleContinue = () => {
     <h3 class="step-title">Información del Propietario</h3>
 
     <div class="form-grid">
+      <!-- Cédula de Identidad -->
       <div class="form-group">
         <label>Cédula de Identidad <span class="required">*</span></label>
         <input
           v-model="accountStore.nationalId"
           type="text"
-          placeholder="401-230900-5001F"
-          required
+          placeholder="001-000000-0000A"
+          :class="{ 'input-error': errors.nationalId }"
+          @input="clearFieldError('nationalId')"
         />
+        <span v-if="errors.nationalId" class="field-error-msg">{{ errors.nationalId }}</span>
+
         <div class="doc-upload-row">
           <label class="btn-subir-doc">
             <i class="fa-regular fa-file-image"></i>
@@ -82,44 +122,56 @@ const handleContinue = () => {
         </div>
       </div>
 
+      <!-- Nombres -->
       <div class="form-group">
         <label>Nombres del Propietario <span class="required">*</span></label>
         <input
           v-model="accountStore.firstName"
           type="text"
-          placeholder="Ernesto"
-          required
+          placeholder="Nombre del propietario"
+          :class="{ 'input-error': errors.firstName }"
+          @input="clearFieldError('firstName')"
         />
+        <span v-if="errors.firstName" class="field-error-msg">{{ errors.firstName }}</span>
       </div>
 
+      <!-- Apellidos -->
       <div class="form-group">
         <label>Apellidos del Propietario <span class="required">*</span></label>
         <input
           v-model="accountStore.lastName"
           type="text"
-          placeholder="Chamorro"
-          required
+          placeholder="Apellido del propietario"
+          :class="{ 'input-error': errors.lastName }"
+          @input="clearFieldError('lastName')"
         />
+        <span v-if="errors.lastName" class="field-error-msg">{{ errors.lastName }}</span>
       </div>
 
+      <!-- Correo electrónico -->
       <div class="form-group">
         <label>Correo electrónico <span class="required">*</span></label>
         <input
           v-model="accountStore.email"
           type="email"
-          placeholder="echamorro@gmail.com"
-          required
+          placeholder="propietario@ejemplo.com"
+          :class="{ 'input-error': errors.email }"
+          @input="clearFieldError('email')"
         />
+        <span v-if="errors.email" class="field-error-msg">{{ errors.email }}</span>
       </div>
 
+      <!-- Teléfono -->
       <div class="form-group">
         <label>Teléfono <span class="required">*</span></label>
         <input
           v-model="accountStore.phoneNumber"
           type="tel"
-          placeholder="8790 - 6723"
-          required
+          placeholder="+50588880000"
+          :class="{ 'input-error': errors.phoneNumber }"
+          @input="clearFieldError('phoneNumber')"
         />
+        <span v-if="errors.phoneNumber" class="field-error-msg">{{ errors.phoneNumber }}</span>
       </div>
     </div>
 
@@ -185,6 +237,18 @@ const handleContinue = () => {
 
 .form-group input:focus {
   border-color: var(--light-teal);
+}
+
+.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fffafb;
+}
+
+.field-error-msg {
+  color: #ef4444;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin-top: 0.15rem;
 }
 
 .doc-upload-row {
