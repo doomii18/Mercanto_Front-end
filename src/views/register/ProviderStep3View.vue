@@ -121,50 +121,12 @@ const finishRegistration = () => {
         />
         <label for="confirm-check">
           Confirmo que la información enviada es correcta y autorizo a Mercanto a
-          verificar los datos enviados.
+          verificar los datos enviados, <router-link :to="{ name: 'home', hash: '#politicas' }" class="policy-link">de acuerdo con las Políticas de Privacidad</router-link>.
         </label>
       </div>
     </div>
 
-    <div class="review-right">
-      <div class="approval-panel">
-        <div class="shield-icon">
-          <i class="fa-solid fa-shield-halved"></i>
-        </div>
-        <h4>¿Qué sucederá después?</h4>
-        <p class="approval-desc">
-          Nuestro equipo revisará la información y verificará que los datos
-          enviados sean correctos.
-        </p>
-        <hr />
-        <h4 style="text-align: left; margin-bottom: 1.25rem">
-          Proceso de Aprobación
-        </h4>
-        <div class="approval-timeline">
-          <div class="timeline-item">
-            <i class="fa-regular fa-clock timeline-icon orange"></i>
-            <div class="timeline-content">
-              <h5>En revisión</h5>
-              <p>Tu solicitud es revisada por nuestro equipo.</p>
-            </div>
-          </div>
-          <div class="timeline-item">
-            <i class="fa-regular fa-circle-check timeline-icon teal"></i>
-            <div class="timeline-content">
-              <h5>Aprobado</h5>
-              <p>Se te notificará por correo que tu solicitud ha sido aprobada.</p>
-            </div>
-          </div>
-          <div class="timeline-item">
-            <i class="fa-regular fa-circle-xmark timeline-icon orange"></i>
-            <div class="timeline-content">
-              <h5>Desaprobado</h5>
-              <p>Te pediremos actualizar la información.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- Right panel removed per user request -->
   </div>
 
   <div class="global-actions">
@@ -331,87 +293,6 @@ const finishRegistration = () => {
   cursor: pointer;
 }
 
-.approval-panel {
-  background: #eaf5f4;
-  border: 1px solid var(--light-teal);
-  border-radius: 16px;
-  padding: 2rem 1.5rem;
-  text-align: center;
-}
-
-.shield-icon {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background: #bae5e2;
-  color: var(--primary-orange);
-  font-size: 2.2rem;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto 1.25rem auto;
-  border: 2.5px solid var(--light-teal);
-}
-
-.approval-panel h4 {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--primary-blue);
-  margin-bottom: 0.6rem;
-}
-
-.approval-desc {
-  font-size: 0.88rem;
-  color: var(--primary-blue);
-  margin-bottom: 1.2rem;
-  line-height: 1.4;
-}
-
-.approval-panel hr {
-  border: none;
-  border-top: 1px solid #bae5e2;
-  margin: 1.5rem 0;
-}
-
-.approval-timeline {
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.timeline-item {
-  display: flex;
-  gap: 0.8rem;
-  align-items: flex-start;
-}
-
-.timeline-icon {
-  font-size: 1.2rem;
-  margin-top: 2px;
-}
-
-.timeline-icon.orange {
-  color: var(--primary-orange);
-}
-
-.timeline-icon.teal {
-  color: var(--light-teal);
-}
-
-.timeline-content h5 {
-  font-weight: 600;
-  color: var(--primary-blue);
-  font-size: 0.95rem;
-  margin-bottom: 0.2rem;
-}
-
-.timeline-content p {
-  font-size: 0.82rem;
-  color: #475569;
-  line-height: 1.35;
-}
-
 .global-actions {
   display: flex;
   justify-content: center;
@@ -454,6 +335,17 @@ const finishRegistration = () => {
 .btn-teal:disabled {
   background: #cbd5e1;
   cursor: not-allowed;
+}
+
+.policy-link {
+  color: #0099ff;
+  text-decoration: underline;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.policy-link:hover {
+  color: #0077cc;
 }
 
 @media (max-width: 900px) {
