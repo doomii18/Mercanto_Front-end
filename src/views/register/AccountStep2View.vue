@@ -2,11 +2,13 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
+import { useAlertStore } from "@/stores/alertStore";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
 
 const router = useRouter();
 const registerStore = useAccountRegisterStore();
+const alertStore = useAlertStore();
 
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
@@ -21,7 +23,10 @@ const handleRegistration = async (credentials: {
         showPasswordModal.value = false;
         showSuccessModal.value = true;
     } catch (err: any) {
-        alert(err.message || "Ocurrió un error al procesar el registro.");
+        alertStore.showError(
+            err.message || "Ocurrió un error al procesar el registro.",
+            "Error en el Registro"
+        );
     }
 };
 

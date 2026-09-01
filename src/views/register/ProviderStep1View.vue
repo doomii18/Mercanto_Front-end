@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { geographyApi } from "@/api";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
+import { useAlertStore } from "@/stores/alertStore";
 import AddressPickerModal, {
   type AddressPickerResult,
 } from "@/components/common/AddressPickerModal.vue";
@@ -11,6 +12,7 @@ import AddressPickerModal, {
 const router = useRouter();
 const providerStore = useProviderRegisterStore();
 const accountStore = useAccountRegisterStore();
+const alertStore = useAlertStore();
 
 const showMapModal = ref(false);
 
@@ -30,7 +32,10 @@ const handleLocationConfirmed = async (location: AddressPickerResult) => {
     accountStore.departmentId = geoRes.department_id;
   } catch (err) {
     console.error("Failed to reverse geocode provider location:", err);
-    alert("No se pudo obtener el municipio para la ubicación seleccionada.");
+    alertStore.showError(
+      "No se pudo obtener el municipio para la ubicación seleccionada.",
+      "Error de Ubicación"
+    );
   }
 };
 
@@ -40,7 +45,7 @@ const handleLogoSelection = (event: Event) => {
     try {
       providerStore.setLogo(input.files[0]);
     } catch (err: any) {
-      alert(err.message);
+      alertStore.showError(err.message || "Error al procesar el logo seleccionado.");
     }
   }
 };
@@ -50,7 +55,7 @@ const handleLogoDrop = (event: DragEvent) => {
     try {
       providerStore.setLogo(event.dataTransfer.files[0]);
     } catch (err: any) {
-      alert(err.message);
+      alertStore.showError(err.message || "Error al procesar el logo seleccionado.");
     }
   }
 };
@@ -68,8 +73,9 @@ const validateStep1 = (): boolean => {
     latitude === null ||
     longitude === null
   ) {
-    alert(
-      "Por favor completa todos los campos obligatorios del negocio y selecciona la ubicación en el mapa."
+    alertStore.showError(
+      "Por favor completa todos los campos obligatorios del negocio y selecciona la ubicación en el mapa.",
+      "Campos Incompletos"
     );
     return false;
   }

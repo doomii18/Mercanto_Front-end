@@ -3,10 +3,12 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
+import { useAlertStore } from "@/stores/alertStore";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();
 const providerStore = useProviderRegisterStore();
+const alertStore = useAlertStore();
 
 const verificationDocName = ref(
   providerStore.verificationDocumentFile?.name || ""
@@ -31,7 +33,10 @@ const validateStep2 = (): boolean => {
     !email.trim() ||
     !phoneNumber.trim()
   ) {
-    alert("Por favor completa todos los campos obligatorios del propietario.");
+    alertStore.showError(
+      "Por favor completa todos los campos obligatorios del propietario.",
+      "Campos Incompletos"
+    );
     return false;
   }
   return true;

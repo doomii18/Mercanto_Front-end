@@ -5,10 +5,12 @@ import { useGeoStore } from "@/modules/geo";
 import type { Municipality } from "@/modules/geo";
 import { geographyApi } from "@/api";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
+import { useAlertStore } from "@/stores/alertStore";
 
 const router = useRouter();
 const geoStore = useGeoStore();
 const registerStore = useAccountRegisterStore();
+const alertStore = useAlertStore();
 
 const isGeoLoading = ref(false);
 
@@ -44,7 +46,7 @@ onMounted(async () => {
 
 const handleAutoDetectLocation = () => {
     if (!navigator.geolocation) {
-        alert("Geolocalización no soportada por el navegador.");
+        alertStore.showError("Geolocalización no soportada por el navegador.", "Geolocalización no disponible");
         return;
     }
 
@@ -66,8 +68,9 @@ const handleAutoDetectLocation = () => {
                 registerStore.municipalityId = res.id;
             } catch (err) {
                 console.error("Reverse geocoding failed:", err);
-                alert(
+                alertStore.showError(
                     "No se pudo detectar el municipio correspondiente a su ubicación.",
+                    "Error de Ubicación"
                 );
             } finally {
                 isGeoLoading.value = false;
@@ -75,7 +78,7 @@ const handleAutoDetectLocation = () => {
         },
         () => {
             isGeoLoading.value = false;
-            alert("Permiso denegado para geolocalización.");
+            alertStore.showError("Permiso denegado para geolocalización.", "Permiso Requerido");
         },
         { enableHighAccuracy: true, timeout: 10000 },
     );
@@ -87,7 +90,7 @@ const handleAvatarSelection = (event: Event) => {
         try {
             registerStore.setAvatar(input.files[0]);
         } catch (err: any) {
-            alert(err.message);
+            alertStore.showError(err.message || "Error al procesar el archivo seleccionado.");
         }
     }
 };
@@ -97,7 +100,7 @@ const handleAvatarDrop = (event: DragEvent) => {
         try {
             registerStore.setAvatar(event.dataTransfer.files[0]);
         } catch (err: any) {
-            alert(err.message);
+            alertStore.showError(err.message || "Error al procesar el archivo seleccionado.");
         }
     }
 };
@@ -122,7 +125,7 @@ const validateStep1 = (): boolean => {
         !municipalityId ||
         !email.trim()
     ) {
-        alert("Por favor completa todos los campos requeridos.");
+        alertStore.showError("Por favor completa todos los campos requeridos.", "Campos Incompletos");
         return false;
     }
     return true;
