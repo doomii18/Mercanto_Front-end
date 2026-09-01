@@ -94,7 +94,7 @@ const finishRegistration = () => {
             />
             <label for="confirm-check">
                 Confirmo que la información enviada es correcta y autorizo a Mercanto a
-                verificar los datos enviados, <router-link :to="{ name: 'home', hash: '#politicas' }" class="policy-link">de acuerdo con las Políticas de Privacidad</router-link>.
+                verificar los datos enviados, <router-link :to="{ name: 'privacy' }" class="policy-link">de acuerdo con las Políticas de Privacidad</router-link>.
             </label>
         </div>
 

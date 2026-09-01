@@ -42,7 +42,7 @@ onMounted(() => {
 
         <!-- Column 2: Navigation Links -->
         <div class="flex flex-col gap-2.5 md:px-10 border-t md:border-t-0 md:border-x-2 border-orange-500 pt-6 md:pt-0">
-          <router-link :to="{ name: 'home', hash: '#politicas' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+          <router-link :to="{ name: 'privacy' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
             Política de privacidad
           </router-link>
           <router-link :to="{ name: 'home', hash: '#categorias' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
