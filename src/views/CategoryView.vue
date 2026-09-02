@@ -94,11 +94,15 @@ const filteredProducts = computed<ProductResponse[]>(() => {
 });
 
 const featuredProviders = computed<FeaturedProviderItem[]>(() => {
-  if (apiProducts.value.length === 0) return [];
+  const reviewedProducts = apiProducts.value.filter(
+    (p) => (p.rating?.review_count ?? 0) > 0
+  );
+
+  if (reviewedProducts.length === 0) return [];
 
   const providerStats = new Map<string, { scoreSum: number; count: number }>();
 
-  apiProducts.value.forEach((p) => {
+  reviewedProducts.forEach((p) => {
     const score = p.rating?.average_score ?? 0;
     const stats = providerStats.get(p.provider_id) || { scoreSum: 0, count: 0 };
     stats.scoreSum += score;
@@ -264,7 +268,6 @@ onMounted(async () => {
           <span>Mostrando {{ filteredProducts.length > 0 ? 1 : 0 }}-{{ filteredProducts.length }} de {{ totalProducts }} productos</span>
         </div>
 
-        <!-- Skeleton Loading State -->
         <div v-if="isLoadingProducts" class="products-grid">
           <div v-for="n in 8" :key="n" class="skeleton-card" aria-hidden="true">
             <div class="skeleton-badge skeleton-pulse"></div>
@@ -276,13 +279,11 @@ onMounted(async () => {
           </div>
         </div>
 
-        <!-- Empty State -->
         <div v-else-if="filteredProducts.length === 0" class="empty-products-msg">
           <i class="fa-solid fa-box-open"></i>
           <h3>No hay productos disponibles en esta categoría.</h3>
         </div>
 
-        <!-- Products Grid -->
         <div v-else class="products-grid">
           <ProductCard
             v-for="(prod, index) in filteredProducts"
@@ -455,7 +456,6 @@ onMounted(async () => {
   gap: 1.5rem;
 }
 
-/* Skeleton Loading */
 .skeleton-card {
   background: #ffffff;
   border: 2px solid var(--border-gray, #e2e8f0);
