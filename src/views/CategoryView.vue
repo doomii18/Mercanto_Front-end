@@ -6,6 +6,7 @@ import type { ProductCategoryResponse } from "../api/services/category/types";
 import type { ProductResponse } from "../api/services/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
+import ProviderCard from "../components/organization/ProviderCard.vue";
 import ProductImage from "../components/product/ProductImage.vue";
 
 interface ProductCardItem {
@@ -23,13 +24,19 @@ interface ProductCardItem {
   isWishlist: boolean;
 }
 
-interface ProviderItem {
+interface ProviderMeta {
+  name: string;
+  logoBlobId: string | null;
+  municipalityId: string | null;
+}
+
+interface FeaturedProviderItem {
   id: string;
   name: string;
+  logoBlobId: string | null;
   rating: number;
-  location: string;
-  categoryId?: string;
-  categoryName?: string;
+  municipalityId: string | null;
+  count?: number;
 }
 
 const PAGE_SIZE = 12;
@@ -49,7 +56,7 @@ const isLoadingMore = ref<boolean>(false);
 const offset = ref(0);
 const totalApiProducts = ref(0);
 
-const providersMap = ref<Map<string, string>>(new Map());
+const providersMap = ref<Map<string, ProviderMeta>>(new Map());
 
 const selectedCategoryId = ref<string | null>(
   (route.query.category_id as string) || null
@@ -88,7 +95,8 @@ const products = computed<ProductCardItem[]>(() => {
     const categoryName = p.category?.name || "General";
     const priceValue = p.base_price;
     const minOrderValue = "Physical" in p.spec ? p.spec.Physical.min_order_quantity : 1;
-    const providerName = providersMap.value.get(p.provider_id) || "Proveedor aliado";
+    const providerMeta = providersMap.value.get(p.provider_id);
+    const providerName = providerMeta?.name || "Proveedor aliado";
     const averageScore = p.rating?.average_score ?? 0;
 
     return {
@@ -120,7 +128,7 @@ const products = computed<ProductCardItem[]>(() => {
   return items;
 });
 
-const featuredProviders = computed<ProviderItem[]>(() => {
+const featuredProviders = computed<FeaturedProviderItem[]>(() => {
   if (apiProducts.value.length === 0) return [];
 
   const providerStats = new Map<string, { scoreSum: number; count: number }>();
@@ -136,22 +144,18 @@ const featuredProviders = computed<ProviderItem[]>(() => {
   return Array.from(providerStats.entries())
     .map(([id, stats]) => {
       const avgRating = stats.count > 0 ? stats.scoreSum / stats.count : 0;
+      const meta = providersMap.value.get(id);
       return {
         id,
-        name: providersMap.value.get(id) || "Proveedor aliado",
+        name: meta?.name || "Proveedor aliado",
+        logoBlobId: meta?.logoBlobId ?? null,
+        municipalityId: meta?.municipalityId ?? null,
         rating: Number(avgRating.toFixed(1)),
-        location: "Nicaragua",
-        count: stats.count
+        count: stats.count,
       };
     })
-    .sort((a, b) => b.rating - a.rating || b.count - a.count)
-    .slice(0, 3)
-    .map(({ id, name, rating, location }) => ({
-      id,
-      name,
-      rating,
-      location
-    }));
+    .sort((a, b) => b.rating - a.rating || (b.count ?? 0) - (a.count ?? 0))
+    .slice(0, 3);
 });
 
 function toggleWishlist(prod: ProductCardItem): void {
@@ -174,9 +178,17 @@ async function resolveProviderNames(items: ProductResponse[]): Promise<void> {
     missingIds.map(async (id) => {
       try {
         const org = await organizationApi.getPublicProvider(id);
-        providersMap.value.set(id, org.company_name);
+        providersMap.value.set(id, {
+          name: org.company_name,
+          logoBlobId: org.logo_blob_id ?? null,
+          municipalityId: org.municipality_id ?? null,
+        });
       } catch {
-        providersMap.value.set(id, "Proveedor aliado");
+        providersMap.value.set(id, {
+          name: "Proveedor aliado",
+          logoBlobId: null,
+          municipalityId: null,
+        });
       }
     })
   );
@@ -221,7 +233,6 @@ async function loadProducts(isAppend = false): Promise<void> {
     }
 
     await resolveProviderNames(res.data);
-
   } catch (err) {
     console.error("Error loading products:", err);
     if (!isAppend) {
@@ -353,28 +364,23 @@ onMounted(async () => {
 
       <section v-if="products.length > 0 && featuredProviders.length > 0" class="featured-providers">
         <h2>Proveedores destacados de {{ heroTitle }}</h2>
-        <div class="providers-grid">
-          <div v-for="(prov, idx) in featuredProviders" :key="idx" class="provider-card">
-            <div class="provider-avatar">
-              <i class="fa-regular fa-user"></i>
-            </div>
-            <h4>{{ prov.name }}</h4>
-            <div class="verified-badge">
-              <i class="fa-solid fa-certificate"></i>
-              <span>Proveedor verificado</span>
-            </div>
-            <div class="provider-rating">
-              <strong>{{ prov.rating }}</strong>
-              <i class="fa-solid fa-star star-filled"></i>
-            </div>
-            <p class="provider-location">{{ prov.location }}</p>
-            <button type="button" class="btn-catalog">Ver catálogo</button>
-          </div>
+        <div class="featured-providers-grid">
+          <ProviderCard
+            v-for="prov in featuredProviders"
+            :key="prov.id"
+            :id="prov.id"
+            :name="prov.name"
+            :logo-blob-id="prov.logoBlobId"
+            :rating="prov.rating"
+            :municipality-id="prov.municipalityId"
+            :is-verified="true"
+          />
         </div>
       </section>
     </main>
   </div>
 </template>
+
 <style scoped>
 .category-view {
   min-height: 100vh;
@@ -683,91 +689,17 @@ onMounted(async () => {
   margin-bottom: 2.5rem;
 }
 
-.providers-grid {
+.featured-providers-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
-}
-
-.provider-card {
-  background: #ffffff;
-  border: 2px solid #ff6a00;
-  border-radius: 20px;
-  padding: 2.2rem 1.8rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.provider-avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  background-color: #f5f7f9;
-  border: 2px solid #023859;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2rem;
-  color: #023859;
-  margin-bottom: 1rem;
-}
-
-.provider-card h4 {
-  font-size: 1.15rem;
-  color: #023859;
-  margin-bottom: 0.4rem;
-  font-weight: 700;
-}
-
-.verified-badge {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  color: #00a896;
-  font-size: 0.8rem;
-  font-weight: 600;
-  margin-bottom: 0.8rem;
-}
-
-.provider-rating {
-  font-size: 1.2rem;
-  color: #023859;
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  margin-bottom: 0.5rem;
-}
-
-.provider-location {
-  color: #888;
-  font-size: 0.85rem;
-  margin-bottom: 1.5rem;
-}
-
-.btn-catalog {
-  background-color: #ff6a00;
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 20px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  transition: opacity 0.2s ease;
-}
-
-.btn-catalog:hover {
-  opacity: 0.92;
 }
 
 @media (max-width: 992px) {
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  .providers-grid {
+  .featured-providers-grid {
     grid-template-columns: 1fr;
   }
 }
@@ -782,4 +714,3 @@ onMounted(async () => {
   }
 }
 </style>
-```[cite: 1]

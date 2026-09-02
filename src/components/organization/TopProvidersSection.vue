@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { organizationApi } from "../../api";
 import { useGeoStore } from "../../modules/geo";
-import ProviderLogo from "./ProviderLogo.vue";
+import ProviderCard from "./ProviderCard.vue";
 
 interface TopProviderItem {
   id: string;
@@ -90,59 +90,17 @@ onMounted(async () => {
     </div>
 
     <div v-else class="providers-grid">
-      <div
+      <ProviderCard
         v-for="provider in providers"
         :key="provider.id"
-        class="provider-card"
-      >
-        <div class="provider-avatar">
-          <ProviderLogo
-            :blob-id="provider.logoBlobId"
-            :alt="provider.name"
-          />
-        </div>
-
-        <h4 :title="provider.name">{{ provider.name }}</h4>
-
-        <div v-if="provider.isVerified" class="verified-icon">
-          <i class="fa-solid fa-certificate"></i>
-        </div>
-        <p class="provider-status">
-          {{
-            provider.isVerified
-              ? "Proveedor verificado"
-              : "Proveedor registrado"
-          }}
-        </p>
-
-        <div
-          class="provider-rating"
-          :title="`${provider.reviewCount} valoraciones`"
-        >
-          <span class="score">
-            {{
-              provider.rating > 0
-                ? provider.rating.toFixed(1)
-                : "0.0"
-            }}
-          </span>
-          <i class="fa-solid fa-star"></i>
-        </div>
-
-        <p class="provider-location" :title="provider.locationText">
-          {{ provider.locationText }}
-        </p>
-
-        <router-link
-          :to="{
-            name: 'category',
-            query: { provider_id: provider.id },
-          }"
-          class="btn-orange"
-        >
-          Ver catálogo
-        </router-link>
-      </div>
+        :id="provider.id"
+        :name="provider.name"
+        :logo-blob-id="provider.logoBlobId"
+        :rating="provider.rating"
+        :review-count="provider.reviewCount"
+        :location-text="provider.locationText"
+        :is-verified="provider.isVerified"
+      />
     </div>
 
     <div class="view-all-wrapper">
@@ -176,109 +134,6 @@ onMounted(async () => {
   margin-bottom: 2rem;
 }
 
-.provider-card {
-  background: #ffffff;
-  border: 2px solid var(--primary-orange);
-  border-radius: 24px;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-  min-width: 0;
-}
-
-.provider-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(255, 106, 0, 0.12);
-}
-
-.provider-avatar {
-  width: 72px;
-  height: 72px;
-  background-color: #f1f5f9;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.8rem;
-  color: #64748b;
-  margin-bottom: 1rem;
-  overflow: hidden;
-  border: 1px solid var(--border-gray);
-}
-
-.provider-card h4 {
-  font-size: 1.15rem;
-  color: var(--primary-blue);
-  margin-bottom: 0.4rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.verified-icon {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  font-size: 1.5rem;
-  color: #0284c7;
-}
-
-.provider-status {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 0.6rem;
-}
-
-.provider-rating {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-blue);
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
-}
-
-.provider-rating i {
-  color: var(--primary-orange);
-  font-size: 1.2rem;
-}
-
-.provider-location {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin-bottom: 1.2rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-}
-
-.btn-orange {
-  background-color: var(--primary-orange);
-  color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 24px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  text-decoration: none;
-  display: inline-block;
-  box-sizing: border-box;
-  transition: background-color 0.2s ease;
-}
-
-.btn-orange:hover {
-  background-color: var(--primary-orange-hover);
-}
-
 .view-all-wrapper {
   text-align: right;
 }
@@ -303,8 +158,14 @@ onMounted(async () => {
 
 /* Skeleton Loading */
 .skeleton-card {
+  background: #ffffff;
+  border: 2px solid var(--border-gray);
+  border-radius: 24px;
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   pointer-events: none;
-  border-color: var(--border-gray);
 }
 
 .skeleton-pulse {
