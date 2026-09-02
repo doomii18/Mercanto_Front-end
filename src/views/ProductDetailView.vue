@@ -3,7 +3,7 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { productApi, organizationApi, cartApi } from "../api";
 import { useAuthStore } from "../modules/auth";
-import { useGeoStore } from "../modules/geo";
+import { useGeoStore } from "../stores/geo";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 

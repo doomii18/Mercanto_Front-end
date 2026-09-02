@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { organizationApi } from "../../api";
-import { useGeoStore } from "../../modules/geo";
+import { useGeoStore } from "../../stores/geo";
 import ProviderCard from "./ProviderCard.vue";
 
 interface TopProviderItem {

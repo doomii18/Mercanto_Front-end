@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { GeocodingService, useGeoStore } from "../modules/geo";
+import { GeocodingService, useGeoStore } from "../stores/geo";
 
 import mochilaImg from "../assets/mochila.png";
 import utensiliosImg from "../assets/utensilios.png";

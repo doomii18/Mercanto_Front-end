@@ -6,7 +6,7 @@ import type { UserProfileResponse } from "../api/services/user_profile/types";
 import BaseModal from "../components/common/BaseModal.vue";
 import ConfirmModal from "../components/common/ConfirmModal.vue";
 import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
-import { useGeoStore } from "../modules/geo";
+import { useGeoStore } from "../stores/geo";
 
 const geoStore = useGeoStore();
 const authStore = useAuthStore();

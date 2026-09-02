@@ -2,8 +2,8 @@
 import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
-import { useGeoStore } from "@/modules/geo";
-import type { Municipality } from "@/modules/geo";
+import { useGeoStore } from "@/stores/geo";
+import type { Municipality } from "@/stores/geo";
 import { geographyApi } from "@/api";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";

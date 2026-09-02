@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted } from "vue";
-import { useGeoStore } from "../../modules/geo";
+import { useGeoStore } from "../../stores/geo";
 import ProviderLogo from "./ProviderLogo.vue";
 
 interface Props {
