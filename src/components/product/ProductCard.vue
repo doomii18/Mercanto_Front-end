@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import ProductImage from "./ProductImage.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
-import { organizationApi } from "../../api";
+import { useOrganizationStore } from "@/stores/organizationStore";
 
 export interface ProductCardProps {
   id: string;
@@ -32,6 +32,8 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
   bubbleClass: "orange",
 });
 
+const orgStore = useOrganizationStore();
+
 const providerName = ref<string>("Proveedor aliado");
 const providerLogoBlobId = ref<string | null>(null);
 const isProviderLoading = ref<boolean>(true);
@@ -50,7 +52,7 @@ async function loadProviderInfo() {
 
   isProviderLoading.value = true;
   try {
-    const org = await organizationApi.getPublicProvider(props.providerId);
+    const org = await orgStore.getPublicProvider(props.providerId);
     providerName.value = org.company_name || "Proveedor aliado";
     providerLogoBlobId.value = org.logo_blob_id ?? null;
   } catch (err) {
@@ -62,9 +64,12 @@ async function loadProviderInfo() {
   }
 }
 
-watch(() => props.providerId, () => {
-  loadProviderInfo();
-});
+watch(
+  () => props.providerId,
+  () => {
+    loadProviderInfo();
+  }
+);
 
 onMounted(() => {
   loadProviderInfo();
@@ -76,7 +81,6 @@ onMounted(() => {
     :to="{ name: 'product-detail', params: { id } }"
     class="product-card group"
   >
-    <!-- 1:1 Aspect Ratio Product Frame with Overlay Badge -->
     <div class="product-img-frame">
       <span v-if="badgeText" class="badge-overlay">
         <i v-if="badgeIcon" :class="badgeIcon"></i>
@@ -90,27 +94,21 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Category -->
     <p v-if="categoryName" class="product-category">{{ categoryName }}</p>
 
-    <!-- Product Title & Price -->
     <div class="product-info">
       <h4 :title="title">{{ title }}</h4>
       <span class="price">{{ formattedPrice }}</span>
     </div>
 
-    <!-- Min Order -->
     <p v-if="minOrder" class="min-order">Pedido mín. {{ minOrder }} und</p>
 
-    <!-- Provider Footer -->
     <div class="provider-info">
-      <!-- Loading Skeleton for Provider Logo & Name -->
       <div v-if="isProviderLoading" class="provider-skeleton-wrap">
         <div class="skeleton-pulse provider-logo-skeleton"></div>
         <div class="skeleton-pulse provider-text-skeleton"></div>
       </div>
 
-      <!-- Resolved Provider Logo & Name -->
       <div v-else class="provider-name-wrap" :title="providerName">
         <div class="provider-logo-frame">
           <ProviderLogo :blob-id="providerLogoBlobId" :alt="providerName" />
@@ -118,14 +116,12 @@ onMounted(() => {
         <span class="provider-name">{{ providerName }}</span>
       </div>
 
-      <!-- Rating -->
       <span class="rating" :title="`${reviewCount} valoraciones`">
         {{ rating > 0 ? rating.toFixed(1) : "0.0" }}
         <i class="fa-solid fa-star"></i>
       </span>
     </div>
 
-    <!-- Rank Bubble -->
     <div
       v-if="rank !== null && rank !== undefined"
       :class="['ranking-bubble', bubbleClass]"
@@ -157,7 +153,6 @@ onMounted(() => {
   box-shadow: 0 12px 28px rgba(255, 106, 0, 0.14);
 }
 
-/* Image Container */
 .product-img-frame {
   position: relative;
   width: 100%;
@@ -178,7 +173,6 @@ onMounted(() => {
   object-fit: cover;
 }
 
-/* Floating Overlay Badge */
 .badge-overlay {
   position: absolute;
   top: 8px;
@@ -350,3 +344,4 @@ onMounted(() => {
   100% { background-position: -200% 0; }
 }
 </style>
+```[cite: 1]
