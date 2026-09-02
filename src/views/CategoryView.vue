@@ -7,22 +7,7 @@ import type { ProductResponse } from "../api/services/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
 import ProviderCard from "../components/organization/ProviderCard.vue";
-import ProductImage from "../components/product/ProductImage.vue";
-
-interface ProductCardItem {
-  id: string;
-  title: string;
-  category: string;
-  categoryId?: string;
-  price: string;
-  minOrder: string;
-  imageBlobId: string | null;
-  provider: string;
-  rating: number | string;
-  rank: number;
-  rankTheme: string;
-  isWishlist: boolean;
-}
+import ProductCard from "../components/product/ProductCard.vue";
 
 interface ProviderMeta {
   name: string;
@@ -40,12 +25,12 @@ interface FeaturedProviderItem {
 }
 
 const PAGE_SIZE = 12;
+const BUBBLE_CLASSES = ["orange", "teal", "blue", "grey"] as const;
 
 const route = useRoute();
 const router = useRouter();
 
 const searchFilter = ref<string>("");
-const wishlistSet = ref<Set<string>>(new Set());
 
 const categories = ref<ProductCategoryResponse[]>([]);
 const apiProducts = ref<ProductResponse[]>([]);
@@ -90,42 +75,22 @@ const totalProducts = computed<number>(() => {
   return totalApiProducts.value;
 });
 
-const products = computed<ProductCardItem[]>(() => {
-  let items = apiProducts.value.map((p, index) => {
-    const categoryName = p.category?.name || "General";
-    const priceValue = p.base_price;
-    const minOrderValue = "Physical" in p.spec ? p.spec.Physical.min_order_quantity : 1;
-    const providerMeta = providersMap.value.get(p.provider_id);
-    const providerName = providerMeta?.name || "Proveedor aliado";
-    const averageScore = p.rating?.average_score ?? 0;
-
-    return {
-      id: p.id,
-      title: p.title,
-      category: categoryName,
-      categoryId: p.category_id,
-      price: `C$ ${priceValue.toLocaleString("es-NI", { minimumFractionDigits: 2 })}`,
-      minOrder: `Min. ${minOrderValue} uds`,
-      imageBlobId: p.image_blob_ids?.[0] ?? null,
-      provider: providerName,
-      rating: averageScore > 0 ? averageScore.toFixed(1) : "0.0",
-      rank: index + 1,
-      rankTheme: `rank-${(index % 4) + 1}`,
-      isWishlist: wishlistSet.value.has(p.id),
-    };
-  });
-
-  if (searchFilter.value.trim() !== "") {
-    const query = searchFilter.value.toLowerCase().trim();
-    items = items.filter(
-      (p) =>
-        p.title.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.provider.toLowerCase().includes(query)
-    );
+function resolveMinOrder(spec: ProductResponse["spec"]): number {
+  if ("Physical" in spec && spec.Physical?.min_order_quantity) {
+    return spec.Physical.min_order_quantity;
   }
+  return 1;
+}
 
-  return items;
+const filteredProducts = computed<ProductResponse[]>(() => {
+  if (!searchFilter.value.trim()) return apiProducts.value;
+  const query = searchFilter.value.toLowerCase().trim();
+
+  return apiProducts.value.filter((p) => {
+    const matchTitle = p.title.toLowerCase().includes(query);
+    const matchCategory = p.category?.name?.toLowerCase().includes(query);
+    return matchTitle || matchCategory;
+  });
 });
 
 const featuredProviders = computed<FeaturedProviderItem[]>(() => {
@@ -158,19 +123,7 @@ const featuredProviders = computed<FeaturedProviderItem[]>(() => {
     .slice(0, 3);
 });
 
-function toggleWishlist(prod: ProductCardItem): void {
-  if (wishlistSet.value.has(prod.id)) {
-    wishlistSet.value.delete(prod.id);
-  } else {
-    wishlistSet.value.add(prod.id);
-  }
-}
-
-function goToProduct(prod: ProductCardItem): void {
-  router.push({ name: "product-detail", params: { id: prod.id } });
-}
-
-async function resolveProviderNames(items: ProductResponse[]): Promise<void> {
+async function resolveFeaturedProviderMeta(items: ProductResponse[]): Promise<void> {
   const missingIds = [...new Set(items.map((p) => p.provider_id).filter((id) => !providersMap.value.has(id)))];
   if (missingIds.length === 0) return;
 
@@ -200,7 +153,7 @@ async function loadCategories(): Promise<void> {
     const res = await categoryApi.getCategories({ limit: 100 });
     categories.value = res.data;
   } catch (err) {
-    console.warn("Using default category definitions:", err);
+    console.warn("Error loading categories:", err);
   } finally {
     isLoadingCategories.value = false;
   }
@@ -232,7 +185,7 @@ async function loadProducts(isAppend = false): Promise<void> {
       apiProducts.value = res.data;
     }
 
-    await resolveProviderNames(res.data);
+    await resolveFeaturedProviderMeta(res.data);
   } catch (err) {
     console.error("Error loading products:", err);
     if (!isAppend) {
@@ -300,61 +253,55 @@ onMounted(async () => {
           <div class="sort-select">
             <span>Ordenar por: <strong>Más Relevantes</strong></span>
           </div>
-          <button type="button" class="btn-filter"><i class="fa-solid fa-bars"></i></button>
+          <button type="button" class="btn-filter" aria-label="Filtros">
+            <i class="fa-solid fa-bars"></i>
+          </button>
         </div>
       </section>
 
       <section class="products-catalog">
         <div class="catalog-header">
-          <span>Mostrando {{ products.length > 0 ? 1 : 0 }}-{{ products.length }} de {{ totalProducts }} productos</span>
+          <span>Mostrando {{ filteredProducts.length > 0 ? 1 : 0 }}-{{ filteredProducts.length }} de {{ totalProducts }} productos</span>
         </div>
 
-        <div v-if="products.length === 0" class="empty-products-msg">
+        <!-- Skeleton Loading State -->
+        <div v-if="isLoadingProducts" class="products-grid">
+          <div v-for="n in 8" :key="n" class="skeleton-card" aria-hidden="true">
+            <div class="skeleton-badge skeleton-pulse"></div>
+            <div class="skeleton-image skeleton-pulse"></div>
+            <div class="skeleton-text skeleton-category skeleton-pulse"></div>
+            <div class="skeleton-text skeleton-title skeleton-pulse"></div>
+            <div class="skeleton-text skeleton-sub skeleton-pulse"></div>
+            <div class="skeleton-footer skeleton-pulse"></div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="filteredProducts.length === 0" class="empty-products-msg">
           <i class="fa-solid fa-box-open"></i>
           <h3>No hay productos disponibles en esta categoría.</h3>
         </div>
 
+        <!-- Products Grid -->
         <div v-else class="products-grid">
-          <div
-            v-for="prod in products"
+          <ProductCard
+            v-for="(prod, index) in filteredProducts"
             :key="prod.id"
-            class="product-card"
-            style="cursor: pointer;"
-            @click="goToProduct(prod)"
-          >
-            <button
-              type="button"
-              :class="['btn-wishlist', { active: prod.isWishlist }]"
-              @click.stop="toggleWishlist(prod)"
-            >
-              <i :class="prod.isWishlist ? 'fa-solid fa-heart' : 'fa-regular fa-heart'"></i>
-            </button>
-            <div class="product-img-wrapper">
-              <ProductImage :blob-id="prod.imageBlobId" :alt="prod.title" />
-            </div>
-            <div class="card-info">
-              <span class="category-label">{{ prod.category }}</span>
-              <h4 class="product-title">{{ prod.title }}</h4>
-              <div class="price-min-order">
-                <span class="price">{{ prod.price }}</span>
-                <span class="min-order">{{ prod.minOrder }}</span>
-              </div>
-              <div class="provider-info">
-                <div class="provider-details">
-                  <i class="fa-solid fa-circle-check verified-icon"></i>
-                  <span class="provider-name">{{ prod.provider }}</span>
-                </div>
-                <div class="rating-info">
-                  <i class="fa-regular fa-user"></i>
-                  <span class="rating">{{ prod.rating }} <i class="fa-solid fa-star star-filled"></i></span>
-                </div>
-              </div>
-            </div>
-            <div :class="['rank-badge', prod.rankTheme]">{{ prod.rank }}</div>
-          </div>
+            :id="prod.id"
+            :title="prod.title"
+            :price="prod.base_price"
+            :provider-id="prod.provider_id"
+            :category-name="prod.category?.name || 'General'"
+            :min-order="resolveMinOrder(prod.spec)"
+            :image-blob-id="prod.image_blob_ids?.[0] ?? null"
+            :rating="prod.rating?.average_score ?? 0"
+            :review-count="prod.rating?.review_count ?? 0"
+            :rank="index + 1"
+            :bubble-class="BUBBLE_CLASSES[index % BUBBLE_CLASSES.length]"
+          />
         </div>
 
-        <div v-if="hasMore && products.length > 0" class="load-more-wrapper">
+        <div v-if="hasMore && filteredProducts.length > 0" class="load-more-wrapper">
           <button type="button" class="btn-load-more" :disabled="isLoadingMore" @click="loadMore">
             {{ isLoadingMore ? 'Cargando...' : 'Cargar más productos' }}
             <i :class="isLoadingMore ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-chevron-down'"></i>
@@ -362,7 +309,7 @@ onMounted(async () => {
         </div>
       </section>
 
-      <section v-if="products.length > 0 && featuredProviders.length > 0" class="featured-providers">
+      <section v-if="filteredProducts.length > 0 && featuredProviders.length > 0" class="featured-providers">
         <h2>Proveedores destacados de {{ heroTitle }}</h2>
         <div class="featured-providers-grid">
           <ProviderCard
@@ -385,7 +332,7 @@ onMounted(async () => {
 .category-view {
   min-height: 100vh;
   background-color: #ffffff;
-  color: #023859;
+  color: var(--primary-blue, #023859);
 }
 
 .category-page-container {
@@ -406,7 +353,7 @@ onMounted(async () => {
   flex: 2;
   display: flex;
   align-items: center;
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--border-gray, #e2e8f0);
   border-radius: 30px;
   padding: 0.3rem 0.3rem 0.3rem 1.5rem;
   background-color: #ffffff;
@@ -427,7 +374,7 @@ onMounted(async () => {
 }
 
 .search-box-wrapper .btn-orange {
-  background-color: #ff6a00;
+  background-color: var(--primary-orange, #ff6a00);
   color: white;
   border: none;
   padding: 0.6rem 1.5rem;
@@ -445,7 +392,7 @@ onMounted(async () => {
 }
 
 .sort-select {
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--border-gray, #e2e8f0);
   border-radius: 20px;
   padding: 0.7rem 1.5rem;
   background: #ffffff;
@@ -455,12 +402,12 @@ onMounted(async () => {
 }
 
 .sort-select strong {
-  color: #ff6a00;
+  color: var(--primary-orange, #ff6a00);
 }
 
 .btn-filter {
   background: #ffffff;
-  border: 1px solid #dcdcdc;
+  border: 1px solid var(--border-gray, #e2e8f0);
   border-radius: 12px;
   width: 45px;
   height: 45px;
@@ -482,7 +429,7 @@ onMounted(async () => {
 .catalog-header {
   margin-bottom: 1.5rem;
   font-weight: 600;
-  color: #023859;
+  color: var(--primary-blue, #023859);
 }
 
 .empty-products-msg {
@@ -499,155 +446,80 @@ onMounted(async () => {
 
 .empty-products-msg h3 {
   font-size: 1.2rem;
-  color: #023859;
+  color: var(--primary-blue, #023859);
 }
 
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 1.5rem;
 }
 
-.product-card {
-  background-color: #ffffff;
-  border: 2px solid #00a896;
-  border-radius: 15px;
-  padding: 1rem;
-  position: relative;
+/* Skeleton Loading */
+.skeleton-card {
+  background: #ffffff;
+  border: 2px solid var(--border-gray, #e2e8f0);
+  border-radius: 20px;
+  padding: 1.1rem;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  pointer-events: none;
 }
 
-.btn-wishlist {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: transparent;
-  border: none;
-  font-size: 1.2rem;
-  color: #ff4d4d;
-  cursor: pointer;
-  z-index: 10;
-  transition: transform 0.2s ease;
+.skeleton-pulse {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
-.btn-wishlist:hover {
-  transform: scale(1.15);
+.skeleton-badge {
+  width: 80px;
+  height: 18px;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
 }
 
-.product-img-wrapper {
+.skeleton-image {
   width: 100%;
   aspect-ratio: 1 / 1;
-  margin-bottom: 1rem;
-  overflow: hidden;
-  border-radius: 20px;
+  border-radius: 14px;
+  margin-bottom: 0.75rem;
 }
 
-.product-img-wrapper :deep(img),
-.product-img-wrapper :deep(svg) {
+.skeleton-text {
+  border-radius: 6px;
+  margin-bottom: 0.4rem;
+}
+
+.skeleton-category {
+  width: 40%;
+  height: 0.75rem;
+  margin: 0 auto 0.35rem;
+}
+
+.skeleton-title {
+  width: 80%;
+  height: 1rem;
+}
+
+.skeleton-sub {
+  width: 45%;
+  height: 0.75rem;
+  margin-left: auto;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-footer {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-.card-info {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.category-label {
-  font-size: 0.75rem;
-  color: #888;
-  margin-bottom: 0.3rem;
-}
-
-.product-title {
-  font-size: 0.95rem;
-  color: #023859;
-  margin-bottom: 0.6rem;
-  font-weight: 600;
-}
-
-.price-min-order {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 0.8rem;
-}
-
-.price {
-  font-weight: 700;
-  color: #ff6a00;
-  font-size: 1.05rem;
-}
-
-.min-order {
-  font-size: 0.75rem;
-  color: #888;
-}
-
-.provider-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid #f0f0f0;
-  padding-top: 0.6rem;
+  height: 1.5rem;
   margin-top: auto;
+  border-radius: 6px;
 }
 
-.provider-details {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: #555;
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
-
-.verified-icon {
-  color: #00a896;
-  font-size: 0.85rem;
-}
-
-.rating-info {
-  display: flex;
-  align-items: center;
-  gap: 0.3rem;
-  font-size: 0.8rem;
-  color: #888;
-}
-
-.rating {
-  font-weight: 600;
-  color: #333;
-}
-
-.star-filled {
-  color: #ffaa00;
-}
-
-.rank-badge {
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: white;
-  font-weight: 700;
-  font-size: 0.75rem;
-}
-
-.rank-1 { background-color: #ff6a00; }
-.rank-2 { background-color: #00a896; }
-.rank-3 { background-color: #023859; }
-.rank-4 { background-color: #718096; }
 
 .load-more-wrapper {
   text-align: center;
@@ -656,10 +528,10 @@ onMounted(async () => {
 
 .btn-load-more {
   background-color: #ffffff;
-  border: 2px solid #00a896;
+  border: 2px solid var(--light-teal, #00a896);
   padding: 0.65rem 2rem;
   border-radius: 25px;
-  color: #00a896;
+  color: var(--light-teal, #00a896);
   font-weight: 600;
   font-size: 0.95rem;
   cursor: pointer;
@@ -684,29 +556,29 @@ onMounted(async () => {
 
 .featured-providers h2 {
   font-size: 1.8rem;
-  color: #023859;
+  color: var(--primary-blue, #023859);
   text-align: center;
   margin-bottom: 2.5rem;
 }
 
 .featured-providers-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 2rem;
 }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .products-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .featured-providers-grid {
     grid-template-columns: 1fr;
   }
 }
 
-@media (max-width: 576px) {
+@media (max-width: 640px) {
   .products-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
   .search-sort-bar {
     flex-direction: column;

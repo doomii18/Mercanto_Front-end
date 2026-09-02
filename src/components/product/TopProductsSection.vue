@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { productApi, organizationApi } from "../../api";
+import { productApi } from "../../api";
 import type { ProductResponse } from "../../api/services/product/types";
-import ProductImage from "./ProductImage.vue";
+import ProductCard from "./ProductCard.vue";
 import topSellersHeroImg from "../../assets/top-sellers-hero.png";
 
 interface TopProductItem {
@@ -12,7 +12,7 @@ interface TopProductItem {
   price: number;
   minOrder: number;
   imageBlobId: string | null;
-  providerName: string;
+  providerId: string;
   rating: number;
   reviewCount: number;
   rank: number;
@@ -45,30 +45,15 @@ async function loadTopProducts() {
       sort_by: "score",
       sort_direction: "desc",
     });
-    const rawItems = res.data;
 
-    const providerMap = new Map<string, string>();
-    const providerIds = [...new Set(rawItems.map((p) => p.provider_id))];
-
-    await Promise.allSettled(
-      providerIds.map(async (id) => {
-        try {
-          const org = await organizationApi.getPublicProvider(id);
-          providerMap.set(id, org.company_name);
-        } catch {
-          providerMap.set(id, "Proveedor aliado");
-        }
-      })
-    );
-
-    topProducts.value = rawItems.map((prod, index) => ({
+    topProducts.value = res.data.map((prod, index) => ({
       id: prod.id,
       title: prod.title,
       categoryName: prod.category?.name || "General",
       price: prod.base_price,
       minOrder: resolveMinOrder(prod.spec),
       imageBlobId: prod.image_blob_ids?.[0] ?? null,
-      providerName: providerMap.get(prod.provider_id) || "Proveedor aliado",
+      providerId: prod.provider_id,
       rating: prod.rating?.average_score ?? 0,
       reviewCount: prod.rating?.review_count ?? 0,
       rank: index + 1,
@@ -117,7 +102,7 @@ onMounted(() => {
 
     <!-- Skeleton Loading State -->
     <div v-if="isLoading" class="products-grid">
-      <div v-for="n in 4" :key="n" class="product-card skeleton-card" aria-hidden="true">
+      <div v-for="n in 4" :key="n" class="skeleton-card" aria-hidden="true">
         <div class="skeleton-badge skeleton-pulse"></div>
         <div class="skeleton-image skeleton-pulse"></div>
         <div class="skeleton-text skeleton-category skeleton-pulse"></div>
@@ -129,47 +114,23 @@ onMounted(() => {
 
     <!-- Product Grid -->
     <div v-else class="products-grid">
-      <router-link
+      <ProductCard
         v-for="product in topProducts"
         :key="product.id"
-        :to="{ name: 'product-detail', params: { id: product.id } }"
-        class="product-card"
-      >
-        <span class="badge-orange small">
-          <i class="fa-solid fa-fire"></i> Los más vendidos
-        </span>
-
-        <div class="product-img-frame">
-          <ProductImage
-            :blob-id="product.imageBlobId"
-            :alt="product.title"
-          />
-        </div>
-
-        <p class="product-category">{{ product.categoryName }}</p>
-
-        <div class="product-info">
-          <h4 :title="product.title">{{ product.title }}</h4>
-          <span class="price">C$ {{ product.price.toLocaleString("es-NI") }}</span>
-        </div>
-
-        <p class="min-order">Pedido mín. {{ product.minOrder }} und</p>
-
-        <div class="provider-info">
-          <div class="provider-name-wrap" :title="product.providerName">
-            <i class="fa-solid fa-certificate badge-verified"></i>
-            <span class="provider-name">{{ product.providerName }}</span>
-          </div>
-          <span class="rating" :title="`${product.reviewCount} valoraciones`">
-            {{ product.rating > 0 ? product.rating.toFixed(1) : "0.0" }}
-            <i class="fa-solid fa-star"></i>
-          </span>
-        </div>
-
-        <div :class="['ranking-bubble', product.bubbleClass]">
-          {{ product.rank }}
-        </div>
-      </router-link>
+        :id="product.id"
+        :title="product.title"
+        :category-name="product.categoryName"
+        :price="product.price"
+        :min-order="product.minOrder"
+        :image-blob-id="product.imageBlobId"
+        :provider-id="product.providerId"
+        :rating="product.rating"
+        :review-count="product.reviewCount"
+        :rank="product.rank"
+        :bubble-class="product.bubbleClass"
+        badge-text="Los más vendidos"
+        badge-icon="fa-solid fa-fire"
+      />
     </div>
   </section>
 </template>
@@ -211,13 +172,6 @@ onMounted(() => {
   align-items: center;
   gap: 0.4rem;
   margin-bottom: 0.75rem;
-}
-
-.badge-orange.small {
-  font-size: 0.72rem;
-  padding: 0.2rem 0.6rem;
-  margin-bottom: 0.5rem;
-  width: fit-content;
 }
 
 .top-sellers-title h2 {
@@ -289,165 +243,14 @@ onMounted(() => {
   width: 100%;
 }
 
-.product-card {
+.skeleton-card {
   background: #ffffff;
-  border: 2px solid var(--primary-orange, #ff6a00);
+  border: 2px solid var(--border-gray, #e2e8f0);
   border-radius: 18px;
   padding: 1.25rem;
-  position: relative;
   display: flex;
   flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-  min-width: 0;
-  box-sizing: border-box;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.product-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(255, 106, 0, 0.15);
-}
-
-.product-img-frame {
-  width: 100%;
-  height: 160px;
-  margin-bottom: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-}
-
-.product-img-frame :deep(.product-image-wrapper) {
-  width: 100%;
-  height: 100%;
-  background-color: transparent;
-}
-
-.product-category {
-  font-size: 0.72rem;
-  color: #718096;
-  text-align: center;
-  margin-bottom: 0.4rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.product-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.35rem;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.product-info h4 {
-  font-size: 0.9rem;
-  color: var(--primary-blue, #023859);
-  font-weight: 600;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
-  min-width: 0;
-}
-
-.product-info .price {
-  color: var(--primary-orange, #ff6a00);
-  font-weight: 700;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.min-order {
-  font-size: 0.72rem;
-  color: #718096;
-  text-align: right;
-  margin-bottom: 0.75rem;
-}
-
-.provider-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.75rem;
-  color: #4a5568;
-  border-top: 1px solid var(--border-gray, #e2e8f0);
-  padding-top: 0.75rem;
-  margin-top: auto;
-  min-width: 0;
-}
-
-.provider-name-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.badge-verified {
-  color: #0284c7;
-  flex-shrink: 0;
-}
-
-.provider-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.provider-info .rating {
-  font-weight: 700;
-  color: var(--text-dark, #1e293b);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  flex-shrink: 0;
-}
-
-.provider-info .rating i {
-  color: var(--primary-orange, #ff6a00);
-}
-
-.ranking-bubble {
-  position: absolute;
-  bottom: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: #ffffff;
-  font-weight: 700;
-  font-size: 0.85rem;
-}
-
-.ranking-bubble.orange {
-  background-color: var(--primary-orange, #ff6a00);
-}
-.ranking-bubble.teal {
-  background-color: #0d9488;
-}
-.ranking-bubble.blue {
-  background-color: var(--primary-blue, #023859);
-}
-.ranking-bubble.grey {
-  background-color: #64748b;
-}
-
-/* Skeleton Loading */
-.skeleton-card {
   pointer-events: none;
-  border-color: var(--border-gray, #e2e8f0);
 }
 
 .skeleton-pulse {
@@ -500,12 +303,8 @@ onMounted(() => {
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 @media (max-width: 1024px) {
