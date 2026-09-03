@@ -7,6 +7,7 @@ import type { Municipality } from "@/stores/geo";
 import { geographyApi } from "@/api";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
+import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
 import {
     personNameSchema,
     nationalIdSchema,
@@ -40,6 +41,23 @@ const municipalities = computed<Municipality[]>(() => {
     return geoStore.getMunicipalitiesByDepartment(registerStore.departmentId);
 });
 
+const avatarModel = computed({
+    get: () => registerStore.avatarFile ?? null,
+    set: (file: File[] | File | null) => {
+        if (file instanceof File) {
+            try {
+                registerStore.setAvatar(file);
+            } catch (err: any) {
+                alertStore.showError(
+                    err.message || "Error al procesar el archivo seleccionado."
+                );
+            }
+        } else {
+            registerStore.clearAvatar();
+        }
+    },
+});
+
 const clearFieldError = (field: string) => {
     if (errors.value[field]) {
         delete errors.value[field];
@@ -51,20 +69,20 @@ watch(
     () => {
         if (
             !municipalities.value.some(
-                (m) => m.id === registerStore.municipalityId,
+                (m) => m.id === registerStore.municipalityId
             )
         ) {
             registerStore.municipalityId = null;
         }
         clearFieldError("departmentId");
-    },
+    }
 );
 
 watch(
     () => registerStore.municipalityId,
     () => {
         clearFieldError("municipalityId");
-    },
+    }
 );
 
 onMounted(async () => {
@@ -79,7 +97,10 @@ onMounted(async () => {
 
 const handleAutoDetectLocation = () => {
     if (!navigator.geolocation) {
-        alertStore.showError("Geolocalización no soportada por el navegador.", "Geolocalización no disponible");
+        alertStore.showError(
+            "Geolocalización no soportada por el navegador.",
+            "Geolocalización no disponible"
+        );
         return;
     }
 
@@ -113,31 +134,13 @@ const handleAutoDetectLocation = () => {
         },
         () => {
             isGeoLoading.value = false;
-            alertStore.showError("Permiso denegado para geolocalización.", "Permiso Requerido");
+            alertStore.showError(
+                "Permiso denegado para geolocalización.",
+                "Permiso Requerido"
+            );
         },
-        { enableHighAccuracy: true, timeout: 10000 },
+        { enableHighAccuracy: true, timeout: 10000 }
     );
-};
-
-const handleAvatarSelection = (event: Event) => {
-    const input = event.target as HTMLInputElement;
-    if (input.files && input.files[0]) {
-        try {
-            registerStore.setAvatar(input.files[0]);
-        } catch (err: any) {
-            alertStore.showError(err.message || "Error al procesar el archivo seleccionado.");
-        }
-    }
-};
-
-const handleAvatarDrop = (event: DragEvent) => {
-    if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-        try {
-            registerStore.setAvatar(event.dataTransfer.files[0]);
-        } catch (err: any) {
-            alertStore.showError(err.message || "Error al procesar el archivo seleccionado.");
-        }
-    }
 };
 
 const validateStep1 = (): boolean => {
@@ -165,7 +168,10 @@ const validateStep1 = (): boolean => {
             }
         }
         errors.value = mappedErrors;
-        alertStore.showError("Por favor corrige los campos con errores antes de continuar.", "Datos inválidos");
+        alertStore.showError(
+            "Por favor corrige los campos con errores antes de continuar.",
+            "Datos inválidos"
+        );
         return false;
     }
 
@@ -191,7 +197,9 @@ const handleContinue = () => {
                     :class="{ 'input-error': errors.firstName }"
                     @input="clearFieldError('firstName')"
                 />
-                <span v-if="errors.firstName" class="field-error-msg">{{ errors.firstName }}</span>
+                <span v-if="errors.firstName" class="field-error-msg">{{
+                    errors.firstName
+                }}</span>
             </div>
 
             <div class="form-group">
@@ -203,7 +211,9 @@ const handleContinue = () => {
                     :class="{ 'input-error': errors.lastName }"
                     @input="clearFieldError('lastName')"
                 />
-                <span v-if="errors.lastName" class="field-error-msg">{{ errors.lastName }}</span>
+                <span v-if="errors.lastName" class="field-error-msg">{{
+                    errors.lastName
+                }}</span>
             </div>
 
             <div class="form-group">
@@ -215,7 +225,9 @@ const handleContinue = () => {
                     :class="{ 'input-error': errors.nationalId }"
                     @input="clearFieldError('nationalId')"
                 />
-                <span v-if="errors.nationalId" class="field-error-msg">{{ errors.nationalId }}</span>
+                <span v-if="errors.nationalId" class="field-error-msg">{{
+                    errors.nationalId
+                }}</span>
             </div>
 
             <div class="form-group">
@@ -227,7 +239,9 @@ const handleContinue = () => {
                     :class="{ 'input-error': errors.phoneNumber }"
                     @input="clearFieldError('phoneNumber')"
                 />
-                <span v-if="errors.phoneNumber" class="field-error-msg">{{ errors.phoneNumber }}</span>
+                <span v-if="errors.phoneNumber" class="field-error-msg">{{
+                    errors.phoneNumber
+                }}</span>
             </div>
 
             <div class="form-group full-width auto-geo-wrapper">
@@ -254,7 +268,10 @@ const handleContinue = () => {
 
             <div class="form-group">
                 <label>Departamento <span class="required">*</span></label>
-                <div class="select-wrapper" :class="{ 'input-error': errors.departmentId }">
+                <div
+                    class="select-wrapper"
+                    :class="{ 'input-error': errors.departmentId }"
+                >
                     <select
                         v-model="registerStore.departmentId"
                         :disabled="departments.length === 0"
@@ -272,12 +289,17 @@ const handleContinue = () => {
                     </select>
                     <i class="fa-solid fa-chevron-down"></i>
                 </div>
-                <span v-if="errors.departmentId" class="field-error-msg">{{ errors.departmentId }}</span>
+                <span v-if="errors.departmentId" class="field-error-msg">{{
+                    errors.departmentId
+                }}</span>
             </div>
 
             <div class="form-group">
                 <label>Municipio <span class="required">*</span></label>
-                <div class="select-wrapper" :class="{ 'input-error': errors.municipalityId }">
+                <div
+                    class="select-wrapper"
+                    :class="{ 'input-error': errors.municipalityId }"
+                >
                     <select
                         v-model="registerStore.municipalityId"
                         :disabled="!registerStore.departmentId"
@@ -295,7 +317,9 @@ const handleContinue = () => {
                     </select>
                     <i class="fa-solid fa-chevron-down"></i>
                 </div>
-                <span v-if="errors.municipalityId" class="field-error-msg">{{ errors.municipalityId }}</span>
+                <span v-if="errors.municipalityId" class="field-error-msg">{{
+                    errors.municipalityId
+                }}</span>
             </div>
 
             <div class="form-group full-width">
@@ -307,40 +331,23 @@ const handleContinue = () => {
                     :class="{ 'input-error': errors.email }"
                     @input="clearFieldError('email')"
                 />
-                <span v-if="errors.email" class="field-error-msg">{{ errors.email }}</span>
+                <span v-if="errors.email" class="field-error-msg">{{
+                    errors.email
+                }}</span>
             </div>
 
             <div class="form-group full-width">
                 <label>Foto de Perfil</label>
-                <div
-                    v-if="!registerStore.avatarPreviewUrl"
-                    class="drag-drop-zone"
-                    @dragover.prevent
-                    @drop.prevent="handleAvatarDrop"
-                >
-                    <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
-                    <p>Arrastra una imagen aquí</p>
-                    <span>o</span>
-                    <label class="btn-outline">
-                        Seleccionar archivo
-                        <input
-                            type="file"
-                            accept="image/png, image/jpeg"
-                            style="display: none"
-                            @change="handleAvatarSelection"
-                        />
-                    </label>
-                </div>
-                <div v-else class="preview-container">
-                    <img :src="registerStore.avatarPreviewUrl" alt="Foto de perfil" />
-                    <button
-                        type="button"
-                        class="btn-remove-photo"
-                        @click="registerStore.clearAvatar"
-                    >
-                        <i class="fa-solid fa-xmark"></i>
-                    </button>
-                </div>
+                <BaseFileDropZone
+                    v-model="avatarModel"
+                    :multiple="false"
+                    accept="image/png, image/jpeg, image/webp"
+                    :max-size-mb="3"
+                    title="Arrastra tu foto de perfil aquí"
+                    button-text="Seleccionar foto"
+                    hint="Formatos soportados: JPG, PNG, WebP. Tamaño máx.: 3MB"
+                    @error="(msg) => alertStore.showError(msg)"
+                />
             </div>
         </div>
 
@@ -469,58 +476,6 @@ const handleContinue = () => {
 .btn-auto-geo:hover {
     background-color: var(--light-teal);
     color: #ffffff;
-}
-
-.drag-drop-zone {
-    border: 2px dashed var(--border-gray);
-    border-radius: 10px;
-    padding: 2rem;
-    text-align: center;
-    background-color: var(--bg-gray);
-    color: #64748b;
-}
-
-.cloud-icon {
-    font-size: 2.4rem;
-    color: #94a3b8;
-    margin-bottom: 0.5rem;
-}
-
-.btn-outline {
-    border: 1px solid var(--light-teal);
-    background: transparent;
-    color: var(--light-teal);
-    padding: 0.45rem 1.4rem;
-    border-radius: 20px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 0.88rem;
-    display: inline-block;
-    margin-top: 0.5rem;
-}
-
-.preview-container {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 0.5rem;
-}
-
-.preview-container img {
-    width: 80px;
-    height: 80px;
-    border-radius: 8px;
-    object-fit: cover;
-}
-
-.btn-remove-photo {
-    background: #ef4444;
-    color: #ffffff;
-    border: none;
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    cursor: pointer;
 }
 
 .step-actions {

@@ -1,17 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
+import { useAlertStore } from "@/stores/alertStore";
+import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
 
-const productName = ref('')
-const brand = ref('')
-const category = ref('')
-const description = ref('')
-const quality = ref('')
-const price = ref('')
-const minQuantity = ref('')
-const unit = ref('')
-const shippingMethods = ref(['bus'])
-const stock = ref('')
+const alertStore = useAlertStore();
 
+const productName = ref("");
+const brand = ref("");
+const category = ref("");
+const description = ref("");
+const quality = ref("");
+const price = ref("");
+const minQuantity = ref("");
+const unit = ref("");
+const shippingMethods = ref(["bus"]);
+const stock = ref("");
+const productPhotos = ref<File[]>([]);
 </script>
 
 <template>
@@ -30,11 +34,19 @@ const stock = ref('')
         <div class="grid-row-3">
           <div class="form-group col-span-2">
             <label>1. Nombre del producto *</label>
-            <input type="text" v-model="productName" placeholder="Ej. Audífonos Bluetooth Sony WH-CH520" />
+            <input
+              type="text"
+              v-model="productName"
+              placeholder="Ej. Audífonos Bluetooth Sony WH-CH520"
+            />
           </div>
           <div class="form-group">
             <label>2. Marca *</label>
-            <input type="text" v-model="brand" placeholder="Escribe la marca" />
+            <input
+              type="text"
+              v-model="brand"
+              placeholder="Escribe la marca"
+            />
           </div>
           <div class="form-group">
             <label>3. Categoría *</label>
@@ -46,12 +58,12 @@ const stock = ref('')
             </select>
           </div>
         </div>
-        
+
         <div class="form-group mt-4">
           <label>4. Descripción del producto *</label>
           <div class="textarea-wrapper">
-            <textarea 
-              v-model="description" 
+            <textarea
+              v-model="description"
               placeholder="Describe tu producto, sus características y beneficios..."
               maxlength="2000"
             ></textarea>
@@ -64,22 +76,43 @@ const stock = ref('')
       <div class="form-section">
         <h3 class="section-title">5. Fotografías del producto *</h3>
         <div class="photos-container">
-          <div class="upload-area">
-            <div class="upload-content">
-              <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
-              <p>Arrastra tus imágenes aquí o</p>
-              <button class="btn-select-file">Seleccionar archivo</button>
-            </div>
-            <p class="upload-hint">Puedes subir hasta 5 imágenes</p>
+          <div class="dropzone-wrapper">
+            <BaseFileDropZone
+              v-model="productPhotos"
+              :multiple="true"
+              :max-files="5"
+              :max-size-mb="5"
+              accept="image/png, image/jpeg, image/webp"
+              title="Arrastra tus imágenes aquí"
+              button-text="Seleccionar archivo"
+              hint="Puedes subir hasta 5 imágenes (JPG, PNG, WebP). Tamaño máx.: 5MB por imagen."
+              @error="(msg) => alertStore.showError(msg)"
+            />
           </div>
+
           <div class="tips-box">
             <h4>Consejos para tus fotos</h4>
             <ul>
-              <li><i class="fa-regular fa-circle-check"></i> Usa imágenes nítidas y bien iluminadas</li>
-              <li><i class="fa-regular fa-circle-check"></i> Fondo claro y sencillo</li>
-              <li><i class="fa-regular fa-circle-check"></i> Muestra el producto desde varios ángulos</li>
-              <li><i class="fa-regular fa-circle-check"></i> Formato recomendado: JPG o PNG</li>
-              <li><i class="fa-regular fa-circle-check"></i> Tamaño máximo: 5MB por imagen</li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i> Usa imágenes nítidas
+                y bien iluminadas
+              </li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i> Fondo claro y
+                sencillo
+              </li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i> Muestra el producto
+                desde varios ángulos
+              </li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i> Formato recomendado:
+                JPG, PNG o WebP
+              </li>
+              <li>
+                <i class="fa-regular fa-circle-check"></i> Tamaño máximo: 5MB
+                por imagen
+              </li>
             </ul>
           </div>
         </div>
@@ -103,13 +136,21 @@ const stock = ref('')
               <label>7. Precio por unidad *</label>
               <div class="input-with-prefix">
                 <span class="prefix">C$</span>
-                <input type="number" v-model="price" placeholder="0.00" />
+                <input
+                  type="number"
+                  v-model="price"
+                  placeholder="0.00"
+                />
               </div>
             </div>
             <div class="grid-row-2">
               <div class="form-group">
                 <label>8. Cantidad mínima de compra *</label>
-                <input type="text" v-model="minQuantity" placeholder="Ej. 1, 6, 12..." />
+                <input
+                  type="text"
+                  v-model="minQuantity"
+                  placeholder="Ej. 1, 6, 12..."
+                />
               </div>
               <div class="form-group">
                 <label>9. Unidad</label>
@@ -121,21 +162,34 @@ const stock = ref('')
               </div>
             </div>
           </div>
+
           <!-- Right Column -->
           <div class="details-col">
             <div class="form-group">
               <label>10. Tipo de envío disponible *</label>
               <div class="checkbox-group">
                 <label class="checkbox-label">
-                  <input type="checkbox" value="bus" v-model="shippingMethods" />
+                  <input
+                    type="checkbox"
+                    value="bus"
+                    v-model="shippingMethods"
+                  />
                   Bus interlocal
                 </label>
                 <label class="checkbox-label">
-                  <input type="checkbox" value="courier" v-model="shippingMethods" />
+                  <input
+                    type="checkbox"
+                    value="courier"
+                    v-model="shippingMethods"
+                  />
                   Empresas de paquetería
                 </label>
                 <label class="checkbox-label">
-                  <input type="checkbox" value="pickup" v-model="shippingMethods" />
+                  <input
+                    type="checkbox"
+                    value="pickup"
+                    v-model="shippingMethods"
+                  />
                   Retiro en tienda
                 </label>
               </div>
@@ -145,7 +199,11 @@ const stock = ref('')
               <p class="sub-label">Gestiona el stock para este producto.</p>
               <div class="input-with-prefix">
                 <span class="prefix">Und</span>
-                <input type="number" v-model="stock" placeholder="0" />
+                <input
+                  type="number"
+                  v-model="stock"
+                  placeholder="0"
+                />
               </div>
             </div>
           </div>
@@ -155,7 +213,12 @@ const stock = ref('')
 
     <!-- Actions Footer -->
     <div class="form-actions">
-      <router-link to="/dashboard/provider-products" class="btn-cancel">Cancelar</router-link>
+      <router-link
+        to="/dashboard/provider-products"
+        class="btn-cancel"
+      >
+        Cancelar
+      </router-link>
       <div class="right-actions">
         <button class="btn-draft">Guardar borrador</button>
         <button class="btn-publish">Publicar producto</button>
@@ -254,7 +317,9 @@ textarea {
   box-sizing: border-box;
 }
 
-input:focus, select:focus, textarea:focus {
+input:focus,
+select:focus,
+textarea:focus {
   border-color: #189c94;
 }
 
@@ -303,58 +368,12 @@ textarea {
 .photos-container {
   display: flex;
   gap: 1.5rem;
+  align-items: flex-start;
 }
 
-.upload-area {
+.dropzone-wrapper {
   flex: 1;
-}
-
-.upload-content {
-  border: 1.5px dashed #ffb480;
-  border-radius: 8px;
-  background: #fdfaf8;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 2.5rem 1rem;
-  text-align: center;
-  min-height: 200px;
-}
-
-.cloud-icon {
-  font-size: 2rem;
-  color: #999;
-  margin-bottom: 0.75rem;
-}
-
-.upload-content p {
-  margin: 0 0 0.75rem 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.btn-select-file {
-  background: transparent;
-  border: 1px solid #189c94;
-  color: #189c94;
-  padding: 0.4rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-select-file:hover {
-  background: #189c94;
-  color: #fff;
-}
-
-.upload-hint {
-  font-size: 0.75rem;
-  color: #888;
-  margin-top: 0.5rem;
+  min-width: 0;
 }
 
 .tips-box {
@@ -362,6 +381,7 @@ textarea {
   background: #f2f9f8;
   border-radius: 8px;
   padding: 1.25rem;
+  flex-shrink: 0;
 }
 
 .tips-box h4 {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
 import { geographyApi } from "@/api";
@@ -9,6 +9,7 @@ import { useAlertStore } from "@/stores/alertStore";
 import AddressPickerModal, {
   type AddressPickerResult,
 } from "@/components/common/AddressPickerModal.vue";
+import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
 import {
   companyNameSchema,
   taxIdSchema,
@@ -35,6 +36,21 @@ const ProviderStep1Schema = z.object({
   address: addressSchema,
   latitude: z.number({ message: "Debe seleccionar la ubicación en el mapa" }),
   longitude: z.number({ message: "Debe seleccionar la ubicación en el mapa" }),
+});
+
+const logoModel = computed({
+  get: () => providerStore.logoFile ?? null,
+  set: (file: File[] | File | null) => {
+    if (file instanceof File) {
+      try {
+        providerStore.setLogo(file);
+      } catch (err: any) {
+        alertStore.showError(err.message || "Error al procesar el logo seleccionado.");
+      }
+    } else {
+      providerStore.clearLogo();
+    }
+  },
 });
 
 const clearFieldError = (field: string) => {
@@ -66,27 +82,6 @@ const handleLocationConfirmed = async (location: AddressPickerResult) => {
       "No se pudo obtener el municipio para la ubicación seleccionada.",
       "Error de Ubicación"
     );
-  }
-};
-
-const handleLogoSelection = (event: Event) => {
-  const input = event.target as HTMLInputElement;
-  if (input.files && input.files[0]) {
-    try {
-      providerStore.setLogo(input.files[0]);
-    } catch (err: any) {
-      alertStore.showError(err.message || "Error al procesar el logo seleccionado.");
-    }
-  }
-};
-
-const handleLogoDrop = (event: DragEvent) => {
-  if (event.dataTransfer?.files && event.dataTransfer.files[0]) {
-    try {
-      providerStore.setLogo(event.dataTransfer.files[0]);
-    } catch (err: any) {
-      alertStore.showError(err.message || "Error al procesar el logo seleccionado.");
-    }
   }
 };
 
@@ -238,35 +233,16 @@ const handleContinue = () => {
       <!-- Logo -->
       <div class="form-group full-width">
         <label>Logo del Negocio</label>
-        <div
-          v-if="!providerStore.logoPreviewUrl"
-          class="drag-drop-zone"
-          @dragover.prevent
-          @drop.prevent="handleLogoDrop"
-        >
-          <i class="fa-solid fa-cloud-arrow-up cloud-icon"></i>
-          <p>Arrastra una imagen aquí</p>
-          <span>o</span>
-          <label class="btn-outline">
-            Seleccionar archivo
-            <input
-              type="file"
-              accept="image/png, image/jpeg"
-              style="display: none"
-              @change="handleLogoSelection"
-            />
-          </label>
-        </div>
-        <div v-else class="preview-container">
-          <img :src="providerStore.logoPreviewUrl" alt="Logo de empresa" />
-          <button
-            type="button"
-            class="btn-remove-logo"
-            @click="providerStore.clearLogo"
-          >
-            <i class="fa-solid fa-xmark"></i>
-          </button>
-        </div>
+        <BaseFileDropZone
+          v-model="logoModel"
+          :multiple="false"
+          accept="image/png, image/jpeg, image/webp"
+          :max-size-mb="3"
+          title="Arrastra el logo de tu negocio aquí"
+          button-text="Seleccionar logo"
+          hint="Formatos soportados: JPG, PNG, WebP. Tamaño máx.: 3MB"
+          @error="(msg) => alertStore.showError(msg)"
+        />
       </div>
     </div>
 
@@ -417,58 +393,6 @@ const handleContinue = () => {
   transform: translateY(-50%);
   color: #94a3b8;
   pointer-events: none;
-}
-
-.drag-drop-zone {
-  border: 2px dashed var(--border-gray);
-  border-radius: 10px;
-  padding: 2rem;
-  text-align: center;
-  background-color: var(--bg-gray);
-  color: #64748b;
-}
-
-.cloud-icon {
-  font-size: 2.4rem;
-  color: #94a3b8;
-  margin-bottom: 0.5rem;
-}
-
-.btn-outline {
-  border: 1px solid var(--light-teal);
-  background: transparent;
-  color: var(--light-teal);
-  padding: 0.45rem 1.4rem;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.88rem;
-  display: inline-block;
-  margin-top: 0.5rem;
-}
-
-.preview-container {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-
-.preview-container img {
-  width: 80px;
-  height: 80px;
-  border-radius: 8px;
-  object-fit: cover;
-}
-
-.btn-remove-logo {
-  background: #ef4444;
-  color: #ffffff;
-  border: none;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  cursor: pointer;
 }
 
 .step-actions {
