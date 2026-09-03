@@ -36,18 +36,18 @@ onUnmounted(() => clearInterval(timer));
 
 <template>
   <section
-    class="relative w-full overflow-hidden bg-slate-50"
+    class="relative w-full overflow-hidden bg-neutral-50"
     @mouseenter="pauseTimer"
     @mouseleave="resumeTimer"
     aria-roledescription="carousel"
   >
-    <!-- CSS Grid Stack Pattern: Forces all children to occupy the exact same cell for seamless crossfading -->
-    <div class="grid grid-cols-1 grid-rows-1 w-full min-h-[600px] lg:min-h-[700px]" aria-live="polite">
+
+    <div class="grid w-full grid-cols-1 grid-rows-1 min-h-150 lg:min-h-175" aria-live="polite">
       <transition name="crossfade">
         <component
           :is="slides[activeIndex]"
           :key="activeIndex"
-          class="col-start-1 row-start-1 w-full h-full self-stretch"
+          class="col-start-1 row-start-1 h-full w-full self-stretch"
         />
       </transition>
     </div>
@@ -60,7 +60,7 @@ onUnmounted(() => clearInterval(timer));
         :aria-label="`Ir al slide ${index + 1}`"
         :class="[
           'h-3 cursor-pointer rounded-full border-none transition-all duration-300 ease-in-out',
-          activeIndex === index ? 'w-8 bg-[#ff6a00]' : 'w-3 bg-gray-300 hover:bg-gray-400'
+          activeIndex === index ? 'w-8 bg-(--primary-orange)' : 'w-3 bg-neutral-300 hover:bg-neutral-400'
         ]"
       ></button>
     </div>
