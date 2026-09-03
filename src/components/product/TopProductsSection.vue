@@ -134,7 +134,6 @@ onMounted(() => {
     </div>
   </section>
 </template>
-
 <style scoped>
 .container {
   max-width: 1200px;
@@ -142,10 +141,6 @@ onMounted(() => {
   padding: 0 1.5rem;
   width: 100%;
   box-sizing: border-box;
-}
-
-.top-sellers {
-  margin-bottom: 5rem;
 }
 
 .top-sellers-header {
