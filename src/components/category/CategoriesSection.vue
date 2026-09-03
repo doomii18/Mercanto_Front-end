@@ -67,7 +67,7 @@ onMounted(async () => {
                 v-for="(cat, idx) in categories"
                 :key="`${loop}-${cat.id}-${idx}`"
                 :to="{ name: 'category', query: { category_id: cat.id } }"
-                class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+                class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md border-2 border-transparent transition-colors duration-200 hover:border-[#ff6a00] hover:bg-[#fffaf5]"
                 :aria-hidden="loop === 2"
                 :tabindex="loop === 2 ? -1 : 0"
               >
