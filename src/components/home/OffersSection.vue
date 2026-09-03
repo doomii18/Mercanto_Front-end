@@ -55,26 +55,26 @@ const scroll = (direction: "left" | "right") => {
 </script>
 
 <template>
-  <section class="relative w-full overflow-hidden bg-[#fff0e6] py-12 md:py-16">
+  <section class="relative flex h-full w-full flex-col justify-center overflow-hidden bg-[#fff0e6] py-12 md:py-16">
     <!-- Background Decoration -->
     <div class="pointer-events-none absolute -bottom-20 -left-10 h-64 w-64 rounded-full bg-[#ffb98a] opacity-50 blur-3xl"></div>
     <div class="pointer-events-none absolute -top-20 right-20 h-96 w-96 rounded-full bg-[#ff6a00] opacity-20 blur-3xl"></div>
 
-    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row gap-8 items-center">
+    <div class="mx-auto flex max-w-7xl flex-col items-center gap-8 px-4 sm:px-6 md:flex-row lg:px-8">
 
       <!-- Left Column: Header -->
-      <div class="w-full md:w-1/3 z-10 flex flex-col items-start">
+      <div class="z-10 flex w-full flex-col items-start md:w-1/3">
         <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#ff8533] to-[#ff6a00] px-4 py-1.5 text-xs font-bold text-white shadow-md">
           <i class="fa-solid fa-percent"></i>
           <span>Ofertas imperdibles</span>
         </div>
 
-        <h2 class="mb-4 font-serif text-4xl font-bold text-[#023859] leading-tight">
+        <h2 class="mb-4 font-serif text-4xl font-bold leading-tight text-[#023859]">
           Productos en <br />
           <span class="text-[#ff6a00]">oferta</span>
         </h2>
 
-        <p class="mb-8 text-[#64748b] text-base leading-relaxed">
+        <p class="mb-8 text-base leading-relaxed text-[#64748b]">
           Aprovecha descuentos exclusivos y haz crecer tu negocio pagando menos.
         </p>
 
@@ -85,23 +85,23 @@ const scroll = (direction: "left" | "right") => {
       </div>
 
       <!-- Right Column: Carousel -->
-      <div class="w-full md:w-2/3 relative z-10 flex items-center group">
+      <div class="group relative z-10 flex w-full items-center md:w-2/3">
 
         <!-- Left Nav -->
-        <button @click="scroll('left')" class="absolute -left-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#023859] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+        <button @click="scroll('left')" class="absolute -left-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#023859] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
           <i class="fa-solid fa-chevron-left"></i>
         </button>
 
-        <div ref="carouselRef" class="flex w-full gap-4 overflow-x-auto snap-x snap-mandatory scrollbar-none py-4 px-2" style="scrollbar-width: none; -ms-overflow-style: none;">
+        <div ref="carouselRef" class="scrollbar-none flex w-full snap-x snap-mandatory gap-4 overflow-x-auto px-2 py-4" style="scrollbar-width: none; -ms-overflow-style: none;">
 
           <!-- Skeleton Loading -->
           <template v-if="isLoading">
-            <div v-for="n in 4" :key="n" class="min-w-[220px] h-[320px] shrink-0 animate-pulse rounded-2xl bg-white p-4 shadow-sm"></div>
+            <div v-for="n in 4" :key="n" class="h-[320px] min-w-[220px] shrink-0 animate-pulse rounded-2xl bg-white p-4 shadow-sm"></div>
           </template>
 
           <!-- Product Cards -->
           <template v-else>
-            <router-link v-for="item in offers" :key="item.id" :to="{ name: 'product-detail', params: { id: item.id } }" class="group/card relative flex min-w-[220px] w-[220px] snap-start flex-col rounded-2xl bg-white p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl">
+            <router-link v-for="item in offers" :key="item.id" :to="{ name: 'product-detail', params: { id: item.id } }" class="group/card relative flex w-[220px] min-w-[220px] snap-start flex-col rounded-2xl bg-white p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl">
 
               <!-- Discount Badge -->
               <span class="absolute left-3 top-3 z-10 rounded-full bg-[#ff6a00] px-2.5 py-1 text-xs font-bold text-white">
@@ -131,7 +131,7 @@ const scroll = (direction: "left" | "right") => {
         </div>
 
         <!-- Right Nav -->
-        <button @click="scroll('right')" class="absolute -right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#023859] shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+        <button @click="scroll('right')" class="absolute -right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#023859] opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
           <i class="fa-solid fa-chevron-right"></i>
         </button>
 

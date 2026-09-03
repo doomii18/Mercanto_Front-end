@@ -56,8 +56,10 @@ interface Props {
 const props = defineProps<Props>();
 
 const data = computed(() => props.provider ?? DEFAULT_MOCK_DATA);
-</script><template>
-  <section class="relative w-full overflow-hidden bg-[#fffaf5] py-10 lg:py-16 select-none">
+</script>
+
+<template>
+  <section class="relative flex h-full w-full flex-col justify-center overflow-hidden bg-[#fffaf5] py-10 select-none lg:py-16">
     <!-- ── Ambient Geometric Backgrounds ── -->
     <div
       class="pointer-events-none absolute -top-28 -left-28 h-96 w-96 rounded-full bg-[#00a896] opacity-90 transition-transform duration-700 md:h-[450px] md:w-[450px]"
@@ -168,7 +170,7 @@ const data = computed(() => props.provider ?? DEFAULT_MOCK_DATA);
 
             <!-- 1. Floating Profile Card (Left) -->
             <div
-              class="relative z-20 w-44 -mr-12 rounded-2xl border-2 border-[#ff6a00] bg-white p-3.5 shadow-xl transition-transform duration-300 hover:scale-105 sm:w-48 sm:-mr-14"
+              class="relative z-20 -mr-12 w-44 rounded-2xl border-2 border-[#ff6a00] bg-white p-3.5 shadow-xl transition-transform duration-300 hover:scale-105 sm:-mr-14 sm:w-48"
             >
               <!-- Card Logo Initials -->
               <div class="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-[#023859] text-xs font-bold tracking-wider text-white">
@@ -239,35 +241,18 @@ const data = computed(() => props.provider ?? DEFAULT_MOCK_DATA);
           <div
             class="relative z-20 mt-4 w-full max-w-sm rounded-lg border-2 border-[#ff6a00] bg-white px-5 py-2.5 text-center shadow-lg sm:max-w-md"
           >
-            <span class="block text-[10px] font-bold tracking-widest text-[#00a896] uppercase">
+            <span class="block text-[10px] font-bold uppercase tracking-widest text-[#00a896]">
               ★ MERCANTO RECONOCE ★
             </span>
-            <h3 class="font-serif text-lg font-extrabold tracking-wide text-[#ff6a00] uppercase sm:text-xl">
+            <h3 class="font-serif text-lg font-extrabold uppercase tracking-wide text-[#ff6a00] sm:text-xl">
               PROVEEDOR DEL MES
             </h3>
-            <span class="block text-[9px] font-bold tracking-[0.3em] text-[#00a896] uppercase">
+            <span class="block text-[9px] font-bold uppercase tracking-[0.3em] text-[#00a896]">
               DESTACADO
             </span>
           </div>
 
-          <!-- 4. Carousel Pagination Indicator (Ready for multi-slide hookup) -->
-          <div class="mt-5 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              class="h-2 w-2 rounded-full bg-[#00a896] transition-all"
-              aria-label="Slide 1 activo"
-            />
-            <button
-              type="button"
-              class="h-2 w-2 rounded-full bg-slate-300 transition-all hover:bg-slate-400"
-              aria-label="Ir al Slide 2"
-            />
-            <button
-              type="button"
-              class="h-2 w-2 rounded-full bg-slate-300 transition-all hover:bg-slate-400"
-              aria-label="Ir al Slide 3"
-            />
-          </div>
+
         </div>
 
       </div>

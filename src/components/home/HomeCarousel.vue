@@ -6,7 +6,7 @@ import OffersSection from './OffersSection.vue';
 
 const slides = [HomeHeroSection, FeaturedProviderSection, OffersSection];
 const activeIndex = ref(0);
-const intervalTime = 15000; // Incrementado a 15 segundos
+const intervalTime = 15000;
 let timer: number | undefined;
 
 const nextSlide = () => {
@@ -36,14 +36,19 @@ onUnmounted(() => clearInterval(timer));
 
 <template>
   <section
-    class="relative w-full overflow-hidden"
+    class="relative w-full overflow-hidden bg-slate-50"
     @mouseenter="pauseTimer"
     @mouseleave="resumeTimer"
     aria-roledescription="carousel"
   >
-    <div class="relative w-full min-h-[600px]">
-      <transition name="fade" mode="out-in">
-        <component :is="slides[activeIndex]" :key="activeIndex" />
+    <!-- CSS Grid Stack Pattern: Forces all children to occupy the exact same cell for seamless crossfading -->
+    <div class="grid grid-cols-1 grid-rows-1 w-full min-h-[600px] lg:min-h-[700px]" aria-live="polite">
+      <transition name="crossfade">
+        <component
+          :is="slides[activeIndex]"
+          :key="activeIndex"
+          class="col-start-1 row-start-1 w-full h-full self-stretch"
+        />
       </transition>
     </div>
 
@@ -63,12 +68,18 @@ onUnmounted(() => clearInterval(timer));
 </template>
 
 <style scoped>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.4s ease-in-out;
+/* Hardware-accelerated crossfade transitions */
+.crossfade-enter-active,
+.crossfade-leave-active {
+  transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+  will-change: opacity, transform;
 }
-.fade-enter-from,
-.fade-leave-to {
+.crossfade-enter-from {
   opacity: 0;
+  transform: scale(0.98);
+}
+.crossfade-leave-to {
+  opacity: 0;
+  transform: scale(1.02);
 }
 </style>

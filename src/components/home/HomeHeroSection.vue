@@ -3,7 +3,7 @@
 </script>
 
 <template>
-  <section id="inicio" class="hero container section-spaced">
+  <section id="inicio" class="hero">
     <div class="hero-text">
       <h1>
         Encuentra los<br />mejores<br />
@@ -43,8 +43,13 @@
   justify-content: space-between;
   align-items: center;
   position: relative;
-  margin: 4rem auto;
+  width: 100%;
+  height: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
   gap: 2rem;
+  box-sizing: border-box;
 }
 
 .hero-text {
@@ -154,8 +159,9 @@
 @media (max-width: 768px) {
   .hero {
     flex-direction: column-reverse;
+    justify-content: center;
     text-align: center;
-    padding: 2rem 1rem;
+    padding: 4rem 1rem;
   }
 
   .search-bar {
