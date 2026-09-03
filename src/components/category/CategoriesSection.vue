@@ -39,7 +39,7 @@ onMounted(async () => {
     </div>
 
     <div class="relative w-full">
-      <div class="group/carousel w-full rounded-2xl bg-[#00a896] px-4 py-6 sm:px-8">
+      <div class="w-full rounded-2xl bg-[#00a896] px-4 py-6 sm:px-8">
         <!-- Internal Scroll Viewport -->
         <div class="w-full overflow-hidden rounded-2xl">
           <!-- Skeleton Loading State -->
@@ -59,7 +59,7 @@ onMounted(async () => {
           <!-- Continuous Infinite Track -->
           <div
             v-else
-            class="carousel-track flex w-max gap-4 sm:gap-6 will-change-transform group-hover/carousel:[animation-play-state:paused]"
+            class="carousel-track flex w-max gap-4 sm:gap-6 will-change-transform"
             :style="{ animationDuration: animationDuration }"
           >
             <template v-for="loop in 2" :key="loop">
@@ -89,6 +89,11 @@ onMounted(async () => {
 /* ── Track & Animation ── */
 .carousel-track {
   animation: desplazarInfinito 25s linear infinite;
+}
+
+/* Detener la animación estrictamente al hacer hover sobre un router-link (ítem) */
+.carousel-track:has(a:hover) {
+  animation-play-state: paused;
 }
 
 @keyframes desplazarInfinito {
