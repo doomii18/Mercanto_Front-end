@@ -97,15 +97,15 @@ const triggerShockwave = (x: number, y: number, maxRadius = 18) => {
   requestAnimationFrame(animateRipple)
 }
 
-const generateRandomTraveler = () => {
-  const origin = landPoints[Math.floor(Math.random() * landPoints.length)]
+const spawnTraveler = (customStart?: { x: number; y: number }, sourcePointName?: string) => {
+  let origin = customStart ? { name: sourcePointName || 'custom', x: customStart.x, y: customStart.y } : landPoints[Math.floor(Math.random() * landPoints.length)]
   let destination = landPoints[Math.floor(Math.random() * landPoints.length)]
   while (destination.name === origin.name) {
     destination = landPoints[Math.floor(Math.random() * landPoints.length)]
   }
 
-  const startX = origin.x + (Math.random() - 0.5) * 20
-  const startY = origin.y + (Math.random() - 0.5) * 20
+  const startX = customStart ? customStart.x : origin.x + (Math.random() - 0.5) * 20
+  const startY = customStart ? customStart.y : origin.y + (Math.random() - 0.5) * 20
   const destX = destination.x + (Math.random() - 0.5) * 20
   const destY = destination.y + (Math.random() - 0.5) * 20
 
@@ -138,8 +138,10 @@ const generateRandomTraveler = () => {
 
   activeTravelers.value.push(traveler)
 
+  // Velocity-based travel time: constant speed of ~0.22 px/ms (approx 4.5ms per pixel)
+  const SPEED_FACTOR = 4.5
+  const duration = distance * SPEED_FACTOR
   const startTime = performance.now()
-  const duration = Math.min(Math.max(distance * 2.2, 1400), 2800)
 
   const animate = (currentTime: number) => {
     const elapsed = currentTime - startTime
@@ -155,6 +157,11 @@ const generateRandomTraveler = () => {
     } else {
       triggerShockwave(traveler.destX, traveler.destY, traveler.radius * 4.5)
       activeTravelers.value = activeTravelers.value.filter(t => t.id !== traveler.id)
+
+      const CHAIN_PROBABILITY = 0.35
+      if (Math.random() < CHAIN_PROBABILITY) {
+        spawnTraveler({ x: traveler.destX, y: traveler.destY }, destination.name)
+      }
     }
   }
 
@@ -162,7 +169,7 @@ const generateRandomTraveler = () => {
 }
 
 onMounted(() => {
-  timer = window.setInterval(generateRandomTraveler, 350)
+  timer = window.setInterval(() => spawnTraveler(), 450)
 })
 
 onUnmounted(() => {
@@ -191,7 +198,13 @@ onUnmounted(() => {
           </feMerge>
         </filter>
 
-        <!-- Dynamic Comet Tail Linear Gradients for each active traveler -->
+        <!-- Ambient Hex/Dot Matrix Grid Pattern -->
+        <pattern id="ambient-dot-grid" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+          <circle cx="16" cy="16" r="1.1" fill="#38bdf8" fill-opacity="0.18" />
+          <path d="M 14 16 L 18 16 M 16 14 L 16 18" stroke="#38bdf8" stroke-width="0.5" stroke-opacity="0.08" />
+        </pattern>
+
+        <!-- Dynamic Comet Tail Linear Gradients -->
         <linearGradient
           v-for="t in activeTravelers"
           :id="`comet-gradient-${t.id}`"
@@ -202,16 +215,22 @@ onUnmounted(() => {
           :x2="getBezierPoint(t.startX, t.cx, t.destX, t.progress)"
           :y2="getBezierPoint(t.startY, t.cy, t.destY, t.progress)"
         >
-          <!-- Origin: fully transparent cyan -->
           <stop offset="0%" stop-color="#0284c7" stop-opacity="0" />
-          <!-- Mid-section: fading bright sky neon -->
           <stop offset="65%" stop-color="#38bdf8" stop-opacity="0.4" />
-          <!-- Near head: vivid cyan glow -->
           <stop offset="88%" stop-color="#06b6d4" stop-opacity="0.9" />
-          <!-- Leading Head: pure brilliant white -->
           <stop offset="100%" stop-color="#ffffff" stop-opacity="1" />
         </linearGradient>
       </defs>
+
+      <!-- 0. AMBIENT BACKGROUND HUD DOT GRID -->
+      <rect
+        x="373.82"
+        y="-2.5"
+        width="907.36"
+        height="894"
+        fill="url(#ambient-dot-grid)"
+        class="pointer-events-none"
+      />
 
       <!-- 1. LAND REGIONS -->
       <g
