@@ -1,12 +1,9 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useAuthStore } from "@/modules/auth";
 import { useUserContextStore } from "@/stores/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
+import UserMenu from "@/components/common/UserMenu.vue";
 
-const router = useRouter();
-const authStore = useAuthStore();
 const contextStore = useUserContextStore();
 
 const sidebarOpen = ref(false);
@@ -18,19 +15,12 @@ const toggleSidebar = () => {
 const closeSidebar = () => {
   sidebarOpen.value = false;
 };
-
-const handleLogout = async () => {
-  closeSidebar();
-  await authStore.logout();
-  router.push({ name: "login" });
-};
-
-
 </script>
 
 <template>
   <div class="min-h-screen bg-white text-[#083c5a]">
-    <header class="fixed top-0 left-0 z-50 flex h-16 w-full items-center gap-4 border-b border-slate-200 bg-white px-6">
+    <!-- Header: Logo aligned to the right -->
+    <header class="fixed top-0 left-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
       <button
         type="button"
         class="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg border-none bg-transparent p-1 transition-colors duration-200 hover:bg-[#fde8e4] focus:outline-none"
@@ -56,12 +46,14 @@ const handleLogout = async () => {
     </header>
 
     <div class="relative mt-16 flex min-h-[calc(100vh-64px)]">
+      <!-- Mobile Backdrop -->
       <div
         v-if="sidebarOpen"
         class="fixed inset-x-0 top-16 bottom-0 z-40 bg-black/25 backdrop-blur-[1px] lg:hidden"
         @click="closeSidebar"
       ></div>
 
+      <!-- Sidebar -->
       <aside
         :class="[
           'fixed z-40 bg-white transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
@@ -101,7 +93,6 @@ const handleLogout = async () => {
             >
               Mi Perfil
             </span>
-
             <span
               v-if="!sidebarOpen"
               class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
@@ -132,7 +123,6 @@ const handleLogout = async () => {
             >
               Mis Productos
             </span>
-
             <span
               v-if="!sidebarOpen"
               class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
@@ -162,7 +152,6 @@ const handleLogout = async () => {
             >
               Pedidos
             </span>
-
             <span
               v-if="!sidebarOpen"
               class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
@@ -192,7 +181,6 @@ const handleLogout = async () => {
             >
               Mensajes
             </span>
-
             <span
               v-if="!sidebarOpen"
               class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
@@ -222,7 +210,6 @@ const handleLogout = async () => {
             >
               Búsqueda Inteligente
             </span>
-
             <span
               v-if="!sidebarOpen"
               class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
@@ -232,36 +219,10 @@ const handleLogout = async () => {
           </router-link>
         </nav>
 
-        <button
-          type="button"
-          :class="[
-            'group relative flex items-center rounded-2xl border-none text-slate-400 transition-all duration-200 hover:bg-red-50 hover:text-red-500 cursor-pointer',
-            'max-md:h-11 max-md:w-11 max-md:justify-center',
-            sidebarOpen
-              ? 'md:mx-3 md:h-11 md:w-[calc(100%-1.5rem)] md:justify-start md:gap-3.5 md:px-3.5'
-              : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
-          ]"
-          @click="handleLogout"
-        >
-          <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg shrink-0 -scale-x-100"></i>
-          <span
-            :class="[
-              'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
-              sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
-            ]"
-          >
-            Cerrar sesión
-          </span>
 
-          <span
-            v-if="!sidebarOpen"
-            class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
-          >
-            Cerrar sesión
-          </span>
-        </button>
       </aside>
 
+      <!-- Main Content Area -->
       <main
         :class="[
           'flex-1 flex flex-col min-h-[calc(100vh-64px)] bg-[#fdf3f0] p-4 sm:p-6 lg:p-10 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
