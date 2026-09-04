@@ -2,6 +2,9 @@ import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { identityApi, tokenProvider } from "../../api";
 import type { AccountResponse, LoginRequest } from "../../api/services/identity/types";
+import { useUserContextStore } from "../../stores/userContextStore";
+import { useOrganizationStore } from "../../stores/organizationStore";
+import { blobCache } from "../blob";
 
 export const useAuthStore = defineStore("auth", () => {
   const account = ref<AccountResponse | null>(null);
@@ -15,7 +18,6 @@ export const useAuthStore = defineStore("auth", () => {
   const accountRole = computed(() => account.value?.role ?? null);
 
   async function refreshAccessToken(): Promise<string> {
-
     if (refreshPromise) {
       return refreshPromise;
     }
@@ -54,6 +56,11 @@ export const useAuthStore = defineStore("auth", () => {
 
       const profile = await identityApi.getMyAccount();
       account.value = profile;
+
+      // Hydrate user context immediately after authentication
+      const userContext = useUserContextStore();
+      await userContext.initialize(true);
+
       return profile;
     } finally {
       isLoading.value = false;
@@ -73,7 +80,6 @@ export const useAuthStore = defineStore("auth", () => {
       }
 
       try {
-        // Obtain a fresh access token before fetching profile
         await refreshAccessToken();
         account.value = await identityApi.getMyAccount();
       } catch (err) {
@@ -108,6 +114,11 @@ export const useAuthStore = defineStore("auth", () => {
     initPromise = null;
     refreshPromise = null;
     isInitialized.value = true;
+
+    // Flush user-scoped state & caches
+    useUserContextStore().reset();
+    useOrganizationStore().resetAllCaches().catch(console.warn);
+    blobCache.clearMemory();
   }
 
   return {

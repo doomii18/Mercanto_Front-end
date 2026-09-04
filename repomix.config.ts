@@ -14,6 +14,10 @@ export default defineConfig({
         pattern: 'public/**',
         directoryStructureOnly: true,
       },
+      {
+        pattern: 'src/components/common/Map.vue',
+        directoryStructureOnly: true,
+      }
     ],
   },
 });
