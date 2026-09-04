@@ -4,7 +4,6 @@ import { useAuthStore } from "../modules/auth";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useGeoStore } from "../stores/geo";
 import { userProfileApi, organizationApi } from "../api";
-import type { UserProfileResponse } from "../api/services/user_profile/types";
 import type { OrganizationDetailsDto, PublicProviderDto } from "../api/services/organization/types";
 import AvatarEditor from "../components/profile/AvatarEditor.vue";
 import EditProfileModal from "../components/profile/EditProfileModal.vue";
@@ -17,17 +16,17 @@ const geoStore = useGeoStore();
 const isProvider = computed(() => contextStore.isProvider);
 const account = computed(() => authStore.account);
 
-// Data State
 // Alias the context store's profile to maintain template compatibility
 const userProfile = computed(() => contextStore.userProfile);
+
 const providerOrg = ref<OrganizationDetailsDto | null>(null);
 const providerPublic = ref<PublicProviderDto | null>(null);
 const isLoading = ref(true);
 
 // UI State
-const showEditProfileModal = ref(false);
 const showEditProviderModal = ref(false);
 const avatarEditorRef = ref<InstanceType<typeof AvatarEditor> | null>(null);
+const editProfileModalRef = ref<InstanceType<typeof EditProfileModal> | null>(null);
 
 // --- Computed Properties ---
 const displayName = computed(() => {
@@ -50,10 +49,12 @@ const memberSinceDate = computed(() => {
     return new Date(account.value.created_at).toLocaleDateString("es-NI", { year: "numeric", month: "long", day: "numeric" });
 });
 
+// Reads the correct avatar blob depending on the user state
 const avatarBlobId = computed<string | null>(() => {
     if (isProvider.value && providerPublic.value) {
         return providerPublic.value.logo_blob_id ?? null;
     }
+    // Buyer state: reads directly from the global context store
     return contextStore.userProfile?.avatar_blob_id ?? null;
 });
 
@@ -103,14 +104,8 @@ const loadProfileData = async () => {
     }
 };
 
-// --- Handlers for Modals ---
-const handleProfileSaved = (updatedProfile: UserProfileResponse) => {
-    // Sync the updated profile back to the global context store
-    contextStore.updateUserProfile(updatedProfile);
-};
-
+// --- Handlers for Provider Modal ---
 const handleProviderSaved = (updatedData: any) => {
-    // Mock update logic: merge the updated data into our local refs
     if (providerOrg.value) {
         providerOrg.value = {
             ...providerOrg.value,
@@ -127,12 +122,11 @@ const handleProviderSaved = (updatedData: any) => {
 };
 
 const handleChangePhotoRequest = () => {
-    showEditProfileModal.value = false;
     showEditProviderModal.value = false;
     avatarEditorRef.value?.openEditor('choice');
 };
 
-// --- Avatar Editor Callbacks ---
+// --- Avatar Editor Callbacks (For direct edits via the camera icon on the profile card) ---
 const handleAvatarSave = async (file: File) => {
     try {
         if (isProvider.value) {
@@ -300,7 +294,8 @@ onMounted(async () => {
         <div class="card personal-info-card">
             <div class="card-header">
                 <h3>{{ isProvider ? 'Información del Propietario' : 'Información Personal' }}</h3>
-                <button type="button" class="btn-edit" @click="showEditProfileModal = true">
+                <!-- Trigger the modal via ref instead of v-model -->
+                <button type="button" class="btn-edit" @click="editProfileModalRef?.open()">
                     <i class="fa-solid fa-pencil"></i> Editar
                 </button>
             </div>
@@ -339,14 +334,9 @@ onMounted(async () => {
         </div>
 
         <!-- Modals -->
-        <EditProfileModal
-            v-model="showEditProfileModal"
-            :initial-data="userProfile"
-            :avatar-blob-id="avatarBlobId"
-            :display-name="displayName"
-            @saved="handleProfileSaved"
-            @change-photo="handleChangePhotoRequest"
-        />
+        <!-- EditProfileModal no longer needs v-model or event listeners -->
+        <EditProfileModal ref="editProfileModalRef" />
+
         <EditProviderModal
             v-model="showEditProviderModal"
             @saved="handleProviderSaved"
