@@ -6,9 +6,9 @@ import { useGeoStore } from "../stores/geo";
 import { userProfileApi, organizationApi } from "../api";
 import type { UserProfileResponse } from "../api/services/user_profile/types";
 import type { OrganizationDetailsDto, PublicProviderDto } from "../api/services/organization/types";
-import BaseModal from "../components/common/BaseModal.vue";
-import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 import AvatarEditor from "../components/profile/AvatarEditor.vue";
+import EditProfileModal from "../components/profile/EditProfileModal.vue";
+import EditProviderModal from "../components/profile/EditProviderModal.vue";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
@@ -25,15 +25,7 @@ const isLoading = ref(true);
 
 // UI State
 const showEditProfileModal = ref(false);
-
-// Edit Form State (For Buyer/Owner Profile)
-const editForm = ref({
-    firstName: "", lastName: "", phoneNumber: "", nationalId: "", municipalityId: "",
-});
-const editErrors = ref({ firstName: "", lastName: "", phoneNumber: "", nationalId: "" });
-const isSavingProfile = ref(false);
-
-// Ref to trigger AvatarEditor from the Edit Profile modal
+const showEditProviderModal = ref(false);
 const avatarEditorRef = ref<InstanceType<typeof AvatarEditor> | null>(null);
 
 // --- Computed Properties ---
@@ -71,7 +63,6 @@ const municipalityName = computed(() => {
     return mun ? mun.name : "—";
 });
 
-// Resolves the provider's location text using the geoStore hierarchy
 const providerLocationText = computed(() => {
     if (providerPublic.value?.municipality_id) {
         const hierarchy = geoStore.resolveLocationHierarchy(providerPublic.value.municipality_id);
@@ -87,8 +78,6 @@ const providerLocationText = computed(() => {
     }
     return "—";
 });
-
-const departments = computed(() => geoStore.departmentList);
 
 // --- Data Loading ---
 const loadProfileData = async () => {
@@ -114,57 +103,33 @@ const loadProfileData = async () => {
     }
 };
 
-// --- Edit Logic (Works for the User/Owner Account) ---
-const openEditProfile = () => {
-    if (!userProfile.value) return;
-    const internal = userProfile.value as any;
-    editForm.value = {
-        firstName: userProfile.value.first_name || "",
-        lastName: userProfile.value.last_name || "",
-        phoneNumber: internal.phone_number || "",
-        nationalId: internal.national_id || "",
-        municipalityId: internal.municipality_id || "",
-    };
-    editErrors.value = { firstName: "", lastName: "", phoneNumber: "", nationalId: "" };
-    showEditProfileModal.value = true;
+// --- Handlers for Modals ---
+const handleProfileSaved = (updatedProfile: UserProfileResponse) => {
+    userProfile.value = updatedProfile;
 };
 
-const validateEditForm = (): boolean => {
-    let isValid = true;
-    const lettersRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-    const digitsRegex = /^[0-9]+$/;
-    editErrors.value = { firstName: "", lastName: "", phoneNumber: "", nationalId: "" };
-
-    if (!editForm.value.firstName.trim()) { editErrors.value.firstName = "El nombre es requerido."; isValid = false; }
-    else if (!lettersRegex.test(editForm.value.firstName)) { editErrors.value.firstName = "Solo se permiten letras."; isValid = false; }
-
-    if (!editForm.value.lastName.trim()) { editErrors.value.lastName = "El apellido es requerido."; isValid = false; }
-    else if (!lettersRegex.test(editForm.value.lastName)) { editErrors.value.lastName = "Solo se permiten letras."; isValid = false; }
-
-    if (editForm.value.phoneNumber && !digitsRegex.test(editForm.value.phoneNumber)) {
-        editErrors.value.phoneNumber = "Solo se permiten números."; isValid = false;
+const handleProviderSaved = (updatedData: any) => {
+    // Mock update logic: merge the updated data into our local refs
+    if (providerOrg.value) {
+        providerOrg.value = {
+            ...providerOrg.value,
+            company_name: updatedData.negocioName,
+            phone_number: updatedData.telNegocio,
+            // Note: tax_id (RUC) is locked in the form, so it remains unchanged
+        };
     }
-    return isValid;
+    if (providerPublic.value) {
+        providerPublic.value = {
+            ...providerPublic.value,
+            company_name: updatedData.negocioName
+        };
+    }
 };
 
-const handleSaveProfile = async () => {
-    if (!validateEditForm()) return;
-    isSavingProfile.value = true;
-    try {
-        const updated = await userProfileApi.updateMyProfile({
-            first_name: editForm.value.firstName.trim(),
-            last_name: editForm.value.lastName.trim(),
-            phone_number: editForm.value.phoneNumber.trim() || null,
-            national_id: editForm.value.nationalId.trim() || null,
-            municipality_id: editForm.value.municipalityId || null,
-        });
-        userProfile.value = updated;
-        showEditProfileModal.value = false;
-    } catch (err: any) {
-        alert(err.message || "Error al actualizar el perfil.");
-    } finally {
-        isSavingProfile.value = false;
-    }
+const handleChangePhotoRequest = () => {
+    showEditProfileModal.value = false;
+    showEditProviderModal.value = false;
+    avatarEditorRef.value?.openEditor('choice');
 };
 
 // --- Avatar Editor Callbacks ---
@@ -198,7 +163,9 @@ const handleAvatarDelete = async () => {
     }
 };
 
-onMounted(async () => { await loadProfileData(); });
+onMounted(async () => {
+    await loadProfileData();
+});
 </script>
 
 <template>
@@ -288,11 +255,11 @@ onMounted(async () => { await loadProfileData(); });
             </template>
         </div>
 
-        <!--  Business Information Card -->
+        <!-- Business Information Card (Provider Only) -->
         <div v-if="isProvider" class="card personal-info-card">
             <div class="card-header">
                 <h3>Información del Negocio</h3>
-                <button type="button" class="btn-edit" disabled title="Edición de proveedor próximamente">
+                <button type="button" class="btn-edit" @click="showEditProviderModal = true">
                     <i class="fa-solid fa-pencil"></i> Editar
                 </button>
             </div>
@@ -325,13 +292,11 @@ onMounted(async () => { await loadProfileData(); });
             </div>
         </div>
 
-
-
-        <!-- Personal / Owner Information Card (UNCONDITIONAL) -->
+        <!-- Personal/Owner Information Card -->
         <div class="card personal-info-card">
             <div class="card-header">
                 <h3>{{ isProvider ? 'Información del Propietario' : 'Información Personal' }}</h3>
-                <button type="button" class="btn-edit" @click="openEditProfile">
+                <button type="button" class="btn-edit" @click="showEditProfileModal = true">
                     <i class="fa-solid fa-pencil"></i> Editar
                 </button>
             </div>
@@ -369,80 +334,21 @@ onMounted(async () => { await loadProfileData(); });
             </div>
         </div>
 
-                <!-- Edit Profile Modal (Edits the User/Owner Account) -->
-        <BaseModal v-model="showEditProfileModal" max-width="620px" :show-close-button="false" @close="showEditProfileModal = false">
-            <template #header>
-                <div class="modal-nav-header">
-                    <button class="btn-back-nav" @click="showEditProfileModal = false"><i class="fa-solid fa-arrow-left"></i></button>
-                    <h3 class="modal-heading">Editar {{ isProvider ? 'Información del Propietario' : 'Información Personal' }}</h3>
-                    <div style="width: 30px"></div>
-                </div>
-            </template>
-            <div class="edit-photo-section">
-                <div class="edit-photo-preview">
-                    <ProfileAvatar :blob-id="avatarBlobId" :alt="displayName" />
-                </div>
-                <div class="edit-photo-info">
-                    <p class="edit-photo-label">Foto de Perfil</p>
-                    <p class="edit-photo-formats">JPG, PNG. Máx. 3MB.</p>
-                    <button type="button" class="btn-change-photo" @click="() => { showEditProfileModal = false; avatarEditorRef?.openEditor('choice'); }">
-                        <i class="fa-solid fa-rotate"></i> Cambiar Foto
-                    </button>
-                </div>
-            </div>
-            <form @submit.prevent="handleSaveProfile" class="edit-form-grid">
-                <div class="edit-form-group">
-                    <label>Nombres</label>
-                    <div :class="['input-with-icon', { error: !!editErrors.firstName }]">
-                        <i class="fa-solid fa-user"></i>
-                        <input v-model="editForm.firstName" type="text" placeholder="Nombres" maxlength="50" required />
-                    </div>
-                    <span v-if="editErrors.firstName" class="field-error">{{ editErrors.firstName }}</span>
-                </div>
-                <div class="edit-form-group">
-                    <label>Apellidos</label>
-                    <div :class="['input-with-icon', { error: !!editErrors.lastName }]">
-                        <i class="fa-solid fa-user"></i>
-                        <input v-model="editForm.lastName" type="text" placeholder="Apellidos" maxlength="50" required />
-                    </div>
-                    <span v-if="editErrors.lastName" class="field-error">{{ editErrors.lastName }}</span>
-                </div>
-                <div class="edit-form-group">
-                    <label>Teléfono</label>
-                    <div :class="['input-with-icon', { error: !!editErrors.phoneNumber }]">
-                        <i class="fa-solid fa-phone"></i>
-                        <input v-model="editForm.phoneNumber" type="tel" placeholder="Teléfono" maxlength="15" />
-                    </div>
-                    <span v-if="editErrors.phoneNumber" class="field-error">{{ editErrors.phoneNumber }}</span>
-                </div>
-                <div class="edit-form-group">
-                    <label>Cédula</label>
-                    <div class="input-with-icon">
-                        <i class="fa-regular fa-id-card"></i>
-                        <input v-model="editForm.nationalId" type="text" placeholder="Cédula" maxlength="20" />
-                    </div>
-                </div>
-                <div class="edit-form-group full-width">
-                    <label>Municipio</label>
-                    <div class="input-with-icon select-wrapper">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <select v-model="editForm.municipalityId">
-                            <option value="">Seleccione su municipio</option>
-                            <optgroup v-for="dept in departments" :key="dept.id" :label="dept.name">
-                                <option v-for="mun in dept.municipalities" :key="mun.id" :value="mun.id">{{ mun.name }}</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                </div>
-                <div class="edit-form-actions full-width">
-                    <button type="button" class="btn-cancel-edit" :disabled="isSavingProfile" @click="showEditProfileModal = false">Cancelar</button>
-                    <button type="submit" class="btn-save-edit" :disabled="isSavingProfile">
-                        <i :class="isSavingProfile ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
-                        {{ isSavingProfile ? "Guardando..." : "Actualizar" }}
-                    </button>
-                </div>
-            </form>
-        </BaseModal>
+        <!-- Modals -->
+        <EditProfileModal
+            v-model="showEditProfileModal"
+            :initial-data="userProfile"
+            :avatar-blob-id="avatarBlobId"
+            :display-name="displayName"
+            @saved="handleProfileSaved"
+            @change-photo="handleChangePhotoRequest"
+        />
+
+        <EditProviderModal
+            v-model="showEditProviderModal"
+            @saved="handleProviderSaved"
+            @change-photo="handleChangePhotoRequest"
+        />
     </div>
 </template>
 
@@ -477,7 +383,8 @@ onMounted(async () => { await loadProfileData(); });
 /* Info Grids */
 .personal-info-card .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; }
 .personal-info-card h3 { font-size: 1.4rem; color: var(--primary-blue); }
-.btn-edit { background-color: #d8f1ef; color: var(--primary-blue); border: none; padding: 0.5rem 1.25rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
+.btn-edit { background-color: #d8f1ef; color: var(--primary-blue); border: none; padding: 0.5rem 1.25rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background-color 0.2s; }
+.btn-edit:hover { background-color: #c0e6e3; }
 .btn-edit:disabled { opacity: 0.6; cursor: not-allowed; }
 .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
 .info-item { display: flex; align-items: center; gap: 0.8rem; }
@@ -488,26 +395,6 @@ onMounted(async () => { await loadProfileData(); });
 .info-item .value.link { color: var(--light-teal); }
 .capitalize { text-transform: capitalize; }
 
-/* Edit Profile Modal */
-.modal-nav-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
-.modal-heading { font-size: 1.3rem; color: var(--primary-blue); }
-.btn-back-nav { background: none; border: none; font-size: 1.2rem; color: var(--primary-blue); cursor: pointer; }
-.edit-photo-section { display: flex; align-items: center; gap: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-gray); margin-bottom: 1.5rem; }
-.edit-photo-preview { width: 75px; height: 75px; border-radius: 50%; overflow: hidden; font-size: 2.2rem; flex-shrink: 0; }
-.edit-photo-label { font-weight: 700; font-size: 0.95rem; }
-.edit-photo-formats { font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem; }
-.btn-change-photo { background: #ffffff; border: 1px solid var(--border-gray); padding: 0.35rem 0.85rem; border-radius: 20px; font-size: 0.85rem; cursor: pointer; font-weight: 600; color: var(--text-dark); }
-.edit-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-.edit-form-group.full-width { grid-column: 1 / -1; }
-.edit-form-group label { display: block; font-weight: 600; font-size: 0.88rem; margin-bottom: 0.4rem; }
-.input-with-icon { display: flex; align-items: center; gap: 0.6rem; border: 1px solid var(--border-gray); border-radius: 8px; padding: 0.65rem 0.9rem; background: #ffffff; }
-.input-with-icon.error { border-color: #ef4444; }
-.input-with-icon input, .input-with-icon select { border: none; outline: none; width: 100%; font-size: 0.92rem; background: transparent; }
-.field-error { color: #ef4444; font-size: 0.78rem; margin-top: 0.2rem; }
-.edit-form-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-.btn-cancel-edit { background: var(--primary-orange); color: #ffffff; border: none; padding: 0.65rem 1.8rem; border-radius: 25px; font-weight: 600; cursor: pointer; }
-.btn-save-edit { background: var(--light-teal); color: #ffffff; border: none; padding: 0.65rem 1.8rem; border-radius: 25px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; }
-
 /* Responsive */
 @media (max-width: 768px) {
     .profile-card { flex-direction: column; text-align: center; }
@@ -515,6 +402,5 @@ onMounted(async () => { await loadProfileData(); });
     .stats-cards { flex-direction: column; gap: 1.5rem; }
     .stat-divider { display: none; }
     .info-grid { grid-template-columns: 1fr; }
-    .edit-form-grid { grid-template-columns: 1fr; }
 }
 </style>
