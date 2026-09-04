@@ -13,7 +13,15 @@ interface Traveler {
   radius: number
 }
 
-// Verified inner land coordinates (safely on solid ground, avoiding lakes & coastlines)
+interface Ripple {
+  id: number
+  x: number
+  y: number
+  maxRadius: number
+  progress: number
+}
+
+// Verified inner land coordinates
 const landPoints = [
   { name: 'Managua', x: 585, y: 550 },
   { name: 'Tipitapa / Boaco West', x: 700, y: 520 },
@@ -37,6 +45,7 @@ const landPoints = [
 ]
 
 const activeTravelers = ref<Traveler[]>([])
+const activeRipples = ref<Ripple[]>([])
 let timer: number | null = null
 
 const getBezierPoint = (p0: number, p1: number, p2: number, t: number) => {
@@ -53,6 +62,39 @@ const getPartialPath = (startX: number, startY: number, cx: number, cy: number, 
   const subCy = startY + (cy - startY) * t
 
   return `M ${startX} ${startY} Q ${subCx} ${subCy} ${currentX} ${currentY}`
+}
+
+const triggerShockwave = (x: number, y: number, maxRadius = 18) => {
+  const ripple: Ripple = {
+    id: Date.now() + Math.random(),
+    x,
+    y,
+    maxRadius,
+    progress: 0
+  }
+
+  activeRipples.value.push(ripple)
+
+  const startTime = performance.now()
+  const duration = 700
+
+  const animateRipple = (currentTime: number) => {
+    const elapsed = currentTime - startTime
+    const progress = Math.min(elapsed / duration, 1)
+
+    const index = activeRipples.value.findIndex(r => r.id === ripple.id)
+    if (index !== -1) {
+      activeRipples.value[index].progress = progress
+    }
+
+    if (progress < 1) {
+      requestAnimationFrame(animateRipple)
+    } else {
+      activeRipples.value = activeRipples.value.filter(r => r.id !== ripple.id)
+    }
+  }
+
+  requestAnimationFrame(animateRipple)
 }
 
 const generateRandomTraveler = () => {
@@ -81,7 +123,7 @@ const generateRandomTraveler = () => {
   const randomJitterY = (Math.random() - 0.5) * 40
 
   const traveler: Traveler = {
-    id: Date.now() + Math.random(),
+    id: Math.floor(Math.random() * 10000000),
     startX,
     startY,
     destX,
@@ -91,6 +133,8 @@ const generateRandomTraveler = () => {
     progress: 0,
     radius
   }
+
+  triggerShockwave(startX, startY, radius * 3.5)
 
   activeTravelers.value.push(traveler)
 
@@ -109,6 +153,7 @@ const generateRandomTraveler = () => {
     if (progress < 1) {
       requestAnimationFrame(animate)
     } else {
+      triggerShockwave(traveler.destX, traveler.destY, traveler.radius * 4.5)
       activeTravelers.value = activeTravelers.value.filter(t => t.id !== traveler.id)
     }
   }
@@ -135,6 +180,7 @@ onUnmounted(() => {
       class="w-full h-auto overflow-visible"
     >
       <defs>
+        <!-- Intense multi-layered neon glow filter -->
         <filter id="neon-glow-intense" x="-100%" y="-100%" width="300%" height="300%">
           <feGaussianBlur stdDeviation="4" result="blur1"/>
           <feGaussianBlur stdDeviation="8" result="blur2"/>
@@ -144,9 +190,30 @@ onUnmounted(() => {
             <feMergeNode in="SourceGraphic"/>
           </feMerge>
         </filter>
+
+        <!-- Dynamic Comet Tail Linear Gradients for each active traveler -->
+        <linearGradient
+          v-for="t in activeTravelers"
+          :id="`comet-gradient-${t.id}`"
+          :key="`grad-${t.id}`"
+          gradientUnits="userSpaceOnUse"
+          :x1="t.startX"
+          :y1="t.startY"
+          :x2="getBezierPoint(t.startX, t.cx, t.destX, t.progress)"
+          :y2="getBezierPoint(t.startY, t.cy, t.destY, t.progress)"
+        >
+          <!-- Origin: fully transparent cyan -->
+          <stop offset="0%" stop-color="#0284c7" stop-opacity="0" />
+          <!-- Mid-section: fading bright sky neon -->
+          <stop offset="65%" stop-color="#38bdf8" stop-opacity="0.4" />
+          <!-- Near head: vivid cyan glow -->
+          <stop offset="88%" stop-color="#06b6d4" stop-opacity="0.9" />
+          <!-- Leading Head: pure brilliant white -->
+          <stop offset="100%" stop-color="#ffffff" stop-opacity="1" />
+        </linearGradient>
       </defs>
 
-      <!-- 1. LAND REGIONS (Cyan stroke + Deep Neon Blue Fill) -->
+      <!-- 1. LAND REGIONS -->
       <g
         id="land-polygons"
         class="fill-blue-950/40 stroke-cyan-400 stroke-[1] transition-all"
@@ -171,7 +238,7 @@ onUnmounted(() => {
         <path d="M1110.386,409.516L1103.109,408.298L1092.724,408.69L1063.295,384.516L1062.658,381.75L1069.393,369.178L1063.551,366.576L1059.483,362.695L1051.831,362.757L1034.889,358.711L1023.566,357.183L1018.545,354.891L1006.006,355.697L999.928,356.915L994.733,361.064L990.709,358.298L981.771,358.917L977.675,363.418L940.223,364.553L902.391,370.685L890.975,386.663L881.074,389.14L877.634,391.06L871.316,399.483L855.7,398.327L847.87,396.221L838.413,403.199L835.855,399.029L836.818,392.423L842.631,389.264L845.869,381.936L841.845,378.777L835.908,381.936L825.127,383.009L812.85,391.453L805.656,387.2L797.175,376.899L792.853,378.591L789.029,375.392L785.85,368.001L781.818,365.544L772.763,350.432L770.398,339.284L771.36,331.335L783.949,320.455L789.27,318.473L791.902,314.261L792.194,309.037L795.955,298.982L790.793,289.815L791.992,287.007L797.827,282.568L800.991,271.253L814.597,270.902L840.567,252.855L856.949,262.705L899.879,195.057L898.785,182.997L909.563,142.747L888.84,141.343L883.31,133.557L880.976,126.473L884.021,124.738L884.58,114.638L887.443,112.077L886.343,106.645L881.553,102.866L881.749,98.776L885.252,87.354L879.509,84.504L879.671,77.44L876.661,74.941L881.366,65.502L889.212,57.962L894.216,54.492L900.099,53.129L903.865,45.011L906.446,42.491L913.251,42.987L920.713,39.62L925.146,42.471L926.457,47.8L930.995,51.373L927.65,55.36L931.227,62.713L936.852,67.423L939.167,73.165L942.316,67.774L945.69,71.74L949.696,70.81L959.038,75.395L969.214,74.631L973.209,81.406L978.17,82.749L980.502,79.506L984.874,79.155L994.603,69.798L998.595,62.672L1002.177,64.737L1000.3,69.405L1004.434,71.079L1007.722,68.868L1009.556,73.268L1012.55,74.363L1017.234,70.335L1015.593,61.185L1016.949,57.322L1021.65,53.852L1022.95,58.644L1031.017,63.457L1037.092,62.279L1040.428,59.759L1045.714,60.482L1043.232,50.588L1044.325,47.779L1049.286,48.915L1050.019,54.265L1055.396,51.786L1055.807,56.31L1063.032,54.905L1066.912,56.826L1078.556,50.175L1081.65,52.902L1090.165,51.291L1093.333,47.8L1100.328,47.118L1102.032,43.999L1106.42,43.999L1107.988,39.599L1114.638,37.782L1115.33,35.447L1124.046,29.726L1130.742,29.374L1133.623,25.78L1143.467,22.682L1144.45,17.29L1149.082,15.039L1151.002,10.143L1155.757,3.367L1158.42,2.293L1162.045,8.263L1169.942,5.433L1176.781,0L1186.93,1.549L1196.389,6.466L1202.892,7.148L1208.032,4.565L1207.531,11.3L1195.623,24.623L1192.317,35.303L1185.978,48.523L1182.924,47.159L1182.839,41.107L1189.038,38.319L1187.242,33.361L1187.254,26.193L1181.813,24.045L1176.825,28.28L1172.135,36.769L1169.57,37.389L1171.867,55.215L1176.487,59.987L1180.807,59.615L1180.264,52.468L1184.924,50.093L1186.434,73.309L1187.899,87.272L1191.588,107.988L1190.04,112.305L1194.672,116.89L1195.46,142.148L1190.679,154.849L1183.037,170.235L1182.623,165.32L1187.222,155.221L1186.013,145.391L1183.631,137.894L1178.863,131.202L1175.205,137.501L1175.649,143.139L1171.94,147.6L1174.611,157.08L1178.309,156.584L1182.916,163.544L1176.663,177.711L1173.815,185.785L1164.888,195.305L1162.798,199.869L1157.288,206.291L1151.56,210.173L1147.38,218.413L1143.353,218.082L1143.56,212.693L1136.129,208.232L1133.958,209.925L1132.468,216.203L1137.491,214.943L1137.137,223.224L1143.581,223.368L1140.867,234.643L1135.671,247.239L1130.741,264.625L1123.433,298.26L1122.356,288.225L1124.955,281.453L1124.235,277.757L1128.358,271.129L1126.026,267.144L1120.772,268.61L1122.922,273.235L1112.831,274.722L1111.334,279.285L1114.834,290.187L1120.805,293.015L1123.071,305.321L1116.727,317.234L1114.008,325.616L1111.478,326.07L1106.548,332.367L1109.568,337.838L1113.669,334.06L1109.627,359.227L1109.413,385.466ZM1278.68,125.378L1278.429,132.772L1275.385,137.667L1271.325,137.894L1267.751,134.156L1271.086,127.154L1274.063,124.986Z" title="Costa Caribe Norte"/>
       </g>
 
-      <!-- 2. WATER BODIES (Fully Transparent Fill + Faint Cyan Border Outline) -->
+      <!-- 2. WATER BODIES -->
       <g
         id="water-polygons"
         class="fill-transparent stroke-cyan-400/35 stroke-[0.8] transition-all"
@@ -181,18 +248,42 @@ onUnmounted(() => {
         <path d="M576.975,565.496L570.191,562.957L566.062,559.552L558.128,557.034L555.434,548.676L556.903,542.505L561.569,539.037L569.698,543.372L574.708,543.702L578.846,540.4L582.314,533.609L588.603,529.564L599.817,525.601L602.282,520.215L612.092,519.389L614.85,525.705L615.567,536.437L619.37,543.392L623.911,554.764L623.101,564.258L627.01,563.618L633.209,555.404L636.622,554.145L644.554,557.942L642.758,566.156L640.173,570.573L638.234,587.021L621.719,587.021L615.882,590.818L603.275,590.178L605.453,583.863L610.797,579.426L610.219,573.111L607.064,564.897L597.163,564.897L592.474,568.055L588.189,573.111Z" id="NI-LKM" title="Lago de Managua"/>
       </g>
 
-      <!-- 3. TRAVELING ARCS & NEON POINTS -->
+      <!-- 3. SHOCKWAVE EXPANDING RIPPLE LAYER -->
+      <g>
+        <template v-for="r in activeRipples" :key="r.id">
+          <!-- Outer Expanding Wave -->
+          <circle
+            :cx="r.x"
+            :cy="r.y"
+            :r="3 + r.progress * r.maxRadius"
+            class="fill-none stroke-cyan-300 stroke-[1.5]"
+            style="filter: drop-shadow(0 0 8px rgba(56, 189, 248, 1));"
+            :style="{ opacity: (1 - r.progress) * 0.85 }"
+          />
+          <!-- Secondary Inner Ring -->
+          <circle
+            :cx="r.x"
+            :cy="r.y"
+            :r="2 + r.progress * (r.maxRadius * 0.55)"
+            class="fill-none stroke-white stroke-[1]"
+            :style="{ opacity: (1 - r.progress) * 0.6 }"
+          />
+        </template>
+      </g>
+
+      <!-- 4. TRAVELING COMET TAILS & HEAD POINTS -->
       <g>
         <template v-for="t in activeTravelers" :key="t.id">
-          <!-- Vanquishing path trace as the point travels -->
+          <!-- Multi-stop Gradient Comet Trail -->
           <path
             :d="getPartialPath(t.startX, t.startY, t.cx, t.cy, t.destX, t.destY, t.progress)"
-            class="fill-none stroke-sky-300 stroke-[1.8]"
-            style="filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.9));"
-            :style="{ opacity: 1 - t.progress }"
+            :stroke="`url(#comet-gradient-${t.id})`"
+            class="fill-none stroke-[2.2]"
+            style="filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.95)) drop-shadow(0 0 16px rgba(14, 165, 233, 0.6));"
+            :style="{ opacity: 1 - t.progress * 0.8 }"
           />
 
-          <!-- Moving Head Point scaled proportionally to travel distance -->
+          <!-- Brilliant White Neon Head Point -->
           <circle
             :cx="getBezierPoint(t.startX, t.cx, t.destX, t.progress)"
             :cy="getBezierPoint(t.startY, t.cy, t.destY, t.progress)"
