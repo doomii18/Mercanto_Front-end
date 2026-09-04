@@ -61,7 +61,7 @@ const handleLogin = async () => {
                 <div class="absolute top-8 -right-48 h-96 w-96 rounded-full bg-(--primary-orange)"></div>
 
                 <!-- Top Right Teal Ring -->
-                <div class="absolute -top-20 -right-24 h-80 w-80 rounded-full border-[40px] border-(--light-teal)"></div>
+                <div class="absolute -top-20 -right-24 h-80 w-80 rounded-full border-40 border-(--light-teal)"></div>
 
                 <div class="pointer-events-none absolute top-1/2 -right-4 -translate-y-1/2 w-[70%] max-w-lg opacity-35 mix-blend-screen flex items-center justify-center">
                     <Map class="w-full h-auto scale-90 origin-right" />
@@ -73,7 +73,7 @@ const handleLogin = async () => {
 
             <div class="relative z-10 w-full max-w-140">
                 <div class="mb-10">
-                    <img src="../assets/1.1 Imagotipo variacion.png" alt="Mercanto" class="h-16 w-auto object-contain" />
+                    <img src="../assets/1.1 Imagotipo variacion.png" alt="Mercanto" class="h-30 w-auto object-contain" />
                 </div>
 
                 <h1 class="mb-5 font-serif text-3xl font-bold leading-tight md:text-4xl lg:text-[2.4rem]">

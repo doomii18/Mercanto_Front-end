@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "../modules/auth";
+import { useAuthStore } from "@/modules/auth";
+import { useUserContextStore } from "@/stores/userContextStore";
+import logoImg from "@/assets/logo.png";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const contextStore = useUserContextStore();
 
 const sidebarOpen = ref(false);
 
@@ -12,529 +15,268 @@ const toggleSidebar = () => {
   sidebarOpen.value = !sidebarOpen.value;
 };
 
+const closeSidebar = () => {
+  sidebarOpen.value = false;
+};
+
 const handleLogout = async () => {
+  closeSidebar();
   await authStore.logout();
   router.push({ name: "login" });
 };
+
+const profileRouteName = computed(() =>
+  contextStore.isProvider ? "provider-profile" : "profile"
+);
 </script>
 
 <template>
-  <div class="dashboard-shell">
-    <!-- ── Top header ─────────────────────────────────── -->
-    <header class="header">
-      <!-- Hamburger -->
-      <button class="hamburger" @click="toggleSidebar" :aria-expanded="sidebarOpen" aria-label="Menú">
-        <span class="bar" :class="{ open: sidebarOpen }"></span>
-        <span class="bar" :class="{ open: sidebarOpen }"></span>
-        <span class="bar" :class="{ open: sidebarOpen }"></span>
+  <div class="min-h-screen bg-white text-[#083c5a]">
+    <header class="fixed top-0 left-0 z-50 flex h-16 w-full items-center gap-4 border-b border-slate-200 bg-white px-6">
+      <button
+        type="button"
+        class="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg border-none bg-transparent p-1 transition-colors duration-200 hover:bg-[#fde8e4] focus:outline-none"
+        :aria-expanded="sidebarOpen"
+        aria-label="Alternar navegación"
+        @click="toggleSidebar"
+      >
+        <span
+          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+          :class="{ 'translate-y-[7.5px] rotate-45': sidebarOpen }"
+        ></span>
+        <span
+          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+          :class="{ 'scale-x-0 opacity-0': sidebarOpen }"
+        ></span>
+        <span
+          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+          :class="{ '-translate-y-[7.5px] -rotate-45': sidebarOpen }"
+        ></span>
       </button>
 
-      <div class="logo">
+      <div class="flex items-center">
         <router-link :to="{ name: 'home' }">
-          <img src="../assets/logo.png" alt="Mercanto" class="logo-img" />
+          <img :src="logoImg" alt="Mercanto" class="h-9.5 object-contain" />
         </router-link>
       </div>
     </header>
 
-    <div class="dashboard-body">
-      <!-- Backdrop (mobile only) -->
+    <div class="relative mt-16 flex min-h-[calc(100vh-64px)]">
       <div
         v-if="sidebarOpen"
-        class="backdrop"
-        @click="sidebarOpen = false"
+        class="fixed inset-x-0 top-16 bottom-0 z-40 bg-black/25 backdrop-blur-[1px] lg:hidden"
+        @click="closeSidebar"
       ></div>
 
-      <!-- ── Sidebar ─────────────────────────────────── -->
-      <aside class="sidebar" :class="{ expanded: sidebarOpen }">
-        <nav class="sidebar-menu">
+      <aside
+        :class="[
+          'fixed z-40 bg-white transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:h-[60px] max-md:w-full max-md:border-t max-md:border-slate-200 max-md:shadow-sm',
+          'md:top-16 md:bottom-0 md:left-0 md:flex md:flex-col md:justify-between md:border-r md:border-slate-200 md:py-5',
+          sidebarOpen
+            ? 'md:w-60 md:items-start md:shadow-xl'
+            : 'md:w-[72px] md:items-center'
+        ]"
+      >
+        <nav
+          :class="[
+            'flex',
+            'max-md:h-full max-md:w-full max-md:flex-row max-md:items-center max-md:justify-around max-md:px-2',
+            'md:w-full md:flex-col md:gap-1.5',
+            sidebarOpen ? 'md:px-3' : 'md:px-0'
+          ]"
+        >
           <router-link
-            :to="{ name: 'profile' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Mi Perfil"
+            :to="{ name: profileRouteName }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
           >
-            <i class="fa-regular fa-user icon"></i>
-            <span class="label">Mi Perfil</span>
+            <i class="fa-regular fa-circle-user w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Mi Perfil
+            </span>
+
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Mi Perfil
+            </span>
           </router-link>
 
           <router-link
+            v-if="contextStore.isProvider"
             :to="{ name: 'provider-products' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Mis Productos"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
           >
-            <i class="fa-solid fa-bag-shopping icon"></i>
-            <span class="label">Mis Productos</span>
+            <i class="fa-solid fa-bag-shopping w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Mis Productos
+            </span>
+
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Mis Productos
+            </span>
           </router-link>
 
           <router-link
-            :to="{ name: 'home' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Favoritos"
+            :to="{ name: 'orders' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
           >
-            <i class="fa-solid fa-cart-shopping icon"></i>
-            <span class="label">Favoritos</span>
+            <i class="fa-solid fa-cart-shopping w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Pedidos
+            </span>
+
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Pedidos
+            </span>
           </router-link>
 
           <router-link
             :to="{ name: 'messages' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Mensajes"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
           >
-            <i class="fa-regular fa-comment-dots icon"></i>
-            <span class="label">Mensajes</span>
+            <i class="fa-regular fa-comment-dots w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Mensajes
+            </span>
+
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Mensajes
+            </span>
           </router-link>
 
           <router-link
             :to="{ name: 'smart-search' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Búsqueda Inteligente"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
           >
-            <i class="fa-solid fa-magnifying-glass icon"></i>
-            <span class="label">Búsqueda Inteligente</span>
-          </router-link>
+            <i class="fa-solid fa-magnifying-glass w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Búsqueda Inteligente
+            </span>
 
-          <router-link
-            :to="{ name: 'home' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Configuración"
-          >
-            <i class="fa-solid fa-gear icon"></i>
-            <span class="label">Configuración</span>
-          </router-link>
-
-          <router-link
-            :to="{ name: 'home' }"
-            class="menu-item"
-            exact-active-class="active"
-            @click="sidebarOpen = false"
-            title="Ayuda"
-          >
-            <i class="fa-regular fa-circle-question icon"></i>
-            <span class="label">Ayuda</span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Búsqueda Inteligente
+            </span>
           </router-link>
         </nav>
 
         <button
           type="button"
-          class="logout-btn"
+          :class="[
+            'group relative flex items-center rounded-2xl border-none text-slate-400 transition-all duration-200 hover:bg-red-50 hover:text-red-500 cursor-pointer',
+            'max-md:h-11 max-md:w-11 max-md:justify-center',
+            sidebarOpen
+              ? 'md:mx-3 md:h-11 md:w-[calc(100%-1.5rem)] md:justify-start md:gap-3.5 md:px-3.5'
+              : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+          ]"
           @click="handleLogout"
-          title="Cerrar sesión"
         >
-          <i class="fa-solid fa-arrow-right-from-bracket icon logout-icon"></i>
-          <span class="label">Cerrar sesión</span>
+          <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center text-lg shrink-0 -scale-x-100"></i>
+          <span
+            :class="[
+              'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+              sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+            ]"
+          >
+            Cerrar sesión
+          </span>
+
+          <span
+            v-if="!sidebarOpen"
+            class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-red-600 px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+          >
+            Cerrar sesión
+          </span>
         </button>
       </aside>
 
-      <!-- ── Content area ────────────────────────────── -->
-      <main class="content-viewport" :class="{ shifted: sidebarOpen }">
+      <main
+        :class="[
+          'flex-1 flex flex-col min-h-[calc(100vh-64px)] bg-[#fdf3f0] p-4 sm:p-6 lg:p-10 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'max-md:mb-[60px] max-md:ml-0',
+          sidebarOpen ? 'lg:ml-60 md:ml-[72px]' : 'md:ml-[72px]'
+        ]"
+      >
         <router-view />
       </main>
     </div>
   </div>
 </template>
-
-<style scoped>
-/* ── Variables ──────────────────────────────────────── */
-:root {
-  --sidebar-collapsed: 72px;
-  --sidebar-expanded: 240px;
-  --header-h: 64px;
-}
-
-/* ── Shell ──────────────────────────────────────────── */
-.dashboard-shell {
-  min-height: 100vh;
-  background-color: #ffffff;
-  color: var(--primary-blue, #083c5a);
-}
-
-/* ── Header ─────────────────────────────────────────── */
-.header {
-  background-color: #ffffff;
-  padding: 0 1.5rem;
-  border-bottom: 1px solid #eeeeee;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 64px;
-  z-index: 200;
-  box-sizing: border-box;
-}
-
-.logo-img {
-  height: 38px;
-  display: block;
-}
-
-/* ── Hamburger button ───────────────────────────────── */
-.hamburger {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  gap: 5px;
-  width: 36px;
-  height: 36px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 8px;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-
-.hamburger:hover {
-  background: #fde8e4;
-}
-
-.bar {
-  display: block;
-  width: 22px;
-  height: 2.5px;
-  background: #083c5a;
-  border-radius: 2px;
-  transition: transform 0.3s ease, opacity 0.3s ease;
-  transform-origin: center;
-}
-
-/* Animate to X when open */
-.bar:nth-child(1).open {
-  transform: translateY(7.5px) rotate(45deg);
-}
-.bar:nth-child(2).open {
-  opacity: 0;
-  transform: scaleX(0);
-}
-.bar:nth-child(3).open {
-  transform: translateY(-7.5px) rotate(-45deg);
-}
-
-/* ── Body ───────────────────────────────────────────── */
-.dashboard-body {
-  display: flex;
-  min-height: calc(100vh - 64px);
-  margin-top: 64px;
-  position: relative;
-}
-
-/* ── Backdrop (mobile overlay) ──────────────────────── */
-.backdrop {
-  display: none;
-}
-
-/* ── Sidebar ────────────────────────────────────────── */
-.sidebar {
-  width: 72px;
-  background-color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.25rem 0 1.5rem;
-  border-right: 1px solid #f0f0f0;
-  position: fixed;
-  top: 64px;
-  bottom: 0;
-  left: 0;
-  z-index: 150;
-  box-sizing: border-box;
-  overflow: hidden;
-  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Expanded state */
-.sidebar.expanded {
-  width: 240px;
-  align-items: flex-start;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.08);
-}
-
-/* ── Sidebar nav ────────────────────────────────────── */
-.sidebar-menu {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.4rem;
-  width: 100%;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-.sidebar.expanded .sidebar-menu {
-  align-items: flex-start;
-  padding: 0 0.75rem;
-}
-
-/* ── Menu items ─────────────────────────────────────── */
-.menu-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  text-decoration: none;
-  color: #9ca3af;
-  font-size: 1.15rem;
-  transition: background 0.2s, color 0.2s, width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  white-space: nowrap;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.sidebar.expanded .menu-item {
-  width: 100%;
-  justify-content: flex-start;
-  gap: 0.85rem;
-  padding: 0 0.85rem;
-  font-size: 0.95rem;
-}
-
-.menu-item:hover {
-  background-color: #fde8e4;
-  color: #ff6a00;
-}
-
-.menu-item.active,
-.menu-item.router-link-active {
-  background-color: #fde8e4;
-  color: #ff6a00;
-}
-
-/* ── Icon ────────────────────────────────────────────── */
-.icon {
-  flex-shrink: 0;
-  width: 20px;
-  text-align: center;
-  font-size: 1.15rem;
-}
-
-/* Logout icon mirrored to match [← design */
-.logout-icon {
-  transform: scaleX(-1);
-}
-
-/* ── Label (hidden when collapsed) ──────────────────── */
-.label {
-  opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  transform: translateX(-6px);
-  transition: opacity 0.25s ease, max-width 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.25s ease;
-  pointer-events: none;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.sidebar.expanded .label {
-  opacity: 1;
-  max-width: 200px;
-  transform: translateX(0);
-}
-
-/* ── Tooltip (collapsed only) ───────────────────────── */
-.menu-item:not(.sidebar.expanded .menu-item)::after {
-  content: attr(title);
-  position: fixed;
-  left: 80px;
-  background: #083c5a;
-  color: #fff;
-  padding: 0.35rem 0.75rem;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 500;
-  white-space: nowrap;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.18s;
-  z-index: 300;
-}
-
-.menu-item:hover::after {
-  opacity: 1;
-}
-
-.sidebar.expanded .menu-item::after {
-  display: none;
-}
-
-/* ── Logout ─────────────────────────────────────────── */
-.logout-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
-  color: #9ca3af;
-  font-size: 1.15rem;
-  background: none;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s, color 0.2s, width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  white-space: nowrap;
-  overflow: hidden;
-  flex-shrink: 0;
-  margin: 0 auto;
-}
-
-.sidebar.expanded .logout-btn {
-  width: calc(100% - 1.5rem);
-  justify-content: flex-start;
-  gap: 0.85rem;
-  padding: 0 0.85rem;
-  margin: 0 0.75rem;
-  font-size: 0.9rem;
-}
-
-.logout-btn:hover {
-  background-color: #fee2e2;
-  color: #ef4444;
-}
-
-.sidebar.expanded .logout-btn .label {
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-/* ── Content viewport ───────────────────────────────── */
-.content-viewport {
-  flex: 1;
-  margin-left: 72px;
-  padding: 2.5rem 3rem;
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100vh - 64px);
-  box-sizing: border-box;
-  background-color: #fdf3f0;
-  transition: margin-left 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.content-viewport.shifted {
-  margin-left: 240px;
-}
-
-/* ── Responsive ─────────────────────────────────────── */
-@media (max-width: 1024px) {
-  .content-viewport {
-    padding: 2rem 1.5rem;
-  }
-
-  /* On tablet the expanded sidebar overlays instead of pushing content */
-  .content-viewport.shifted {
-    margin-left: 72px;
-  }
-
-  .backdrop {
-    display: block;
-    position: fixed;
-    inset: 64px 0 0 0;
-    background: rgba(0, 0, 0, 0.25);
-    z-index: 140;
-  }
-}
-
-@media (max-width: 768px) {
-  /* Bottom nav bar on mobile */
-  .sidebar {
-    width: 100% !important;
-    height: 60px;
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 0.5rem;
-    border-right: none;
-    border-top: 1px solid #f0f0f0;
-    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
-    transition: none;
-  }
-
-  .sidebar.expanded {
-    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
-  }
-
-  .sidebar-menu {
-    flex-direction: row;
-    gap: 0;
-    padding: 0;
-    width: auto;
-    align-items: center !important;
-  }
-
-  .sidebar.expanded .sidebar-menu {
-    padding: 0;
-  }
-
-  .menu-item,
-  .sidebar.expanded .menu-item {
-    width: 44px !important;
-    height: 44px;
-    border-radius: 12px;
-    justify-content: center !important;
-    padding: 0 !important;
-    gap: 0 !important;
-    font-size: 1.1rem;
-  }
-
-  .label {
-    display: none !important;
-  }
-
-  .menu-item::after,
-  .logout-btn::after {
-    display: none !important;
-  }
-
-  .logout-btn,
-  .sidebar.expanded .logout-btn {
-    width: 44px !important;
-    height: 44px;
-    justify-content: center !important;
-    padding: 0 !important;
-    gap: 0 !important;
-    margin: 0 !important;
-  }
-
-  .dashboard-body {
-    flex-direction: column;
-  }
-
-  .content-viewport,
-  .content-viewport.shifted {
-    margin-left: 0 !important;
-    padding: 1.5rem 1rem;
-    margin-bottom: 60px;
-    min-height: auto;
-  }
-
-  .backdrop {
-    display: none !important;
-  }
-}
-
-@media (max-width: 480px) {
-  .content-viewport {
-    padding: 1rem 0.75rem;
-  }
-}
-</style>

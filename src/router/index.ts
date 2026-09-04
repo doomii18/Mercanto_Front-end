@@ -1,5 +1,15 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
-import { useAuthStore } from "../modules/auth";
+import { useAuthStore } from "@/modules/auth";
+import { useUserContextStore } from "@/stores/userContextStore";
+import { bootstrapApp } from "@/utils/bootstrap";
+
+declare module "vue-router" {
+  interface RouteMeta {
+    requiresAuth?: boolean;
+    guestOnly?: boolean;
+    requiresProvider?: boolean;
+  }
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -14,7 +24,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: "privacy",
         name: "privacy",
-        component: () => import("../views/PrivacyView.vue")
+        component: () => import("../views/PrivacyView.vue"),
       },
       {
         path: "category",
@@ -97,7 +107,7 @@ const routes: RouteRecordRaw[] = [
     path: "/provider/profile",
     name: "provider-profile",
     component: () => import("../views/ProviderProfileView.vue"),
-    meta: { requiresAuth: true },
+    meta: { requiresAuth: true, requiresProvider: true },
   },
   {
     path: "/dashboard",
@@ -129,13 +139,13 @@ const routes: RouteRecordRaw[] = [
         path: "provider-products",
         name: "provider-products",
         component: () => import("../views/ProviderProductsView.vue"),
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, requiresProvider: true },
       },
       {
         path: "provider-products/add",
         name: "provider-add-product",
         component: () => import("../views/ProviderAddProductView.vue"),
-        meta: { requiresAuth: true },
+        meta: { requiresAuth: true, requiresProvider: true },
       },
       {
         path: "messages",
@@ -192,20 +202,28 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-  const authStore = useAuthStore();
+  // Unified bootstrap: hydrates auth, provider organization context, and geo cache
+  await bootstrapApp();
 
-  if (!authStore.isInitialized) {
-    await authStore.initialize();
-  }
+  const authStore = useAuthStore();
+  const contextStore = useUserContextStore();
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
+  const requiresProvider = to.matched.some((record) => record.meta.requiresProvider);
   const guestOnly = to.matched.some((record) => record.meta.guestOnly);
 
+  // Unauthenticated check
   if (requiresAuth && !authStore.isAuthenticated) {
     return { name: "login", query: { redirect: to.fullPath } };
   }
 
+  // Guest-only redirect (logged-in users accessing login/register)
   if (guestOnly && authStore.isAuthenticated) {
+    return contextStore.isProvider ? { name: "provider-products" } : { name: "profile" };
+  }
+
+  // Provider authorization check (prevents buyers accessing provider panels)
+  if (requiresProvider && !contextStore.isProvider) {
     return { name: "profile" };
   }
 

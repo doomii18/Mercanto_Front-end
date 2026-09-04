@@ -1,6 +1,9 @@
 import { z } from "zod";
 export { phoneNumberSchema, addressSchema } from "../../shared/schemas";
 
+export const rucRegexStrict = /^([JNE]\d{13}|\d{13}[A-Z])$/;
+export const rucRegexFormatted = /^([JNE]-?\d{13}|\d{3}-?\d{6}-?\d{4}[A-Z])$/i;
+
 export const ProviderKindSchema = z.enum(
   ["manufacturer", "distributor", "wholesaler", "retailer", "service"],
   { message: "Seleccione un tipo de negocio válido" }
@@ -34,10 +37,17 @@ export const companyNameSchema = z
 export const taxIdSchema = z
   .string({ message: "El número RUC es obligatorio" })
   .trim()
-  .toUpperCase()
   .min(1, "El número RUC no puede estar vacío")
-  .max(50, "El número RUC no debe exceder los 50 caracteres")
-  .regex(/^[J|N|E]\d{13}$/, "Formato RUC inválido (ej. J0310000664348)");
+  .transform((val) => val.replace(/[-\s]/g, "").toUpperCase())
+  .pipe(
+    z
+      .string()
+      .length(14, "El RUC debe tener exactamente 14 caracteres")
+      .regex(
+        rucRegexStrict,
+        "Formato RUC inválido (ej. J0310000664348 o 0010101900001A)"
+      )
+  );
 
 export const companyDescriptionSchema = z
   .string({ message: "La descripción debe ser texto" })
