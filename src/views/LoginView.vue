@@ -47,31 +47,33 @@ const handleLogin = async () => {
   }
 };
 </script>
-
 <template>
     <div class="flex min-h-screen w-full flex-col lg:flex-row">
         <!-- Left Panel -->
         <section class="relative hidden lg:flex flex-1 items-center justify-center overflow-hidden bg-(--primary-blue) p-8 text-white lg:flex-[1.2] lg:p-10">
 
-            <!-- Background Decorative Figures -->
+            <!-- Background Decorative Figures & Map -->
             <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                 <!-- Top Center Dots -->
                 <div class="absolute top-12 left-1/3 h-32 w-48 opacity-15" style="background-image: radial-gradient(circle, #ffffff 2px, transparent 2px); background-size: 24px 24px;"></div>
 
-                <!-- Top Right Orange Blob (Pushed far to the right so only a subtle edge remains) -->
+                <!-- Top Right Orange Blob -->
                 <div class="absolute top-8 -right-48 h-96 w-96 rounded-full bg-(--primary-orange)"></div>
 
-                <!-- Top Right Teal Ring (Pushed far to the right so only a small arc remains) -->
+                <!-- Top Right Teal Ring -->
                 <div class="absolute -top-20 -right-24 h-80 w-80 rounded-full border-[40px] border-(--light-teal)"></div>
 
-                <!-- Bottom City Outline (Pinned to bottom-left, no scaling/stretching) -->
+                <div class="pointer-events-none absolute top-1/2 -right-4 -translate-y-1/2 w-[70%] max-w-lg opacity-35 mix-blend-screen flex items-center justify-center">
+                    <Map class="w-full h-auto scale-90 origin-right" />
+                </div>
+
+                <!-- Bottom City Outline -->
                 <img src="../assets/city_outline.png" alt="Cityscape backdrop" aria-hidden="true" class="absolute bottom-0 left-0 w-auto max-w-none h-40 object-contain object-bottom opacity-60 mix-blend-screen" />
             </div>
-            <Map></Map>
 
             <div class="relative z-10 w-full max-w-140">
                 <div class="mb-10">
-                    <img src="../assets/1.1 Imagotipo variacion.png" alt="Mercanto" class="h-11 object-contain" />
+                    <img src="../assets/1.1 Imagotipo variacion.png" alt="Mercanto" class="h-16 w-auto object-contain" />
                 </div>
 
                 <h1 class="mb-5 font-serif text-3xl font-bold leading-tight md:text-4xl lg:text-[2.4rem]">
@@ -80,7 +82,7 @@ const handleLogin = async () => {
                 </h1>
 
                 <p class="mb-6 text-[0.95rem] leading-relaxed text-neutral-300">
-                    Compra al por mayor de forma fácil, segura<br />
+                    Compra al por mayor de forma fácil, segura<br/>
                     y con proveedores verificados en todo Nicaragua.
                 </p>
 
@@ -149,7 +151,6 @@ const handleLogin = async () => {
 
         <!-- Right Panel -->
         <section class="relative flex flex-1 items-center justify-center overflow-hidden bg-neutral-50 p-6 lg:p-8">
-
             <!-- Background Decorative Figures -->
             <div class="pointer-events-none absolute inset-0 z-0 overflow-hidden">
                 <!-- Top Right Orange Dots -->
@@ -160,7 +161,8 @@ const handleLogin = async () => {
                 <div class="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-teal-100/40"></div>
             </div>
 
-            <div class="relative z-10 w-full max-w-100 rounded-3xl bg-white p-6 shadow-[0_15px_40px_rgba(0,0,0,0.05)] md:px-8 md:py-10">
+            <!-- Login Card with Thicker, Defined Orange Border -->
+            <div class="relative z-10 w-full max-w-100 rounded-3xl border-3 border-(--primary-orange) bg-white p-6 shadow-2xl shadow-(--primary-orange)/20 md:px-8 md:py-10">
                 <div class="mb-6 text-center">
                     <div class="mb-3 inline-flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 text-[1.5rem] text-(--primary-orange)">
                         <i class="fa-solid fa-bag-shopping"></i>
