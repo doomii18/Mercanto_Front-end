@@ -2,6 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../modules/auth";
+import Map from "@/components/common/Map.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -66,6 +67,7 @@ const handleLogin = async () => {
                 <!-- Bottom City Outline (Pinned to bottom-left, no scaling/stretching) -->
                 <img src="../assets/city_outline.png" alt="Cityscape backdrop" aria-hidden="true" class="absolute bottom-0 left-0 w-auto max-w-none h-40 object-contain object-bottom opacity-60 mix-blend-screen" />
             </div>
+            <Map></Map>
 
             <div class="relative z-10 w-full max-w-140">
                 <div class="mb-10">
