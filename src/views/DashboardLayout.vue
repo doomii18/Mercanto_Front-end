@@ -3,7 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/modules/auth";
 import { useUserContextStore } from "@/stores/userContextStore";
-import logoImg from "@/assets/logo.png";
+import AppLogo from "@/components/common/AppLogo.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -52,11 +52,7 @@ const handleLogout = async () => {
         ></span>
       </button>
 
-      <div class="flex items-center">
-        <router-link :to="{ name: 'home' }">
-          <img :src="logoImg" alt="Mercanto" class="h-9.5 object-contain" />
-        </router-link>
-      </div>
+      <AppLogo class="h-9" />
     </header>
 
     <div class="relative mt-16 flex min-h-[calc(100vh-64px)]">

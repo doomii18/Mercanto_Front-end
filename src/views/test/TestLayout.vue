@@ -1,15 +1,12 @@
+<script setup lang="ts">
+import AppLogo from '@/components/common/AppLogo.vue';
+
+</script>
+
 <template>
     <div class="test-layout">
         <header class="top-header">
-            <div class="logo">
-                <router-link :to="{ name: 'home' }">
-                    <img
-                        src="../../assets/logo.png"
-                        alt="Mercanto"
-                        class="logo-icon"
-                    />
-                </router-link>
-            </div>
+            <AppLogo class="h-10" />
             <h2>Test Views</h2>
         </header>
 

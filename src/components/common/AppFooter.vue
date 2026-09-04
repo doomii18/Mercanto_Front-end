@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
 import { useAuthStore } from "@/modules/auth";
-import imagotipoImg from "../../assets/1.1 Imagotipo variacion.png";
+import AppLogo from "./AppLogo.vue";
 
 const authStore = useAuthStore();
 
@@ -19,11 +19,7 @@ onMounted(() => {
       <div class="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-0 items-center">
         <!-- Column 1: Info & Contacts -->
         <div class="flex flex-col gap-4 md:pr-10">
-          <img
-            :src="imagotipoImg"
-            alt="Mercanto"
-            class="h-12 w-auto object-contain self-start"
-          />
+        <AppLogo variant="imagotipo" class="h-12 self-start" />
           <div class="flex flex-col gap-2.5 text-sm text-slate-200">
             <a href="mailto:mercanto@gmail.com" class="flex items-center gap-3 hover:underline">
               <i class="fa-regular fa-envelope text-lg"></i>

@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "../modules/auth";
 import Map from "@/components/common/Map.vue";
+import AppLogo from "@/components/common/AppLogo.vue";
 
 const router = useRouter();
 const route = useRoute();
@@ -72,9 +73,7 @@ const handleLogin = async () => {
             </div>
 
             <div class="relative z-10 w-full max-w-140">
-                <div class="mb-10">
-                    <img src="../assets/1.1 Imagotipo variacion.png" alt="Mercanto" class="h-30 w-auto object-contain" />
-                </div>
+                <AppLogo variant="imagotipo" class="h-24 md:h-30" />
 
                 <h1 class="mb-5 font-serif text-3xl font-bold leading-tight md:text-4xl lg:text-[2.4rem]">
                     Conectamos tu negocio<br />

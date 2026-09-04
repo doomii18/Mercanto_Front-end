@@ -4,7 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import { useAuthStore } from "@/modules/auth";
 import { userProfileApi } from "@/api";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
-import logoImg from "@/assets/logo.png";
+import AppLogo from "./AppLogo.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -92,11 +92,7 @@ const profileRoute = computed(() => {
 <template>
   <header class="navbar-header">
     <div class="navbar-container">
-      <div class="logo">
-        <router-link :to="{ name: 'home' }" @click="closeMenu">
-          <img :src="logoImg" alt="Mercanto" class="logo-img" />
-        </router-link>
-      </div>
+        <AppLogo class="h-10 md:h-12" @click="closeMenu" />
 
       <button
         type="button"

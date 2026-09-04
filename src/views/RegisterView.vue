@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import AppLogo from '@/components/common/AppLogo.vue';
+
 
 </script>
 
@@ -7,13 +9,7 @@
         <div class="registro-container">
             <!-- Left Branding & Summary Panel -->
             <section class="registro-left">
-                <div class="registro-brand">
-                    <img
-                        src="../assets/logo.png"
-                        alt="Mercanto"
-                        class="brand-logo"
-                    />
-                </div>
+                <AppLogo class="h-14 md:h-16" />
 
                 <h2 class="registro-left-title">
                     Únete a Mercanto<br />y haz crecer tu negocio
