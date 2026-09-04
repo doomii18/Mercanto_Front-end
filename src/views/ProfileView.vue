@@ -18,7 +18,8 @@ const isProvider = computed(() => contextStore.isProvider);
 const account = computed(() => authStore.account);
 
 // Data State
-const userProfile = ref<UserProfileResponse | null>(null);
+// Alias the context store's profile to maintain template compatibility
+const userProfile = computed(() => contextStore.userProfile);
 const providerOrg = ref<OrganizationDetailsDto | null>(null);
 const providerPublic = ref<PublicProviderDto | null>(null);
 const isLoading = ref(true);
@@ -31,8 +32,7 @@ const avatarEditorRef = ref<InstanceType<typeof AvatarEditor> | null>(null);
 // --- Computed Properties ---
 const displayName = computed(() => {
     if (isProvider.value && providerOrg.value) return providerOrg.value.company_name;
-    if (userProfile.value) return `${userProfile.value.first_name || ""} ${userProfile.value.last_name || ""}`.trim() || "Usuario";
-    return "Usuario";
+    return contextStore.displayName;
 });
 
 const displayBadge = computed(() => (isProvider.value ? "Proveedor" : "Comprador"));
@@ -54,12 +54,13 @@ const avatarBlobId = computed<string | null>(() => {
     if (isProvider.value && providerPublic.value) {
         return providerPublic.value.logo_blob_id ?? null;
     }
-    return userProfile.value?.avatar_blob_id ?? null;
+    return contextStore.userProfile?.avatar_blob_id ?? null;
 });
 
 const municipalityName = computed(() => {
-    if (!userProfile.value || !("municipality_id" in userProfile.value) || !userProfile.value.municipality_id) return "—";
-    const mun = geoStore.getMunicipalityById(userProfile.value.municipality_id);
+    const profile = contextStore.userProfile;
+    if (!profile || !("municipality_id" in profile) || !profile.municipality_id) return "—";
+    const mun = geoStore.getMunicipalityById(profile.municipality_id);
     return mun ? mun.name : "—";
 });
 
@@ -86,8 +87,7 @@ const loadProfileData = async () => {
         if (!contextStore.isInitialized) await contextStore.initialize();
         if (!geoStore.isInitialized) await geoStore.initialize();
 
-        userProfile.value = await userProfileApi.getMyProfile();
-
+        // Fetch provider-specific details if applicable
         if (isProvider.value && contextStore.activeOrganizationId) {
             try {
                 providerOrg.value = await organizationApi.getOrganizationDetails(contextStore.activeOrganizationId);
@@ -105,7 +105,8 @@ const loadProfileData = async () => {
 
 // --- Handlers for Modals ---
 const handleProfileSaved = (updatedProfile: UserProfileResponse) => {
-    userProfile.value = updatedProfile;
+    // Sync the updated profile back to the global context store
+    contextStore.updateUserProfile(updatedProfile);
 };
 
 const handleProviderSaved = (updatedData: any) => {
@@ -115,7 +116,6 @@ const handleProviderSaved = (updatedData: any) => {
             ...providerOrg.value,
             company_name: updatedData.negocioName,
             phone_number: updatedData.telNegocio,
-            // Note: tax_id (RUC) is locked in the form, so it remains unchanged
         };
     }
     if (providerPublic.value) {
@@ -140,8 +140,10 @@ const handleAvatarSave = async (file: File) => {
             alert("Logo de proveedor actualizado (Mock).");
         } else {
             await userProfileApi.changeProfilePicture(file);
+            // Refresh profile from API and sync to context store
+            const updatedProfile = await userProfileApi.getMyProfile();
+            contextStore.updateUserProfile(updatedProfile);
         }
-        await loadProfileData();
     } catch (err: any) {
         alert(err.message || "Error al guardar la foto.");
     }
@@ -156,7 +158,9 @@ const handleAvatarDelete = async () => {
             alert("Logo de proveedor eliminado (Mock).");
         } else {
             await userProfileApi.deleteProfilePicture(avatarBlobId.value);
-            if (userProfile.value) userProfile.value.avatar_blob_id = null;
+            // Refresh profile from API and sync to context store
+            const updatedProfile = await userProfileApi.getMyProfile();
+            contextStore.updateUserProfile(updatedProfile);
         }
     } catch (err: any) {
         alert(err.message || "Error al eliminar la foto.");
@@ -343,7 +347,6 @@ onMounted(async () => {
             @saved="handleProfileSaved"
             @change-photo="handleChangePhotoRequest"
         />
-
         <EditProviderModal
             v-model="showEditProviderModal"
             @saved="handleProviderSaved"

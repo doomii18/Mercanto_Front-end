@@ -1,17 +1,19 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { organizationApi } from "@/api";
+import { organizationApi, userProfileApi } from "@/api";
 import type { OrganizationDetailsDto } from "@/api/services/organization/types";
+import type { UserProfileResponse } from "@/api/services/user_profile/types";
 
 export type UserGroup = "buyer" | "provider";
 
 export const useUserContextStore = defineStore("userContext", () => {
   const organizations = ref<OrganizationDetailsDto[]>([]);
   const activeOrganizationId = ref<string | null>(null);
+  const userProfile = ref<UserProfileResponse | null>(null);
+
   const isInitialized = ref(false);
   const isLoading = ref(false);
   const error = ref<Error | null>(null);
-
   let initPromise: Promise<void> | null = null;
 
   const activeOrganization = computed<OrganizationDetailsDto | null>(() => {
@@ -29,6 +31,17 @@ export const useUserContextStore = defineStore("userContext", () => {
   const isProvider = computed(() => userGroup.value === "provider");
   const isBuyer = computed(() => userGroup.value === "buyer");
 
+  // Helper to easily get the display name based on user type
+  const displayName = computed(() => {
+    if (isProvider.value && activeOrganization.value) {
+      return activeOrganization.value.company_name;
+    }
+    if (userProfile.value) {
+      return `${userProfile.value.first_name} ${userProfile.value.last_name}`.trim() || "Usuario";
+    }
+    return "Usuario";
+  });
+
   async function initialize(forceRefresh = false): Promise<void> {
     if (isInitialized.value && !forceRefresh) return;
     if (initPromise) return initPromise;
@@ -36,16 +49,22 @@ export const useUserContextStore = defineStore("userContext", () => {
     initPromise = (async () => {
       isLoading.value = true;
       error.value = null;
-
       try {
-        const orgs = await organizationApi.getMyOrganizations();
+        // Fetch both organizations and user profile in parallel
+        const [orgs, profile] = await Promise.all([
+          organizationApi.getMyOrganizations(),
+          userProfileApi.getMyProfile(),
+        ]);
+
         organizations.value = orgs;
+        userProfile.value = profile;
 
         // Auto-select first provider organization as workaround
         activeOrganizationId.value = orgs.length > 0 ? orgs[0].id : null;
       } catch (err: any) {
         error.value = err instanceof Error ? err : new Error(String(err));
         organizations.value = [];
+        userProfile.value = null;
         activeOrganizationId.value = null;
         throw error.value;
       } finally {
@@ -56,6 +75,11 @@ export const useUserContextStore = defineStore("userContext", () => {
     })();
 
     return initPromise;
+  }
+
+  // Action to manually update the profile state (useful for the future update form store)
+  function updateUserProfile(profile: UserProfileResponse): void {
+    userProfile.value = profile;
   }
 
   function setActiveOrganization(orgId: string): void {
@@ -69,6 +93,7 @@ export const useUserContextStore = defineStore("userContext", () => {
   function reset(): void {
     organizations.value = [];
     activeOrganizationId.value = null;
+    userProfile.value = null;
     isInitialized.value = false;
     error.value = null;
     initPromise = null;
@@ -78,6 +103,8 @@ export const useUserContextStore = defineStore("userContext", () => {
     organizations,
     activeOrganizationId,
     activeOrganization,
+    userProfile,
+    displayName,
     userGroup,
     isProvider,
     isBuyer,
@@ -85,6 +112,7 @@ export const useUserContextStore = defineStore("userContext", () => {
     isLoading,
     error,
     initialize,
+    updateUserProfile,
     setActiveOrganization,
     reset,
   };
