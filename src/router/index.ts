@@ -104,12 +104,6 @@ const routes: RouteRecordRaw[] = [
     ],
   },
   {
-    path: "/provider/profile",
-    name: "provider-profile",
-    component: () => import("../views/ProviderProfileView.vue"),
-    meta: { requiresAuth: true, requiresProvider: true },
-  },
-  {
     path: "/dashboard",
     component: () => import("../views/DashboardLayout.vue"),
     children: [
