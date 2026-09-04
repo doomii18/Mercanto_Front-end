@@ -5,7 +5,6 @@ import AppLogo from "@/components/common/AppLogo.vue";
 import UserMenu from "@/components/common/UserMenu.vue";
 
 const contextStore = useUserContextStore();
-
 const sidebarOpen = ref(false);
 
 const toggleSidebar = () => {
@@ -41,7 +40,6 @@ const closeSidebar = () => {
           :class="{ '-translate-y-[7.5px] -rotate-45': sidebarOpen }"
         ></span>
       </button>
-
       <AppLogo class="h-9" />
     </header>
 
@@ -219,7 +217,12 @@ const closeSidebar = () => {
           </router-link>
         </nav>
 
-
+        <!-- 👇 User Menu pinned to the bottom of the sidebar -->
+        <!-- align="left" prevents it from overflowing the left edge of the screen -->
+        <!-- drop-direction="up" prevents it from being clipped by the bottom of the viewport -->
+        <div class="hidden md:flex w-full items-center justify-center px-3 mt-auto">
+          <UserMenu :collapsed="!sidebarOpen" align="left" drop-direction="up" />
+        </div>
       </aside>
 
       <!-- Main Content Area -->

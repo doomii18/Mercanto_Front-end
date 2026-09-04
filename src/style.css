@@ -1,51 +1,67 @@
 @import "tailwindcss";
-
+@plugin "daisyui" {
+  themes: light --default;
+}
 
 /* FreeSerif Font Faces */
 @font-face {
   font-family: "FreeSerif";
-  src:
-    url("./assets/fonts/freeserif/FreeSerif.woff2") format("woff2"),
-    url("./assets/fonts/freeserif/FreeSerif.woff") format("woff");
-  font-weight: 400 500;
-  font-style: normal;
-  font-display: swap;
+  src: url("./assets/fonts/freeserif/FreeSerif.woff2") format("woff2"), url("./assets/fonts/freeserif/FreeSerif.woff") format("woff");
+  font-weight: 400 500; font-style: normal; font-display: swap;
 }
-
 @font-face {
   font-family: "FreeSerif";
-  src:
-    url("./assets/fonts/freeserif/FreeSerifBold.woff2") format("woff2"),
-    url("./assets/fonts/freeserif/FreeSerifBold.woff") format("woff");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
+  src: url("./assets/fonts/freeserif/FreeSerifBold.woff2") format("woff2"), url("./assets/fonts/freeserif/FreeSerifBold.woff") format("woff");
+  font-weight: 700; font-style: normal; font-display: swap;
 }
-
 @font-face {
   font-family: "FreeSerif";
-  src:
-    url("./assets/fonts/freeserif/FreeSerifItalic.woff2") format("woff2"),
-    url("./assets/fonts/freeserif/FreeSerifItalic.woff") format("woff");
-  font-weight: 400 500;
-  font-style: italic;
-  font-display: swap;
+  src: url("./assets/fonts/freeserif/FreeSerifItalic.woff2") format("woff2"), url("./assets/fonts/freeserif/FreeSerifItalic.woff") format("woff");
+  font-weight: 400 500; font-style: italic; font-display: swap;
 }
-
 @font-face {
   font-family: "FreeSerif";
-  src:
-    url("./assets/fonts/freeserif/FreeSerifBoldItalic.woff2") format("woff2"),
-    url("./assets/fonts/freeserif/FreeSerifBoldItalic.woff") format("woff");
-  font-weight: 700;
-  font-style: italic;
-  font-display: swap;
+  src: url("./assets/fonts/freeserif/FreeSerifBoldItalic.woff2") format("woff2"), url("./assets/fonts/freeserif/FreeSerifBoldItalic.woff") format("woff");
+  font-weight: 700; font-style: italic; font-display: swap;
 }
 
 @theme {
+
+  /* Primary Actions & Headers (Azul Oscuro) */
+  --color-primary: var(--color-blue-500);
+  --color-primary-content: #ffffff;
+
+  /* Secondary Actions & Highlights (Naranja de Seguridad) */
+  --color-secondary: var(--color-orange-500);
+  --color-secondary-content: #ffffff;
+
+  /* Accents, Links & Success (Verde Persa) */
+  --color-accent: var(--color-teal-500);
+  --color-accent-content: #ffffff;
+
+  /* Neutral / Dark Text */
+  --color-neutral: var(--color-neutral-900);
+  --color-neutral-content: #ffffff;
+
+  /* Base Colors (Backgrounds, Cards, Borders) */
+  --color-base-100: var(--color-neutral-warm); /* Main page background */
+  --color-base-200: var(--color-neutral-100);  /* Secondary background */
+  --color-base-300: var(--color-neutral-200);  /* Borders & Dividers */
+  --color-base-content: var(--color-neutral-900); /* Main text color */
+
+  /* Status Colors */
+  --color-info: var(--color-blue-400);
+  --color-info-content: #ffffff;
+  --color-success: var(--color-teal-500);
+  --color-success-content: #ffffff;
+  --color-warning: var(--color-orange-500);
+  --color-warning-content: #ffffff;
+  --color-error: #ef4444;
+  --color-error-content: #ffffff;
+
+
   --font-primary: "FreeSerif", Georgia, "Times New Roman", serif;
   --font-secondary: "Lato", "Helvetica Neue", Arial, sans-serif;
-
   --font-serif: var(--font-primary);
   --font-sans: var(--font-secondary);
 }
@@ -91,7 +107,7 @@
   --color-neutral-500: #64748b;
   --color-neutral-900: #1e293b;
 
-  /* Legacy Aliases */
+  /* Legacy Aliases (kept so your existing custom CSS doesn't break) */
   --primary-blue: var(--color-blue-500);
   --primary-orange: var(--color-orange-500);
   --primary-orange-hover: var(--color-orange-600);
@@ -109,9 +125,6 @@ body {
   min-height: 100vh;
 }
 
-h1,
-h2,
-h3,
-h4 {
+h1, h2, h3, h4 {
   font-family: var(--font-primary);
 }

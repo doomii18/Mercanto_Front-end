@@ -5,12 +5,22 @@ import { useAuthStore } from "@/modules/auth";
 import { userProfileApi } from "@/api";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 
+interface Props {
+  collapsed?: boolean;
+  align?: "left" | "right";
+  dropDirection?: "up" | "down";
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  collapsed: false,
+  align: "right",
+  dropDirection: "down",
+});
+
 const router = useRouter();
 const authStore = useAuthStore();
-
 const isDropdownOpen = ref(false);
 const menuRef = ref<HTMLElement | null>(null);
-
 const avatarBlobId = ref<string | null>(null);
 const userFullName = ref<string>("");
 const isProfileLoading = ref(true);
@@ -33,6 +43,7 @@ const fetchUserProfile = async () => {
     isProfileLoading.value = false;
     return;
   }
+
   isProfileLoading.value = true;
   try {
     const profile = await userProfileApi.getMyProfile();
@@ -89,192 +100,110 @@ const handleLogout = async () => {
 </script>
 
 <template>
-  <div ref="menuRef" class="user-menu-container">
+  <div ref="menuRef" class="relative inline-block">
+    <!-- Trigger Button -->
     <button
       type="button"
-      class="user-profile-badge"
+      :class="[
+        'flex items-center rounded-full border bg-base-100 transition-all',
+        props.collapsed
+          ? 'p-1 border-base-300 hover:border-accent hover:shadow-md'
+          : 'gap-2 border-base-300 px-3 py-1.5 hover:border-accent hover:shadow-md'
+      ]"
       @click.stop="toggleDropdown"
       :aria-expanded="isDropdownOpen"
       aria-haspopup="true"
     >
-      <span class="provider-tag" v-if="authStore.accountRole && authStore.accountRole !== 'member'">
+      <!-- Role Tag (DaisyUI Badge) - Hidden when collapsed -->
+      <span
+        v-if="!props.collapsed && authStore.accountRole && authStore.accountRole !== 'member'"
+        class="badge badge-accent badge-sm uppercase"
+      >
         {{ roleLabel }}
       </span>
 
-      <!-- Skeleton for Name / Avatar while profile is loading -->
+      <!-- Skeleton Loaders -->
       <template v-if="isProfileLoading">
-        <div class="h-4 w-20 animate-pulse rounded bg-slate-200"></div>
-        <div class="h-7 w-7 animate-pulse rounded-full bg-slate-200"></div>
-      </template>
-
-      <template v-else>
-        <span class="user-name" :title="userFullName">{{ userFullName }}</span>
-        <div class="h-7 w-7 overflow-hidden rounded-full">
-          <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
+        <div v-if="!props.collapsed" class="h-4 w-20 animate-pulse rounded bg-base-200"></div>
+        <div class="avatar">
+          <div class="w-7 rounded-full bg-base-200"></div>
         </div>
       </template>
 
+      <!-- Actual Content -->
+      <template v-else>
+        <!-- User Name - Hidden when collapsed -->
+        <span
+          v-if="!props.collapsed"
+          class="hidden max-w-[120px] truncate text-sm font-semibold text-base-content md:inline"
+          :title="userFullName"
+        >
+          {{ userFullName }}
+        </span>
+
+        <!-- Avatar (DaisyUI Avatar) -->
+        <div class="avatar">
+          <div class="w-7 rounded-full ring-1 ring-base-200">
+            <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
+          </div>
+        </div>
+      </template>
+
+      <!-- Chevron - Hidden when collapsed -->
       <i
-        class="fa-solid fa-chevron-down text-xs text-slate-400 ml-1 transition-transform duration-200"
+        v-if="!props.collapsed"
+        class="fa-solid fa-chevron-down text-xs text-base-content/50 transition-transform duration-200"
         :class="{ 'rotate-180': isDropdownOpen }"
       ></i>
     </button>
 
+    <!-- Dropdown Menu (DaisyUI Menu) -->
     <transition name="dropdown-fade">
-      <div v-if="isDropdownOpen" class="user-dropdown-menu">
-        <router-link
-          :to="{ name: 'profile' }"
-          class="dropdown-item"
-          @click="closeDropdown"
-        >
-          <i class="fa-regular fa-circle-user"></i>
-          <span>Mi Perfil</span>
-        </router-link>
+      <ul
+        v-if="isDropdownOpen"
+        class="menu menu-sm absolute z-[100] w-52 rounded-box border border-base-200 bg-base-100 p-2 shadow-lg"
+        :class="[
+          props.align === 'left' ? 'left-0' : 'right-0',
+          props.dropDirection === 'up' ? 'bottom-full mb-2' : 'top-full mt-2'
+        ]"
+      >
+        <li>
+          <router-link
+            :to="{ name: 'profile' }"
+            class="text-base-content hover:bg-base-200"
+            @click="closeDropdown"
+          >
+            <i class="fa-regular fa-circle-user"></i>
+            <span>Mi Perfil</span>
+          </router-link>
+        </li>
 
-        <div class="dropdown-divider"></div>
+        <!-- Divider (DaisyUI Divider) -->
+        <div class="divider my-1"></div>
 
-        <button type="button" class="dropdown-item logout-item" @click="handleLogout">
-          <i class="fa-solid fa-arrow-right-from-bracket"></i>
-          <span>Cerrar sesión</span>
-        </button>
-      </div>
+        <li>
+          <button
+            @click="handleLogout"
+            class="text-error hover:bg-error/10"
+          >
+            <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            <span>Cerrar sesión</span>
+          </button>
+        </li>
+      </ul>
     </transition>
   </div>
 </template>
 
 <style scoped>
-.user-menu-container {
-  position: relative;
-  display: inline-block;
-}
-
-.user-profile-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.4rem 0.85rem;
-  background-color: #ffffff;
-  border: 1px solid var(--border-gray);
-  border-radius: 24px;
-  text-decoration: none;
-  cursor: pointer;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.user-profile-badge:hover {
-  border-color: var(--light-teal);
-  box-shadow: 0 2px 8px rgba(0, 168, 150, 0.15);
-}
-
-.provider-tag {
-  background-color: #d8f1ef;
-  color: var(--light-teal);
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-}
-
-.user-name {
-  color: var(--primary-blue);
-  font-size: 0.88rem;
-  font-weight: 600;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-dropdown-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  background-color: #ffffff;
-  border: 1px solid var(--border-gray);
-  border-radius: 12px;
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  min-width: 180px;
-  z-index: 100;
-  padding: 0.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0.85rem;
-  border-radius: 8px;
-  color: var(--primary-blue);
-  font-size: 0.9rem;
-  font-weight: 500;
-  text-decoration: none;
-  background: transparent;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.dropdown-item i {
-  font-size: 1rem;
-  width: 18px;
-  text-align: center;
-  color: #64748b;
-}
-
-.dropdown-item:hover {
-  background-color: #f1f5f9;
-  color: var(--light-teal);
-}
-
-.dropdown-item:hover i {
-  color: var(--light-teal);
-}
-
-.logout-item {
-  color: #ef4444;
-}
-
-.logout-item i {
-  color: #ef4444;
-}
-
-.logout-item:hover {
-  background-color: #fef2f2;
-  color: #dc2626;
-}
-
-.logout-item:hover i {
-  color: #dc2626;
-}
-
-.dropdown-divider {
-  height: 1px;
-  background-color: var(--border-gray);
-  margin: 0.25rem 0;
-}
-
-/* Dropdown Transition */
+/* Kept minimal: Only used for Vue's <transition> mechanics */
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
-
 .dropdown-fade-enter-from,
 .dropdown-fade-leave-to {
   opacity: 0;
   transform: translateY(-5px);
-}
-
-/* Hide user name on small screens to save space */
-@media (max-width: 768px) {
-  .user-name {
-    display: none;
-  }
 }
 </style>
