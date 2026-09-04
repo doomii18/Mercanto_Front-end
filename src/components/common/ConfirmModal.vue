@@ -65,10 +65,24 @@ const emit = defineEmits<{
     </template>
   </BaseModal>
 </template>
-
 <style scoped>
 .confirm-content {
   text-align: center;
+}
+
+
+.confirm-content h2 {
+  color: var(--primary-blue, #083c5a);
+  font-size: 1.35rem;
+  font-weight: 700;
+  margin: 0.5rem 0;
+}
+
+.confirm-content p {
+  color: #64748b;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0 0 1rem 0;
 }
 
 .modal-icon {
@@ -104,6 +118,7 @@ const emit = defineEmits<{
   border-radius: 8px;
   border: 1px solid var(--border-gray);
   background: #fff;
+  color: var(--primary-blue, #083c5a);
   cursor: pointer;
   font-weight: 600;
 }

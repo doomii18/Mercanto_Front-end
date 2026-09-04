@@ -159,7 +159,6 @@ const handleSubmit = () => {
     </div>
   </BaseModal>
 </template>
-
 <style scoped>
 .password-modal-content {
   padding: 0.5rem;
@@ -170,7 +169,7 @@ const handleSubmit = () => {
   height: 80px;
   border-radius: 50%;
   background: #c9ebe8;
-  color: var(--light-teal);
+  color: var(--light-teal, #189c94);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -178,9 +177,10 @@ const handleSubmit = () => {
   margin: 0 auto 1.25rem auto;
 }
 
+/* Explicitly define text colors with fallbacks to prevent DaisyUI base styles from overriding them */
 .password-modal-content h2 {
   text-align: center;
-  color: var(--primary-blue);
+  color: var(--primary-blue, #083c5a);
   font-size: 1.5rem;
   margin-bottom: 0.4rem;
 }
@@ -212,7 +212,7 @@ const handleSubmit = () => {
 .form-group label {
   display: block;
   margin-bottom: 0.4rem;
-  color: var(--primary-blue);
+  color: var(--primary-blue, #083c5a);
   font-weight: 600;
   font-size: 0.88rem;
 }
@@ -226,38 +226,39 @@ const handleSubmit = () => {
 .input-icon-wrapper i.left-icon {
   position: absolute;
   left: 14px;
-  color: var(--primary-blue);
+  color: var(--primary-blue, #083c5a);
   pointer-events: none;
 }
 
 .input-icon-wrapper i.right-icon {
   position: absolute;
   right: 14px;
-  color: var(--light-teal);
+  color: var(--light-teal, #189c94);
   cursor: pointer;
 }
 
 .input-icon-wrapper input {
   width: 100%;
   padding: 0.75rem 2.5rem;
-  border: 1px solid var(--border-gray);
+  border: 1px solid var(--border-gray, #e2e8f0);
   border-radius: 8px;
   font-family: "Lato", sans-serif;
   font-size: 0.95rem;
   outline: none;
   background: #ffffff;
+  color: var(--text-dark, #1e293b); /* Added explicit text color for inputs */
   transition: border-color 0.2s;
 }
 
 .input-icon-wrapper input:focus {
-  border-color: var(--light-teal);
+  border-color: var(--light-teal, #189c94);
 }
 
 .input-icon-wrapper input:disabled {
-  background-color: var(--bg-gray);
+  background-color: var(--bg-gray, #f1f5f9);
   color: #64748b;
   cursor: not-allowed;
-  border: 1px solid var(--border-gray);
+  border: 1px solid var(--border-gray, #e2e8f0);
 }
 
 .card-actions {
@@ -271,9 +272,9 @@ const handleSubmit = () => {
   flex: 1;
   padding: 0.75rem;
   border-radius: 8px;
-  border: 1px solid var(--border-gray);
+  border: 1px solid var(--border-gray, #e2e8f0);
   background-color: #ffffff;
-  color: var(--primary-blue);
+  color: var(--primary-blue, #083c5a); /* Added explicit fallback */
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
@@ -281,7 +282,7 @@ const handleSubmit = () => {
 }
 
 .btn-cancel:hover:not(:disabled) {
-  background-color: var(--bg-gray);
+  background-color: var(--bg-gray, #f1f5f9);
 }
 
 .btn-save {
@@ -289,8 +290,8 @@ const handleSubmit = () => {
   padding: 0.75rem;
   border-radius: 8px;
   border: none;
-  background-color: var(--primary-orange);
-  color: #ffffff;
+  background-color: var(--primary-orange, #ff6a00);
+  color: #ffffff; /* Added explicit fallback */
   font-weight: 600;
   font-size: 0.9rem;
   cursor: pointer;
