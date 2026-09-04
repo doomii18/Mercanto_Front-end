@@ -26,7 +26,7 @@ const isLoading = ref(true);
 // UI State
 const showEditProfileModal = ref(false);
 
-// Edit Form State (For Buyer Profile)
+// Edit Form State (For Buyer/Owner Profile)
 const editForm = ref({
     firstName: "", lastName: "", phoneNumber: "", nationalId: "", municipalityId: "",
 });
@@ -71,6 +71,23 @@ const municipalityName = computed(() => {
     return mun ? mun.name : "—";
 });
 
+// Resolves the provider's location text using the geoStore hierarchy
+const providerLocationText = computed(() => {
+    if (providerPublic.value?.municipality_id) {
+        const hierarchy = geoStore.resolveLocationHierarchy(providerPublic.value.municipality_id);
+        if (hierarchy?.municipality && hierarchy?.department) {
+            return `${hierarchy.municipality.name}, ${hierarchy.department.name}`;
+        }
+        if (hierarchy?.municipality) {
+            return hierarchy.municipality.name;
+        }
+    }
+    if (providerOrg.value?.location) {
+        return `${providerOrg.value.location.latitude.toFixed(4)}, ${providerOrg.value.location.longitude.toFixed(4)}`;
+    }
+    return "—";
+});
+
 const departments = computed(() => geoStore.departmentList);
 
 // --- Data Loading ---
@@ -97,7 +114,7 @@ const loadProfileData = async () => {
     }
 };
 
-// --- Buyer Edit Logic ---
+// --- Edit Logic (Works for the User/Owner Account) ---
 const openEditProfile = () => {
     if (!userProfile.value) return;
     const internal = userProfile.value as any;
@@ -271,120 +288,93 @@ onMounted(async () => { await loadProfileData(); });
             </template>
         </div>
 
-        <!-- Information Cards -->
-        <template v-if="isProvider">
-            <div class="card personal-info-card">
-                <div class="card-header">
-                    <h3>Información del Negocio</h3>
-                    <button type="button" class="btn-edit" disabled title="Edición de proveedor próximamente">
-                        <i class="fa-solid fa-pencil"></i> Editar
-                    </button>
+        <!--  Business Information Card -->
+        <div v-if="isProvider" class="card personal-info-card">
+            <div class="card-header">
+                <h3>Información del Negocio</h3>
+                <button type="button" class="btn-edit" disabled title="Edición de proveedor próximamente">
+                    <i class="fa-solid fa-pencil"></i> Editar
+                </button>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="fa-solid fa-building"></i>
+                    <span class="label">Nombre del Negocio</span>
+                    <span class="value">{{ providerOrg?.company_name || "—" }}</span>
                 </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <i class="fa-regular fa-id-card"></i>
-                        <span class="label">Número RUC</span>
-                        <span class="value">{{ providerOrg?.tax_id || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="label">Negocio</span>
-                        <span class="value">{{ providerOrg?.company_name || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-building"></i>
-                        <span class="label">Tipo de Negocio</span>
-                        <span class="value capitalize">{{ providerOrg?.kind || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <span class="label">Teléfono</span>
-                        <span class="value">{{ providerOrg?.phone_number || "—" }}</span>
-                    </div>
-                    <div class="info-item full-width">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <span class="label">Dirección</span>
-                        <span class="value">{{ providerOrg?.location ? `${providerOrg.location.latitude.toFixed(4)}, ${providerOrg.location.longitude.toFixed(4)}` : "—" }}</span>
-                    </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <span class="label">Teléfono del Negocio</span>
+                    <span class="value">{{ providerOrg?.phone_number || "—" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-regular fa-id-card"></i>
+                    <span class="label">Número RUC</span>
+                    <span class="value">{{ providerOrg?.tax_id || "—" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-briefcase"></i>
+                    <span class="label">Tipo de Negocio</span>
+                    <span class="value capitalize">{{ providerOrg?.kind || "—" }}</span>
+                </div>
+                <div class="info-item full-width">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span class="label">Ubicación</span>
+                    <span class="value">{{ providerLocationText }}</span>
                 </div>
             </div>
-            <div class="card personal-info-card">
-                <div class="card-header">
-                    <h3>Información del Propietario</h3>
-                </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <i class="fa-regular fa-id-card"></i>
-                        <span class="label">Cédula</span>
-                        <span class="value">{{ (userProfile as any)?.national_id || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="label">Propietario</span>
-                        <span class="value">{{ userProfile ? `${userProfile.first_name} ${userProfile.last_name}` : "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-regular fa-envelope"></i>
-                        <span class="label">Correo electrónico</span>
-                        <span class="value link">{{ displayEmail }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <span class="label">Teléfono</span>
-                        <span class="value">{{ (userProfile as any)?.phone_number || "—" }}</span>
-                    </div>
-                </div>
-            </div>
-        </template>
-        <template v-else>
-            <div class="card personal-info-card">
-                <div class="card-header">
-                    <h3>Información Personal</h3>
-                    <button type="button" class="btn-edit" @click="openEditProfile">
-                        <i class="fa-solid fa-pencil"></i> Editar
-                    </button>
-                </div>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="label">Nombres</span>
-                        <span class="value">{{ userProfile?.first_name || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-phone"></i>
-                        <span class="label">Teléfono</span>
-                        <span class="value">{{ (userProfile as any)?.phone_number || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-user"></i>
-                        <span class="label">Apellidos</span>
-                        <span class="value">{{ userProfile?.last_name || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-regular fa-id-card"></i>
-                        <span class="label">Cédula</span>
-                        <span class="value">{{ (userProfile as any)?.national_id || "—" }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-regular fa-envelope"></i>
-                        <span class="label">Correo electrónico</span>
-                        <span class="value link">{{ displayEmail }}</span>
-                    </div>
-                    <div class="info-item">
-                        <i class="fa-solid fa-location-dot"></i>
-                        <span class="label">Municipio</span>
-                        <span class="value">{{ municipalityName }}</span>
-                    </div>
-                </div>
-            </div>
-        </template>
+        </div>
 
-        <!-- Edit Profile Modal (Buyer Only) -->
+
+
+        <!-- Personal / Owner Information Card (UNCONDITIONAL) -->
+        <div class="card personal-info-card">
+            <div class="card-header">
+                <h3>{{ isProvider ? 'Información del Propietario' : 'Información Personal' }}</h3>
+                <button type="button" class="btn-edit" @click="openEditProfile">
+                    <i class="fa-solid fa-pencil"></i> Editar
+                </button>
+            </div>
+            <div class="info-grid">
+                <div class="info-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span class="label">Nombres</span>
+                    <span class="value">{{ userProfile?.first_name || "—" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-phone"></i>
+                    <span class="label">Teléfono</span>
+                    <span class="value">{{ (userProfile as any)?.phone_number || "—" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span class="label">Apellidos</span>
+                    <span class="value">{{ userProfile?.last_name || "—" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-regular fa-id-card"></i>
+                    <span class="label">Cédula</span>
+                    <span class="value">{{ (userProfile as any)?.national_id || "—" }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-regular fa-envelope"></i>
+                    <span class="label">Correo electrónico</span>
+                    <span class="value link">{{ displayEmail }}</span>
+                </div>
+                <div class="info-item">
+                    <i class="fa-solid fa-location-dot"></i>
+                    <span class="label">Municipio</span>
+                    <span class="value">{{ municipalityName }}</span>
+                </div>
+            </div>
+        </div>
+
+                <!-- Edit Profile Modal (Edits the User/Owner Account) -->
         <BaseModal v-model="showEditProfileModal" max-width="620px" :show-close-button="false" @close="showEditProfileModal = false">
             <template #header>
                 <div class="modal-nav-header">
                     <button class="btn-back-nav" @click="showEditProfileModal = false"><i class="fa-solid fa-arrow-left"></i></button>
-                    <h3 class="modal-heading">Editar Información Personal</h3>
+                    <h3 class="modal-heading">Editar {{ isProvider ? 'Información del Propietario' : 'Información Personal' }}</h3>
                     <div style="width: 30px"></div>
                 </div>
             </template>

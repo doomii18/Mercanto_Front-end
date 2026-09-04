@@ -25,9 +25,7 @@ const handleLogout = async () => {
   router.push({ name: "login" });
 };
 
-const profileRouteName = computed(() =>
-  contextStore.isProvider ? "provider-profile" : "profile"
-);
+
 </script>
 
 <template>
@@ -87,7 +85,7 @@ const profileRouteName = computed(() =>
           ]"
         >
           <router-link
-            :to="{ name: profileRouteName }"
+            :to="{ name: 'profile' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
