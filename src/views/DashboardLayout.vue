@@ -1,4 +1,3 @@
-
 <script setup lang="ts">
 import { ref } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
@@ -44,7 +43,7 @@ const closeSidebar = () => {
       <AppLogo class="h-9" />
     </header>
 
-    <!-- Wrapper: Strictly fits the remaining viewport height (accounting for the 60px mobile bottom nav) -->
+    <!-- Wrapper: Strictly fits the remaining viewport height -->
     <div class="relative mt-16 flex h-[calc(100vh-64px-60px)] md:h-[calc(100vh-64px)] overflow-hidden">
       <!-- Mobile Backdrop -->
       <div
@@ -72,6 +71,7 @@ const closeSidebar = () => {
             sidebarOpen ? 'md:px-3' : 'md:px-0'
           ]"
         >
+          <!-- Mi Perfil -->
           <router-link
             :to="{ name: 'profile' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
@@ -100,6 +100,8 @@ const closeSidebar = () => {
               Mi Perfil
             </span>
           </router-link>
+
+          <!-- Mis Productos (Provider Only) -->
           <router-link
             v-if="contextStore.isProvider"
             :to="{ name: 'provider-products' }"
@@ -129,6 +131,39 @@ const closeSidebar = () => {
               Mis Productos
             </span>
           </router-link>
+
+          <!-- Favoritos (Buyer Only) -->
+          <router-link
+            v-if="!contextStore.isProvider"
+            :to="{ name: 'favorites' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-regular fa-heart w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Favoritos
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Favoritos
+            </span>
+          </router-link>
+
+          <!-- Pedidos -->
           <router-link
             :to="{ name: 'orders' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
@@ -157,6 +192,8 @@ const closeSidebar = () => {
               Pedidos
             </span>
           </router-link>
+
+          <!-- Mensajes -->
           <router-link
             :to="{ name: 'messages' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
@@ -185,7 +222,10 @@ const closeSidebar = () => {
               Mensajes
             </span>
           </router-link>
-          <router-link v-if="!contextStore.isProvider"
+
+          <!-- Búsqueda Inteligente (Buyer Only) -->
+          <router-link
+            v-if="!contextStore.isProvider"
             :to="{ name: 'smart-search' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
@@ -220,7 +260,7 @@ const closeSidebar = () => {
         </div>
       </aside>
 
-
+      <!-- Main Content Area -->
       <main
         :class="[
           'relative flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#fdf3f0] p-4 sm:p-6 lg:p-10 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',

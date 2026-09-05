@@ -36,6 +36,11 @@ const routes: RouteRecordRaw[] = [
         name: "product-detail",
         component: () => import("../views/ProductDetailView.vue"),
       },
+      {
+        path: 'catalog',
+        name: 'provider-catalog',
+        component: () => import('@/views/ProviderCatalogView.vue'),
+      }
     ],
   },
   {
@@ -110,6 +115,11 @@ const routes: RouteRecordRaw[] = [
       {
         path: "",
         redirect: { name: "profile" },
+      },
+      {
+        path: 'favorites',
+        name: 'favorites',
+        component: () => import('@/views/FavoritesView.vue'),
       },
       {
         path: "profile",
