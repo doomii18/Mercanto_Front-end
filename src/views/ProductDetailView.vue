@@ -6,6 +6,8 @@ import { useAuthStore } from "../modules/auth";
 import { useGeoStore } from "../stores/geo";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
+import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
+
 
 interface ShippingMethodOption {
     id: string;
@@ -545,6 +547,7 @@ const navigateToCategory = () => {
                         </button>
                     </div>
                 </section>
+                <ProductReviewsSection :product-id="product.id" />
             </template>
         </main>
         <transition name="toast-fade">
