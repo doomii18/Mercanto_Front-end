@@ -34,6 +34,7 @@ interface ProductDetailData {
     rating: number;
     reviewCount: number;
     providerRating: number;
+    category_id: string;
     provider: {
         id?: string;
         name: string;
@@ -73,7 +74,8 @@ const quantity = ref(1);
 const product = ref<ProductDetailData>({
     id: "",
     title: "",
-    category: "",
+  category: "",
+    category_id: "",
     price: 0,
     minOrder: 1,
     rating: 0,
@@ -202,11 +204,13 @@ async function loadProduct(id: string) {
                 id: prodRes.id,
                 title: prodRes.title,
                 category: prodRes.category?.name || "General",
+                category_id: prodRes.category?.id || "",
                 price: prodRes.base_price,
                 minOrder,
                 rating: prodRes.rating?.average_score || 0,
                 reviewCount: prodRes.rating?.review_count || 0,
-                providerRating,
+              providerRating,
+
                 provider: {
                     id: prodRes.provider_id,
                     name: providerName,
@@ -221,7 +225,8 @@ async function loadProduct(id: string) {
             };
         } else {
             product.value = {
-                id,
+              id,
+                category_id: "",
                 title: "Producto no encontrado",
                 category: "General",
                 price: 0,
@@ -372,7 +377,9 @@ const navigateToCategory = () => {
             <nav class="mb-8 flex flex-wrap items-center gap-1.5 text-sm text-neutral-500" aria-label="Breadcrumb">
                 <router-link :to="{ name: 'home' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">Inicio</router-link>
                 <span class="font-medium text-neutral-400">&gt;</span>
-                <router-link :to="{ name: 'category' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">Categorías</router-link>
+                <router-link v-if="product.category_id" :to="{ name: 'category', params: { categoryId: product.category_id  } }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">
+                  Categorías
+                </router-link>>
                 <span class="font-medium text-neutral-400">&gt;</span>
                 <a href="#" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500" @click.prevent="navigateToCategory">
                     {{ product.category || "Categoría" }}
@@ -524,8 +531,8 @@ const navigateToCategory = () => {
                         <router-link
                             v-if="product.provider.id"
                             :to="{
-                                name: 'category',
-                                query: { provider_id: product.provider.id },
+                                name: 'provider-catalog',
+                                params: { providerId: product.provider.id },
                             }"
                             class="mb-6 inline-flex w-44 items-center justify-center rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
                         >

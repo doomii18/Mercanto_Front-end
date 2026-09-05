@@ -53,7 +53,7 @@ const isOrdersActive = computed(() => route.name === "orders");
           Inicio
         </router-link>
         <router-link
-          :to="{ name: 'category' }"
+          :to="{ name: 'home', hash: '#categorias' }"
           :class="['nav-btn', { 'nav-btn-active': isCategoryActive }]"
           exact-active-class=""
           active-class=""

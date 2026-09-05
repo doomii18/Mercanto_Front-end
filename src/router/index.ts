@@ -27,7 +27,7 @@ const routes: RouteRecordRaw[] = [
         component: () => import("../views/PrivacyView.vue"),
       },
       {
-        path: "category",
+        path: "category/:categoryId",
         name: "category",
         component: () => import("../views/CategoryView.vue"),
       },

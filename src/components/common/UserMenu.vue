@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/modules/auth";
 import { userProfileApi } from "@/api";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
@@ -18,12 +18,17 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
+
 const isDropdownOpen = ref(false);
 const menuRef = ref<HTMLElement | null>(null);
 const avatarBlobId = ref<string | null>(null);
 const userFullName = ref<string>("");
 const isProfileLoading = ref(true);
+
+const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
+const isOnProfile = computed(() => route.name === "profile");
 
 const roleLabel = computed(() => {
   const role = authStore.accountRole;
@@ -105,10 +110,10 @@ const handleLogout = async () => {
     <button
       type="button"
       :class="[
-        'flex items-center rounded-full border bg-base-100 transition-all',
+        'flex items-center rounded-lg border bg-base-100 transition-all',
         props.collapsed
-          ? 'p-1 border-base-300 hover:border-accent hover:shadow-md'
-          : 'gap-2 border-base-300 px-3 py-1.5 hover:border-accent hover:shadow-md'
+          ? 'p-1 border-base-300 hover:border-accent hover:shadow-sm'
+          : 'gap-1.5 border-base-300 px-2 py-1 hover:border-accent hover:shadow-sm'
       ]"
       @click.stop="toggleDropdown"
       :aria-expanded="isDropdownOpen"
@@ -117,16 +122,16 @@ const handleLogout = async () => {
       <!-- Role Tag - Hidden when collapsed -->
       <span
         v-if="!props.collapsed && authStore.accountRole && authStore.accountRole !== 'member'"
-        class="badge badge-accent badge-sm uppercase"
+        class="badge badge-accent badge-xs rounded uppercase"
       >
         {{ roleLabel }}
       </span>
 
       <!-- Skeleton Loaders -->
       <template v-if="isProfileLoading">
-        <div v-if="!props.collapsed" class="h-4 w-20 animate-pulse rounded bg-base-200"></div>
+        <div v-if="!props.collapsed" class="h-3.5 w-16 animate-pulse rounded bg-base-200"></div>
         <div class="avatar">
-          <div class="w-7 rounded-full bg-base-200"></div>
+          <div class="w-6 rounded-full bg-base-200"></div>
         </div>
       </template>
 
@@ -134,15 +139,15 @@ const handleLogout = async () => {
       <template v-else>
         <span
           v-if="!props.collapsed"
-          class="hidden max-w-[120px] truncate text-sm font-semibold text-base-content md:inline"
+          class="hidden max-w-[110px] truncate text-xs font-semibold text-base-content md:inline"
           :title="userFullName"
         >
           {{ userFullName }}
         </span>
 
-        <!-- Avatar (Uses ProfileAvatar for consistent fallback) -->
+        <!-- Trigger Avatar: forced circular -->
         <div class="avatar">
-          <div class="w-7 rounded-full ring-1 ring-base-200">
+          <div class="w-6 rounded-full ring-1 ring-base-200 overflow-hidden">
             <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
           </div>
         </div>
@@ -151,7 +156,7 @@ const handleLogout = async () => {
       <!-- Chevron - Hidden when collapsed -->
       <i
         v-if="!props.collapsed"
-        class="fa-solid fa-chevron-down text-xs text-base-content/50 transition-transform duration-200"
+        class="fa-solid fa-chevron-down text-[10px] text-base-content/50 transition-transform duration-200"
         :class="{ 'rotate-180': isDropdownOpen }"
       ></i>
     </button>
@@ -160,50 +165,65 @@ const handleLogout = async () => {
     <transition name="dropdown-fade">
       <div
         v-if="isDropdownOpen"
-        class="absolute z-[100] w-60 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-[0_8px_30px_rgba(0,0,0,0.12)]"
+        class="absolute z-[100] w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md"
         :class="[
           props.align === 'left' ? 'left-0' : 'right-0',
-          props.dropDirection === 'up' ? 'bottom-full mb-2.5' : 'top-full mt-2.5'
+          props.dropDirection === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'
         ]"
       >
         <!-- User Identity Header -->
-        <div class="flex items-center gap-3 px-4 pt-4 pb-3">
-          <!-- Avatar (Uses the exact same ProfileAvatar component for consistent fallback) -->
-          <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full">
+        <div class="flex items-center gap-2.5 px-3 py-2 border-b border-slate-100">
+          <!-- Dropdown Avatar: forced circular -->
+          <div class="h-8 w-8 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-100">
             <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
           </div>
           <div class="min-w-0 flex-1">
-            <p class="truncate text-sm font-bold text-[#083c5a]">
+            <p class="truncate text-xs font-bold text-[#083c5a]">
               {{ userFullName || "Usuario" }}
             </p>
-            <p class="truncate text-xs text-slate-400">
+            <p class="truncate text-[11px] text-slate-400 leading-tight">
               {{ roleLabel }}
             </p>
           </div>
         </div>
 
         <!-- Navigation Actions -->
-        <div class="px-2 pb-1">
+        <div v-if="!isUnderDashboard || !isOnProfile" class="p-1 space-y-0.5">
+          <!-- Opción Dashboard -->
           <router-link
-            :to="{ name: 'profile' }"
-            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-[#f0faf9] hover:text-[#189c94]"
+            v-if="!isUnderDashboard"
+            to="/dashboard"
+            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             @click="closeDropdown"
           >
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 text-slate-400 transition-colors group-hover:bg-[#e6f7f5] group-hover:text-[#189c94]">
-              <i class="fa-regular fa-circle-user text-base"></i>
+            <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-50 text-slate-400">
+              <i class="fa-solid fa-gauge-high text-xs"></i>
+            </div>
+            <span>Ir al Dashboard</span>
+          </router-link>
+
+          <!-- Opción Mi Perfil -->
+          <router-link
+            v-if="!isOnProfile"
+            :to="{ name: 'profile' }"
+            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            @click="closeDropdown"
+          >
+            <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-50 text-slate-400">
+              <i class="fa-regular fa-circle-user text-xs"></i>
             </div>
             <span>Mi Perfil</span>
           </router-link>
         </div>
 
-        <!-- Logout Section (visually separated by background, not a line) -->
-        <div class="bg-slate-50/70 px-2 py-2">
+        <!-- Logout Section -->
+        <div class="border-t border-slate-100 p-1 bg-slate-50/50">
           <button
-            class="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-red-400 transition-colors hover:bg-red-50 hover:text-red-500"
+            class="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
             @click="handleLogout"
           >
-            <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-red-50/80 text-red-300 transition-colors hover:bg-red-100 hover:text-red-500">
-              <i class="fa-solid fa-arrow-right-from-bracket text-base"></i>
+            <div class="flex h-6 w-6 items-center justify-center rounded bg-red-50 text-red-400">
+              <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
             </div>
             <span>Cerrar sesión</span>
           </button>
@@ -216,11 +236,11 @@ const handleLogout = async () => {
 <style scoped>
 .dropdown-fade-enter-active,
 .dropdown-fade-leave-active {
-  transition: opacity 0.18s ease, transform 0.18s ease;
+  transition: opacity 0.15s ease, transform 0.15s ease;
 }
 .dropdown-fade-enter-from,
 .dropdown-fade-leave-to {
   opacity: 0;
-  transform: translateY(6px);
+  transform: translateY(4px);
 }
 </style>

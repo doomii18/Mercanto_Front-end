@@ -31,21 +31,21 @@ const route = useRoute();
 const router = useRouter();
 
 const searchFilter = ref<string>("");
-
 const categories = ref<ProductCategoryResponse[]>([]);
 const apiProducts = ref<ProductResponse[]>([]);
 const isLoadingCategories = ref<boolean>(false);
 const isLoadingProducts = ref<boolean>(false);
 const isLoadingMore = ref<boolean>(false);
-
 const offset = ref(0);
 const totalApiProducts = ref(0);
-
 const providersMap = ref<Map<string, ProviderMeta>>(new Map());
 
-const selectedCategoryId = ref<string | null>(
-  (route.query.category_id as string) || null
-);
+const sortBy = ref<string>("created_at");
+const sortDirection = ref<string>("desc");
+
+const selectedCategoryId = computed<string | null>(() => {
+  return (route.params.categoryId as string) || null;
+});
 
 const currentCategory = computed<ProductCategoryResponse | null>(() => {
   if (!selectedCategoryId.value) return null;
@@ -85,7 +85,6 @@ function resolveMinOrder(spec: ProductResponse["spec"]): number {
 const filteredProducts = computed<ProductResponse[]>(() => {
   if (!searchFilter.value.trim()) return apiProducts.value;
   const query = searchFilter.value.toLowerCase().trim();
-
   return apiProducts.value.filter((p) => {
     const matchTitle = p.title.toLowerCase().includes(query);
     const matchCategory = p.category?.name?.toLowerCase().includes(query);
@@ -97,11 +96,9 @@ const featuredProviders = computed<FeaturedProviderItem[]>(() => {
   const reviewedProducts = apiProducts.value.filter(
     (p) => (p.rating?.review_count ?? 0) > 0
   );
-
   if (reviewedProducts.length === 0) return [];
 
   const providerStats = new Map<string, { scoreSum: number; count: number }>();
-
   reviewedProducts.forEach((p) => {
     const score = p.rating?.average_score ?? 0;
     const stats = providerStats.get(p.provider_id) || { scoreSum: 0, count: 0 };
@@ -164,6 +161,11 @@ async function loadCategories(): Promise<void> {
 }
 
 async function loadProducts(isAppend = false): Promise<void> {
+  if (!selectedCategoryId.value) {
+    router.push({ name: "home" });
+    return;
+  }
+
   if (isAppend) {
     isLoadingMore.value = true;
   } else {
@@ -175,10 +177,9 @@ async function loadProducts(isAppend = false): Promise<void> {
     const res = await productApi.getProducts({
       limit: PAGE_SIZE,
       offset: offset.value,
-      category_id: selectedCategoryId.value || undefined,
-      provider_id: (route.query.provider_id as string) || undefined,
-      sort_by: "created_at",
-      sort_direction: "desc",
+      category_id: selectedCategoryId.value,
+      sort_by: sortBy.value as any,
+      sort_direction: sortDirection.value as any,
     });
 
     totalApiProducts.value = res.total;
@@ -210,29 +211,40 @@ function loadMore(): void {
 function handleCategorySelect(category: ProductCategoryResponse): void {
   router.push({
     name: "category",
-    query: {
-      ...route.query,
-      category_id: category.id,
-    },
+    params: { categoryId: category.id },
   });
 }
 
+function handleSortChange(): void {
+  loadProducts(false);
+}
+
+onMounted(() => {
+  if (!selectedCategoryId.value) {
+    router.push({ name: "home" });
+  }
+});
+
 watch(
-  () => route.query.category_id,
+  () => route.params.categoryId,
   (newCatId) => {
-    selectedCategoryId.value = (newCatId as string) || null;
-    loadProducts(false);
+    if (newCatId) {
+      loadProducts(false);
+    }
   }
 );
+
+watch([sortBy, sortDirection], () => {
+  loadProducts(false);
+});
 
 onMounted(async () => {
   await Promise.all([loadCategories(), loadProducts(false)]);
 });
 </script>
-
 <template>
-  <div class="category-view">
-    <main class="category-page-container">
+  <div class="min-h-screen bg-white text-neutral-900">
+    <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <CategoryHeroCard
         :name="heroTitle"
         :description="heroDescription"
@@ -247,44 +259,84 @@ onMounted(async () => {
         @select="handleCategorySelect"
       />
 
-      <section class="search-sort-bar">
-        <div class="search-box-wrapper">
-          <i class="fa-solid fa-magnifying-glass search-icon"></i>
-          <input v-model="searchFilter" type="text" :placeholder="`Buscar en ${heroTitle}`" />
-          <button type="button" class="btn-orange">Buscar productos</button>
-        </div>
-        <div class="sort-filter-wrapper">
-          <div class="sort-select">
-            <span>Ordenar por: <strong>Más Relevantes</strong></span>
-          </div>
-          <button type="button" class="btn-filter" aria-label="Filtros">
-            <i class="fa-solid fa-bars"></i>
+      <!-- Search & Sort Bar -->
+      <section class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <!-- Search Input Wrapper -->
+        <div class="flex flex-1 items-center rounded-full border border-neutral-200 bg-white p-1.5 shadow-sm transition-shadow focus-within:shadow-md">
+          <i class="fa-solid fa-magnifying-glass pl-4 pr-3 text-neutral-400"></i>
+          <input
+            v-model="searchFilter"
+            type="text"
+            :placeholder="`Buscar en ${heroTitle}`"
+            class="w-full border-none bg-transparent text-sm text-neutral-900 placeholder-neutral-400 outline-none"
+          />
+          <button
+            type="button"
+            class="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 shrink-0 cursor-pointer"
+          >
+            Buscar productos
           </button>
+        </div>
+
+        <!-- Sort Select Wrapper -->
+        <div class="flex flex-wrap items-center gap-2 rounded-2xl sm:rounded-full border border-neutral-200 bg-white px-4 py-2 shadow-sm">
+          <span class="text-xs font-semibold uppercase tracking-wider text-neutral-900 whitespace-nowrap">
+            Ordenar por:
+          </span>
+          <div class="flex flex-1 items-center gap-2">
+            <select
+              id="sort-by"
+              v-model="sortBy"
+              @change="handleSortChange"
+              class="w-full sm:w-auto bg-transparent text-sm font-semibold text-orange-500 outline-none cursor-pointer hover:text-orange-600"
+            >
+              <option value="created_at" class="text-neutral-900">Más recientes</option>
+              <option value="updated_at" class="text-neutral-900">Última actualización</option>
+              <option value="title" class="text-neutral-900">Nombre (A-Z)</option>
+              <option value="price" class="text-neutral-900">Precio</option>
+              <option value="score" class="text-neutral-900">Calificación</option>
+            </select>
+            <span class="text-neutral-300">|</span>
+            <select
+              v-model="sortDirection"
+              @change="handleSortChange"
+              class="bg-transparent text-sm font-semibold text-orange-500 outline-none cursor-pointer hover:text-orange-600"
+            >
+              <option value="desc" class="text-neutral-900">Descendente</option>
+              <option value="asc" class="text-neutral-900">Ascendente</option>
+            </select>
+          </div>
         </div>
       </section>
 
-      <section class="products-catalog">
-        <div class="catalog-header">
+      <!-- Products Grid & Catalog -->
+      <section class="mb-12 rounded-3xl bg-neutral-100 p-6 sm:p-8">
+        <div class="mb-6 font-semibold text-blue-500">
           <span>Mostrando {{ filteredProducts.length > 0 ? 1 : 0 }}-{{ filteredProducts.length }} de {{ totalProducts }} productos</span>
         </div>
 
-        <div v-if="isLoadingProducts" class="products-grid">
-          <div v-for="n in 8" :key="n" class="skeleton-card" aria-hidden="true">
-            <div class="skeleton-badge skeleton-pulse"></div>
-            <div class="skeleton-image skeleton-pulse"></div>
-            <div class="skeleton-text skeleton-category skeleton-pulse"></div>
-            <div class="skeleton-text skeleton-title skeleton-pulse"></div>
-            <div class="skeleton-text skeleton-sub skeleton-pulse"></div>
-            <div class="skeleton-footer skeleton-pulse"></div>
+        <div v-if="isLoadingProducts" class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div
+            v-for="n in 8"
+            :key="n"
+            class="flex flex-col rounded-2xl border-2 border-neutral-200 bg-white p-4"
+            aria-hidden="true"
+          >
+            <div class="h-4 w-20 animate-pulse rounded-full bg-neutral-200 mb-2"></div>
+            <div class="aspect-square w-full animate-pulse rounded-xl bg-neutral-200 mb-3"></div>
+            <div class="mx-auto h-3 w-2/5 animate-pulse rounded bg-neutral-200 mb-1.5"></div>
+            <div class="h-4 w-4/5 animate-pulse rounded bg-neutral-200 mb-1"></div>
+            <div class="ml-auto h-3 w-1/2 animate-pulse rounded bg-neutral-200 mb-3"></div>
+            <div class="mt-auto h-6 w-full animate-pulse rounded bg-neutral-200"></div>
           </div>
         </div>
 
-        <div v-else-if="filteredProducts.length === 0" class="empty-products-msg">
-          <i class="fa-solid fa-box-open"></i>
-          <h3>No hay productos disponibles en esta categoría.</h3>
+        <div v-else-if="filteredProducts.length === 0" class="py-16 text-center text-neutral-400">
+          <i class="fa-solid fa-box-open text-6xl text-neutral-300 mb-4 block"></i>
+          <h3 class="text-xl font-semibold text-blue-500">No hay productos disponibles en esta categoría.</h3>
         </div>
 
-        <div v-else class="products-grid">
+        <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <ProductCard
             v-for="(prod, index) in filteredProducts"
             :key="prod.id"
@@ -302,17 +354,25 @@ onMounted(async () => {
           />
         </div>
 
-        <div v-if="hasMore && filteredProducts.length > 0" class="load-more-wrapper">
-          <button type="button" class="btn-load-more" :disabled="isLoadingMore" @click="loadMore">
+        <div v-if="hasMore && filteredProducts.length > 0" class="mt-8 text-center">
+          <button
+            type="button"
+            class="inline-flex items-center gap-2 rounded-full border-2 border-teal-500 bg-white px-8 py-2.5 text-sm font-semibold text-teal-500 transition-colors hover:bg-teal-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            :disabled="isLoadingMore"
+            @click="loadMore"
+          >
             {{ isLoadingMore ? 'Cargando...' : 'Cargar más productos' }}
             <i :class="isLoadingMore ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-chevron-down'"></i>
           </button>
         </div>
       </section>
 
-      <section v-if="filteredProducts.length > 0 && featuredProviders.length > 0" class="featured-providers">
-        <h2>Proveedores destacados de {{ heroTitle }}</h2>
-        <div class="featured-providers-grid">
+      <!-- Featured Providers -->
+      <section v-if="filteredProducts.length > 0 && featuredProviders.length > 0" class="mb-16">
+        <h2 class="mb-10 text-center text-2xl font-bold text-blue-500 sm:text-3xl">
+          Proveedores destacados de {{ heroTitle }}
+        </h2>
+        <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
           <ProviderCard
             v-for="prov in featuredProviders"
             :key="prov.id"
@@ -328,261 +388,3 @@ onMounted(async () => {
     </main>
   </div>
 </template>
-
-<style scoped>
-.category-view {
-  min-height: 100vh;
-  background-color: #ffffff;
-  color: var(--primary-blue, #023859);
-}
-
-.category-page-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
-.search-sort-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 2rem;
-  margin-bottom: 2rem;
-}
-
-.search-box-wrapper {
-  flex: 2;
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border-gray, #e2e8f0);
-  border-radius: 30px;
-  padding: 0.3rem 0.3rem 0.3rem 1.5rem;
-  background-color: #ffffff;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.search-icon {
-  color: #888;
-  margin-right: 0.8rem;
-  font-size: 1.1rem;
-}
-
-.search-box-wrapper input {
-  flex: 1;
-  border: none;
-  outline: none;
-  font-size: 0.95rem;
-}
-
-.search-box-wrapper .btn-orange {
-  background-color: var(--primary-orange, #ff6a00);
-  color: white;
-  border: none;
-  padding: 0.6rem 1.5rem;
-  border-radius: 20px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sort-filter-wrapper {
-  flex: 1;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 1rem;
-}
-
-.sort-select {
-  border: 1px solid var(--border-gray, #e2e8f0);
-  border-radius: 20px;
-  padding: 0.7rem 1.5rem;
-  background: #ffffff;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-  font-size: 0.9rem;
-  color: #555;
-}
-
-.sort-select strong {
-  color: var(--primary-orange, #ff6a00);
-}
-
-.btn-filter {
-  background: #ffffff;
-  border: 1px solid var(--border-gray, #e2e8f0);
-  border-radius: 12px;
-  width: 45px;
-  height: 45px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.2rem;
-  cursor: pointer;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
-}
-
-.products-catalog {
-  background-color: #f5f7f9;
-  border-radius: 20px;
-  padding: 2rem;
-  margin-bottom: 3rem;
-}
-
-.catalog-header {
-  margin-bottom: 1.5rem;
-  font-weight: 600;
-  color: var(--primary-blue, #023859);
-}
-
-.empty-products-msg {
-  text-align: center;
-  padding: 4rem 2rem;
-  color: #888;
-}
-
-.empty-products-msg i {
-  font-size: 3.5rem;
-  margin-bottom: 1rem;
-  color: #cbd5e1;
-}
-
-.empty-products-msg h3 {
-  font-size: 1.2rem;
-  color: var(--primary-blue, #023859);
-}
-
-.products-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 1.5rem;
-}
-
-.skeleton-card {
-  background: #ffffff;
-  border: 2px solid var(--border-gray, #e2e8f0);
-  border-radius: 20px;
-  padding: 1.1rem;
-  display: flex;
-  flex-direction: column;
-  pointer-events: none;
-}
-
-.skeleton-pulse {
-  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s ease-in-out infinite;
-}
-
-.skeleton-badge {
-  width: 80px;
-  height: 18px;
-  border-radius: 10px;
-  margin-bottom: 0.5rem;
-}
-
-.skeleton-image {
-  width: 100%;
-  aspect-ratio: 1 / 1;
-  border-radius: 14px;
-  margin-bottom: 0.75rem;
-}
-
-.skeleton-text {
-  border-radius: 6px;
-  margin-bottom: 0.4rem;
-}
-
-.skeleton-category {
-  width: 40%;
-  height: 0.75rem;
-  margin: 0 auto 0.35rem;
-}
-
-.skeleton-title {
-  width: 80%;
-  height: 1rem;
-}
-
-.skeleton-sub {
-  width: 45%;
-  height: 0.75rem;
-  margin-left: auto;
-  margin-bottom: 0.75rem;
-}
-
-.skeleton-footer {
-  width: 100%;
-  height: 1.5rem;
-  margin-top: auto;
-  border-radius: 6px;
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
-}
-
-.load-more-wrapper {
-  text-align: center;
-  margin-top: 2rem;
-}
-
-.btn-load-more {
-  background-color: #ffffff;
-  border: 2px solid var(--light-teal, #00a896);
-  padding: 0.65rem 2rem;
-  border-radius: 25px;
-  color: var(--light-teal, #00a896);
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.btn-load-more:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btn-load-more:hover:not(:disabled) {
-  background-color: #e6f6f5;
-}
-
-.featured-providers {
-  margin-bottom: 4rem;
-}
-
-.featured-providers h2 {
-  font-size: 1.8rem;
-  color: var(--primary-blue, #023859);
-  text-align: center;
-  margin-bottom: 2.5rem;
-}
-
-.featured-providers-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 2rem;
-}
-
-@media (max-width: 1024px) {
-  .products-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .featured-providers-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-@media (max-width: 640px) {
-  .products-grid {
-    grid-template-columns: minmax(0, 1fr);
-  }
-  .search-sort-bar {
-    flex-direction: column;
-    gap: 1rem;
-  }
-}
-</style>

@@ -63,14 +63,14 @@ onMounted(async () => {
             :style="{ animationDuration: animationDuration }"
           >
             <template v-for="loop in 2" :key="loop">
-              <router-link
-                v-for="(cat, idx) in categories"
-                :key="`${loop}-${cat.id}-${idx}`"
-                :to="{ name: 'category', query: { category_id: cat.id } }"
-                class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md border-2 border-transparent transition-colors duration-200 hover:border-[#ff6a00] hover:bg-[#fffaf5]"
-                :aria-hidden="loop === 2"
-                :tabindex="loop === 2 ? -1 : 0"
-              >
+            <router-link
+              v-for="(cat, idx) in categories"
+              :key="`${loop}-${cat.id}-${idx}`"
+              :to="{ name: 'category', params: { categoryId: cat.id } }"
+              class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md border-2 border-transparent transition-colors duration-200 hover:border-[#ff6a00] hover:bg-[#fffaf5]"
+              :aria-hidden="loop === 2"
+              :tabindex="loop === 2 ? -1 : 0"
+            >
                 <div class="mb-4 h-24 w-24">
                   <CategoryImage :blob-id="cat.image_blob_id" :alt="cat.name" />
                 </div>
