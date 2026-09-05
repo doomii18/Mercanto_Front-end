@@ -5,6 +5,7 @@ import type {
   QuoteAggregateResponseSchema,
   PaginatedQuoteAggregateResponseSchema,
   QuoteItemDtoSchema,
+  QuoteItemResponseSchema,
   AccountQuoteFiltersQuerySchema,
   ProviderQuoteFiltersQuerySchema,
 } from "./payloads";
@@ -15,6 +16,7 @@ import type {
 } from "./domain";
 
 export type QuoteItemDto = z.infer<typeof QuoteItemDtoSchema>;
+export type QuoteItemResponse = z.infer<typeof QuoteItemResponseSchema>;
 export type CreateQuoteRequest = z.infer<typeof CreateQuoteRequestSchema>;
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;
 export type QuoteAggregateResponse = z.infer<typeof QuoteAggregateResponseSchema>;

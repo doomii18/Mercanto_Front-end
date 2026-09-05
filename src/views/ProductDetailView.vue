@@ -2,7 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { productApi, organizationApi } from "../api";
-import { useAuthStore } from "../modules/auth";
+
 import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
 import { useToastStore } from "@/stores/toastStore";
@@ -60,7 +60,7 @@ const COLOR_PRESETS: ProductColor[] = [
 
 const route = useRoute();
 const router = useRouter();
-const authStore = useAuthStore();
+
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();

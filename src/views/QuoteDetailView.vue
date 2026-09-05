@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { quoteApi, organizationApi, productApi, userProfileApi } from "../api";
-import { useToastStore } from "@/stores/toastStore";
 import { useQuoteActions } from "@/composables/useQuoteActions";
 import type { QuoteAggregateResponse } from "../api/services/quote/types";
 import type { PublicProviderDto } from "../api/services/organization/types";
@@ -12,11 +11,13 @@ import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import QuoteIdBadge from "../components/quote/QuoteIdBadge.vue";
 import QuoteStatusBadge from "../components/quote/QuoteStatusBadge.vue";
 import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
+import FacturaTemplate from "@/components/invoice/FacturaTemplate.vue";
+import DownloadInvoiceButton from "@/components/invoice/DownloadInvoiceButton.vue";
 
 const route = useRoute();
 const router = useRouter();
-const toastStore = useToastStore();
 
+const facturaTemplateRef = ref<InstanceType<typeof FacturaTemplate> | null>(null);
 const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
 const provider = ref<PublicProviderDto | null>(null);
 const buyerProfile = ref<UserProfileResponse | null>(null);
@@ -140,16 +141,6 @@ const goBack = () => {
   router.push({ name: "orders" });
 };
 
-const handleDownloadInvoice = () => {
-  toastStore.addToast({
-    title: "Función en desarrollo",
-    message:
-      "La descarga de facturas estará disponible próximamente. Te notificaremos cuando esté lista.",
-    icon: "fa-solid fa-file-invoice",
-    variant: "info",
-  });
-};
-
 const handleOpenChat = () => {
   router.push({ name: "messages" });
 };
@@ -161,6 +152,18 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col">
+    <!-- Offscreen Printable Container for Canvas Rasterization -->
+    <div
+      v-if="quoteAggregate"
+      class="fixed -left-[9999px] top-0 pointer-events-none opacity-0 overflow-hidden"
+      aria-hidden="true"
+    >
+      <FacturaTemplate
+        ref="facturaTemplateRef"
+        :quote-id="quoteAggregate.quote.id"
+      />
+    </div>
+
     <div
       v-if="isLoading"
       class="flex flex-col items-center justify-center py-16 px-4 gap-4 text-base text-neutral-500"
@@ -326,13 +329,15 @@ onMounted(() => {
               <i class="fa-solid fa-star text-amber-500"></i>
               <i class="fa-regular fa-star text-neutral-300"></i>
             </div>
-            <button
-              type="button"
-              class="w-full bg-transparent border border-teal-700 text-teal-700 py-2 px-5 rounded-lg font-semibold text-sm cursor-pointer hover:bg-teal-700 hover:text-white transition-colors capitalize"
-              @click.prevent
+            <router-link
+              :to="{
+                name: 'provider-catalog',
+                params: { providerId: provider?.id },
+              }"
+              class="w-full bg-transparent border border-teal-700 text-teal-700 py-2 px-5 rounded-lg font-semibold text-sm cursor-pointer hover:bg-teal-700 hover:text-white transition-colors capitalize inline-block"
             >
               ver proveedor
-            </button>
+            </router-link>
           </div>
 
           <div class="bg-white border border-neutral-200 rounded-2xl p-6 text-left">
@@ -351,30 +356,27 @@ onMounted(() => {
         </div>
       </div>
 
-      <div class="flex flex-col gap-4 mt-2">
+      <div class="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-neutral-200 pt-5">
+        <div class="flex flex-wrap items-center gap-2.5">
+          <DownloadInvoiceButton
+            :template-ref="facturaTemplateRef"
+            :filename="`factura-${quoteAggregate.quote.id.substring(0, 8).toUpperCase()}.pdf`"
+          />
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 hover:border-neutral-400"
+            @click="handleOpenChat"
+          >
+            <i class="fa-regular fa-comment-dots text-neutral-500"></i>
+            <span>Enviar mensaje</span>
+          </button>
+        </div>
+
         <QuoteActionBar
           :actions="availableActions"
           :is-action-processing="isActionProcessing"
           @action="executeAction"
         />
-        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
-          <button
-            type="button"
-            class="bg-transparent border border-teal-700 text-teal-700 py-2.5 px-5 rounded-xl font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-teal-700 hover:text-white transition-colors"
-            @click="handleDownloadInvoice"
-          >
-            <i class="fa-solid fa-arrow-down-to-bracket"></i>
-            <span>Descargar factura</span>
-          </button>
-          <button
-            type="button"
-            class="bg-transparent border border-teal-700 text-teal-700 py-2.5 px-5 rounded-xl font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-teal-700 hover:text-white transition-colors"
-            @click="handleOpenChat"
-          >
-            <i class="fa-regular fa-comment-dots"></i>
-            <span>Enviar mensaje al proveedor</span>
-          </button>
-        </div>
       </div>
     </div>
   </div>
