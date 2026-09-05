@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
 import UserMenu from "@/components/common/UserMenu.vue";
+import NotificationBell from "@/components/common/NotificationBell.vue";
 
 const contextStore = useUserContextStore();
 const sidebarOpen = ref(false);
@@ -18,7 +19,7 @@ const closeSidebar = () => {
 
 <template>
   <div class="min-h-screen bg-white text-[#083c5a]">
-    <!-- Header: Logo aligned to the right -->
+    <!-- Header: Hamburger left, Logo + Bell right -->
     <header class="fixed top-0 left-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
       <button
         type="button"
@@ -40,7 +41,11 @@ const closeSidebar = () => {
           :class="{ '-translate-y-[7.5px] -rotate-45': sidebarOpen }"
         ></span>
       </button>
-      <AppLogo class="h-9" />
+
+      <div class="flex items-center gap-3">
+        <NotificationBell />
+        <AppLogo class="h-9" />
+      </div>
     </header>
 
     <!-- Wrapper: Strictly fits the remaining viewport height -->
@@ -251,6 +256,36 @@ const closeSidebar = () => {
               class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
             >
               Búsqueda Inteligente
+            </span>
+          </router-link>
+
+          <!-- Notificaciones (Sidebar link) -->
+          <router-link
+            :to="{ name: 'notifications' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'max-md:h-11 max-md:w-11 max-md:justify-center',
+              sidebarOpen
+                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
+                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-regular fa-bell w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Notificaciones
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Notificaciones
             </span>
           </router-link>
         </nav>
