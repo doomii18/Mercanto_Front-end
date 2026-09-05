@@ -37,6 +37,21 @@ let unsubs: (() => void)[] = [];
 const isProvider = computed(() => contextStore.isProvider);
 const orgId = computed(() => contextStore.activeOrganizationId);
 
+/**
+ * Generates a deterministic online/offline status based on a seeded string.
+ * Uses a simple hash function to create a pseudo-random boolean (~30% chance to be online).
+ */
+function isOnline(seedStr: string | null | undefined): boolean {
+  if (!seedStr) return false;
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = (hash << 5) - hash + seedStr.charCodeAt(i);
+    hash |= 0; // Convert to 32bit integer
+  }
+  // ~30% chance to be online
+  return (Math.abs(hash) % 10) < 3;
+}
+
 function scrollToBottom() {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -317,7 +332,6 @@ onBeforeUnmount(() => {
               class="w-full h-full"
             />
           </div>
-
           <div class="flex-1 min-w-0 overflow-hidden">
             <div class="flex justify-between items-center">
               <span class="font-bold text-sm text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap" :title="threadPreviews[conv.id]?.name">
@@ -360,8 +374,15 @@ onBeforeUnmount(() => {
             </span>
             <span class="text-xs text-[#888] flex items-center gap-1 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
               Pedido: #{{ threadPreviews[activeThread.id]?.quoteGroupId?.substring(0, 8) || activeThread.quote_group_id.substring(0, 8) }}
-              <span class="w-2 h-2 rounded-full bg-[#22c55e] inline-block shrink-0"></span>
-              <span class="text-[#888]">En línea</span>
+
+              <!-- Dynamic Status Text & Dot -->
+              <span
+                class="w-2 h-2 rounded-full inline-block shrink-0"
+                :class="isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'bg-[#22c55e]' : 'bg-[#9ca3af]'"
+              ></span>
+              <span>
+                {{ isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'En línea' : 'Desconectado' }}
+              </span>
             </span>
           </div>
         </div>
