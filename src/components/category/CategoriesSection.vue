@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { categoryApi } from "../../api";
+import { categoryApi, productApi } from "../../api"; // Added productApi
 import type { ProductCategoryResponse } from "../../api/services/category/types";
 import CategoryImage from "./CategoryImage.vue";
 
@@ -19,9 +19,22 @@ const animationDuration = computed(() => {
 onMounted(async () => {
   try {
     const response = await categoryApi.getCategories({ limit: 50 });
-    categories.value = response.data.map((cat) => ({
+    const cats = response.data;
+
+    // Fetch product counts concurrently for each category using limit=0
+    const counts = await Promise.allSettled(
+      cats.map((cat) =>
+        productApi
+          .getProducts({ category_id: cat.id, limit: 0, offset: 0 })
+          .then((res) => res.total)
+          .catch(() => 0) // Fallback to 0 if the request fails
+      )
+    );
+
+    categories.value = cats.map((cat, index) => ({
       ...cat,
-      productCount: Math.floor(Math.random() * 600) + 50,
+      productCount:
+        counts[index].status === "fulfilled" ? counts[index].value : 0,
     }));
   } catch (err) {
     console.error("Failed to load categories:", err);
@@ -37,7 +50,6 @@ onMounted(async () => {
       <h2 class="mb-2 text-3xl font-bold text-[#023859] sm:text-4xl">Categorías</h2>
       <p class="text-base text-[#718096]">Explora todas nuestras categorías de productos para ti</p>
     </div>
-
     <div class="relative w-full">
       <div class="w-full rounded-2xl bg-[#00a896] px-4 py-6 sm:px-8">
         <!-- Internal Scroll Viewport -->
@@ -55,7 +67,6 @@ onMounted(async () => {
               <div class="h-3 w-1/2 animate-pulse rounded-md bg-slate-200"></div>
             </div>
           </div>
-
           <!-- Continuous Infinite Track -->
           <div
             v-else
@@ -63,14 +74,14 @@ onMounted(async () => {
             :style="{ animationDuration: animationDuration }"
           >
             <template v-for="loop in 2" :key="loop">
-            <router-link
-              v-for="(cat, idx) in categories"
-              :key="`${loop}-${cat.id}-${idx}`"
-              :to="{ name: 'category', params: { categoryId: cat.id } }"
-              class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md border-2 border-transparent transition-colors duration-200 hover:border-[#ff6a00] hover:bg-[#fffaf5]"
-              :aria-hidden="loop === 2"
-              :tabindex="loop === 2 ? -1 : 0"
-            >
+              <router-link
+                v-for="(cat, idx) in categories"
+                :key="`${loop}-${cat.id}-${idx}`"
+                :to="{ name: 'category', params: { categoryId: cat.id } }"
+                class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md border-2 border-transparent transition-colors duration-200 hover:border-[#ff6a00] hover:bg-[#fffaf5]"
+                :aria-hidden="loop === 2"
+                :tabindex="loop === 2 ? -1 : 0"
+              >
                 <div class="mb-4 h-24 w-24">
                   <CategoryImage :blob-id="cat.image_blob_id" :alt="cat.name" />
                 </div>

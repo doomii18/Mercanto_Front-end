@@ -35,7 +35,7 @@ export const PatchProductRequestSchema = z.object({
 });
 
 export const ProductFiltersRequestSchema = z.object({
-  limit: z.number().int().positive().optional(),
+  limit: z.number().int().nonnegative().optional(),
   offset: z.number().int().nonnegative().optional(),
   provider_id: z.uuid().optional(),
   category_id: z.uuid().optional(),
