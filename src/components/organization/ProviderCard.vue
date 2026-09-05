@@ -69,10 +69,10 @@ onMounted(async () => {
     </p>
 
     <router-link
-      :to="{
-        name: 'category',
-        query: { provider_id: id },
-      }"
+    :to="{
+         name: 'provider-catalog',
+         params: { providerId: id },
+       }"
       class="btn-orange"
     >
       Ver catálogo

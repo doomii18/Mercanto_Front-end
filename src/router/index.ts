@@ -37,10 +37,10 @@ const routes: RouteRecordRaw[] = [
         component: () => import("../views/ProductDetailView.vue"),
       },
       {
-        path: 'catalog',
-        name: 'provider-catalog',
-        component: () => import('@/views/ProviderCatalogView.vue'),
-      }
+             path: 'catalog/:providerId',
+             name: 'provider-catalog',
+             component: () => import('@/views/ProviderCatalogView.vue'),
+           }
     ],
   },
   {
