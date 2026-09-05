@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import HomeHeroSection from './HomeHeroSection.vue';
 import FeaturedProviderSection from './FeaturedProviderSection.vue';
 import OffersSection from './OffersSection.vue';
@@ -8,40 +8,39 @@ const slides = [HomeHeroSection, FeaturedProviderSection, OffersSection];
 const activeIndex = ref(0);
 const intervalTime = 15000;
 let timer: number | undefined;
-
 const nextSlide = () => {
   activeIndex.value = (activeIndex.value + 1) % slides.length;
 };
-
-const setSlide = (index: number) => {
-  activeIndex.value = index;
-  resetTimer();
-};
-
 const startTimer = () => {
+  stopTimer();
   timer = window.setInterval(nextSlide, intervalTime);
 };
-
-const resetTimer = () => {
-  clearInterval(timer);
+const stopTimer = () => {
+  if (timer) {
+    clearInterval(timer);
+    timer = undefined;
+  }
+};
+const setSlide = (index: number) => {
+  activeIndex.value = index;
   startTimer();
 };
-
-const pauseTimer = () => clearInterval(timer);
-const resumeTimer = () => startTimer();
-
-onMounted(() => startTimer());
-onUnmounted(() => clearInterval(timer));
+const pause = () => stopTimer();
+const resume = () => startTimer();
+onMounted(() => {
+  startTimer();
+});
+onBeforeUnmount(() => {
+  stopTimer();
+});
 </script>
-
 <template>
   <section
     class="relative w-full overflow-hidden bg-neutral-50"
-    @mouseenter="pauseTimer"
-    @mouseleave="resumeTimer"
+    @mouseenter="pause"
+    @mouseleave="resume"
     aria-roledescription="carousel"
   >
-
     <div class="grid w-full grid-cols-1 grid-rows-1 min-h-150 lg:min-h-175" aria-live="polite">
       <transition name="crossfade">
         <component
@@ -51,7 +50,6 @@ onUnmounted(() => clearInterval(timer));
         />
       </transition>
     </div>
-
     <div class="absolute bottom-6 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2">
       <button
         v-for="(_, index) in slides"
@@ -68,7 +66,6 @@ onUnmounted(() => clearInterval(timer));
 </template>
 
 <style scoped>
-/* Hardware-accelerated crossfade transitions */
 .crossfade-enter-active,
 .crossfade-leave-active {
   transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
