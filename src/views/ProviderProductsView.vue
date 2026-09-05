@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { productApi, categoryApi, quoteApi } from "@/api";
+import { productApi, categoryApi, quoteApi, inventoryApi } from "@/api";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
 import type { ProductResponse } from "@/api/services/product/types";
 import type { ProductCategoryResponse } from "@/api/services/category/types";
+import type { InventoryResponse } from "@/api/services/inventory/types";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
@@ -19,13 +20,15 @@ const pendingOrdersCount = ref(0);
 const isLoading = ref(false);
 const isExporting = ref(false);
 
+// Local In-Component Stock Cache
+const inventoryCache = ref<Record<string, InventoryResponse>>({});
+const inventoryLoading = ref<Record<string, boolean>>({});
+
 // Filters and Pagination
 const searchQuery = ref("");
 const selectedCategory = ref("todas");
 const statusFilter = ref<"todos" | "activos" | "inactivos">("todos");
 const viewMode = ref<"list" | "grid">("list");
-const selectedIds = ref<Set<string>>(new Set());
-const selectAll = ref(false);
 
 const currentPage = ref(1);
 const perPage = 8;
@@ -70,6 +73,54 @@ async function loadStats() {
   }
 }
 
+async function fetchStockForProducts(items: ProductResponse[]) {
+  const missing = items.filter(
+    (p) => !inventoryCache.value[p.id] && !inventoryLoading.value[p.id]
+  );
+  if (missing.length === 0) return;
+
+  missing.forEach((p) => {
+    inventoryLoading.value[p.id] = true;
+  });
+
+  await Promise.allSettled(
+    missing.map(async (p) => {
+      try {
+        const inv = await inventoryApi.getInventory(p.id);
+        inventoryCache.value[p.id] = inv;
+      } catch (err) {
+        console.warn(`Error al cargar inventario para el producto ${p.id}:`, err);
+      } finally {
+        delete inventoryLoading.value[p.id];
+      }
+    })
+  );
+}
+
+function getStockInfo(productId: string) {
+  const inv = inventoryCache.value[productId];
+  const loading = !!inventoryLoading.value[productId];
+
+  if (loading) {
+    return { text: "Cargando...", inStock: true, loading: true };
+  }
+  if (!inv) {
+    return { text: "Sin stock", inStock: false, loading: false };
+  }
+  if (inv.type === "Internal") {
+    return {
+      text: inv.available_stock > 0 ? `${inv.available_stock} unds` : "Agotado",
+      inStock: inv.available_stock > 0,
+      loading: false,
+    };
+  }
+  return {
+    text: inv.is_in_stock ? "En stock" : "Agotado",
+    inStock: inv.is_in_stock,
+    loading: false,
+  };
+}
+
 async function fetchProducts() {
   if (!activeOrgId.value) return;
 
@@ -95,30 +146,13 @@ async function fetchProducts() {
 
     products.value = data;
     totalProducts.value = res.total;
-    selectedIds.value.clear();
-    selectAll.value = false;
+
+    fetchStockForProducts(data);
   } catch (err: any) {
     alertStore.showError(err.message || "Error al obtener los productos.");
   } finally {
     isLoading.value = false;
   }
-}
-
-function toggleAll() {
-  if (selectAll.value) {
-    products.value.forEach((p) => selectedIds.value.add(p.id));
-  } else {
-    selectedIds.value.clear();
-  }
-}
-
-function toggleSelect(id: string) {
-  if (selectedIds.value.has(id)) {
-    selectedIds.value.delete(id);
-  } else {
-    selectedIds.value.add(id);
-  }
-  selectAll.value = selectedIds.value.size === products.value.length && products.value.length > 0;
 }
 
 function promptDelete(product: ProductResponse) {
@@ -131,6 +165,7 @@ async function confirmDelete() {
   isDeleting.value = true;
   try {
     await productApi.deleteProduct(productToDelete.value.id);
+    delete inventoryCache.value[productToDelete.value.id];
     alertStore.spawnAlert({
       title: "Producto eliminado",
       message: `El producto "${productToDelete.value.title}" fue eliminado exitosamente.`,
@@ -177,6 +212,7 @@ async function exportCatalogCsv() {
 
     const rows = res.data.map((p) => {
       const minQty = "Physical" in p.spec ? p.spec.Physical.min_order_quantity : 1;
+      const stockInfo = getStockInfo(p.id);
       return [
         escapeCsv(p.id),
         escapeCsv(p.title),
@@ -184,7 +220,7 @@ async function exportCatalogCsv() {
         escapeCsv(p.base_price),
         escapeCsv(p.unit_of_measure),
         escapeCsv(minQty),
-        escapeCsv("En stock"),
+        escapeCsv(stockInfo.text),
         escapeCsv(p.is_active ? "Activo" : "Inactivo"),
         escapeCsv(p.updated_at),
       ].join(",");
@@ -383,9 +419,6 @@ onMounted(async () => {
         <table class="w-full border-collapse text-left text-xs sm:text-sm">
           <thead class="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs font-bold uppercase tracking-wider">
             <tr>
-              <th class="py-3 px-3.5 w-10 text-center">
-                <input type="checkbox" v-model="selectAll" @change="toggleAll" class="rounded text-[#00a896] cursor-pointer" />
-              </th>
               <th class="py-3 px-3.5">Producto</th>
               <th class="py-3 px-3.5">Categoría</th>
               <th class="py-3 px-3.5">Precio Base</th>
@@ -397,14 +430,6 @@ onMounted(async () => {
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr v-for="product in products" :key="product.id" class="hover:bg-slate-50/70 transition-colors">
-              <td class="py-3 px-3.5 text-center">
-                <input
-                  type="checkbox"
-                  :checked="selectedIds.has(product.id)"
-                  @change="toggleSelect(product.id)"
-                  class="rounded text-[#00a896] cursor-pointer"
-                />
-              </td>
               <td class="py-3 px-3.5">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-50">
@@ -436,8 +461,20 @@ onMounted(async () => {
                 <span v-else class="text-slate-400">Servicio</span>
               </td>
               <td class="py-3 px-3.5 whitespace-nowrap">
-                <span class="py-0.5 px-2 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
-                  En stock
+                <span
+                  v-if="getStockInfo(product.id).loading"
+                  class="py-0.5 px-2 rounded-full bg-slate-100 text-slate-400 text-xs font-semibold animate-pulse"
+                >
+                  Cargando...
+                </span>
+                <span
+                  v-else
+                  class="py-0.5 px-2 rounded-full text-xs font-semibold border"
+                  :class="getStockInfo(product.id).inStock
+                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                    : 'bg-red-50 text-red-700 border-red-200'"
+                >
+                  {{ getStockInfo(product.id).text }}
                 </span>
               </td>
               <td class="py-3 px-3.5 whitespace-nowrap">
@@ -467,7 +504,7 @@ onMounted(async () => {
               </td>
             </tr>
             <tr v-if="products.length === 0">
-              <td colspan="8" class="py-8 text-center text-slate-500 text-sm font-medium">
+              <td colspan="7" class="py-8 text-center text-slate-500 text-sm font-medium">
                 No se encontraron productos registrados en este proveedor.
               </td>
             </tr>
@@ -491,8 +528,20 @@ onMounted(async () => {
             >
               {{ product.is_active ? 'Activo' : 'Inactivo' }}
             </span>
-            <span class="py-0.5 px-1.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-semibold border border-emerald-200">
-              En stock
+            <span
+              v-if="getStockInfo(product.id).loading"
+              class="py-0.5 px-1.5 rounded-md bg-slate-100 text-slate-400 text-[10px] font-semibold animate-pulse"
+            >
+              ...
+            </span>
+            <span
+              v-else
+              class="py-0.5 px-1.5 rounded-md text-[10px] font-semibold border"
+              :class="getStockInfo(product.id).inStock
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                : 'bg-red-50 text-red-700 border-red-200'"
+            >
+              {{ getStockInfo(product.id).text }}
             </span>
           </div>
 
