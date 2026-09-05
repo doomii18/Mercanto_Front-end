@@ -8,12 +8,16 @@ import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 
-
 interface ShippingMethodOption {
     id: string;
     name: string;
     icon: string;
     cost: number;
+}
+
+interface ProductColor {
+    name: string;
+    hex: string;
 }
 
 interface ProductDetailData {
@@ -38,6 +42,17 @@ interface ProductDetailData {
     shippingMethods: ShippingMethodOption[];
 }
 
+const COLOR_PRESETS: ProductColor[] = [
+    { name: "Café Rústico", hex: "#4a2c11" },
+    { name: "Negro Mate", hex: "#1e293b" },
+    { name: "Miel / Tan", hex: "#c88a4b" },
+    { name: "Azul Marino", hex: "#0f3460" },
+    { name: "Gris Asfalto", hex: "#64748b" },
+    { name: "Verde Oliva", hex: "#4d5b3d" },
+    { name: "Vino", hex: "#6b212f" },
+    { name: "Blanco Hueso", hex: "#f1f5f9" },
+];
+
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
@@ -47,6 +62,7 @@ const showAddedToast = ref(false);
 const isLoading = ref(true);
 
 const selectedShippingMethod = ref("bus");
+const selectedColor = ref<string>("");
 const quantity = ref(1);
 
 const product = ref<ProductDetailData>({
@@ -69,6 +85,49 @@ const product = ref<ProductDetailData>({
     shippingMethods: [],
 });
 
+function hashString(str: string): number {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash * 33) ^ str.charCodeAt(i);
+    }
+    return Math.abs(hash);
+}
+
+const availableColors = computed<ProductColor[]>(() => {
+    if (!product.value.id) return [];
+    const seed = hashString(product.value.id);
+
+    // Seeded check: ~60% chance of having color variants
+    const hasColorVariants = (seed % 10) < 6;
+    if (!hasColorVariants) return [];
+
+    const count = 2 + (Math.floor(seed / 10) % 4); // 2 to 5 colors
+    const colors: ProductColor[] = [];
+
+    for (let i = 0; i < count; i++) {
+        const index = (seed + i * 2) % COLOR_PRESETS.length;
+        const candidate = COLOR_PRESETS[index];
+        if (!colors.some((c) => c.name === candidate.name)) {
+            colors.push(candidate);
+        }
+    }
+    return colors;
+});
+
+watch(
+    availableColors,
+    (colors) => {
+        if (colors.length > 0) {
+            if (!selectedColor.value || !colors.some((c) => c.name === selectedColor.value)) {
+                selectedColor.value = colors[0].name;
+            }
+        } else {
+            selectedColor.value = "";
+        }
+    },
+    { immediate: true },
+);
+
 function resolveLocationText(municipalityId?: string): string {
     if (!municipalityId) return "Managua, Nicaragua";
     const hierarchy = geoStore.resolveLocationHierarchy(municipalityId);
@@ -78,9 +137,7 @@ function resolveLocationText(municipalityId?: string): string {
         : hierarchy.municipality.name;
 }
 
-function resolveShippingMethods(
-    methods?: string[],
-): ShippingMethodOption[] {
+function resolveShippingMethods(methods?: string[]): ShippingMethodOption[] {
     const result: ShippingMethodOption[] = [];
     const hasBus = methods?.includes("bus") ?? true;
     const hasOwn = methods?.includes("own_delivery") ?? false;
@@ -281,102 +338,129 @@ const navigateToCategory = () => {
 </script>
 
 <template>
-    <div class="product-detail-page">
-        <main class="container main-content">
-            <nav class="breadcrumbs-nav" aria-label="Breadcrumb">
-                <router-link :to="{ name: 'home' }">Inicio</router-link>
-                <span class="separator">></span>
-                <router-link :to="{ name: 'category' }">Categorías</router-link>
-                <span class="separator">></span>
-                <a href="#" @click.prevent="navigateToCategory">{{
-                    product.category || "Categoría"
-                }}</a>
-                <span class="separator">></span>
-                <span class="current-crumb">{{
-                    product.title || "Producto"
-                }}</span>
+    <div class="min-h-screen bg-white text-neutral-900 flex flex-col font-sans">
+        <main class="mx-auto w-full max-w-[1200px] px-6 pt-6 pb-16 flex-1">
+            <nav class="mb-8 flex flex-wrap items-center gap-1.5 text-sm text-neutral-500" aria-label="Breadcrumb">
+                <router-link :to="{ name: 'home' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">Inicio</router-link>
+                <span class="font-medium text-neutral-400">&gt;</span>
+                <router-link :to="{ name: 'category' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">Categorías</router-link>
+                <span class="font-medium text-neutral-400">&gt;</span>
+                <a href="#" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500" @click.prevent="navigateToCategory">
+                    {{ product.category || "Categoría" }}
+                </a>
+                <span class="font-medium text-neutral-400">&gt;</span>
+                <span class="font-semibold text-neutral-600">{{ product.title || "Producto" }}</span>
             </nav>
-            <section v-if="isLoading" class="skeleton-grid-loader">
-                <div class="skeleton-box skeleton-left skeleton-pulse"></div>
-                <div class="skeleton-box skeleton-right skeleton-pulse"></div>
+
+            <section v-if="isLoading" class="mb-10 grid min-h-[450px] grid-cols-1 gap-10 lg:grid-cols-[1fr_1.35fr]">
+                <div class="animate-pulse rounded-3xl bg-neutral-200"></div>
+                <div class="animate-pulse rounded-3xl bg-neutral-200"></div>
             </section>
+
             <template v-else>
-                <section class="product-top-grid">
-                    <div class="product-gallery-card">
-                        <div class="product-image-container">
+                <section class="mb-10 grid grid-cols-1 items-stretch gap-10 lg:grid-cols-[1fr_1.35fr]">
+                    <div class="flex flex-col items-center justify-center p-4">
+                        <div class="flex aspect-square w-full max-w-[500px] items-center justify-center overflow-hidden rounded-2xl bg-neutral-50">
                             <ProductImage
                                 :blob-id="product.imageBlobId"
                                 :alt="product.title"
+                                class="w-full h-full"
                             />
                         </div>
                     </div>
-                    <div class="product-summary-card">
-                        <div class="summary-top-row">
-                            <span class="category-tag-italic">{{
-                                product.category || "General"
-                            }}</span>
+
+                    <div class="relative flex flex-col rounded-3xl bg-neutral-100 p-8 lg:p-10">
+                        <div class="absolute top-7 right-8 flex flex-col items-end gap-1">
+                            <span class="text-xs italic text-neutral-500">{{ product.category || "General" }}</span>
                         </div>
-                        <h1 class="product-main-title">{{ product.title }}</h1>
-                        <div class="provider-pill-row">
-                            <div class="provider-avatar-circle">
+
+                        <h1 class="mb-3 max-w-[75%] font-serif text-2xl lg:text-3xl font-bold text-neutral-900">
+                            {{ product.title }}
+                        </h1>
+
+                        <div class="mb-5 inline-flex items-center gap-2">
+                            <div class="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-blue-400 to-blue-600 text-sm font-bold text-white">
                                 <ProviderLogo
                                     :blob-id="product.provider.logoBlobId"
                                     :alt="product.provider.name"
-                                    class="rounded-full"
+                                    class="w-full h-full rounded-full"
                                 />
                             </div>
-                            <span class="provider-title-text">{{
-                                product.provider.name
-                            }}</span>
-                            <i
-                                v-if="product.provider.verified"
-                                class="fa-solid fa-circle-check verified-badge-icon"
-                            ></i>
+                            <span class="text-sm font-semibold text-neutral-900">{{ product.provider.name }}</span>
+                            <i v-if="product.provider.verified" class="fa-solid fa-circle-check text-blue-500 text-base"></i>
                         </div>
-                        <div class="product-price-row">
-                            <span class="currency-price">
+
+                        <div class="mb-2.5">
+                            <span class="font-serif text-2xl lg:text-3xl font-bold text-orange-500">
                                 C$ {{ formatPrice(product.price) }}
                             </span>
                         </div>
-                        <div class="min-order-row">
-                            <strong>Pedido mínimo:</strong>
-                            {{ product.minOrder }} unidad{{
-                                product.minOrder > 1 ? "es" : ""
-                            }}
+
+                        <div class="mb-3 text-sm text-neutral-900">
+                            <strong class="font-semibold text-neutral-900">Pedido mínimo:</strong>
+                            {{ product.minOrder }} unidad{{ product.minOrder > 1 ? "es" : "" }}
                         </div>
 
-                        <div class="rating-stars-row">
+                        <div class="mb-5 flex items-center gap-1.5 text-sm font-semibold text-neutral-900">
                             <template v-if="product.reviewCount > 0">
-                                <i class="fa-solid fa-star star-orange-outline"></i>
-                                <span class="rating-number">{{ product.rating.toFixed(1) }}</span>
-                                <span class="review-count">({{ product.reviewCount }} valoraciones)</span>
+                                <i class="fa-solid fa-star text-orange-500 text-base"></i>
+                                <span class="text-neutral-900">{{ product.rating.toFixed(1) }}</span>
+                                <span class="font-normal text-neutral-500">({{ product.reviewCount }} valoraciones)</span>
                             </template>
                             <template v-else>
-                                <span class="review-count" style="margin-left: 0;">Sin valoraciones aún</span>
+                                <span class="font-normal text-neutral-500">Sin valoraciones aún</span>
                             </template>
                         </div>
 
-                        <div class="specs-list">
-                            <p class="spec-line">
-                                <strong>Descripción:</strong>
+                        <!-- Seeded Color Picker -->
+                        <div v-if="availableColors.length > 0" class="mb-5">
+                            <div class="mb-2 flex items-center gap-2 text-sm">
+                                <span class="font-semibold text-neutral-900">Color:</span>
+                                <span class="text-neutral-500">{{ selectedColor }}</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button
+                                    v-for="color in availableColors"
+                                    :key="color.name"
+                                    type="button"
+                                    :title="color.name"
+                                    :aria-label="color.name"
+                                    :class="[
+                                        'group relative flex h-7 w-7 items-center justify-center rounded-full transition-all focus:outline-none',
+                                        selectedColor === color.name
+                                            ? 'ring-2 ring-neutral-900 ring-offset-2 scale-110'
+                                            : 'border border-neutral-300 hover:scale-105'
+                                    ]"
+                                    :style="{ backgroundColor: color.hex }"
+                                    @click="selectedColor = color.name"
+                                >
+                                    <i
+                                        v-if="selectedColor === color.name"
+                                        class="fa-solid fa-check text-[10px]"
+                                        :class="color.name.includes('Blanco') ? 'text-neutral-900' : 'text-white'"
+                                    ></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="mb-5 flex flex-col gap-2">
+                            <p class="text-sm leading-relaxed text-neutral-900">
+                                <strong class="font-semibold text-neutral-900">Descripción:</strong>
                                 {{ product.description }}
                             </p>
                         </div>
-                        <div class="shipping-options-section">
-                            <p class="section-label">
-                                Tipo de envío disponible:
-                            </p>
-                            <div class="shipping-methods-row">
+
+                        <div>
+                            <p class="mb-2 text-sm font-semibold text-neutral-900">Tipo de envío disponible:</p>
+                            <div class="flex flex-wrap gap-3">
                                 <div
                                     v-for="method in product.shippingMethods"
                                     :key="method.id"
                                     :class="[
-                                        'shipping-method-item',
-                                        {
-                                            active:
-                                                selectedShippingMethod ===
-                                                method.id,
-                                        },
+                                        'flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors duration-150',
+                                        selectedShippingMethod === method.id
+                                            ? 'bg-teal-500/15 text-teal-600'
+                                            : 'text-neutral-900 hover:bg-neutral-200'
                                     ]"
                                     @click="selectedShippingMethod = method.id"
                                 >
@@ -384,162 +468,140 @@ const navigateToCategory = () => {
                                     <span>{{ method.name }}</span>
                                 </div>
                             </div>
-                            <p class="shipping-disclaimer">*Costos de envío estimados, calculados al finalizar la compra.</p>
+                            <p class="mt-2 text-xs italic text-neutral-500">*Costos de envío estimados, calculados al finalizar la compra.</p>
                         </div>
                     </div>
                 </section>
-                <section class="product-bottom-grid">
-                    <div class="card-provider-box">
-                        <h3 class="box-heading">Tu proveedor</h3>
-                        <div class="provider-profile-summary">
+
+                <section class="grid grid-cols-1 items-stretch gap-10 lg:grid-cols-[1fr_1.35fr]">
+                    <div class="flex flex-col rounded-3xl bg-neutral-100 p-8 lg:p-10">
+                        <h3 class="mb-5 font-serif text-xl font-bold text-neutral-900">Tu proveedor</h3>
+
+                        <div class="mb-3 flex items-center gap-3">
                             <div class="h-10 w-10 overflow-hidden rounded-full bg-blue-400">
                                 <ProviderLogo
                                     :blob-id="product.provider.logoBlobId"
                                     :alt="product.provider.name"
+                                    class="w-full h-full"
                                 />
                             </div>
-                            <div class="provider-name-wrapper">
-                                <span class="provider-name-bold">{{
-                                    product.provider.name
-                                }}</span>
-                                <i
-                                    v-if="product.provider.verified"
-                                    class="fa-solid fa-circle-check verified-badge-icon"
-                                ></i>
+                            <div class="flex items-center gap-1.5">
+                                <span class="font-bold text-neutral-900">{{ product.provider.name }}</span>
+                                <i v-if="product.provider.verified" class="fa-solid fa-circle-check text-blue-500 text-base"></i>
                             </div>
                         </div>
 
-                        <div class="provider-rating-score">
+                        <div class="mb-2 flex items-center gap-1.5">
                             <template v-if="product.providerRating > 0">
-                                <i class="fa-solid fa-star star-orange-outline"></i>
-                                <span class="score-number">{{ product.providerRating.toFixed(1) }}</span>
+                                <i class="fa-solid fa-star text-orange-500"></i>
+                                <span class="text-xl font-bold text-neutral-900">{{ product.providerRating.toFixed(1) }}</span>
                             </template>
                             <template v-else>
-                                <span class="score-number" style="font-size: 0.95rem; color: #718096;">Sin calificación</span>
+                                <span class="text-sm text-neutral-500">Sin calificación</span>
                             </template>
                         </div>
 
-                        <p class="provider-location-text">
-                            {{ product.provider.location }}
-                        </p>
+                        <p class="mb-5 text-sm text-neutral-500">{{ product.provider.location }}</p>
+
                         <router-link
                             v-if="product.provider.id"
                             :to="{
                                 name: 'category',
                                 query: { provider_id: product.provider.id },
                             }"
-                            class="btn-orange-pill btn-catalog"
+                            class="mb-6 inline-flex w-44 items-center justify-center rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
                         >
                             Ver catálogo
                         </router-link>
                         <button
                             v-else
                             type="button"
-                            class="btn-orange-pill btn-catalog"
+                            class="mb-6 inline-flex w-44 items-center justify-center rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5"
                             @click="navigateToCategory"
                         >
                             Ver catálogo
                         </button>
-                        <hr class="card-divider" />
-                        <div class="cart-summary-footer">
-                            <div class="cart-left-info">
-                                <i
-                                    class="fa-solid fa-box-open box-cart-icon"
-                                ></i>
-                                <span class="cart-items-count"
-                                    >Productos al por mayor garantizados</span
-                                >
+
+                        <hr class="my-3 border-t border-neutral-300" />
+
+                        <div class="mt-auto flex items-center justify-between gap-4">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-box-open text-xl text-teal-600"></i>
+                                <span class="text-xs text-neutral-900">Productos al por mayor garantizados</span>
                             </div>
                             <router-link
                                 :to="{ name: 'orders' }"
-                                class="btn-view-order-link"
+                                class="rounded-md border border-teal-600 px-3 py-1 text-xs font-semibold text-teal-600 transition-colors hover:bg-teal-600 hover:text-white"
                             >
-                                Ver pedidos >
+                                Ver pedidos &gt;
                             </router-link>
                         </div>
                     </div>
-                    <div class="card-quantity-box">
-                        <h3 class="box-heading">Elige la cantidad</h3>
-                        <div class="stepper-row">
-                            <div class="stepper-controls">
+
+                    <div class="flex flex-col rounded-3xl bg-neutral-100 p-8 lg:p-10">
+                        <h3 class="mb-5 font-serif text-xl font-bold text-neutral-900">Elige la cantidad</h3>
+
+                        <div class="mb-6 flex items-center gap-3">
+                            <div class="flex items-center gap-2.5">
                                 <button
                                     type="button"
-                                    class="btn-stepper minus"
-                                    :disabled="
-                                        quantity <=
-                                        (product.minOrder > 0
-                                            ? product.minOrder
-                                            : 1)
-                                    "
+                                    class="flex h-6 w-6 items-center justify-center rounded bg-neutral-500 text-xs text-white transition-colors hover:bg-neutral-900 disabled:cursor-not-allowed disabled:bg-neutral-300"
+                                    :disabled="quantity <= (product.minOrder > 0 ? product.minOrder : 1)"
                                     aria-label="Disminuir cantidad"
                                     @click="decreaseQuantity"
                                 >
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-                                <span class="stepper-value">{{
-                                    quantity
-                                }}</span>
+                                <span class="min-w-[28px] text-center text-lg font-bold text-teal-600">{{ quantity }}</span>
                                 <button
                                     type="button"
-                                    class="btn-stepper plus"
+                                    class="flex h-6 w-6 items-center justify-center rounded bg-neutral-500 text-xs text-white transition-colors hover:bg-neutral-900"
                                     aria-label="Aumentar cantidad"
                                     @click="increaseQuantity"
                                 >
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
-                            <span class="unit-label">unidades</span>
-                            <span class="badge-min-order"
-                                >Mín. {{ product.minOrder }} und</span
-                            >
+                            <span class="text-sm text-neutral-900">unidades</span>
+                            <span class="rounded-xl bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-600">
+                                Mín. {{ product.minOrder }} und
+                            </span>
                         </div>
-                        <div class="price-breakdown-table">
-                            <div class="breakdown-row">
-                                <span class="row-label">Precio unitario:</span>
-                                <span class="row-value"
-                                    >C$ {{ formatPrice(product.price) }}</span
-                                >
+
+                        <div class="mb-7 flex flex-col gap-2.5 text-sm">
+                            <div class="flex items-center justify-between">
+                                <span class="text-neutral-500">Precio unitario:</span>
+                                <span class="font-medium text-neutral-900">C$ {{ formatPrice(product.price) }}</span>
                             </div>
-                            <div class="breakdown-row">
-                                <span class="row-label">Cantidad:</span>
-                                <span class="row-value"
-                                    >{{ quantity }} und</span
-                                >
+                            <div class="flex items-center justify-between">
+                                <span class="text-neutral-500">Cantidad:</span>
+                                <span class="font-medium text-neutral-900">{{ quantity }} und</span>
                             </div>
-                            <hr class="breakdown-divider light" />
-                            <div class="breakdown-row">
-                                <span class="row-label">Tipo de envío:</span>
-                                <span class="row-value">{{
-                                    selectedShipping.name
-                                }}</span>
+                            <hr class="my-1 border-t border-neutral-300" />
+                            <div class="flex items-center justify-between">
+                                <span class="text-neutral-500">Tipo de envío:</span>
+                                <span class="font-medium text-neutral-900">{{ selectedShipping.name }}</span>
                             </div>
-                            <div class="breakdown-row">
-                                <span class="row-label">Subtotal:</span>
-                                <span class="row-value"
-                                    >C$ {{ formatPrice(subtotal) }}</span
-                                >
+                            <div class="flex items-center justify-between">
+                                <span class="text-neutral-500">Subtotal:</span>
+                                <span class="font-medium text-neutral-900">C$ {{ formatPrice(subtotal) }}</span>
                             </div>
-                            <div class="breakdown-row">
-                                <span class="row-label">Envío estimado:</span>
-                                <span class="row-value">
-                                    {{
-                                        shippingCost > 0
-                                            ? `C$ ${formatPrice(shippingCost)}`
-                                            : "C$ 0"
-                                    }}
+                            <div class="flex items-center justify-between">
+                                <span class="text-neutral-500">Envío estimado:</span>
+                                <span class="font-medium text-neutral-900">
+                                    {{ shippingCost > 0 ? `C$ ${formatPrice(shippingCost)}` : "C$ 0" }}
                                 </span>
                             </div>
-                            <hr class="breakdown-divider strong" />
-                            <div class="breakdown-row total-row">
-                                <span class="total-label">Total estimado:</span>
-                                <span class="total-value"
-                                    >C$ {{ formatPrice(total) }}</span
-                                >
+                            <hr class="my-1 border-t-2 border-neutral-500" />
+                            <div class="flex items-center justify-between text-base font-bold text-neutral-900">
+                                <span>Total estimado:</span>
+                                <span class="text-lg font-bold text-neutral-900">C$ {{ formatPrice(total) }}</span>
                             </div>
                         </div>
+
                         <button
                             type="button"
-                            class="btn-orange-pill btn-add-to-cart"
+                            class="w-full rounded-full bg-gradient-to-b from-orange-400 to-orange-600 py-3.5 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
                             :disabled="product.price <= 0"
                             @click="handleAddToCart"
                         >
@@ -547,551 +609,26 @@ const navigateToCategory = () => {
                         </button>
                     </div>
                 </section>
+
                 <ProductReviewsSection :product-id="product.id" />
             </template>
         </main>
-        <transition name="toast-fade">
-            <div v-if="showAddedToast" class="toast-notification">
-                <i class="fa-solid fa-circle-check"></i>
-                <span
-                    >¡{{ product.title }} ({{ quantity }} unds) agregado a tu
-                    pedido!</span
-                >
+
+        <transition
+            enter-active-class="transition duration-300 ease-out"
+            enter-from-class="translate-y-5 opacity-0"
+            enter-to-class="translate-y-0 opacity-100"
+            leave-active-class="transition duration-200 ease-in"
+            leave-from-class="translate-y-0 opacity-100"
+            leave-to-class="translate-y-5 opacity-0"
+        >
+            <div
+                v-if="showAddedToast"
+                class="fixed bottom-8 right-8 z-50 flex items-center gap-3 rounded-xl border-l-[5px] border-orange-500 bg-neutral-900 px-6 py-4 font-semibold text-white shadow-2xl"
+            >
+                <i class="fa-solid fa-circle-check text-base"></i>
+                <span>¡{{ product.title }} ({{ quantity }} unds{{ selectedColor ? ` - ${selectedColor}` : '' }}) agregado a tu pedido!</span>
             </div>
         </transition>
     </div>
 </template>
-
-<style scoped>
-.product-detail-page {
-    min-height: 100vh;
-    background-color: #ffffff;
-    color: var(--text-dark, #1e293b);
-    display: flex;
-    flex-direction: column;
-}
-
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 1.5rem;
-    width: 100%;
-}
-
-.main-content {
-    padding-top: 1.5rem;
-    padding-bottom: 4rem;
-    flex: 1;
-}
-
-.breadcrumbs-nav {
-    display: flex;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    font-size: 0.88rem;
-    color: #718096;
-    margin-bottom: 2rem;
-}
-
-.breadcrumbs-nav a {
-    color: #718096;
-    text-decoration: none;
-    transition: color 0.2s ease;
-}
-
-.breadcrumbs-nav a:hover {
-    color: var(--primary-orange, #ff6a00);
-}
-
-.separator {
-    color: #a0aec0;
-    font-weight: 500;
-}
-
-.current-crumb {
-    color: #718096;
-    font-weight: 600;
-}
-
-.product-top-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.35fr;
-    gap: 2.5rem;
-    align-items: stretch;
-    margin-bottom: 2.5rem;
-}
-
-.product-gallery-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 1.5rem 1rem;
-}
-
-.product-image-container {
-    width: 100%;
-    max-width: 500px;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 16px;
-    background-color: #f8fafc;
-    overflow: hidden;
-}
-
-.product-image-container :deep(.product-image-wrapper) {
-    width: 100%;
-    height: 100%;
-    background-color: transparent;
-}
-
-.product-summary-card {
-    background-color: #f1f4f8;
-    border-radius: 24px;
-    padding: 2.2rem 2.5rem;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-.summary-top-row {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    position: absolute;
-    top: 1.8rem;
-    right: 2rem;
-    gap: 0.25rem;
-}
-
-.category-tag-italic {
-    font-size: 0.85rem;
-    color: #718096;
-    font-style: italic;
-    margin-top: 0.2rem;
-}
-
-.product-main-title {
-    font-family: "Lora", serif;
-    font-size: 1.95rem;
-    font-weight: 700;
-    color: var(--primary-blue, #083c5a);
-    margin-bottom: 0.8rem;
-    max-width: 75%;
-}
-
-.provider-pill-row {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1.2rem;
-}
-
-.provider-avatar-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.95rem;
-    overflow: hidden;
-}
-
-.provider-avatar-circle.large {
-    width: 48px;
-    height: 48px;
-    font-size: 1.4rem;
-}
-
-.provider-avatar-circle :deep(.provider-logo-wrapper) {
-    width: 100%;
-    height: 100%;
-}
-
-.provider-title-text {
-    color: var(--primary-blue, #083c5a);
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.verified-badge-icon {
-    color: #0284c7;
-    font-size: 1.05rem;
-}
-
-.product-price-row {
-    margin-bottom: 0.6rem;
-}
-
-.currency-price {
-    font-family: "Lora", serif;
-    color: var(--primary-orange, #ff6a00);
-    font-size: 1.75rem;
-    font-weight: 700;
-}
-
-.min-order-row {
-    font-size: 0.95rem;
-    color: #2d3748;
-    margin-bottom: 0.8rem;
-}
-
-.rating-stars-row {
-    display: flex;
-    align-items: center;
-    gap: 0.35rem;
-    font-size: 0.95rem;
-    color: #2d3748;
-    font-weight: 600;
-    margin-bottom: 1.2rem;
-}
-
-.star-orange-outline {
-    color: var(--primary-orange, #ff6a00);
-    font-size: 1.15rem;
-}
-
-.review-count {
-    font-size: 0.8rem;
-    color: #718096;
-    font-weight: 400;
-    margin-left: 0.2rem;
-}
-
-.specs-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 1.2rem;
-}
-
-.spec-line {
-    font-size: 0.9rem;
-    line-height: 1.45;
-    color: #2d3748;
-}
-
-.shipping-options-section {
-    margin-bottom: 1.2rem;
-}
-
-.shipping-methods-row {
-    display: flex;
-    gap: 1.5rem;
-    flex-wrap: wrap;
-}
-
-.shipping-method-item {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    padding: 0.35rem 0.6rem;
-    border-radius: 8px;
-    color: var(--primary-blue, #083c5a);
-}
-
-.shipping-method-item.active {
-    background-color: rgba(24, 156, 148, 0.12);
-    color: var(--light-teal, #189c94);
-}
-
-.shipping-disclaimer {
-    font-size: 0.75rem;
-    color: #94a3b8;
-    font-style: italic;
-    margin-top: 0.5rem;
-}
-
-.product-bottom-grid {
-    display: grid;
-    grid-template-columns: 1fr 1.35fr;
-    gap: 2.5rem;
-    align-items: stretch;
-}
-
-.card-provider-box,
-.card-quantity-box {
-    background-color: #f1f4f8;
-    border-radius: 24px;
-    padding: 2.2rem 2.5rem;
-    display: flex;
-    flex-direction: column;
-}
-
-.box-heading {
-    font-family: "Lora", serif;
-    font-size: 1.35rem;
-    font-weight: 700;
-    color: var(--primary-blue, #083c5a);
-    margin-bottom: 1.25rem;
-}
-
-.provider-profile-summary {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    margin-bottom: 0.8rem;
-}
-
-.provider-name-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.provider-name-bold {
-    font-weight: 700;
-    color: var(--primary-blue, #083c5a);
-    font-size: 1.05rem;
-}
-
-.provider-rating-score {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-bottom: 0.5rem;
-}
-
-.score-number {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--primary-blue, #083c5a);
-}
-
-.provider-location-text {
-    font-size: 0.88rem;
-    color: #718096;
-    margin-bottom: 1.2rem;
-}
-
-.btn-orange-pill {
-    background: linear-gradient(180deg, #ff7a18 0%, #ff5500 100%);
-    color: #ffffff;
-    border: none;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    transition: transform 0.2s ease;
-}
-
-.btn-orange-pill:hover:not(:disabled) {
-    transform: translateY(-2px);
-}
-
-.btn-catalog {
-    width: 170px;
-    padding: 0.65rem 1.4rem;
-    border-radius: 20px;
-    font-size: 0.92rem;
-    margin-bottom: 1.5rem;
-}
-
-.card-divider {
-    border: none;
-    border-top: 1px solid #cbd5e1;
-    margin: 0.5rem 0 1.25rem;
-}
-
-.cart-summary-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-top: auto;
-}
-
-.cart-left-info {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-}
-
-.box-cart-icon {
-    color: var(--light-teal, #189c94);
-    font-size: 1.35rem;
-}
-
-.cart-items-count {
-    font-size: 0.85rem;
-    color: #2d3748;
-}
-
-.btn-view-order-link {
-    border: 1.5px solid var(--light-teal, #189c94);
-    color: var(--light-teal, #189c94);
-    text-decoration: none;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0.35rem 0.85rem;
-    border-radius: 6px;
-}
-
-.stepper-row {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 1.5rem;
-}
-
-.stepper-controls {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-}
-
-.btn-stepper {
-    width: 24px;
-    height: 24px;
-    background-color: #64748b;
-    color: #ffffff;
-    border: none;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-.btn-stepper:disabled {
-    background-color: #cbd5e1;
-    cursor: not-allowed;
-}
-
-.stepper-value {
-    color: var(--light-teal, #189c94);
-    font-weight: 700;
-    font-size: 1.15rem;
-    min-width: 28px;
-    text-align: center;
-}
-
-.unit-label {
-    color: #4a5568;
-    font-size: 0.9rem;
-}
-
-.badge-min-order {
-    background-color: #d8f1ef;
-    color: var(--light-teal, #189c94);
-    font-size: 0.8rem;
-    font-weight: 600;
-    padding: 0.2rem 0.65rem;
-    border-radius: 12px;
-}
-
-.price-breakdown-table {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    margin-bottom: 1.75rem;
-}
-
-.breakdown-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.95rem;
-}
-
-.breakdown-divider.light {
-    border: none;
-    border-top: 1px solid #cbd5e1;
-    margin: 0.4rem 0;
-}
-
-.breakdown-divider.strong {
-    border: none;
-    border-top: 1.5px solid #64748b;
-    margin: 0.5rem 0;
-}
-
-.total-value {
-    font-weight: 700;
-    color: #1a202c;
-    font-size: 1.15rem;
-}
-
-.btn-add-to-cart {
-    width: 100%;
-    padding: 0.9rem;
-    border-radius: 26px;
-    font-size: 1.05rem;
-}
-
-.toast-notification {
-    position: fixed;
-    bottom: 2rem;
-    right: 2rem;
-    background-color: var(--primary-blue, #083c5a);
-    color: #ffffff;
-    padding: 1rem 1.6rem;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
-    z-index: 1000;
-    font-weight: 600;
-    border-left: 5px solid var(--primary-orange, #ff6a00);
-}
-
-.toast-fade-enter-active,
-.toast-fade-leave-active {
-    transition: all 0.3s ease;
-}
-
-.toast-fade-enter-from,
-.toast-fade-leave-to {
-    opacity: 0;
-    transform: translateY(20px);
-}
-
-.skeleton-grid-loader {
-    display: grid;
-    grid-template-columns: 1fr 1.35fr;
-    gap: 2.5rem;
-    min-height: 450px;
-    margin-bottom: 2.5rem;
-}
-
-.skeleton-box {
-    background: #edf2f7;
-    border-radius: 24px;
-}
-
-.skeleton-pulse {
-    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s ease-in-out infinite;
-}
-
-@keyframes shimmer {
-    0% {
-        background-position: 200% 0;
-    }
-    100% {
-        background-position: -200% 0;
-    }
-}
-
-@media (max-width: 992px) {
-    .product-top-grid,
-    .product-bottom-grid,
-    .skeleton-grid-loader {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
