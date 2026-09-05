@@ -32,12 +32,8 @@ interface ProductDetailData {
         logoBlobId?: string | null;
     };
     imageBlobId?: string | null;
-    rank: number;
-    brand: string;
     description: string;
-    colors: string[];
     shippingMethods: ShippingMethodOption[];
-    prepTime: string;
 }
 
 const route = useRoute();
@@ -48,36 +44,8 @@ const geoStore = useGeoStore();
 const showAddedToast = ref(false);
 const isLoading = ref(true);
 
-const selectedColorIndex = ref(0);
 const selectedShippingMethod = ref("bus");
 const quantity = ref(1);
-
-const COLOR_PALETTES = [
-    ["#189c94", "#1e293b", "#5a1818"],
-    ["#0f172a", "#64748b", "#3b82f6"],
-    ["#0284c7", "#f43f5e", "#10b981"],
-    ["#000000", "#cbd5e1", "#189c94"],
-    ["#be185d", "#b45309", "#4338ca"],
-];
-
-const BRANDS = [
-    "Sony",
-    "Samsung",
-    "HP",
-    "Lenovo",
-    "Apple",
-    "Xiaomi",
-    "Logitech",
-    "Chef Master",
-    "Genérico",
-];
-
-const PREP_TIMES = [
-    "12 horas",
-    "24 horas",
-    "1 - 2 días hábiles",
-    "2 - 3 días hábiles",
-];
 
 const product = ref<ProductDetailData>({
     id: "",
@@ -95,29 +63,14 @@ const product = ref<ProductDetailData>({
         verified: false,
     },
     imageBlobId: null,
-    rank: 1,
-    brand: "",
     description: "",
-    colors: [],
     shippingMethods: [],
-    prepTime: "",
 });
-
-function hashString(str: string): number {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
-    }
-    return Math.abs(hash);
-}
 
 function resolveLocationText(municipalityId?: string): string {
     if (!municipalityId) return "Managua, Nicaragua";
-
     const hierarchy = geoStore.resolveLocationHierarchy(municipalityId);
     if (!hierarchy) return "Managua, Nicaragua";
-
     return hierarchy.department
         ? `${hierarchy.municipality.name}, ${hierarchy.department.name}`
         : hierarchy.municipality.name;
@@ -125,7 +78,6 @@ function resolveLocationText(municipalityId?: string): string {
 
 function resolveShippingMethods(
     methods?: string[],
-    hash = 0,
 ): ShippingMethodOption[] {
     const result: ShippingMethodOption[] = [];
     const hasBus = methods?.includes("bus") ?? true;
@@ -153,49 +105,14 @@ function resolveShippingMethods(
         id: "courier",
         name: "Empresas de paquetería",
         icon: "fa-solid fa-truck-fast",
-        cost: hash % 2 === 0 ? 200 : 220,
+        cost: 200,
     });
 
     return result;
 }
 
-function generateSeededProduct(id: string, hash: number): ProductDetailData {
-    const seededColors = COLOR_PALETTES[hash % COLOR_PALETTES.length];
-    const seededBrand = BRANDS[hash % BRANDS.length];
-    const seededPrep = PREP_TIMES[hash % PREP_TIMES.length];
-    const seededRank = (hash % 4) + 1;
-    const seededPrice = ((hash % 20) + 1) * 150 + 200;
-
-    return {
-        id,
-        title: `Producto Mayorista #${id.slice(0, 6)}`,
-        category: "Artículos Mayoristas",
-        price: seededPrice,
-        minOrder: 1,
-        rating: 4.8,
-        reviewCount: 12,
-        providerRating: 4.5,
-        provider: {
-            name: "Distribuidora Mayorista Central",
-            initial: "D",
-            location: "Managua, Nicaragua",
-            verified: true,
-            logoBlobId: null,
-        },
-        imageBlobId: null,
-        rank: seededRank,
-        brand: seededBrand,
-        description:
-            "Producto con alta demanda y margen comercial para distribución a nivel nacional.",
-        colors: seededColors,
-        shippingMethods: resolveShippingMethods(["bus"], hash),
-        prepTime: seededPrep,
-    };
-}
-
 async function loadProduct(id: string) {
     isLoading.value = true;
-    const hash = hashString(id);
 
     try {
         const [prodRes] = await Promise.all([
@@ -212,8 +129,8 @@ async function loadProduct(id: string) {
             let providerName = "Proveedor aliado";
             let providerInitial = "P";
             let providerLocation = "Managua, Nicaragua";
-            let providerVerified = true;
-            let providerRating = prodRes.rating?.average_score ?? 4.5;
+            let providerVerified = false;
+            let providerRating = 0;
             let logoBlobId: string | null = null;
 
             try {
@@ -221,26 +138,16 @@ async function loadProduct(id: string) {
                 providerName = org.company_name;
                 providerInitial = org.company_name.charAt(0).toUpperCase();
                 providerLocation = resolveLocationText(org.municipality_id);
-                providerRating = org.rating?.average_score || 4.5;
+                providerRating = org.rating?.average_score || 0;
                 logoBlobId = org.logo_blob_id ?? null;
             } catch (orgErr) {
                 console.warn("Could not fetch provider metadata:", orgErr);
             }
 
-            const seededColors = COLOR_PALETTES[hash % COLOR_PALETTES.length];
-            const seededBrand = BRANDS[hash % BRANDS.length];
-            const seededPrep = PREP_TIMES[hash % PREP_TIMES.length];
-            const seededRank = (hash % 4) + 1;
-            const mappedShipping = resolveShippingMethods(
-                prodRes.shipping_methods,
-                hash,
-            );
+            const mappedShipping = resolveShippingMethods(prodRes.shipping_methods);
 
             let minOrder = 1;
-            if (
-                "Physical" in prodRes.spec &&
-                prodRes.spec.Physical?.min_order_quantity
-            ) {
+            if ("Physical" in prodRes.spec && prodRes.spec.Physical?.min_order_quantity) {
                 minOrder = prodRes.spec.Physical.min_order_quantity;
             }
 
@@ -250,7 +157,7 @@ async function loadProduct(id: string) {
                 category: prodRes.category?.name || "General",
                 price: prodRes.base_price,
                 minOrder,
-                rating: prodRes.rating?.average_score || 4.5,
+                rating: prodRes.rating?.average_score || 0,
                 reviewCount: prodRes.rating?.review_count || 0,
                 providerRating,
                 provider: {
@@ -262,25 +169,43 @@ async function loadProduct(id: string) {
                     logoBlobId,
                 },
                 imageBlobId: prodRes.image_blob_ids?.[0] ?? null,
-                rank: seededRank,
-                brand: seededBrand,
-                description:
-                    prodRes.description ||
-                    "Producto de alta calidad disponible para compra al por mayor.",
-                colors: seededColors,
+                description: prodRes.description || "Producto de alta calidad disponible para compra al por mayor.",
                 shippingMethods: mappedShipping,
-                prepTime: seededPrep,
             };
         } else {
-            product.value = generateSeededProduct(id, hash);
+            product.value = {
+                id,
+                title: "Producto no encontrado",
+                category: "General",
+                price: 0,
+                minOrder: 1,
+                rating: 0,
+                reviewCount: 0,
+                providerRating: 0,
+                provider: { name: "Desconocido", initial: "D", location: "N/A", verified: false },
+                imageBlobId: null,
+                description: "No se pudo cargar la información del producto.",
+                shippingMethods: [],
+            };
         }
     } catch (err) {
         console.error("Critical failure during product loading:", err);
-        product.value = generateSeededProduct(id, hash);
+        product.value = {
+            id,
+            title: "Error de carga",
+            category: "General",
+            price: 0,
+            minOrder: 1,
+            rating: 0,
+            reviewCount: 0,
+            providerRating: 0,
+            provider: { name: "Error", initial: "E", location: "N/A", verified: false },
+            imageBlobId: null,
+            description: "Ocurrió un error al cargar el producto.",
+            shippingMethods: [],
+        };
     } finally {
-        quantity.value =
-            product.value.minOrder > 0 ? product.value.minOrder : 1;
-        selectedColorIndex.value = 0;
+        quantity.value = product.value.minOrder > 0 ? product.value.minOrder : 1;
         if (product.value.shippingMethods.length > 0) {
             selectedShippingMethod.value = product.value.shippingMethods[0].id;
         }
@@ -303,21 +228,12 @@ onMounted(() => {
 });
 
 const selectedShipping = computed(() => {
-    if (
-        !product.value.shippingMethods ||
-        product.value.shippingMethods.length === 0
-    ) {
-        return {
-            id: "bus",
-            name: "Bus Interlocal",
-            icon: "fa-solid fa-bus",
-            cost: 150,
-        };
+    if (!product.value.shippingMethods || product.value.shippingMethods.length === 0) {
+        return { id: "bus", name: "Bus Interlocal", icon: "fa-solid fa-bus", cost: 0 };
     }
     return (
-        product.value.shippingMethods.find(
-            (m) => m.id === selectedShippingMethod.value,
-        ) || product.value.shippingMethods[0]
+        product.value.shippingMethods.find((m) => m.id === selectedShippingMethod.value) ||
+        product.value.shippingMethods[0]
     );
 });
 
@@ -378,12 +294,10 @@ const navigateToCategory = () => {
                     product.title || "Producto"
                 }}</span>
             </nav>
-
             <section v-if="isLoading" class="skeleton-grid-loader">
                 <div class="skeleton-box skeleton-left skeleton-pulse"></div>
                 <div class="skeleton-box skeleton-right skeleton-pulse"></div>
             </section>
-
             <template v-else>
                 <section class="product-top-grid">
                     <div class="product-gallery-card">
@@ -393,23 +307,14 @@ const navigateToCategory = () => {
                                 :alt="product.title"
                             />
                         </div>
-                        <div class="gallery-favorite-star">
-                            <i class="fa-solid fa-star star-orange"></i>
-                        </div>
                     </div>
-
                     <div class="product-summary-card">
                         <div class="summary-top-row">
-                            <div class="ranking-badge">
-                                {{ product.rank > 0 ? product.rank : "1" }}
-                            </div>
                             <span class="category-tag-italic">{{
                                 product.category || "General"
                             }}</span>
                         </div>
-
                         <h1 class="product-main-title">{{ product.title }}</h1>
-
                         <div class="provider-pill-row">
                             <div class="provider-avatar-circle">
                                 <ProviderLogo
@@ -426,13 +331,11 @@ const navigateToCategory = () => {
                                 class="fa-solid fa-circle-check verified-badge-icon"
                             ></i>
                         </div>
-
                         <div class="product-price-row">
                             <span class="currency-price">
                                 C$ {{ formatPrice(product.price) }}
                             </span>
                         </div>
-
                         <div class="min-order-row">
                             <strong>Pedido mínimo:</strong>
                             {{ product.minOrder }} unidad{{
@@ -441,54 +344,22 @@ const navigateToCategory = () => {
                         </div>
 
                         <div class="rating-stars-row">
-                            <i class="fa-solid fa-star star-orange-outline"></i>
-                            <span class="rating-number">
-                                {{
-                                    product.rating > 0
-                                        ? product.rating.toFixed(1)
-                                        : "4.5"
-                                }}
-                            </span>
-                            <span
-                                v-if="product.reviewCount > 0"
-                                class="review-count"
-                                >({{ product.reviewCount }} valoraciones)</span
-                            >
-                        </div>
-
-                        <div class="colors-section">
-                            <p class="section-label">Colores disponibles:</p>
-                            <div
-                                v-if="
-                                    product.colors && product.colors.length > 0
-                                "
-                                class="color-swatches-row"
-                            >
-                                <button
-                                    v-for="(color, idx) in product.colors"
-                                    :key="idx"
-                                    type="button"
-                                    :class="[
-                                        'color-swatch-btn',
-                                        { active: selectedColorIndex === idx },
-                                    ]"
-                                    :style="{ backgroundColor: color }"
-                                    :aria-label="`Color ${idx + 1}`"
-                                    @click="selectedColorIndex = idx"
-                                ></button>
-                            </div>
+                            <template v-if="product.reviewCount > 0">
+                                <i class="fa-solid fa-star star-orange-outline"></i>
+                                <span class="rating-number">{{ product.rating.toFixed(1) }}</span>
+                                <span class="review-count">({{ product.reviewCount }} valoraciones)</span>
+                            </template>
+                            <template v-else>
+                                <span class="review-count" style="margin-left: 0;">Sin valoraciones aún</span>
+                            </template>
                         </div>
 
                         <div class="specs-list">
-                            <p class="spec-line">
-                                <strong>Marca:</strong> {{ product.brand }}
-                            </p>
                             <p class="spec-line">
                                 <strong>Descripción:</strong>
                                 {{ product.description }}
                             </p>
                         </div>
-
                         <div class="shipping-options-section">
                             <p class="section-label">
                                 Tipo de envío disponible:
@@ -511,21 +382,13 @@ const navigateToCategory = () => {
                                     <span>{{ method.name }}</span>
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="prep-time-section">
-                            <p class="section-label">Tiempo de preparación:</p>
-                            <p class="prep-time-value">
-                                {{ product.prepTime }}
-                            </p>
+                            <p class="shipping-disclaimer">*Costos de envío estimados, calculados al finalizar la compra.</p>
                         </div>
                     </div>
                 </section>
-
                 <section class="product-bottom-grid">
                     <div class="card-provider-box">
                         <h3 class="box-heading">Tu proveedor</h3>
-
                         <div class="provider-profile-summary">
                             <div class="h-10 w-10 overflow-hidden rounded-full bg-blue-400">
                                 <ProviderLogo
@@ -545,20 +408,18 @@ const navigateToCategory = () => {
                         </div>
 
                         <div class="provider-rating-score">
-                            <i class="fa-solid fa-star star-orange-outline"></i>
-                            <span class="score-number">
-                                {{
-                                    product.providerRating > 0
-                                        ? product.providerRating.toFixed(1)
-                                        : "4.5"
-                                }}
-                            </span>
+                            <template v-if="product.providerRating > 0">
+                                <i class="fa-solid fa-star star-orange-outline"></i>
+                                <span class="score-number">{{ product.providerRating.toFixed(1) }}</span>
+                            </template>
+                            <template v-else>
+                                <span class="score-number" style="font-size: 0.95rem; color: #718096;">Sin calificación</span>
+                            </template>
                         </div>
 
                         <p class="provider-location-text">
                             {{ product.provider.location }}
                         </p>
-
                         <router-link
                             v-if="product.provider.id"
                             :to="{
@@ -577,9 +438,7 @@ const navigateToCategory = () => {
                         >
                             Ver catálogo
                         </button>
-
                         <hr class="card-divider" />
-
                         <div class="cart-summary-footer">
                             <div class="cart-left-info">
                                 <i
@@ -597,10 +456,8 @@ const navigateToCategory = () => {
                             </router-link>
                         </div>
                     </div>
-
                     <div class="card-quantity-box">
                         <h3 class="box-heading">Elige la cantidad</h3>
-
                         <div class="stepper-row">
                             <div class="stepper-controls">
                                 <button
@@ -617,11 +474,9 @@ const navigateToCategory = () => {
                                 >
                                     <i class="fa-solid fa-minus"></i>
                                 </button>
-
                                 <span class="stepper-value">{{
                                     quantity
                                 }}</span>
-
                                 <button
                                     type="button"
                                     class="btn-stepper plus"
@@ -631,14 +486,11 @@ const navigateToCategory = () => {
                                     <i class="fa-solid fa-plus"></i>
                                 </button>
                             </div>
-
                             <span class="unit-label">unidades</span>
-
                             <span class="badge-min-order"
                                 >Mín. {{ product.minOrder }} und</span
                             >
                         </div>
-
                         <div class="price-breakdown-table">
                             <div class="breakdown-row">
                                 <span class="row-label">Precio unitario:</span>
@@ -646,30 +498,25 @@ const navigateToCategory = () => {
                                     >C$ {{ formatPrice(product.price) }}</span
                                 >
                             </div>
-
                             <div class="breakdown-row">
                                 <span class="row-label">Cantidad:</span>
                                 <span class="row-value"
                                     >{{ quantity }} und</span
                                 >
                             </div>
-
                             <hr class="breakdown-divider light" />
-
                             <div class="breakdown-row">
                                 <span class="row-label">Tipo de envío:</span>
                                 <span class="row-value">{{
                                     selectedShipping.name
                                 }}</span>
                             </div>
-
                             <div class="breakdown-row">
                                 <span class="row-label">Subtotal:</span>
                                 <span class="row-value"
                                     >C$ {{ formatPrice(subtotal) }}</span
                                 >
                             </div>
-
                             <div class="breakdown-row">
                                 <span class="row-label">Envío estimado:</span>
                                 <span class="row-value">
@@ -680,9 +527,7 @@ const navigateToCategory = () => {
                                     }}
                                 </span>
                             </div>
-
                             <hr class="breakdown-divider strong" />
-
                             <div class="breakdown-row total-row">
                                 <span class="total-label">Total estimado:</span>
                                 <span class="total-value"
@@ -690,7 +535,6 @@ const navigateToCategory = () => {
                                 >
                             </div>
                         </div>
-
                         <button
                             type="button"
                             class="btn-orange-pill btn-add-to-cart"
@@ -703,7 +547,6 @@ const navigateToCategory = () => {
                 </section>
             </template>
         </main>
-
         <transition name="toast-fade">
             <div v-if="showAddedToast" class="toast-notification">
                 <i class="fa-solid fa-circle-check"></i>
@@ -779,34 +622,27 @@ const navigateToCategory = () => {
 .product-gallery-card {
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
+    justify-content: center;
+    align-items: center;
     padding: 1.5rem 1rem;
 }
 
 .product-image-container {
     width: 100%;
-    height: 380px;
+    max-width: 500px;
+    aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
     justify-content: center;
+    border-radius: 16px;
+    background-color: #f8fafc;
+    overflow: hidden;
 }
 
 .product-image-container :deep(.product-image-wrapper) {
     width: 100%;
     height: 100%;
     background-color: transparent;
-}
-
-.gallery-favorite-star {
-    display: flex;
-    align-items: center;
-    padding-top: 1rem;
-}
-
-.star-orange {
-    color: var(--primary-orange, #ff6a00);
-    font-size: 1.4rem;
-    cursor: pointer;
 }
 
 .product-summary-card {
@@ -826,19 +662,6 @@ const navigateToCategory = () => {
     top: 1.8rem;
     right: 2rem;
     gap: 0.25rem;
-}
-
-.ranking-badge {
-    background-color: var(--primary-orange, #ff6a00);
-    color: #ffffff;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 0.95rem;
 }
 
 .category-tag-italic {
@@ -939,40 +762,6 @@ const navigateToCategory = () => {
     margin-left: 0.2rem;
 }
 
-.colors-section {
-    margin-bottom: 1.2rem;
-}
-
-.section-label {
-    font-weight: 700;
-    font-size: 0.92rem;
-    color: #1a202c;
-    margin-bottom: 0.5rem;
-}
-
-.color-swatches-row {
-    display: flex;
-    gap: 0.6rem;
-}
-
-.color-swatch-btn {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: 2px solid #ffffff;
-    box-shadow: 0 0 0 1px #cbd5e1;
-    cursor: pointer;
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.color-swatch-btn:hover,
-.color-swatch-btn.active {
-    transform: scale(1.15);
-    box-shadow: 0 0 0 2px var(--primary-blue, #083c5a);
-}
-
 .specs-list {
     display: flex;
     flex-direction: column;
@@ -1013,13 +802,11 @@ const navigateToCategory = () => {
     color: var(--light-teal, #189c94);
 }
 
-.prep-time-section {
-    margin-top: auto;
-}
-
-.prep-time-value {
-    font-size: 0.9rem;
-    color: #2d3748;
+.shipping-disclaimer {
+    font-size: 0.75rem;
+    color: #94a3b8;
+    font-style: italic;
+    margin-top: 0.5rem;
 }
 
 .product-bottom-grid {
