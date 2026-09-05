@@ -1,199 +1,104 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { cartApi, productApi, organizationApi } from "@/api";
+import type { CartItemResponse } from "@/api/services/cart/types";
+import type { ProductResponse } from "@/api/services/product/types";
+import ProductImage from "@/components/product/ProductImage.vue";
+import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 
-interface FavoriteProduct {
-  id: string;
+interface CartProductDisplay {
+  cartItem: CartItemResponse;
+  product: ProductResponse;
   providerName: string;
-  title: string;
-  price: number;
-  inStock: boolean;
-  rating: number;
-  reviewsCount: number;
-  category: string;
-  imageUrl: string;
+  providerLogoBlobId: string | null;
 }
 
+const cartProducts = ref<CartProductDisplay[]>([]);
+const isLoading = ref(true);
 const searchQuery = ref("");
-const selectedCategory = ref("all");
 const viewMode = ref<"grid" | "list">("grid");
 
-const categories = [
-  { id: "all", label: "Todas las cat..." },
-  { id: "joyeria", label: "Joyería" },
-  { id: "tecnologia", label: "Tecnología" },
-  { id: "hogar", label: "Deco Hogar" },
-  { id: "calzado", label: "Calzado" },
-  { id: "ropa", label: "Ropa" },
-  { id: "accesorios", label: "Accesorios" },
-];
+const fetchCartProducts = async () => {
+  isLoading.value = true;
+  try {
+    const items = await cartApi.getMyCartProducts();
 
-const favorites = ref<FavoriteProduct[]>([
-  {
-    id: "1",
-    providerName: "Joyería López",
-    title: "Aretes de Corazón",
-    price: 100,
-    inStock: true,
-    rating: 4.5,
-    reviewsCount: 14,
-    category: "joyeria",
-    imageUrl: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "2",
-    providerName: "TecnoPlus",
-    title: "Auriculares sin cable",
-    price: 500,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 13,
-    category: "tecnologia",
-    imageUrl: "https://images.unsplash.com/photo-1546435770-a3e426bf472b?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "3",
-    providerName: "Deco Hogar",
-    title: "Bolsa Chodini",
-    price: 100,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 12,
-    category: "hogar",
-    imageUrl: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "4",
-    providerName: "Papelería Rosales S.A",
-    title: "Lentes de Sol Aviador",
-    price: 50,
-    inStock: true,
-    rating: 4.5,
-    reviewsCount: 11,
-    category: "accesorios",
-    imageUrl: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "5",
-    providerName: "Grupo Río",
-    title: "Tenis deportivos",
-    price: 600,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 16,
-    category: "calzado",
-    imageUrl: "https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "6",
-    providerName: "Grupo Río",
-    title: "Tacones",
-    price: 500,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 15,
-    category: "calzado",
-    imageUrl: "https://images.unsplash.com/photo-1543163521-1bf539c55dd2?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "7",
-    providerName: "Hassan Tex",
-    title: "Pantalón de Niño",
-    price: 600,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 14,
-    category: "ropa",
-    imageUrl: "https://images.unsplash.com/photo-1542272604-780c96856592?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "8",
-    providerName: "Tecno Plus",
-    title: "Mouse Gamer 7",
-    price: 150,
-    inStock: true,
-    rating: 4.5,
-    reviewsCount: 17,
-    category: "tecnologia",
-    imageUrl: "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "9",
-    providerName: "Proveedor 9",
-    title: "Producto 9",
-    price: 0,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 10,
-    category: "ropa",
-    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "10",
-    providerName: "Proveedor 10",
-    title: "Producto 10",
-    price: 0,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 10,
-    category: "accesorios",
-    imageUrl: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "11",
-    providerName: "Proveedor 11",
-    title: "Producto 11",
-    price: 0,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 10,
-    category: "joyeria",
-    imageUrl: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80",
-  },
-  {
-    id: "12",
-    providerName: "Proveedor 12",
-    title: "Producto 12",
-    price: 0,
-    inStock: true,
-    rating: 4.3,
-    reviewsCount: 10,
-    category: "joyeria",
-    imageUrl: "https://images.unsplash.com/photo-1611591475152-4783113828af?auto=format&fit=crop&w=600&q=80",
-  },
-]);
+    const promises = items.map(async (item) => {
+      try {
+        const product = await productApi.getProduct(item.product_id);
+        let providerName = "Proveedor";
+        let providerLogoBlobId: string | null = null;
+
+        try {
+          const org = await organizationApi.getPublicProvider(product.provider_id);
+          providerName = org.company_name;
+          providerLogoBlobId = org.logo_blob_id ?? null;
+        } catch (e) {
+          console.warn("Failed to fetch provider for product", product.id);
+        }
+
+        return {
+          cartItem: item,
+          product,
+          providerName,
+          providerLogoBlobId,
+        };
+      } catch (e) {
+        console.warn("Failed to fetch product", item.product_id);
+        return null;
+      }
+    });
+
+    const results = await Promise.all(promises);
+    cartProducts.value = results.filter((r): r is CartProductDisplay => r !== null);
+  } catch (err) {
+    console.error("Failed to load cart:", err);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 const filteredProducts = computed(() => {
-  return favorites.value.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.value.trim().toLowerCase()) ||
-      p.providerName.toLowerCase().includes(searchQuery.value.trim().toLowerCase());
-    const matchesCat = selectedCategory.value === "all" || p.category === selectedCategory.value;
-    return matchesSearch && matchesCat;
+  if (!searchQuery.value.trim()) return cartProducts.value;
+  const query = searchQuery.value.toLowerCase().trim();
+  return cartProducts.value.filter((p) => {
+    return (
+      p.product.title.toLowerCase().includes(query) ||
+      p.providerName.toLowerCase().includes(query)
+    );
   });
 });
 
-const removeFavorite = (id: string) => {
-  favorites.value = favorites.value.filter((p) => p.id !== id);
+const removeFromCart = async (productId: string) => {
+  try {
+    await cartApi.deleteMyCartProduct(productId);
+    cartProducts.value = cartProducts.value.filter(
+      (p) => p.product.id !== productId
+    );
+  } catch (err) {
+    console.error("Failed to remove from cart:", err);
+  }
 };
 
-const formatPrice = (val: number) => `C$ ${val.toFixed(2)}`;
+const formatPrice = (val: number) => `C$ ${val.toLocaleString("es-NI")}`;
+
+onMounted(() => {
+  fetchCartProducts();
+});
 </script>
 
 <template>
   <div class="w-full space-y-6">
-    <!-- Header -->
     <header class="space-y-1">
       <h1 class="font-serif text-3xl font-bold tracking-tight text-[#023859]">
         Mis Favoritos
       </h1>
       <p class="text-sm font-normal text-slate-500">
-        Consulta y monitorea tus productos favoritos
+        Consulta y monitorea los productos en tu carrito de compras
       </p>
     </header>
 
-    <!-- Filter Bar -->
     <section class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <!-- Search -->
       <div class="relative w-full max-w-md">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-400"></i>
         <input
@@ -204,25 +109,7 @@ const formatPrice = (val: number) => `C$ ${val.toFixed(2)}`;
         />
       </div>
 
-      <!-- Controls Right -->
       <div class="flex items-center gap-3">
-        <!-- Category Dropdown -->
-        <div class="relative">
-          <label class="absolute -top-2 left-2 bg-white px-1 text-[10px] font-semibold text-slate-400">
-            Categoría
-          </label>
-          <select
-            v-model="selectedCategory"
-            class="h-9 cursor-pointer appearance-none rounded-lg border border-slate-200 bg-white px-3 pr-8 text-xs font-medium text-slate-700 outline-none transition-colors hover:border-slate-300 focus:border-[#00a896]"
-          >
-            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
-              {{ cat.label }}
-            </option>
-          </select>
-          <i class="fa-solid fa-chevron-down pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400"></i>
-        </div>
-
-        <!-- View Mode Switcher -->
         <div class="flex items-center gap-1">
           <button
             type="button"
@@ -254,19 +141,22 @@ const formatPrice = (val: number) => `C$ ${val.toFixed(2)}`;
       </div>
     </section>
 
-    <!-- Empty State -->
+    <div v-if="isLoading" class="flex flex-col items-center justify-center py-16 text-center">
+      <i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a896] mb-4"></i>
+      <p class="text-sm text-slate-500">Cargando tu carrito...</p>
+    </div>
+
     <div
-      v-if="filteredProducts.length === 0"
+      v-else-if="filteredProducts.length === 0"
       class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center"
     >
       <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-        <i class="fa-regular fa-heart text-2xl"></i>
+        <i class="fa-solid fa-cart-shopping text-2xl"></i>
       </div>
-      <h3 class="text-sm font-bold text-[#023859]">No tienes productos favoritos</h3>
-      <p class="mt-1 text-xs text-slate-400">Explora el catálogo y guarda productos para verlos aquí.</p>
+      <h3 class="text-sm font-bold text-[#023859]">Tu carrito está vacío</h3>
+      <p class="mt-1 text-xs text-slate-400">Explora el catálogo y agrega productos para verlos aquí.</p>
     </div>
 
-    <!-- Product Grid (5 Columns) -->
     <section
       v-else
       :class="[
@@ -277,70 +167,78 @@ const formatPrice = (val: number) => `C$ ${val.toFixed(2)}`;
       ]"
     >
       <article
-        v-for="product in filteredProducts"
-        :key="product.id"
-        class="group relative flex flex-col justify-between rounded-2xl border border-[#00a896]/30 bg-white p-3.5 shadow-xs transition-all hover:shadow-md"
+        v-for="item in filteredProducts"
+        :key="item.product.id"
+        :class="[
+          'group relative rounded-2xl border border-[#00a896]/30 bg-white p-3.5 shadow-xs transition-all hover:shadow-md',
+          viewMode === 'grid'
+            ? 'flex flex-col justify-between'
+            : 'flex flex-col sm:flex-row sm:items-center sm:gap-4'
+        ]"
       >
-        <!-- Card Remove/Tag Action -->
         <button
           type="button"
-          class="absolute right-3 top-3 z-10 text-slate-400 transition-colors hover:text-red-500"
+          class="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition-all hover:scale-110 hover:bg-red-600"
           title="Eliminar de favoritos"
-          @click="removeFavorite(product.id)"
+          @click="removeFromCart(item.product.id)"
         >
-          <i class="fa-solid fa-tag text-xs rotate-90"></i>
+          <i class="fa-solid fa-heart-crack text-xs"></i>
         </button>
 
-        <!-- Product Image -->
-        <div class="mb-3 flex aspect-4/3 w-full items-center justify-center overflow-hidden rounded-xl bg-slate-50 p-1">
-          <img
-            :src="product.imageUrl"
-            :alt="product.title"
-            class="h-full w-full object-cover rounded-lg transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
+        <div
+          :class="[
+            'relative overflow-hidden rounded-xl bg-slate-50 flex-shrink-0',
+            viewMode === 'grid'
+              ? 'h-48 w-full mb-3'
+              : 'h-28 w-full sm:h-28 sm:w-28 mb-3 sm:mb-0'
+          ]"
+        >
+          <ProductImage
+            :blob-id="item.product.image_blob_ids?.[0]"
+            :alt="item.product.title"
+            class="h-full w-full rounded-xl object-cover transition-transform duration-300 group-hover:scale-105"
           />
         </div>
 
-        <!-- Product Details -->
-        <div>
-          <p class="truncate text-[11px] text-slate-400">
-            {{ product.providerName }}
-          </p>
-
-          <h2 class="line-clamp-1 font-serif text-sm font-bold text-[#023859]" :title="product.title">
-            {{ product.title }}
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-1.5 mb-1">
+            <div class="h-4 w-4 rounded-full overflow-hidden border border-slate-200 flex-shrink-0">
+              <ProviderLogo :blob-id="item.providerLogoBlobId" :alt="item.providerName" />
+            </div>
+            <p class="truncate text-[11px] text-slate-400">
+              {{ item.providerName }}
+            </p>
+          </div>
+          <h2 class="line-clamp-1 font-serif text-sm font-bold text-[#023859]" :title="item.product.title">
+            {{ item.product.title }}
           </h2>
-
           <p class="mt-1 text-sm font-bold text-[#ff6a00]">
-            {{ formatPrice(product.price) }}
+            {{ formatPrice(item.product.base_price) }}
           </p>
-
           <div class="mt-1.5 flex items-center justify-between text-[11px]">
             <span class="font-semibold text-[#00a896]">
-              {{ product.inStock ? "En stock" : "Agotado" }}
+              Cantidad: {{ item.cartItem.quantity }}
             </span>
-            <span class="text-slate-400">
-              {{ product.rating }} ({{ product.reviewsCount }})
+            <span class="flex items-center gap-1 text-slate-500">
+              <i class="fa-solid fa-star text-[10px] text-amber-400"></i>
+              <span>{{ item.product.rating?.average_score?.toFixed(1) || '0.0' }}</span>
+              <span class="text-slate-400">({{ item.product.rating?.review_count || 0 }})</span>
             </span>
           </div>
         </div>
 
-        <!-- Card Actions -->
-        <div class="mt-3 flex items-center gap-1.5">
+        <div
+          :class="[
+            'flex items-center',
+            viewMode === 'grid' ? 'mt-3' : 'mt-3 sm:mt-0 sm:w-40 flex-shrink-0'
+          ]"
+        >
           <router-link
-            :to="{ name: 'product-detail', params: { id: product.id } }"
-            class="flex flex-1 items-center justify-center rounded-lg bg-[#00a896] py-1.5 text-center text-xs font-semibold text-white transition-colors hover:bg-[#009688]"
+            :to="{ name: 'product-detail', params: { id: item.product.id } }"
+            class="flex w-full items-center justify-center rounded-lg bg-[#00a896] py-2 text-center text-xs font-semibold text-white transition-colors hover:bg-[#009688]"
           >
             Ver detalles
           </router-link>
-
-          <button
-            type="button"
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#00a896] text-[#00a896] transition-colors hover:bg-[#e0f4f2]"
-            aria-label="Agregar al carrito"
-          >
-            <i class="fa-solid fa-cart-shopping text-xs"></i>
-          </button>
         </div>
       </article>
     </section>
