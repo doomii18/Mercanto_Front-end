@@ -686,16 +686,15 @@ const navigateToCategory = () => {
                         <input
                             v-model="shippingAddress"
                             type="text"
-                            readonly
-                            class="w-full p-2.5 bg-neutral-50 text-neutral-900 placeholder:text-neutral-400 border border-neutral-300 rounded-lg cursor-pointer focus:outline-none"
-                            placeholder="Toca para seleccionar en el mapa"
-                            @click="showAddressPicker = true"
+                            class="w-full p-2.5 bg-white text-neutral-900 placeholder:text-neutral-400 border border-neutral-300 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
+                            placeholder="Escribe tu dirección o usa el mapa"
                         />
                         <button
                             type="button"
                             class="flex items-center justify-center rounded-lg bg-teal-600 px-4 py-2.5 text-white transition-colors hover:bg-teal-700"
-                            @click="showAddressPicker = true"
+                            title="Seleccionar en el mapa"
                             aria-label="Abrir mapa"
+                            @click="showAddressPicker = true"
                         >
                             <i class="fa-solid fa-map-location-dot"></i>
                         </button>

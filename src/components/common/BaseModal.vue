@@ -61,7 +61,7 @@ onBeforeUnmount(() => {
     <Transition name="modal-fade">
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black/50 flex justify-center items-center z-50 p-4"
+        class="fixed inset-0 bg-black/50 flex justify-center items-center z-[9999] p-4"
         role="dialog"
         aria-modal="true"
         @click.self="handleBackdropClick"
