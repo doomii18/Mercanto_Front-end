@@ -10,7 +10,7 @@ import {
   ProductImageSearchHitSchema,
   PaginatedProductImageSearchResponseSchema,
 } from "./payloads";
-import { ProductSortFieldSchema } from "./domain";
+import { ProductSortFieldSchema, UnitOfMeasureSchema } from "./domain";
 
 export type CreateProductRequest = z.infer<typeof CreateProductRequestSchema>;
 export type PatchProductRequest = z.infer<typeof PatchProductRequestSchema>;
@@ -24,3 +24,6 @@ export type ProductImageSearchHit = z.infer<typeof ProductImageSearchHitSchema>;
 export type PaginatedProductImageSearchResponse = z.infer<typeof PaginatedProductImageSearchResponseSchema>;
 
 export type ProductSortField = z.infer<typeof ProductSortFieldSchema>;
+
+export type UnitOfMeasure = z.infer<typeof UnitOfMeasureSchema>;
+export type ShippingMethod = z.infer<typeof ShippingMethodSchema>;

@@ -1,21 +1,178 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted, computed } from "vue";
+import { useRouter } from "vue-router";
+import { z } from "zod";
+import { productApi, categoryApi } from "@/api";
+import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
-import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
+import type { CreateProductRequest, UnitOfMeasure } from "@/api/services/product/types";
+import type { ProductCategoryResponse } from "@/api/services/category/types";
 
+import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
+import type { ShippingMethod } from "@/api/services/quote/types";
+
+const router = useRouter();
+const userContext = useUserContextStore();
 const alertStore = useAlertStore();
+
 
 const productName = ref("");
 const brand = ref("");
-const category = ref("");
+const categoryId = ref("");
 const description = ref("");
-const quality = ref("");
-const price = ref("");
-const minQuantity = ref("");
-const unit = ref("");
-const shippingMethods = ref(["bus"]);
-const stock = ref("");
+const quality = ref("new");
+const price = ref<number | "">("");
+const minQuantity = ref<number | "">(1);
+const unit = ref<UnitOfMeasure>("piece");
+const shippingMethods = ref<ShippingMethod[]>(["bus"]);
+const stock = ref<number | "">("");
 const productPhotos = ref<File[]>([]);
+
+
+const categories = ref<ProductCategoryResponse[]>([]);
+const isSubmitting = ref(false);
+const isLoadingCategories = ref(false);
+const formErrors = ref<Record<string, string>>({});
+
+
+const AddProductFormSchema = z.object({
+  productName: z
+    .string({ message: "El nombre del producto es obligatorio." })
+    .trim()
+    .min(1, "El nombre del producto es obligatorio.")
+    .max(255, "El nombre no puede exceder los 255 caracteres."),
+  categoryId: z
+    .string({ message: "Debes seleccionar una categoría válida." })
+    .uuid("Debes seleccionar una categoría válida."),
+  description: z
+    .string()
+    .trim()
+    .max(2000, "La descripción no puede exceder los 2000 caracteres.")
+    .optional(),
+  price: z
+    .number({ message: "Ingresa un precio válido." })
+    .positive("El precio por unidad debe ser mayor a 0."),
+  minQuantity: z
+    .number({ message: "Ingresa una cantidad mínima válida." })
+    .int("La cantidad mínima debe ser un número entero.")
+    .min(1, "El pedido mínimo debe ser de al menos 1 unidad."),
+  unit: z.enum(
+    [
+      "piece",
+      "box",
+      "roll",
+      "pallet",
+      "lot",
+      "package",
+      "set",
+      "system",
+      "service",
+      "contract",
+    ],
+    { message: "Selecciona una unidad de medida válida." }
+  ),
+  shippingMethods: z
+    .array(z.enum(["bus", "own_delivery"]))
+    .min(1, "Selecciona al menos un método de envío disponible."),
+});
+
+const activeOrgId = computed(() => userContext.activeOrganizationId);
+
+async function loadCategories() {
+  isLoadingCategories.value = true;
+  try {
+    const res = await categoryApi.getCategories({ limit: 100 });
+    categories.value = res.data;
+  } catch (err: any) {
+    alertStore.showError(err.message || "Error al cargar las categorías.");
+  } finally {
+    isLoadingCategories.value = false;
+  }
+}
+
+function clearFieldError(field: string) {
+  if (formErrors.value[field]) {
+    delete formErrors.value[field];
+  }
+}
+
+async function handlePublishProduct() {
+  formErrors.value = {};
+
+  if (!activeOrgId.value) {
+    alertStore.showError("No se encontró una organización activa para publicar el producto.");
+    return;
+  }
+
+  const parseResult = AddProductFormSchema.safeParse({
+    productName: productName.value,
+    categoryId: categoryId.value,
+    description: description.value || undefined,
+    price: price.value === "" ? undefined : Number(price.value),
+    minQuantity: minQuantity.value === "" ? undefined : Number(minQuantity.value),
+    unit: unit.value,
+    shippingMethods: shippingMethods.value,
+  });
+
+  if (!parseResult.success) {
+    const mapped: Record<string, string> = {};
+    for (const issue of parseResult.error.issues) {
+      const key = String(issue.path[0]);
+      if (!mapped[key]) mapped[key] = issue.message;
+    }
+    formErrors.value = mapped;
+    alertStore.showError("Por favor revisa los campos requeridos en el formulario.");
+    return;
+  }
+
+  isSubmitting.value = true;
+  try {
+    const payload: CreateProductRequest = {
+      provider_id: activeOrgId.value,
+      category_id: categoryId.value,
+      title: productName.value.trim(),
+      description: description.value.trim() || null,
+      base_price: Number(price.value),
+      unit_of_measure: unit.value,
+      shipping_methods: shippingMethods.value,
+      spec: {
+        Physical: {
+          min_order_quantity: Number(minQuantity.value),
+        },
+      },
+    };
+
+    const createdProduct = await productApi.createProduct(payload);
+
+    if (productPhotos.value.length > 0) {
+      for (const photo of productPhotos.value) {
+        await productApi.uploadProductImage(createdProduct.id, photo);
+      }
+    }
+
+    alertStore.spawnAlert({
+      title: "Producto publicado",
+      message: `"${createdProduct.title}" ha sido creado y publicado con éxito.`,
+      iconVariant: "teal",
+      icon: "fa-solid fa-circle-check",
+      confirmText: "Ver mis productos",
+      onConfirm: () => {
+        router.push("/dashboard/provider-products");
+      },
+    });
+  } catch (err: any) {
+    alertStore.showError(err.message || "Error al crear y publicar el producto.");
+  } finally {
+    isSubmitting.value = false;
+  }
+}
+
+onMounted(async () => {
+  if (!userContext.isInitialized) {
+    await userContext.initialize().catch(console.warn);
+  }
+  await loadCategories();
+});
 </script>
 
 <template>
@@ -28,53 +185,67 @@ const productPhotos = ref<File[]>([]);
 
     <h1 class="page-title">Agregar nuevo producto</h1>
 
-    <div class="form-container">
-      <!-- Section 1 -->
+    <form @submit.prevent="handlePublishProduct" class="form-container">
+      <!-- Section 1: General Info -->
       <div class="form-section">
         <div class="grid-row-3">
           <div class="form-group col-span-2">
-            <label>1. Nombre del producto *</label>
+            <label>Nombre del producto <span class="required">*</span></label>
             <input
               type="text"
               v-model="productName"
               placeholder="Ej. Audífonos Bluetooth Sony WH-CH520"
+              :class="{ 'input-error': formErrors.productName }"
+              @input="clearFieldError('productName')"
             />
+            <span v-if="formErrors.productName" class="field-error-msg">{{ formErrors.productName }}</span>
           </div>
+
           <div class="form-group">
-            <label>2. Marca *</label>
+            <label>Marca</label>
             <input
               type="text"
               v-model="brand"
-              placeholder="Escribe la marca"
+              placeholder="Escribe la marca (opcional)"
             />
           </div>
+
           <div class="form-group">
-            <label>3. Categoría *</label>
-            <select v-model="category">
+            <label>Categoría <span class="required">*</span></label>
+            <select
+              v-model="categoryId"
+              :disabled="isLoadingCategories"
+              :class="{ 'input-error': formErrors.categoryId }"
+              @change="clearFieldError('categoryId')"
+            >
               <option value="" disabled>Selecciona una categoría</option>
-              <option value="electronics">Electrónica</option>
-              <option value="clothing">Ropa</option>
-              <option value="home">Hogar</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                {{ cat.name }}
+              </option>
             </select>
+            <span v-if="formErrors.categoryId" class="field-error-msg">{{ formErrors.categoryId }}</span>
           </div>
         </div>
 
         <div class="form-group mt-4">
-          <label>4. Descripción del producto *</label>
+          <label>Descripción del producto</label>
           <div class="textarea-wrapper">
             <textarea
               v-model="description"
-              placeholder="Describe tu producto, sus características y beneficios..."
+              placeholder="Describe tu producto, sus características y especificaciones técnicas..."
               maxlength="2000"
+              :class="{ 'input-error': formErrors.description }"
+              @input="clearFieldError('description')"
             ></textarea>
             <span class="char-count">{{ description.length }}/2000</span>
           </div>
+          <span v-if="formErrors.description" class="field-error-msg">{{ formErrors.description }}</span>
         </div>
       </div>
 
       <!-- Section 2: Photos -->
       <div class="form-section">
-        <h3 class="section-title">5. Fotografías del producto *</h3>
+        <h3 class="section-title">Fotografías del producto</h3>
         <div class="photos-container">
           <div class="dropzone-wrapper">
             <BaseFileDropZone
@@ -94,71 +265,83 @@ const productPhotos = ref<File[]>([]);
             <h4>Consejos para tus fotos</h4>
             <ul>
               <li>
-                <i class="fa-regular fa-circle-check"></i> Usa imágenes nítidas
-                y bien iluminadas
+                <i class="fa-regular fa-circle-check"></i> Usa imágenes nítidas y con buena iluminación.
               </li>
               <li>
-                <i class="fa-regular fa-circle-check"></i> Fondo claro y
-                sencillo
+                <i class="fa-regular fa-circle-check"></i> Utiliza fondos claros y limpios.
               </li>
               <li>
-                <i class="fa-regular fa-circle-check"></i> Muestra el producto
-                desde varios ángulos
+                <i class="fa-regular fa-circle-check"></i> Muestra el producto desde varios ángulos.
               </li>
               <li>
-                <i class="fa-regular fa-circle-check"></i> Formato recomendado:
-                JPG, PNG o WebP
+                <i class="fa-regular fa-circle-check"></i> Formatos aceptados: JPG, PNG o WebP.
               </li>
               <li>
-                <i class="fa-regular fa-circle-check"></i> Tamaño máximo: 5MB
-                por imagen
+                <i class="fa-regular fa-circle-check"></i> Máximo 5MB por archivo.
               </li>
             </ul>
           </div>
         </div>
       </div>
 
-      <!-- Section 3: Details -->
+      <!-- Section 3: Details & Specs -->
       <div class="form-section">
-        <h3 class="section-title">Detalles del producto</h3>
+        <h3 class="section-title">Detalles comerciales y envío</h3>
         <div class="details-grid">
           <!-- Left Column -->
           <div class="details-col">
             <div class="form-group">
-              <label>6. Calidad *</label>
+              <label>Calidad del producto</label>
               <select v-model="quality">
-                <option value="" disabled>Selecciona la calidad</option>
-                <option value="new">Nuevo</option>
-                <option value="used">Usado</option>
+                <option value="new">Nuevo / Original</option>
+                <option value="used">Genérico / Reacondicionado</option>
               </select>
             </div>
+
             <div class="form-group">
-              <label>7. Precio por unidad *</label>
-              <div class="input-with-prefix">
+              <label>Precio base unitario <span class="required">*</span></label>
+              <div class="input-with-prefix" :class="{ 'input-error': formErrors.price }">
                 <span class="prefix">C$</span>
                 <input
                   type="number"
-                  v-model="price"
+                  step="0.01"
+                  v-model.number="price"
                   placeholder="0.00"
+                  @input="clearFieldError('price')"
                 />
               </div>
+              <span v-if="formErrors.price" class="field-error-msg">{{ formErrors.price }}</span>
             </div>
+
             <div class="grid-row-2">
               <div class="form-group">
-                <label>8. Cantidad mínima de compra *</label>
+                <label>Cantidad mínima de compra <span class="required">*</span></label>
                 <input
-                  type="text"
-                  v-model="minQuantity"
+                  type="number"
+                  min="1"
+                  v-model.number="minQuantity"
                   placeholder="Ej. 1, 6, 12..."
+                  :class="{ 'input-error': formErrors.minQuantity }"
+                  @input="clearFieldError('minQuantity')"
                 />
+                <span v-if="formErrors.minQuantity" class="field-error-msg">{{ formErrors.minQuantity }}</span>
               </div>
+
               <div class="form-group">
-                <label>9. Unidad</label>
-                <select v-model="unit">
-                  <option value="" disabled>Seleccionar</option>
-                  <option value="unit">Unidad</option>
+                <label>Unidad de medida <span class="required">*</span></label>
+                <select v-model="unit" :class="{ 'input-error': formErrors.unit }">
+                  <option value="piece">Pieza / Unidad</option>
                   <option value="box">Caja</option>
+                  <option value="package">Paquete</option>
+                  <option value="lot">Lote</option>
+                  <option value="pallet">Pallet</option>
+                  <option value="set">Juego / Set</option>
+                  <option value="roll">Rollo</option>
+                  <option value="system">Sistema</option>
+                  <option value="service">Servicio</option>
+                  <option value="contract">Contrato</option>
                 </select>
+                <span v-if="formErrors.unit" class="field-error-msg">{{ formErrors.unit }}</span>
               </div>
             </div>
           </div>
@@ -166,42 +349,38 @@ const productPhotos = ref<File[]>([]);
           <!-- Right Column -->
           <div class="details-col">
             <div class="form-group">
-              <label>10. Tipo de envío disponible *</label>
+              <label>Métodos de envío disponibles <span class="required">*</span></label>
               <div class="checkbox-group">
                 <label class="checkbox-label">
                   <input
                     type="checkbox"
                     value="bus"
                     v-model="shippingMethods"
+                    @change="clearFieldError('shippingMethods')"
                   />
                   Bus interlocal
                 </label>
                 <label class="checkbox-label">
                   <input
                     type="checkbox"
-                    value="courier"
+                    value="own_delivery"
                     v-model="shippingMethods"
+                    @change="clearFieldError('shippingMethods')"
                   />
-                  Empresas de paquetería
-                </label>
-                <label class="checkbox-label">
-                  <input
-                    type="checkbox"
-                    value="pickup"
-                    v-model="shippingMethods"
-                  />
-                  Retiro en tienda
+                  Entrega propia / Paquetería
                 </label>
               </div>
+              <span v-if="formErrors.shippingMethods" class="field-error-msg">{{ formErrors.shippingMethods }}</span>
             </div>
+
             <div class="form-group mt-3">
-              <label>11. Stock disponible *</label>
-              <p class="sub-label">Gestiona el stock para este producto.</p>
+              <label>Stock referencial inicial</label>
+              <p class="sub-label">Cantidad estimada disponible en bodega.</p>
               <div class="input-with-prefix">
                 <span class="prefix">Und</span>
                 <input
                   type="number"
-                  v-model="stock"
+                  v-model.number="stock"
                   placeholder="0"
                 />
               </div>
@@ -209,21 +388,27 @@ const productPhotos = ref<File[]>([]);
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Actions Footer -->
-    <div class="form-actions">
-      <router-link
-        to="/dashboard/provider-products"
-        class="btn-cancel"
-      >
-        Cancelar
-      </router-link>
-      <div class="right-actions">
-        <button class="btn-draft">Guardar borrador</button>
-        <button class="btn-publish">Publicar producto</button>
+      <!-- Footer Actions -->
+      <div class="form-actions">
+        <router-link
+          to="/dashboard/provider-products"
+          class="btn-cancel"
+        >
+          Cancelar
+        </router-link>
+        <div class="right-actions">
+          <button
+            type="submit"
+            class="btn-publish"
+            :disabled="isSubmitting"
+          >
+            <i v-if="isSubmitting" class="fa-solid fa-spinner fa-spin"></i>
+            <span>{{ isSubmitting ? "Publicando producto..." : "Publicar producto" }}</span>
+          </button>
+        </div>
       </div>
-    </div>
+    </form>
   </div>
 </template>
 
@@ -283,7 +468,6 @@ const productPhotos = ref<File[]>([]);
   margin-bottom: 1.2rem;
 }
 
-/* Form inputs styling */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -294,6 +478,10 @@ const productPhotos = ref<File[]>([]);
   font-size: 0.85rem;
   font-weight: 600;
   color: #333;
+}
+
+.required {
+  color: var(--primary-orange, #ff6a00);
 }
 
 .sub-label {
@@ -323,6 +511,18 @@ textarea:focus {
   border-color: #189c94;
 }
 
+.input-error {
+  border-color: #ef4444 !important;
+  background-color: #fffafb;
+}
+
+.field-error-msg {
+  color: #ef4444;
+  font-size: 0.78rem;
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
+
 textarea {
   resize: vertical;
   min-height: 120px;
@@ -340,7 +540,6 @@ textarea {
   color: #aaa;
 }
 
-/* Grids */
 .grid-row-3 {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr;
@@ -364,7 +563,6 @@ textarea {
   margin-top: 0.75rem;
 }
 
-/* Photos Section */
 .photos-container {
   display: flex;
   gap: 1.5rem;
@@ -413,7 +611,6 @@ textarea {
   margin-top: 0.15rem;
 }
 
-/* Details Section */
 .details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -481,7 +678,6 @@ textarea {
   height: 16px;
 }
 
-/* Footer Actions */
 .form-actions {
   display: flex;
   justify-content: space-between;
@@ -512,23 +708,6 @@ textarea {
   gap: 1rem;
 }
 
-.btn-draft {
-  padding: 0.6rem 1.25rem;
-  border: 1px solid #d0d0d0;
-  color: #555;
-  background: #fff;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-.btn-draft:hover {
-  background: #f5f5f5;
-  border-color: #bbb;
-}
-
 .btn-publish {
   padding: 0.6rem 1.5rem;
   border: none;
@@ -539,13 +718,20 @@ textarea {
   font-weight: 600;
   transition: all 0.2s;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.btn-publish:hover {
+.btn-publish:hover:not(:disabled) {
   background: #e05e00;
 }
 
-/* Responsive */
+.btn-publish:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 @media (max-width: 900px) {
   .grid-row-3 {
     grid-template-columns: 1fr;
