@@ -1,15 +1,22 @@
+
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { quoteApi, organizationApi } from "../api";
+import { quoteApi, organizationApi, userProfileApi } from "../api";
+import { useUserContextStore } from "../stores/userContextStore";
 import type {
   QuoteAggregateResponse,
   QuoteStatus,
   AccountQuoteFiltersQuery,
+  ProviderQuoteFiltersQuery,
 } from "../api/services/quote/types";
-import type { PublicProviderDto } from "../api/services/organization/types";
 import QuoteListItem from "../components/quote/QuoteListItem.vue";
 import QuoteSearchBox from "../components/quote/QuoteSearchBox.vue";
+
+interface CounterpartyInfo {
+  name: string;
+  avatarBlobId: string | null;
+}
 
 const ALLOWED_STATUSES: QuoteStatus[] = [
   "pending_provider",
@@ -27,6 +34,10 @@ interface FilterOption {
 }
 
 const router = useRouter();
+const contextStore = useUserContextStore();
+
+const isProvider = computed(() => contextStore.isProvider);
+const providerId = computed(() => contextStore.activeOrganizationId);
 
 const filterOptions: FilterOption[] = [
   { label: "Todos", value: "all" },
@@ -38,7 +49,7 @@ const filterOptions: FilterOption[] = [
 
 const currentFilter = ref<FilterTab>("all");
 const quotes = ref<QuoteAggregateResponse[]>([]);
-const providersMap = ref<Map<string, PublicProviderDto>>(new Map());
+const counterpartiesMap = ref<Map<string, CounterpartyInfo>>(new Map());
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 
@@ -52,46 +63,80 @@ const loadOrders = async () => {
   isLoading.value = true;
   errorMessage.value = null;
 
-  const params: AccountQuoteFiltersQuery = {
-    limit: 20,
-    offset: 0,
-    statuses:
-      currentFilter.value === "all"
-        ? ALLOWED_STATUSES
-        : [currentFilter.value],
-  };
+  const statuses =
+    currentFilter.value === "all"
+      ? ALLOWED_STATUSES
+      : [currentFilter.value];
 
   try {
-    const response = await quoteApi.getMyQuotes(params);
+    let response;
+
+    if (isProvider.value && providerId.value) {
+      const params: ProviderQuoteFiltersQuery = {
+        limit: 20,
+        offset: 0,
+        statuses,
+      };
+      response = await quoteApi.getProviderQuotes(providerId.value, params);
+    } else {
+      const params: AccountQuoteFiltersQuery = {
+        limit: 20,
+        offset: 0,
+        statuses,
+      };
+      response = await quoteApi.getMyQuotes(params);
+    }
 
     if (currentRequestId === lastRequestId) {
       quotes.value = response.data;
 
-      const uniqueProviderIds = Array.from(
-        new Set(
-          response.data
-            .map((item) => item.quote.provider_id)
-            .filter((id): id is string => Boolean(id) && !providersMap.value.has(id))
-        )
+      // Determine counterpart IDs based on context
+      const counterpartIds = new Set<string>();
+      response.data.forEach((item) => {
+        const id = isProvider.value ? item.quote.buyer_id : item.quote.provider_id;
+        if (id) counterpartIds.add(id);
+      });
+
+      const missingIds = Array.from(counterpartIds).filter(
+        (id) => !counterpartiesMap.value.has(id)
       );
 
-      if (uniqueProviderIds.length > 0) {
-        const providerEntries = await Promise.allSettled(
-          uniqueProviderIds.map(async (id) => {
-            const prov = await organizationApi.getPublicProvider(id);
-            return [id, prov] as const;
+      if (missingIds.length > 0) {
+        const entries = await Promise.allSettled(
+          missingIds.map(async (id) => {
+            if (isProvider.value) {
+              // Fetch Buyer Profile
+              const profile = await userProfileApi.getUserProfile(id);
+              return [
+                id,
+                {
+                  name: `${profile.first_name} ${profile.last_name}`.trim() || "Comprador",
+                  avatarBlobId: profile.avatar_blob_id ?? null,
+                },
+              ] as const;
+            } else {
+              // Fetch Provider Profile
+              const prov = await organizationApi.getPublicProvider(id);
+              return [
+                id,
+                {
+                  name: prov.company_name,
+                  avatarBlobId: prov.logo_blob_id ?? null,
+                },
+              ] as const;
+            }
           })
         );
 
         if (currentRequestId === lastRequestId) {
-          const nextMap = new Map(providersMap.value);
-          for (const result of providerEntries) {
+          const nextMap = new Map(counterpartiesMap.value);
+          for (const result of entries) {
             if (result.status === "fulfilled") {
-              const [id, prov] = result.value;
-              nextMap.set(id, prov);
+              const [id, info] = result.value;
+              nextMap.set(id, info);
             }
           }
-          providersMap.value = nextMap;
+          counterpartiesMap.value = nextMap;
         }
       }
     }
@@ -124,11 +169,14 @@ onMounted(() => {
 <template>
   <div class="orders-view-shell">
     <div class="orders-header-row">
-      <h1 class="orders-page-title">Mis Pedidos</h1>
+      <h1 class="orders-page-title">
+        {{ isProvider ? "Pedidos Recibidos" : "Mis Pedidos" }}
+      </h1>
       <QuoteSearchBox
         :quotes="visibleQuotes"
-        :providers-map="providersMap"
-        placeholder="Buscar por ID, producto o proveedor..."
+        :counterparties-map="counterpartiesMap"
+        :is-provider="isProvider"
+        :placeholder="isProvider ? 'Buscar por ID, producto o comprador...' : 'Buscar por ID, producto o proveedor...'"
       />
     </div>
 
@@ -168,6 +216,7 @@ onMounted(() => {
         v-for="item in filteredQuotes"
         :key="item.quote.id"
         :quote-aggregate="item"
+        :counterparty="counterpartiesMap.get(isProvider ? item.quote.buyer_id : item.quote.provider_id)"
         @select="handleSelectQuote"
       />
     </div>
