@@ -4,6 +4,7 @@ import { useAuthStore } from "./modules/auth/authStore";
 import { usePreferencesGuard } from "./modules/auth/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 import GlobalAlerts from "./components/common/GlobalAlerts.vue";
+import GlobalToasts from "./components/common/GlobalToasts.vue";
 
 const authStore = useAuthStore();
 const { showPrompt, currentPreferences, checkPreferences, savePreferences } =
@@ -14,7 +15,6 @@ onMounted(async () => {
   if (authStore.isAuthenticated) {
     await checkPreferences();
   }
-
 });
 
 watch(
@@ -40,4 +40,5 @@ watch(
   />
 
   <GlobalAlerts />
+  <GlobalToasts />
 </template>
