@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
-import { chatApi, notificationsApi, quoteApi, userProfileApi, organizationApi } from "../api";
+import { chatApi, quoteApi, userProfileApi, organizationApi } from "../api";
 import { useAuthStore } from "../modules/auth";
 import { useUserContextStore } from "../stores/userContextStore";
+import { useNotificationStore } from "@/stores/notificationStore";
 import { formatUuidv7ToLocalTime } from "../utils/formatters";
 import { NewChatMessageEventSchema } from "../api/services/notifications/payloads";
 import type { ChatThreadResponse, ChatMessageResponse } from "../api/services/chat/types";
@@ -11,6 +12,7 @@ import ProviderLogo from "../components/organization/ProviderLogo.vue";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
+const notificationStore = useNotificationStore();
 
 const threads = ref<ChatThreadResponse[]>([]);
 const activeThreadId = ref<string | null>(null);
@@ -37,19 +39,14 @@ let unsubs: (() => void)[] = [];
 const isProvider = computed(() => contextStore.isProvider);
 const orgId = computed(() => contextStore.activeOrganizationId);
 
-/**
- * Generates a deterministic online/offline status based on a seeded string.
- * Uses a simple hash function to create a pseudo-random boolean (~30% chance to be online).
- */
 function isOnline(seedStr: string | null | undefined): boolean {
   if (!seedStr) return false;
   let hash = 0;
   for (let i = 0; i < seedStr.length; i++) {
     hash = (hash << 5) - hash + seedStr.charCodeAt(i);
-    hash |= 0; // Convert to 32bit integer
+    hash |= 0;
   }
-  // ~30% chance to be online
-  return (Math.abs(hash) % 10) < 3;
+  return Math.abs(hash) % 10 < 3;
 }
 
 function scrollToBottom() {
@@ -127,16 +124,10 @@ async function sendMessage() {
   }
 }
 
-/**
- * Resolves the "other party" metadata for each thread.
- * - If Provider: Fetches the Buyer's profile (name, avatar)
- * - If Buyer: Fetches the Provider's public info (company name, logo)
- */
 const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
   if (threadsList.length === 0) return;
 
-  // 1. Fetch quote details for each thread to get buyer_id and provider_id
-  const quotePromises = threadsList.map(t => {
+  const quotePromises = threadsList.map((t) => {
     if (isProvider.value && orgId.value) {
       return quoteApi.getProviderQuotes(orgId.value, { quote_group_id: t.quote_group_id, limit: 1 }).catch(() => null);
     } else {
@@ -147,7 +138,7 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
   const quoteResults = await Promise.all(quotePromises);
 
   const otherPartyIds = new Set<string>();
-  const threadQuoteMap = new Map<string, { buyerId: string, providerId: string }>();
+  const threadQuoteMap = new Map<string, { buyerId: string; providerId: string }>();
 
   quoteResults.forEach((res, idx) => {
     if (res && res.data.length > 0) {
@@ -158,23 +149,21 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
     }
   });
 
-  // 2. Fetch profiles/logos for the "other party"
-  const profilePromises = Array.from(otherPartyIds).map(id => {
+  const profilePromises = Array.from(otherPartyIds).map((id) => {
     if (isProvider.value) {
-      return userProfileApi.getUserProfile(id).then(p => ({ id, type: 'buyer', data: p })).catch(() => null);
+      return userProfileApi.getUserProfile(id).then((p) => ({ id, type: "buyer", data: p })).catch(() => null);
     } else {
-      return organizationApi.getPublicProvider(id).then(p => ({ id, type: 'provider', data: p })).catch(() => null);
+      return organizationApi.getPublicProvider(id).then((p) => ({ id, type: "provider", data: p })).catch(() => null);
     }
   });
 
   const profileResults = await Promise.all(profilePromises);
-  const profileMap = new Map<string, { type: string, data: any }>();
-  profileResults.forEach(res => {
+  const profileMap = new Map<string, { type: string; data: any }>();
+  profileResults.forEach((res) => {
     if (res) profileMap.set(res.id, res);
   });
 
-  // 3. Map data to thread previews
-  threadsList.forEach(t => {
+  threadsList.forEach((t) => {
     const ids = threadQuoteMap.get(t.id);
     const otherId = isProvider.value ? ids?.buyerId : ids?.providerId;
     const profile = otherId ? profileMap.get(otherId) : null;
@@ -183,7 +172,7 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
     let avatarBlobId: string | null = null;
 
     if (profile) {
-      if (profile.type === 'buyer') {
+      if (profile.type === "buyer") {
         name = `${profile.data.first_name} ${profile.data.last_name}`.trim() || "Comprador";
         avatarBlobId = profile.data.avatar_blob_id ?? null;
       } else {
@@ -198,7 +187,7 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
       hasUnread: threadPreviews.value[t.id]?.hasUnread || false,
       name,
       avatarBlobId,
-      quoteGroupId: t.quote_group_id
+      quoteGroupId: t.quote_group_id,
     };
   });
 };
@@ -209,9 +198,8 @@ onMounted(async () => {
     if (!contextStore.isInitialized) {
       await contextStore.initialize();
     }
-    await notificationsApi.connect();
 
-    const unsub = notificationsApi.subscribe("NewChatMessage", (rawEvent) => {
+    const unsub = notificationStore.subscribe("NewChatMessage", (rawEvent) => {
       try {
         const event = NewChatMessageEventSchema.parse(rawEvent);
         const existing = threadPreviews.value[event.thread_id];
@@ -221,7 +209,7 @@ onMounted(async () => {
           hasUnread: activeThreadId.value !== event.thread_id,
           name: existing?.name || "Nuevo Mensaje",
           avatarBlobId: existing?.avatarBlobId || null,
-          quoteGroupId: existing?.quoteGroupId || ""
+          quoteGroupId: existing?.quoteGroupId || "",
         };
 
         if (activeThreadId.value === event.thread_id) {
@@ -246,7 +234,6 @@ onMounted(async () => {
     const res = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });
     threads.value = res.data;
 
-    // Initialize default previews before resolving metadata
     threads.value.forEach((t) => {
       threadPreviews.value[t.id] = {
         preview: `Pedido: ${t.quote_group_id.substring(0, 8)}...`,
@@ -254,7 +241,7 @@ onMounted(async () => {
         hasUnread: false,
         name: "Cargando...",
         avatarBlobId: null,
-        quoteGroupId: t.quote_group_id
+        quoteGroupId: t.quote_group_id,
       };
     });
 
@@ -262,7 +249,6 @@ onMounted(async () => {
       await selectThread(threads.value[0].id);
     }
 
-    // Resolve metadata in background
     resolveThreadMetadata(threads.value);
   } catch (err) {
     console.error("Failed to initialize chat:", err);

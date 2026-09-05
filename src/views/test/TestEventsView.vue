@@ -1,43 +1,44 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
-import { notificationsApi } from '../../api';
-import type { NotificationEvent } from '../../api/services/notifications/types';
+import { useNotificationStore } from '@/stores/notificationStore';
 
-const events = ref<NotificationEvent[]>([]);
-const isConnected = ref(false);
-let unsub: (() => void) | null = null;
-
-onMounted(async () => {
-  try {
-    await notificationsApi.connect();
-    isConnected.value = true;
-
-    unsub = notificationsApi.subscribeAll((ev) => {
-      events.value.unshift(ev); // Prepend to show newest first
-      if (events.value.length > 50) events.value.pop();
-    });
-  } catch (err) {
-    console.error("Event connection failed", err);
-  }
-});
-
-onBeforeUnmount(() => {
-  if (unsub) unsub();
-});
+const notificationStore = useNotificationStore();
 </script>
 
 <template>
   <div>
     <h3>Global WebSocket Events</h3>
-    <p>Status: <strong :style="{ color: isConnected ? 'green' : 'red' }">{{ isConnected ? 'Connected' : 'Disconnected' }}</strong></p>
+    <p>
+      Status:
+      <strong :style="{ color: notificationStore.isConnected ? 'green' : 'red' }">
+        {{ notificationStore.isConnected ? 'Connected' : 'Disconnected' }}
+      </strong>
+      <span v-if="notificationStore.isConnecting" style="color: orange; margin-left: 0.5rem;">
+        (Connecting...)
+      </span>
+    </p>
+
+    <div v-if="notificationStore.connectionError" style="color: red; margin-bottom: 1rem;">
+      Error: {{ notificationStore.connectionError.message }}
+      <button @click="notificationStore.connect()" style="margin-left: 0.5rem; cursor: pointer; text-decoration: underline;">
+        Retry
+      </button>
+    </div>
 
     <div class="event-log">
-      <div v-for="ev in events" :key="ev.notification_id" class="event-item">
+      <div v-for="ev in notificationStore.recentEvents" :key="ev.notification_id" class="event-item">
         <span class="badge">{{ ev.type }}</span>
         <pre>{{ JSON.stringify(ev, null, 2) }}</pre>
       </div>
-      <p v-if="!events.length">Waiting for events...</p>
+      <p v-if="!notificationStore.recentEvents.length">Waiting for events...</p>
     </div>
+
+    <button
+      v-if="notificationStore.recentEvents.length"
+      @click="notificationStore.clearEvents()"
+      style="margin-top: 1rem; padding: 0.4rem 0.8rem; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer;"
+    >
+      Clear Log
+    </button>
   </div>
 </template>
 
@@ -53,12 +54,14 @@ onBeforeUnmount(() => {
   flex-direction: column;
   gap: 1rem;
 }
+
 .event-item {
   background: white;
   padding: 1rem;
   border-radius: 6px;
   border-left: 4px solid var(--primary-blue);
 }
+
 .badge {
   background: var(--light-teal);
   color: white;
@@ -67,6 +70,7 @@ onBeforeUnmount(() => {
   font-size: 0.8rem;
   font-weight: bold;
 }
+
 pre {
   margin-top: 0.5rem;
   font-size: 0.85rem;
