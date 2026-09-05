@@ -1,9 +1,10 @@
-
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { quoteApi, organizationApi, userProfileApi } from "../api";
 import { useUserContextStore } from "../stores/userContextStore";
+import { useNotificationStore } from "@/stores/notificationStore";
+import { QuoteStatusChangedEventSchema } from "@/api/services/notifications/payloads";
 import type {
   QuoteAggregateResponse,
   QuoteStatus,
@@ -35,6 +36,7 @@ interface FilterOption {
 
 const router = useRouter();
 const contextStore = useUserContextStore();
+const notificationStore = useNotificationStore();
 
 const isProvider = computed(() => contextStore.isProvider);
 const providerId = computed(() => contextStore.activeOrganizationId);
@@ -52,7 +54,6 @@ const quotes = ref<QuoteAggregateResponse[]>([]);
 const counterpartiesMap = ref<Map<string, CounterpartyInfo>>(new Map());
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
-
 let lastRequestId = 0;
 
 const visibleQuotes = computed(() => quotes.value);
@@ -70,7 +71,6 @@ const loadOrders = async () => {
 
   try {
     let response;
-
     if (isProvider.value && providerId.value) {
       const params: ProviderQuoteFiltersQuery = {
         limit: 20,
@@ -90,7 +90,6 @@ const loadOrders = async () => {
     if (currentRequestId === lastRequestId) {
       quotes.value = response.data;
 
-      // Determine counterpart IDs based on context
       const counterpartIds = new Set<string>();
       response.data.forEach((item) => {
         const id = isProvider.value ? item.quote.buyer_id : item.quote.provider_id;
@@ -105,7 +104,6 @@ const loadOrders = async () => {
         const entries = await Promise.allSettled(
           missingIds.map(async (id) => {
             if (isProvider.value) {
-              // Fetch Buyer Profile
               const profile = await userProfileApi.getUserProfile(id);
               return [
                 id,
@@ -115,7 +113,6 @@ const loadOrders = async () => {
                 },
               ] as const;
             } else {
-              // Fetch Provider Profile
               const prov = await organizationApi.getPublicProvider(id);
               return [
                 id,
@@ -153,6 +150,42 @@ const loadOrders = async () => {
   }
 };
 
+let unsubscribeQuoteStatus: (() => void) | null = null;
+
+onMounted(() => {
+  loadOrders();
+
+  unsubscribeQuoteStatus = notificationStore.subscribe(
+    "QuoteStatusChanged",
+    (rawEvent) => {
+      const parsed = QuoteStatusChangedEventSchema.safeParse(rawEvent);
+      if (!parsed.success) return;
+
+      const { quote_id, new_status } = parsed.data;
+      const isQuoteVisible = quotes.value.some((q) => q.quote.id === quote_id);
+
+      if (isQuoteVisible) {
+        const statusMatchesFilter =
+          currentFilter.value === "all" ||
+          currentFilter.value === new_status;
+
+        if (statusMatchesFilter) {
+          loadOrders();
+        } else {
+          quotes.value = quotes.value.filter((q) => q.quote.id !== quote_id);
+        }
+      }
+    }
+  );
+});
+
+onBeforeUnmount(() => {
+  if (unsubscribeQuoteStatus) {
+    unsubscribeQuoteStatus();
+    unsubscribeQuoteStatus = null;
+  }
+});
+
 watch(currentFilter, () => {
   loadOrders();
 });
@@ -160,16 +193,12 @@ watch(currentFilter, () => {
 const handleSelectQuote = (quoteId: string) => {
   router.push({ name: "quote-detail", params: { id: quoteId } });
 };
-
-onMounted(() => {
-  loadOrders();
-});
 </script>
 
 <template>
-  <div class="orders-view-shell">
-    <div class="orders-header-row">
-      <h1 class="orders-page-title">
+  <div class="flex flex-col w-full">
+    <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-6 mb-7">
+      <h1 class="font-serif text-3xl font-bold text-neutral-900 m-0">
         {{ isProvider ? "Pedidos Recibidos" : "Mis Pedidos" }}
       </h1>
       <QuoteSearchBox
@@ -180,38 +209,56 @@ onMounted(() => {
       />
     </div>
 
-    <div class="filter-bar">
+    <div class="flex items-end gap-6 md:gap-9 w-full border-b border-neutral-200 mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <button
         v-for="filter in filterOptions"
         :key="filter.value"
         type="button"
-        :class="['filter-btn', { active: currentFilter === filter.value }]"
+        :class="[
+          'bg-transparent border-0 border-b-2 pb-2 -mb-px font-serif text-lg font-medium whitespace-nowrap cursor-pointer transition-colors',
+          currentFilter === filter.value
+            ? 'text-teal-700 border-teal-700'
+            : 'text-neutral-500 border-transparent hover:text-teal-700'
+        ]"
         @click="currentFilter = filter.value"
       >
         {{ filter.label }}
       </button>
     </div>
 
-    <div v-if="isLoading" class="loading-state">
-      <i class="fa-solid fa-spinner fa-spin"></i>
+    <div
+      v-if="isLoading"
+      class="flex flex-col items-center justify-center py-16 px-6 text-center text-neutral-500 gap-3"
+    >
+      <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
       <span>Cargando pedidos...</span>
     </div>
 
-    <div v-else-if="errorMessage" class="error-state">
-      <i class="fa-solid fa-circle-exclamation error-icon"></i>
-      <p>{{ errorMessage }}</p>
-      <button type="button" class="btn-retry" @click="loadOrders">
+    <div
+      v-else-if="errorMessage"
+      class="flex flex-col items-center justify-center py-16 px-6 text-center text-neutral-500 gap-3"
+    >
+      <i class="fa-solid fa-circle-exclamation text-4xl text-error"></i>
+      <p class="text-neutral-900 m-0">{{ errorMessage }}</p>
+      <button
+        type="button"
+        class="mt-2 py-2 px-6 bg-teal-700 text-white border-0 rounded-lg font-semibold cursor-pointer hover:bg-teal-800 transition-colors"
+        @click="loadOrders"
+      >
         Reintentar
       </button>
     </div>
 
-    <div v-else-if="filteredQuotes.length === 0" class="empty-state">
-      <i class="fa-regular fa-folder-open empty-icon"></i>
-      <h3>No hay pedidos en esta sección</h3>
-      <p>Los pedidos correspondientes a este estado aparecerán aquí.</p>
+    <div
+      v-else-if="filteredQuotes.length === 0"
+      class="flex flex-col items-center justify-center py-16 px-6 text-center text-neutral-500 gap-3"
+    >
+      <i class="fa-regular fa-folder-open text-5xl text-neutral-300"></i>
+      <h3 class="text-lg font-bold font-serif text-neutral-900 m-0">No hay pedidos en esta sección</h3>
+      <p class="text-sm text-neutral-500 m-0">Los pedidos correspondientes a este estado aparecerán aquí.</p>
     </div>
 
-    <div v-else class="quotes-list">
+    <div v-else class="flex flex-col gap-5">
       <QuoteListItem
         v-for="item in filteredQuotes"
         :key="item.quote.id"
@@ -222,129 +269,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.orders-view-shell {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
-.orders-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 1.75rem;
-}
-
-.orders-page-title {
-  font-family: 'Lora', serif;
-  font-size: 1.85rem;
-  font-weight: 700;
-  color: var(--primary-blue, #083c5a);
-  margin: 0;
-}
-
-.filter-bar {
-  display: flex;
-  align-items: flex-end;
-  gap: 2.25rem;
-  width: 100%;
-  border-bottom: 1.5px solid #e2e8f0;
-  margin-bottom: 2rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.filter-bar::-webkit-scrollbar {
-  display: none;
-}
-
-.filter-btn {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  padding: 0 0 0.55rem 0;
-  margin-bottom: -1.5px;
-  font-family: 'Lora', serif;
-  font-size: 1.15rem;
-  font-weight: 500;
-  color: #8c9ba5;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: color 0.15s ease, border-color 0.15s ease;
-}
-
-.filter-btn:hover {
-  color: var(--light-teal, #189c94);
-}
-
-.filter-btn.active {
-  color: var(--light-teal, #189c94);
-  border-bottom: 2px solid var(--light-teal, #189c94);
-}
-
-.quotes-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
-}
-
-.loading-state,
-.error-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 1.5rem;
-  text-align: center;
-  color: #64748b;
-  gap: 0.75rem;
-}
-
-.error-icon {
-  font-size: 2.5rem;
-  color: #ef4444;
-}
-
-.empty-icon {
-  font-size: 3rem;
-  color: #cbd5e1;
-}
-
-.empty-state h3 {
-  font-size: 1.15rem;
-  color: var(--primary-blue, #083c5a);
-  margin: 0;
-}
-
-.empty-state p {
-  font-size: 0.9rem;
-  margin: 0;
-}
-
-.btn-retry {
-  margin-top: 0.5rem;
-  padding: 0.5rem 1.5rem;
-  background-color: var(--light-teal, #189c94);
-  color: #ffffff;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .orders-header-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 1rem;
-  }
-
-  .filter-bar {
-    gap: 1.5rem;
-  }
-}
-</style>

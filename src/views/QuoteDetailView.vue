@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { quoteApi, organizationApi, productApi, userProfileApi } from "../api";
+import { useToastStore } from "@/stores/toastStore";
+import { useQuoteActions } from "@/composables/useQuoteActions";
 import type { QuoteAggregateResponse } from "../api/services/quote/types";
 import type { PublicProviderDto } from "../api/services/organization/types";
 import type { UserProfileResponse } from "../api/services/user_profile/types";
@@ -9,9 +11,11 @@ import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import QuoteIdBadge from "../components/quote/QuoteIdBadge.vue";
 import QuoteStatusBadge from "../components/quote/QuoteStatusBadge.vue";
+import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
 
 const route = useRoute();
 const router = useRouter();
+const toastStore = useToastStore();
 
 const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
 const provider = ref<PublicProviderDto | null>(null);
@@ -19,7 +23,6 @@ const buyerProfile = ref<UserProfileResponse | null>(null);
 const itemBlobIds = ref<Record<string, string | null>>({});
 const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
-
 const productBlobCache = new Map<string, Promise<string | null>>();
 
 const PAYMENT_LABELS: Record<string, string> = {
@@ -59,7 +62,10 @@ const calculatedTotal = computed(() => {
 
 const buyerFullName = computed(() => {
   if (!buyerProfile.value) return "Cliente Registrado";
-  return `${buyerProfile.value.first_name || ""} ${buyerProfile.value.last_name || ""}`.trim() || "Cliente Registrado";
+  return (
+    `${buyerProfile.value.first_name || ""} ${buyerProfile.value.last_name || ""}`.trim() ||
+    "Cliente Registrado"
+  );
 });
 
 const buyerPhone = computed(() => {
@@ -71,7 +77,6 @@ const loadProductBlobId = async (productId: string): Promise<string | null> => {
   if (productBlobCache.has(productId)) {
     return productBlobCache.get(productId)!;
   }
-
   const promise = (async () => {
     try {
       const prod = await productApi.getProduct(productId);
@@ -80,7 +85,6 @@ const loadProductBlobId = async (productId: string): Promise<string | null> => {
       return null;
     }
   })();
-
   productBlobCache.set(productId, promise);
   return promise;
 };
@@ -92,23 +96,20 @@ const loadQuoteDetails = async () => {
     isLoading.value = false;
     return;
   }
-
   isLoading.value = true;
   errorMessage.value = null;
-
   try {
     const [detail, profile] = await Promise.allSettled([
       quoteApi.getQuote(quoteId),
       userProfileApi.getMyProfile(),
     ]);
-
     if (detail.status === "fulfilled") {
       quoteAggregate.value = detail.value;
-
       if (detail.value.quote.provider_id) {
-        provider.value = await organizationApi.getPublicProvider(detail.value.quote.provider_id);
+        provider.value = await organizationApi.getPublicProvider(
+          detail.value.quote.provider_id
+        );
       }
-
       await Promise.all(
         detail.value.items.map(async (item) => {
           const blobId = await loadProductBlobId(item.product_id);
@@ -118,28 +119,39 @@ const loadQuoteDetails = async () => {
     } else {
       throw detail.reason;
     }
-
     if (profile.status === "fulfilled") {
       buyerProfile.value = profile.value;
     }
   } catch (err: any) {
     console.error("Failed to load quote details:", err);
-    errorMessage.value = err.message || "Error al cargar los detalles del pedido.";
+    errorMessage.value =
+      err.message || "Error al cargar los detalles del pedido.";
   } finally {
     isLoading.value = false;
   }
 };
+
+const { availableActions, executeAction, isActionProcessing } = useQuoteActions(
+  quoteAggregate,
+  { onReload: loadQuoteDetails }
+);
 
 const goBack = () => {
   router.push({ name: "orders" });
 };
 
 const handleDownloadInvoice = () => {
-  alert("Descargando factura del pedido...");
+  toastStore.addToast({
+    title: "Función en desarrollo",
+    message:
+      "La descarga de facturas estará disponible próximamente. Te notificaremos cuando esté lista.",
+    icon: "fa-solid fa-file-invoice",
+    variant: "info",
+  });
 };
 
 const handleOpenChat = () => {
-  alert("Redirigiendo al chat con el proveedor...");
+  router.push({ name: "messages" });
 };
 
 onMounted(() => {
@@ -148,102 +160,117 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="quote-detail-shell">
-    <div v-if="isLoading" class="loading-state">
-      <i class="fa-solid fa-spinner fa-spin"></i>
+  <div class="flex flex-col">
+    <div
+      v-if="isLoading"
+      class="flex flex-col items-center justify-center py-16 px-4 gap-4 text-base text-neutral-500"
+    >
+      <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
       <span>Cargando información del pedido...</span>
     </div>
 
-    <div v-else-if="errorMessage || !quoteAggregate" class="error-state">
-      <i class="fa-solid fa-circle-exclamation error-icon"></i>
-      <p>{{ errorMessage || 'No se encontró el pedido solicitado.' }}</p>
-      <button type="button" class="btn-outline-teal" @click="goBack">
+    <div
+      v-else-if="errorMessage || !quoteAggregate"
+      class="flex flex-col items-center justify-center py-16 px-4 gap-4 text-base text-neutral-500"
+    >
+      <i class="fa-solid fa-circle-exclamation text-5xl text-error"></i>
+      <p class="text-neutral-900">{{ errorMessage || "No se encontró el pedido solicitado." }}</p>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 px-5 py-2 border border-teal-700 text-teal-700 font-semibold rounded-lg hover:bg-teal-700 hover:text-white transition-colors"
+        @click="goBack"
+      >
         <i class="fa-solid fa-arrow-left"></i> Volver a Mis Pedidos
       </button>
     </div>
 
-    <div v-else class="details-content">
-      <div class="details-top-header">
-        <div class="details-title-group">
+    <div v-else class="flex flex-col gap-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-5">
           <button
             type="button"
-            class="btn-back-arrow"
+            class="bg-transparent border-0 text-xl text-neutral-900 cursor-pointer flex items-center justify-center p-1"
             aria-label="Regresar a pedidos"
             @click="goBack"
           >
             <i class="fa-solid fa-arrow-left"></i>
           </button>
           <div>
-            <div class="details-order-heading-wrapper">
-              <span class="heading-title-text">Detalles del Pedido</span>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl font-bold font-serif text-neutral-900">Detalles del Pedido</span>
               <QuoteIdBadge :quote-id="quoteAggregate.quote.id" size="lg" />
             </div>
-            <p class="details-order-subdate">
+            <p class="text-sm text-neutral-500 mt-1">
               Realizado el {{ formatDate(quoteAggregate.quote.updated_at) }}
             </p>
           </div>
         </div>
-
         <QuoteStatusBadge :status="quoteAggregate.quote.status" size="md" />
       </div>
 
-      <div class="order-summary-card">
-        <div class="summary-col">
-          <div class="summary-col-header">
-            <i class="fa-regular fa-calendar-days summary-icon"></i>
+      <div class="bg-teal-50 border border-teal-200 rounded-2xl p-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+            <i class="fa-regular fa-calendar-days text-base text-neutral-900"></i>
             <span>Fecha de Compra</span>
           </div>
-          <strong class="summary-val">{{ formatDate(quoteAggregate.quote.updated_at) }}</strong>
+          <strong class="text-neutral-900 text-base font-bold">{{
+            formatDate(quoteAggregate.quote.updated_at)
+          }}</strong>
         </div>
-
-        <div class="summary-col">
-          <div class="summary-col-header">
-            <i class="fa-regular fa-money-bill-1 summary-icon"></i>
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+            <i class="fa-regular fa-money-bill-1 text-base text-neutral-900"></i>
             <span>Total Pagado</span>
           </div>
-          <strong class="summary-val">{{ formatMoney(calculatedTotal) }}</strong>
+          <strong class="text-neutral-900 text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
         </div>
-
-        <div class="summary-col">
-          <div class="summary-col-header">
-            <i class="fa-regular fa-credit-card summary-icon"></i>
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+            <i class="fa-regular fa-credit-card text-base text-neutral-900"></i>
             <span>Método de Pago</span>
           </div>
-          <strong class="summary-val">
-            {{ PAYMENT_LABELS[quoteAggregate.quote.payment_preference] || quoteAggregate.quote.payment_preference }}
+          <strong class="text-neutral-900 text-base font-bold">
+            {{
+              PAYMENT_LABELS[quoteAggregate.quote.payment_preference] ||
+              quoteAggregate.quote.payment_preference
+            }}
           </strong>
         </div>
-
-        <div class="summary-col">
-          <div class="summary-col-header">
-            <i class="fa-solid fa-bag-shopping summary-icon"></i>
+        <div class="flex flex-col gap-2">
+          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+            <i class="fa-solid fa-bag-shopping text-base text-neutral-900"></i>
             <span>Cantidad de Productos</span>
           </div>
-          <strong class="summary-val">
-            {{ totalUnits }} {{ totalUnits === 1 ? 'producto' : 'productos' }}
+          <strong class="text-neutral-900 text-base font-bold">
+            {{ totalUnits }} {{ totalUnits === 1 ? "producto" : "productos" }}
           </strong>
         </div>
       </div>
 
-      <div class="details-split-grid">
-        <div class="details-products-box">
-          <h3 class="box-inner-title">Productos ({{ quoteAggregate.items.length }})</h3>
-
-          <div class="products-table-wrapper">
-            <table class="order-products-table">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-2xl p-6">
+          <h3 class="text-base font-bold text-neutral-900 mb-5 font-serif">
+            Productos ({{ quoteAggregate.items.length }})
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse text-sm">
               <thead>
-                <tr>
-                  <th style="width: 48%;">Producto</th>
-                  <th style="width: 18%;">Precio U.</th>
-                  <th style="width: 16%;">Cantidad</th>
-                  <th style="width: 18%; text-align: right;">Subtotal</th>
+                <tr class="border-b border-neutral-100 text-neutral-500 font-medium text-left">
+                  <th class="pb-4 w-1/2">Producto</th>
+                  <th class="pb-4 w-1/5">Precio U.</th>
+                  <th class="pb-4 w-1/6">Cantidad</th>
+                  <th class="pb-4 w-1/6 text-right">Subtotal</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr v-for="item in quoteAggregate.items" :key="item.product_id">
-                  <td class="td-product">
-                    <div class="product-item-cell">
-                      <div class="table-prod-img-box">
+              <tbody class="divide-y divide-neutral-100">
+                <tr
+                  v-for="item in quoteAggregate.items"
+                  :key="item.product_id"
+                >
+                  <td class="py-4 pr-2 align-middle">
+                    <div class="flex items-center gap-4">
+                      <div class="w-14 h-14 border border-neutral-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
                         <ProductImage
                           :blob-id="itemBlobIds[item.product_id]"
                           :alt="item.product_title_snapshot"
@@ -251,473 +278,104 @@ onMounted(() => {
                           object-fit="contain"
                         />
                       </div>
-                      <span class="product-item-name">{{ item.product_title_snapshot }}</span>
+                      <span class="font-semibold text-neutral-900 leading-snug text-sm">
+                        {{ item.product_title_snapshot }}
+                      </span>
                     </div>
                   </td>
-                  <td class="td-price">{{ formatMoney(item.unit_price_snapshot) }}</td>
-                  <td class="td-qty">Ud. {{ item.quantity }}</td>
-                  <td class="td-subtotal" style="text-align: right;">
+                  <td class="py-4 px-2 align-middle font-semibold text-neutral-900">
+                    {{ formatMoney(item.unit_price_snapshot) }}
+                  </td>
+                  <td class="py-4 px-2 align-middle font-semibold text-neutral-900">
+                    Ud. {{ item.quantity }}
+                  </td>
+                  <td class="py-4 pl-2 align-middle font-semibold text-neutral-900 text-right">
                     {{ formatMoney(item.quantity * item.unit_price_snapshot) }}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          <div v-if="quoteAggregate.quote.buyer_notes" class="buyer-notes-box">
-            <strong>Notas del comprador:</strong>
-            <p>{{ quoteAggregate.quote.buyer_notes }}</p>
+          <div v-if="quoteAggregate.quote.buyer_notes" class="bg-base-200 p-3.5 rounded-lg mt-4 text-sm text-neutral-500">
+            <strong class="font-semibold text-neutral-900">Notas del comprador:</strong>
+            <p class="mt-1 text-neutral-700">{{ quoteAggregate.quote.buyer_notes }}</p>
           </div>
-
-          <div class="table-bottom-total-row">
-            <span class="total-text-label">Total</span>
-            <strong class="total-text-amount">{{ formatMoney(calculatedTotal) }}</strong>
+          <div class="bg-teal-100/50 rounded-xl px-6 py-3.5 flex justify-between items-center mt-6 text-neutral-900">
+            <span class="text-sm font-semibold">Total</span>
+            <strong class="text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
           </div>
         </div>
 
-        <div class="details-sidebar-boxes">
-          <div class="side-detail-card">
-            <h4>Proveedor</h4>
-            <div class="side-provider-avatar">
+        <div class="flex flex-col gap-6">
+          <div class="bg-white border border-neutral-200 rounded-2xl p-6 text-center">
+            <h4 class="text-left mb-5 text-neutral-900 text-base font-bold font-serif">Proveedor</h4>
+            <div class="w-16 h-16 rounded-full border-2 border-neutral-900 bg-white flex items-center justify-center mx-auto mb-3 overflow-hidden p-1">
               <ProviderLogo
                 :blob-id="provider?.logo_blob_id"
                 :alt="provider?.company_name"
                 :fallback-text="provider?.company_name"
               />
             </div>
-            <h5>{{ provider?.company_name || 'Proveedor' }}</h5>
-
-            <div class="provider-stars-rating">
-              <i class="fa-solid fa-star star-filled"></i>
-              <i class="fa-solid fa-star star-filled"></i>
-              <i class="fa-solid fa-star star-filled"></i>
-              <i class="fa-solid fa-star star-filled"></i>
-              <i class="fa-regular fa-star star-empty"></i>
+            <h5 class="text-base text-neutral-900 font-bold mb-1.5 font-serif">
+              {{ provider?.company_name || "Proveedor" }}
+            </h5>
+            <div class="flex justify-center gap-1 text-sm mb-5">
+              <i class="fa-solid fa-star text-amber-500"></i>
+              <i class="fa-solid fa-star text-amber-500"></i>
+              <i class="fa-solid fa-star text-amber-500"></i>
+              <i class="fa-solid fa-star text-amber-500"></i>
+              <i class="fa-regular fa-star text-neutral-300"></i>
             </div>
-
-            <button type="button" class="btn-side-action" @click.prevent>
+            <button
+              type="button"
+              class="w-full bg-transparent border border-teal-700 text-teal-700 py-2 px-5 rounded-lg font-semibold text-sm cursor-pointer hover:bg-teal-700 hover:text-white transition-colors capitalize"
+              @click.prevent
+            >
               ver proveedor
             </button>
           </div>
 
-          <div class="side-detail-card address-box">
-            <h4>Dirección de Entrega</h4>
-
-            <div class="address-user-line">
-              <i class="fa-solid fa-location-dot map-pin-icon"></i>
-              <span class="address-user-name">{{ buyerFullName }}</span>
+          <div class="bg-white border border-neutral-200 rounded-2xl p-6 text-left">
+            <h4 class="mb-5 text-neutral-900 text-base font-bold font-serif">Dirección de Entrega</h4>
+            <div class="flex items-center gap-2 text-neutral-900 mb-2.5">
+              <i class="fa-solid fa-location-dot text-lg text-neutral-900"></i>
+              <span class="font-bold text-sm text-neutral-900">{{ buyerFullName }}</span>
             </div>
-
-            <p class="address-line-text">
-              {{ quoteAggregate.quote.shipping_address || 'Dirección no especificada' }}
+            <p class="text-neutral-700 text-xs leading-relaxed font-normal mb-1.5">
+              {{ quoteAggregate.quote.shipping_address || "Dirección no especificada" }}
             </p>
-
-            <p v-if="buyerPhone" class="address-phone-text">
+            <p v-if="buyerPhone" class="text-neutral-500 text-xs font-normal">
               Tel. {{ buyerPhone }}
             </p>
           </div>
         </div>
       </div>
 
-      <div class="details-action-footer">
-        <button
-          type="button"
-          class="btn-footer-pill"
-          @click="handleDownloadInvoice"
-        >
-          <i class="fa-solid fa-arrow-down-to-bracket"></i>
-          <span>Descargar factura</span>
-        </button>
-
-        <button
-          type="button"
-          class="btn-footer-pill right"
-          @click="handleOpenChat"
-        >
-          <i class="fa-regular fa-comment-dots"></i>
-          <span>Enviar mensaje al proveedor</span>
-        </button>
+      <div class="flex flex-col gap-4 mt-2">
+        <QuoteActionBar
+          :actions="availableActions"
+          :is-action-processing="isActionProcessing"
+          @action="executeAction"
+        />
+        <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4">
+          <button
+            type="button"
+            class="bg-transparent border border-teal-700 text-teal-700 py-2.5 px-5 rounded-xl font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-teal-700 hover:text-white transition-colors"
+            @click="handleDownloadInvoice"
+          >
+            <i class="fa-solid fa-arrow-down-to-bracket"></i>
+            <span>Descargar factura</span>
+          </button>
+          <button
+            type="button"
+            class="bg-transparent border border-teal-700 text-teal-700 py-2.5 px-5 rounded-xl font-semibold text-sm cursor-pointer inline-flex items-center justify-center gap-2 hover:bg-teal-700 hover:text-white transition-colors"
+            @click="handleOpenChat"
+          >
+            <i class="fa-regular fa-comment-dots"></i>
+            <span>Enviar mensaje al proveedor</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
-
-<style scoped>
-.quote-detail-shell {
-  display: flex;
-  flex-direction: column;
-}
-
-.loading-state,
-.error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 1rem;
-  gap: 1rem;
-  color: #64748b;
-  font-size: 1rem;
-}
-
-.error-icon {
-  font-size: 3rem;
-  color: #ef4444;
-}
-
-.details-content {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.details-top-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-}
-
-.details-title-group {
-  display: flex;
-  align-items: center;
-  gap: 1.2rem;
-}
-
-.btn-back-arrow {
-  background: none;
-  border: none;
-  font-size: 1.4rem;
-  color: var(--primary-blue, #083c5a);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.details-order-heading-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.heading-title-text {
-  font-size: 1.55rem;
-  color: var(--primary-blue, #083c5a);
-  font-weight: 700;
-  font-family: 'Lora', serif;
-}
-
-.details-order-subdate {
-  color: #64748b;
-  font-size: 0.88rem;
-  margin-top: 0.2rem;
-}
-
-.order-summary-card {
-  background-color: #f0faf9;
-  border: 1.5px solid #a3ded8;
-  border-radius: 16px;
-  padding: 1.4rem 2rem;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.summary-col {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.summary-col-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--primary-blue, #083c5a);
-  font-size: 0.85rem;
-  font-weight: 600;
-}
-
-.summary-icon {
-  color: var(--primary-blue, #083c5a);
-  font-size: 1rem;
-}
-
-.summary-val {
-  color: var(--primary-blue, #083c5a);
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.details-split-grid {
-  display: grid;
-  grid-template-columns: 2.2fr 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.details-products-box {
-  background: #ffffff;
-  border: 1.5px solid var(--border-gray, #e0e0e0);
-  border-radius: 16px;
-  padding: 1.5rem;
-}
-
-.box-inner-title {
-  font-size: 1rem;
-  color: var(--primary-blue, #083c5a);
-  font-weight: 700;
-  margin-bottom: 1.2rem;
-}
-
-.products-table-wrapper {
-  overflow-x: auto;
-}
-
-.order-products-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.88rem;
-}
-
-.order-products-table th {
-  color: #777;
-  font-weight: 500;
-  text-align: left;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #f2f2f2;
-}
-
-.order-products-table td {
-  padding: 1rem 0.5rem;
-  border-bottom: 1px solid #f8f8f8;
-  vertical-align: middle;
-}
-
-.product-item-cell {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.table-prod-img-box {
-  width: 58px;
-  height: 58px;
-  border: 1px solid var(--border-gray, #e0e0e0);
-  border-radius: 8px;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 4px;
-  flex-shrink: 0;
-}
-
-.product-item-name {
-  font-weight: 600;
-  color: var(--primary-blue, #083c5a);
-  line-height: 1.35;
-  font-size: 0.88rem;
-}
-
-.td-price,
-.td-qty,
-.td-subtotal {
-  font-weight: 600;
-  color: var(--primary-blue, #083c5a);
-  font-size: 0.88rem;
-}
-
-.buyer-notes-box {
-  background: var(--bg-gray, #f5f7f9);
-  padding: 0.8rem 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
-  font-size: 0.85rem;
-  color: #475569;
-}
-
-.table-bottom-total-row {
-  background-color: #e2f4f2;
-  border-radius: 10px;
-  padding: 0.85rem 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 1.5rem;
-  color: var(--primary-blue, #083c5a);
-}
-
-.total-text-label {
-  font-size: 0.95rem;
-  font-weight: 600;
-}
-
-.total-text-amount {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.details-sidebar-boxes {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.side-detail-card {
-  background: #ffffff;
-  border: 1.5px solid var(--border-gray, #e0e0e0);
-  border-radius: 16px;
-  padding: 1.5rem;
-  text-align: center;
-}
-
-.side-detail-card h4 {
-  text-align: left;
-  margin-bottom: 1.2rem;
-  color: var(--primary-blue, #083c5a);
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.side-provider-avatar {
-  width: 70px;
-  height: 70px;
-  border-radius: 50%;
-  border: 2px solid #083c5a;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 0.8rem auto;
-  overflow: hidden;
-  padding: 4px;
-}
-
-.side-detail-card h5 {
-  font-size: 0.95rem;
-  color: var(--primary-blue, #083c5a);
-  font-weight: 700;
-  margin-bottom: 0.4rem;
-}
-
-.provider-stars-rating {
-  display: flex;
-  justify-content: center;
-  gap: 0.25rem;
-  font-size: 0.85rem;
-  margin-bottom: 1.2rem;
-}
-
-.star-filled {
-  color: #f59e0b;
-}
-
-.star-empty {
-  color: #cbd5e1;
-}
-
-.btn-side-action {
-  width: 100%;
-  background: transparent;
-  border: 1.5px solid var(--light-teal, #189c94);
-  color: var(--light-teal, #189c94);
-  padding: 0.5rem 1.2rem;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.88rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.btn-side-action:hover {
-  background-color: var(--light-teal, #189c94);
-  color: #ffffff;
-}
-
-.address-box {
-  text-align: left;
-}
-
-.address-user-line {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--primary-blue, #083c5a);
-  margin-bottom: 0.6rem;
-}
-
-.map-pin-icon {
-  color: var(--primary-blue, #083c5a);
-  font-size: 1.1rem;
-}
-
-.address-user-name {
-  font-weight: 700;
-  font-size: 0.92rem;
-}
-
-.address-line-text {
-  color: var(--light-teal, #189c94);
-  font-size: 0.82rem;
-  line-height: 1.45;
-  font-weight: 500;
-  margin-bottom: 0.6rem;
-}
-
-.address-phone-text {
-  color: var(--light-teal, #189c94);
-  font-size: 0.82rem;
-  font-weight: 500;
-}
-
-.details-action-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1.5rem;
-  margin-top: 0.5rem;
-}
-
-.btn-footer-pill {
-  background: transparent;
-  border: 1.5px solid var(--light-teal, #189c94);
-  color: var(--light-teal, #189c94);
-  padding: 0.65rem 1.4rem;
-  border-radius: 10px;
-  font-weight: 600;
-  font-size: 0.88rem;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  transition: all 0.2s ease;
-}
-
-.btn-footer-pill:hover {
-  background-color: var(--light-teal, #189c94);
-  color: #ffffff;
-}
-
-@media (max-width: 1024px) {
-  .order-summary-card {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .details-split-grid {
-    grid-template-columns: 1fr;
-  }
-  .details-action-footer {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-
-@media (max-width: 768px) {
-  .details-top-header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-</style>
