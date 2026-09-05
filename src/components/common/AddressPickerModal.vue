@@ -157,13 +157,13 @@ watch(
     @close="handleCancel"
     @update:model-value="emit('update:modelValue', $event)"
   >
-    <h2 class="map-modal-header">
+    <h2 class="text-left text-xl text-blue-500 mb-4 font-serif">
       <i class="fa-solid fa-location-dot"></i> Seleccionar Ubicación
     </h2>
 
     <button
       type="button"
-      class="btn-teal map-btn-current"
+      class="w-full mb-4 rounded-lg p-3 flex items-center justify-center gap-2 bg-teal-500 text-white font-semibold transition-opacity duration-200 disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed"
       :disabled="isLocating"
       @click="useCurrentLocation"
     >
@@ -171,7 +171,7 @@ watch(
       <span>{{ isLocating ? "Obteniendo..." : "Usar mi ubicación actual" }}</span>
     </button>
 
-    <div style="height: 320px; width: 100%; border-radius: 8px; overflow: hidden; border: 1px solid var(--border-gray);">
+    <div class="h-80 w-full rounded-lg overflow-hidden border border-neutral-200 mb-4">
       <l-map
         v-model:zoom="zoom"
         :center="center"
@@ -193,19 +193,23 @@ watch(
       </l-map>
     </div>
 
-    <label class="map-address-label">Dirección detectada:</label>
-    <div class="map-address-box">
+    <label class="block text-left text-sm font-semibold text-blue-500 mt-2">Dirección detectada:</label>
+    <div class="p-3 bg-neutral-100 rounded-lg text-sm text-neutral-600 text-left mt-2 mb-2">
       {{ mapAddressText }}
     </div>
 
     <template #footer>
-      <div class="map-modal-actions">
-        <button type="button" class="btn-secondary" @click="handleCancel">
+      <div class="flex justify-end gap-4 w-full pt-4">
+        <button
+          type="button"
+          class="bg-white border border-neutral-200 text-blue-500 py-3 px-6 rounded-lg font-semibold cursor-pointer hover:bg-neutral-50 transition-colors"
+          @click="handleCancel"
+        >
           Cancelar
         </button>
         <button
           type="button"
-          class="btn-teal"
+          class="bg-teal-500 text-white border-none py-3 px-6 rounded-lg font-semibold cursor-pointer transition-opacity duration-200 disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed hover:bg-teal-600"
           :disabled="!tempMunicipalityId"
           @click="handleConfirm"
         >
@@ -215,75 +219,3 @@ watch(
     </template>
   </BaseModal>
 </template>
-
-<style scoped>
-.map-modal-header {
-  text-align: left;
-  font-size: 1.3rem;
-  color: var(--primary-blue);
-  margin-bottom: 1rem;
-}
-
-.map-btn-current {
-  width: 100%;
-  margin-bottom: 1rem;
-  border-radius: 8px;
-  padding: 0.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.map-address-label {
-  display: block;
-  text-align: left;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: var(--primary-blue);
-  margin-top: 1rem;
-}
-
-.map-address-box {
-  padding: 0.75rem;
-  background: var(--bg-gray);
-  border-radius: 8px;
-  font-size: 0.9rem;
-  color: #475569;
-  text-align: left;
-  margin-top: 0.4rem;
-}
-
-.map-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  width: 100%;
-}
-
-.btn-teal {
-  background: var(--light-teal);
-  color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: opacity 0.2s ease;
-}
-
-.btn-teal:disabled {
-  background: #cbd5e1;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  background: #ffffff;
-  border: 1px solid var(--border-gray);
-  color: var(--primary-blue);
-  padding: 0.75rem 1.5rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-</style>

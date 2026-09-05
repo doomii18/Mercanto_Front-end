@@ -10,6 +10,7 @@ import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
 import type { PaymentMethod } from "@/api/services/quote/types";
 
 interface ShippingMethodOption {
@@ -89,14 +90,16 @@ const product = ref<ProductDetailData>({
     shippingMethods: [],
 });
 
-// Quote Draft State
 const providerId = computed(() => product.value.provider.id ?? "");
 const currentDraft = computed(() => providerId.value ? quoteBuilderStore.getDraft(providerId.value) : null);
 const draftItems = computed(() => currentDraft.value?.items ?? []);
 const draftSubtotal = computed(() => providerId.value ? quoteBuilderStore.getSubtotal(providerId.value) : 0);
 
 const showConfirmQuoteModal = ref(false);
+const showAddressPicker = ref(false);
 const shippingAddress = ref("");
+const shippingMunicipalityId = ref<string | null>(null);
+const shippingCoordinates = ref<{ lat: number; lng: number } | null>(null);
 const paymentPreference = ref<PaymentMethod>("virtual_wallet");
 
 function hashString(str: string): number {
@@ -315,6 +318,12 @@ const openConfirmModal = () => {
         paymentPreference.value = currentDraft.value.paymentPreference || "virtual_wallet";
     }
     showConfirmQuoteModal.value = true;
+};
+
+const handleAddressConfirm = (result: AddressPickerResult) => {
+    shippingAddress.value = result.address;
+    shippingMunicipalityId.value = result.municipalityId;
+    shippingCoordinates.value = { lat: result.latitude, lng: result.longitude };
 };
 
 const confirmQuote = async () => {
@@ -673,12 +682,24 @@ const navigateToCategory = () => {
                     <label class="block text-sm font-semibold text-neutral-900 mb-1">
                         Dirección de envío *
                     </label>
-                    <input
-                        v-model="shippingAddress"
-                        type="text"
-                        class="w-full p-2.5 bg-white text-neutral-900 placeholder:text-neutral-400 border border-neutral-300 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
-                        placeholder="Ej. Casa #123, Barrio Centro, Managua"
-                    />
+                    <div class="flex gap-2">
+                        <input
+                            v-model="shippingAddress"
+                            type="text"
+                            readonly
+                            class="w-full p-2.5 bg-neutral-50 text-neutral-900 placeholder:text-neutral-400 border border-neutral-300 rounded-lg cursor-pointer focus:outline-none"
+                            placeholder="Toca para seleccionar en el mapa"
+                            @click="showAddressPicker = true"
+                        />
+                        <button
+                            type="button"
+                            class="flex items-center justify-center rounded-lg bg-teal-600 px-4 py-2.5 text-white transition-colors hover:bg-teal-700"
+                            @click="showAddressPicker = true"
+                            aria-label="Abrir mapa"
+                        >
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </button>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-sm font-semibold text-neutral-900 mb-1">
@@ -695,5 +716,13 @@ const navigateToCategory = () => {
                 </div>
             </div>
         </ConfirmModal>
+
+        <AddressPickerModal
+            v-model="showAddressPicker"
+            :initial-address="shippingAddress"
+            :initial-lat="shippingCoordinates?.lat"
+            :initial-lng="shippingCoordinates?.lng"
+            @confirm="handleAddressConfirm"
+        />
     </div>
 </template>
