@@ -107,19 +107,18 @@ const loadProfileData = async () => {
 };
 
 // --- Handlers for Provider Modal ---
-const handleProviderSaved = (updatedData: any) => {
-  if (providerOrg.value) {
-    providerOrg.value = {
-      ...providerOrg.value,
-      company_name: updatedData.negocioName,
-      phone_number: updatedData.telNegocio,
-    };
-  }
-  if (providerPublic.value) {
-    providerPublic.value = {
-      ...providerPublic.value,
-      company_name: updatedData.negocioName
-    };
+const handleProviderSaved = async () => {
+  if (contextStore.activeOrganizationId) {
+    try {
+      providerOrg.value = await organizationApi.getOrganizationDetails(
+        contextStore.activeOrganizationId
+      );
+      providerPublic.value = await organizationApi.getPublicProvider(
+        contextStore.activeOrganizationId
+      );
+    } catch (e) {
+      console.warn("Failed to reload provider details", e);
+    }
   }
 };
 

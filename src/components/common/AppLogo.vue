@@ -1,18 +1,24 @@
 <script setup lang="ts">
+import { computed } from "vue";
+import logoVariantOne from "@/assets/LOGO.png";
+import logoVariantTwo from "@/assets/1.1 Imagotipo variacion.png";
 
-import logoImg from "@/assets/LOGO.png";
-
+type LogoVariant = "logo" | "imagotipo";
 
 interface Props {
-
-  variant?: "logo" | "imagotipo";
+  variant?: LogoVariant;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   variant: "logo",
 });
 
+const LOGO_MAP: Record<LogoVariant, string> = {
+  logo: logoVariantOne,
+  imagotipo: logoVariantTwo,
+};
 
+const logoSrc = computed(() => LOGO_MAP[props.variant]);
 </script>
 
 <template>
@@ -22,7 +28,7 @@ const props = withDefaults(defineProps<Props>(), {
     aria-label="Ir a Mercanto - Inicio"
   >
     <img
-      :src="logoImg"
+      :src="logoSrc"
       alt="Mercanto"
       class="h-full w-auto object-contain pointer-events-none select-none"
       draggable="false"

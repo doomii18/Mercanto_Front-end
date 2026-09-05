@@ -21,7 +21,7 @@ export const CreateProductRequestSchema = z.object({
   description: ProductDescriptionSchema.optional().nullable(),
   base_price: ProductPriceSchema,
   shipping_methods: z.array(ShippingMethodSchema),
-  unit_of_measure: UnitOfMeasureSchema.optional(),
+  unit_of_measure: UnitOfMeasureSchema.default("piece"),
   spec: ProductSpecSchema,
 });
 
@@ -51,9 +51,9 @@ export const ProductResponseSchema = z.object({
   id: z.uuid(),
   provider_id: z.uuid(),
   category_id: z.uuid(),
-  title: ProductTitleSchema,
-  description: ProductDescriptionSchema.nullable().optional(),
-  base_price: ProductPriceSchema,
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  base_price: z.coerce.number(),
   unit_of_measure: UnitOfMeasureSchema,
   spec: ProductSpecSchema,
   is_active: z.boolean(),

@@ -10,8 +10,8 @@ export const InternalInventoryDtoSchema = z.object({
   product_id: z.uuid(),
   available_stock: z.number().int(),
   reserved_stock: z.number().int(),
-  updated_at: z.iso.datetime(),
   lifetime_units_sold: z.number().int(),
+  updated_at: z.iso.datetime(),
 });
 
 export const PublicInventoryDtoSchema = z.object({

@@ -26,4 +26,3 @@ export type PaginatedProductImageSearchResponse = z.infer<typeof PaginatedProduc
 export type ProductSortField = z.infer<typeof ProductSortFieldSchema>;
 
 export type UnitOfMeasure = z.infer<typeof UnitOfMeasureSchema>;
-export type ShippingMethod = z.infer<typeof ShippingMethodSchema>;

@@ -3,11 +3,18 @@ import { RatingSummarySchema, SortDirectionSchema } from "../../shared/schemas";
 
 export { RatingSummarySchema, SortDirectionSchema };
 
-export const CategoryNameSchema = z.string().min(1).max(100);
-export const CategoryDescriptionSchema = z.string().min(1).max(2000);
-export const ProductTitleSchema = z.string().min(1).max(255);
-export const ProductDescriptionSchema = z.string().min(1).max(2000);
-export const ProductPriceSchema = z.number().min(0);
+export const CategoryNameSchema = z.string().trim().min(1).max(100);
+export const CategoryDescriptionSchema = z.string().trim().min(1).max(2000);
+
+export const ProductTitleSchema = z.string().trim().min(1).max(255);
+
+export const ProductDescriptionSchema = z.string().trim().min(1).max(2000);
+
+
+export const ProductPriceSchema = z.coerce.number().min(0);
+
+
+export const MinOrderQuantitySchema = z.number().int().min(1);
 
 export const UnitOfMeasureSchema = z.enum([
   "piece",
@@ -32,12 +39,12 @@ export const ProductSortFieldSchema = z.enum([
 ]);
 
 export const PhysicalSpecSchema = z.object({
-  min_order_quantity: z.number().int().min(1),
+  min_order_quantity: MinOrderQuantitySchema,
 });
 
 export const ServiceSpecSchema = z.object({
   estimated_duration_minutes: z.number().int().positive().optional().nullable(),
-  service_radius_km: z.number().min(0).optional().nullable(),
+  service_radius_km: z.coerce.number().min(0).optional().nullable(),
   requires_appointment: z.boolean(),
 });
 
@@ -47,12 +54,12 @@ export const ProductSpecSchema = z.union([
 ]);
 
 export const PhysicalSpecUpdateSchema = z.object({
-  min_order_quantity: z.number().int().min(1).optional().nullable(),
+  min_order_quantity: MinOrderQuantitySchema.optional().nullable(),
 });
 
 export const ServiceSpecUpdateSchema = z.object({
   estimated_duration_minutes: z.number().int().positive().optional().nullable(),
-  service_radius_km: z.number().min(0).optional().nullable(),
+  service_radius_km: z.coerce.number().min(0).optional().nullable(),
   requires_appointment: z.boolean().optional().nullable(),
 });
 
@@ -63,5 +70,5 @@ export const ProductSpecUpdateSchema = z.union([
 
 export const CategorySummarySchema = z.object({
   id: z.uuid(),
-  name: CategoryNameSchema,
+  name: z.string(),
 });
