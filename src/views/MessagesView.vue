@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { chatApi, notificationsApi } from "../api";
@@ -56,6 +57,7 @@ const filteredThreads = computed(() => {
 
 async function selectThread(threadId: string) {
   if (activeThreadId.value === threadId) return;
+
   activeThreadId.value = threadId;
   isLoadingMessages.value = true;
   currentMessages.value = [];
@@ -146,6 +148,7 @@ onMounted(async () => {
         console.error("Malformed NewChatMessage payload:", err);
       }
     });
+
     unsubs.push(unsub);
 
     const res = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });
@@ -175,620 +178,145 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="messages-shell">
-    <!-- Conversations panel -->
-    <aside class="conv-panel">
-      <h2 class="conv-title">Mensajes</h2>
+  <!-- Shell: Uses flex-1 min-h-0 to perfectly constrain height to parent's content box,
+       while negative margins break out of parent padding for a full-bleed background without causing page scroll -->
+  <div class="flex flex-1 min-h-0 overflow-hidden relative bg-[#fde8e4] -m-4 w-[calc(100%+2rem)] sm:-m-6 sm:w-[calc(100%+3rem)] lg:-m-10 lg:w-[calc(100%+5rem)] max-md:flex-col">
 
-      <div class="search-wrap">
+    <!-- Conversations panel -->
+    <aside class="w-[370px] min-w-[260px] min-h-0 bg-white border-r border-[#eee] flex flex-col pt-6 px-5 pb-4 gap-4 overflow-hidden max-md:w-full max-md:min-w-0 max-md:h-2/5 max-md:border-r-0 max-md:border-b">
+      <h2 class="text-[1.35rem] font-bold text-[#083c5a] m-0 shrink-0">Mensajes</h2>
+
+      <div class="relative shrink-0">
         <input
           v-model="searchQuery"
-          class="search-input"
+          class="w-full py-2.5 pl-4 pr-10 border-[1.5px] border-[#d9d9d9] rounded-full text-sm text-[#444] bg-[#f9f9f9] outline-none box-border transition-colors focus:border-[#189c94]"
           placeholder="Buscar conversación por ID"
           type="text"
         />
-        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <i class="fa-solid fa-magnifying-glass absolute right-3.5 top-1/2 -translate-y-1/2 text-[#888] text-[0.85rem]"></i>
       </div>
 
-      <div class="tabs">
+      <div class="flex gap-6 border-b-[1.5px] border-[#eee] pb-2 shrink-0">
         <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'todos' }"
+          class="bg-transparent border-none text-[0.95rem] font-medium cursor-pointer px-0 pb-1 border-b-[2.5px] border-transparent mb-[-0.58rem] transition-all"
+          :class="activeTab === 'todos' ? 'text-[#083c5a] font-bold border-b-[#189c94]' : 'text-[#888]'"
           @click="activeTab = 'todos'"
         >
           Todos
         </button>
         <button
-          class="tab-btn"
-          :class="{ active: activeTab === 'no-leidos' }"
+          class="bg-transparent border-none text-[0.95rem] font-medium cursor-pointer px-0 pb-1 border-b-[2.5px] border-transparent mb-[-0.58rem] transition-all"
+          :class="activeTab === 'no-leidos' ? 'text-[#083c5a] font-bold border-b-[#189c94]' : 'text-[#888]'"
           @click="activeTab = 'no-leidos'"
         >
           No leídos
         </button>
       </div>
 
-      <ul class="conv-list">
-        <li v-if="isLoadingThreads" class="empty-hint">Cargando conversaciones...</li>
-        <li v-else-if="filteredThreads.length === 0" class="empty-hint">No hay conversaciones</li>
-
+      <!-- Scrollable Thread List -->
+      <ul class="list-none p-0 m-0 overflow-y-auto min-h-0 flex-1 flex flex-col gap-1">
+        <li v-if="isLoadingThreads" class="text-center text-[0.85rem] text-[#94a3b8] py-6">Cargando conversaciones...</li>
+        <li v-else-if="filteredThreads.length === 0" class="text-center text-[0.85rem] text-[#94a3b8] py-6">No hay conversaciones</li>
         <li
           v-for="conv in filteredThreads"
           :key="conv.id"
-          class="conv-item"
-          :class="{ 'conv-item--active': conv.id === activeThreadId }"
+          class="flex items-center gap-3.5 p-3 rounded-xl cursor-pointer transition-colors hover:bg-[#f5f5f5] shrink-0"
+          :class="{ 'bg-[#fde8e4]': conv.id === activeThreadId }"
           @click="selectThread(conv.id)"
         >
           <div
-            class="conv-avatar"
+            class="w-12 h-12 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0 tracking-wide"
             :style="{ backgroundColor: getAvatarColor(conv.id) }"
           >
             {{ conv.id.substring(0, 2).toUpperCase() }}
           </div>
-          <div class="conv-info">
-            <div class="conv-name-row">
-              <span class="conv-name" :title="conv.id">{{ conv.id }}</span>
-              <span class="conv-time">{{ threadPreviews[conv.id]?.time }}</span>
+          <div class="flex-1 min-w-0 overflow-hidden">
+            <div class="flex justify-between items-center">
+              <span class="font-bold text-sm text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap" :title="conv.id">{{ conv.id }}</span>
+              <span class="text-xs text-[#999] whitespace-nowrap ml-2 shrink-0">{{ threadPreviews[conv.id]?.time }}</span>
             </div>
-            <span class="conv-preview">{{ threadPreviews[conv.id]?.preview }}</span>
+            <span class="text-xs text-[#777] whitespace-nowrap overflow-hidden text-ellipsis block mt-0.5">{{ threadPreviews[conv.id]?.preview }}</span>
           </div>
         </li>
       </ul>
     </aside>
 
     <!-- Chat panel -->
-    <section class="chat-panel">
+    <section class="flex-1 min-w-0 min-h-0 flex flex-col bg-white overflow-hidden max-md:h-3/5">
       <template v-if="activeThread">
-        <div class="chat-header">
+        <div class="flex items-center gap-4 px-6 py-4 shrink-0">
           <div
-            class="chat-avatar"
+            class="w-[50px] h-[50px] rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
             :style="{ backgroundColor: getAvatarColor(activeThread.id) }"
           >
             {{ activeThread.id.substring(0, 2).toUpperCase() }}
           </div>
-          <div class="chat-contact">
-            <span class="chat-name">{{ activeThread.id }}</span>
-            <span class="chat-meta">
+          <div class="flex flex-col overflow-hidden min-w-0">
+            <span class="font-bold text-base text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">{{ activeThread.id }}</span>
+            <span class="text-xs text-[#888] flex items-center gap-1 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
               Quote Group: {{ activeThread.quote_group_id }}
-              <span class="status-dot online"></span>
-              <span class="status-label">En línea</span>
+              <span class="w-2 h-2 rounded-full bg-[#22c55e] inline-block shrink-0"></span>
+              <span class="text-[#888]">En línea</span>
             </span>
           </div>
         </div>
 
-        <div class="chat-divider"></div>
+        <div class="h-px bg-[#eee] mx-6 shrink-0"></div>
 
-        <div ref="messagesContainer" class="chat-messages">
-          <div class="date-separator">Canal Seguro</div>
+        <!-- Scrollable Message Area -->
+        <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto px-8 py-6 flex flex-col gap-4 bg-white max-md:px-4">
+          <div class="text-center text-[0.78rem] text-[#aaa] my-2 relative shrink-0 before:content-[''] before:absolute before:top-1/2 before:w-[calc(50%-80px)] before:h-px before:bg-[#e5e5e5] before:left-0 after:content-[''] after:absolute after:top-1/2 after:w-[calc(50%-80px)] after:h-px after:bg-[#e5e5e5] after:right-0">
+            Canal Seguro
+          </div>
 
-          <div v-if="isLoadingMessages" class="empty-hint">Cargando mensajes...</div>
-          <div v-else-if="currentMessages.length === 0" class="empty-hint">No hay mensajes aún.</div>
+          <div v-if="isLoadingMessages" class="text-center text-[0.85rem] text-[#94a3b8] py-6">Cargando mensajes...</div>
+          <div v-else-if="currentMessages.length === 0" class="text-center text-[0.85rem] text-[#94a3b8] py-6">No hay mensajes aún.</div>
 
           <div
             v-for="msg in currentMessages"
             :key="msg.id"
-            class="msg-wrap"
-            :class="msg.sender_id === authStore.account?.id ? 'msg-wrap--me' : 'msg-wrap--them'"
+            class="flex shrink-0"
+            :class="msg.sender_id === authStore.account?.id ? 'justify-end' : 'justify-start'"
           >
             <div
-              class="msg-bubble"
-              :class="msg.sender_id === authStore.account?.id ? 'bubble-me' : 'bubble-them'"
+              class="max-w-[58%] py-3 px-4 rounded-2xl relative max-md:max-w-[80%]"
+              :class="msg.sender_id === authStore.account?.id ? 'bg-[#189c94] rounded-br-sm' : 'bg-[#fde8e4] rounded-bl-sm'"
             >
-              <p class="msg-text">{{ msg.content }}</p>
-              <span class="msg-time">{{ formatUuidv7ToLocalTime(msg.id) }}</span>
+              <p class="m-0 mb-1.5 text-[0.88rem] leading-relaxed break-words" :class="msg.sender_id === authStore.account?.id ? 'text-white' : 'text-[#1a1a1a]'">
+                {{ msg.content }}
+              </p>
+              <span class="text-[0.7rem] block text-right" :class="msg.sender_id === authStore.account?.id ? 'text-white/75' : 'text-[#aaa]'">
+                {{ formatUuidv7ToLocalTime(msg.id) }}
+              </span>
             </div>
           </div>
         </div>
 
-        <form class="chat-input-bar" @submit.prevent="sendMessage">
-          <button type="button" class="attach-btn" title="Adjuntar archivo">
+        <form class="flex items-center gap-3 px-6 py-4 border-t border-[#eee] bg-white shrink-0" @submit.prevent="sendMessage">
+          <button type="button" class="bg-transparent border-none cursor-pointer text-lg text-[#aaa] p-1 transition-colors shrink-0 hover:text-[#189c94]" title="Adjuntar archivo">
             <i class="fa-solid fa-paperclip"></i>
           </button>
           <input
             v-model="newMessage"
-            class="chat-input"
+            class="flex-1 border-[1.5px] border-[#e0e0e0] rounded-full py-2.5 px-5 text-sm text-[#333] bg-[#f9f9f9] outline-none transition-colors focus:border-[#189c94] focus:bg-white"
             placeholder="Escribe tu mensaje..."
             type="text"
           />
-          <button type="submit" class="send-btn" title="Enviar" :disabled="!newMessage.trim()">
+          <button
+            type="submit"
+            class="bg-[#189c94] border-none cursor-pointer text-white w-10 h-10 rounded-full flex items-center justify-center text-[0.95rem] shrink-0 transition-all hover:bg-[#147d76] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Enviar"
+            :disabled="!newMessage.trim()"
+          >
             <i class="fa-solid fa-paper-plane"></i>
           </button>
         </form>
       </template>
 
-      <div v-else class="no-thread-selected">
-        <i class="fa-regular fa-comments empty-chat-icon"></i>
+      <div v-else class="flex-1 flex flex-col items-center justify-center gap-4 text-[#888]">
+        <i class="fa-regular fa-comments text-5xl text-[#cbd5e1]"></i>
         <p>Selecciona una conversación para ver los mensajes</p>
       </div>
     </section>
   </div>
 </template>
-
-<style scoped>
-/* Shell */
-.messages-shell {
-  display: flex;
-  height: calc(100vh - 64px);
-  max-height: calc(100vh - 64px);
-  margin: -2.5rem -3rem;
-  background: #fde8e4;
-  overflow: hidden;
-  position: relative;
-}
-
-/* Parent container overflow suppression */
-:global(body:has(.messages-shell)),
-:global(main:has(.messages-shell)),
-:global(.content:has(.messages-shell)) {
-  overflow: hidden !important;
-}
-
-/* Conversations panel */
-.conv-panel {
-  width: 370px;
-  min-width: 260px;
-  min-height: 0;
-  background: #ffffff;
-  border-right: 1px solid #eee;
-  display: flex;
-  flex-direction: column;
-  padding: 1.5rem 1.25rem 1rem;
-  gap: 1rem;
-  overflow: hidden;
-}
-
-.conv-title {
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #083c5a;
-  margin: 0;
-  flex-shrink: 0;
-}
-
-.search-wrap {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.search-input {
-  width: 100%;
-  padding: 0.6rem 2.5rem 0.6rem 1rem;
-  border: 1.5px solid #d9d9d9;
-  border-radius: 30px;
-  font-size: 0.9rem;
-  color: #444;
-  background: #f9f9f9;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s;
-}
-
-.search-input:focus {
-  border-color: #189c94;
-}
-
-.search-icon {
-  position: absolute;
-  right: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: #888;
-  font-size: 0.85rem;
-}
-
-.tabs {
-  display: flex;
-  gap: 1.5rem;
-  border-bottom: 1.5px solid #eee;
-  padding-bottom: 0.5rem;
-  flex-shrink: 0;
-}
-
-.tab-btn {
-  background: none;
-  border: none;
-  font-size: 0.95rem;
-  font-weight: 500;
-  color: #888;
-  cursor: pointer;
-  padding: 0 0 0.4rem;
-  border-bottom: 2.5px solid transparent;
-  margin-bottom: -0.58rem;
-  transition: all 0.2s;
-}
-
-.tab-btn.active {
-  color: #083c5a;
-  font-weight: 700;
-  border-bottom-color: #189c94;
-}
-
-.conv-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  overflow-y: auto;
-  min-height: 0;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.conv-item {
-  display: flex;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.75rem 0.75rem;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.18s;
-  flex-shrink: 0;
-}
-
-.conv-item:hover {
-  background: #f5f5f5;
-}
-
-.conv-item--active {
-  background: #fde8e4;
-}
-
-.conv-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-  letter-spacing: 0.5px;
-}
-
-.conv-info {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.conv-name-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.conv-name {
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #1a1a1a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.conv-time {
-  font-size: 0.75rem;
-  color: #999;
-  white-space: nowrap;
-  margin-left: 0.5rem;
-  flex-shrink: 0;
-}
-
-.conv-preview {
-  font-size: 0.8rem;
-  color: #777;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
-  margin-top: 0.15rem;
-}
-
-/* Chat panel */
-.chat-panel {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  overflow: hidden;
-}
-
-.chat-header {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.1rem 1.5rem;
-  flex-shrink: 0;
-}
-
-.chat-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.chat-contact {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-width: 0;
-}
-
-.chat-name {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #1a1a1a;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.chat-meta {
-  font-size: 0.8rem;
-  color: #888;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  margin-top: 0.1rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #ccc;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-.status-dot.online {
-  background: #22c55e;
-}
-
-.status-label {
-  color: #888;
-}
-
-.chat-divider {
-  height: 1px;
-  background: #eee;
-  margin: 0 1.5rem;
-  flex-shrink: 0;
-}
-
-.chat-messages {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 1.5rem 2rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  background: #ffffff;
-}
-
-.date-separator {
-  text-align: center;
-  font-size: 0.78rem;
-  color: #aaa;
-  margin: 0.5rem 0;
-  position: relative;
-  flex-shrink: 0;
-}
-
-.date-separator::before,
-.date-separator::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  width: calc(50% - 80px);
-  height: 1px;
-  background: #e5e5e5;
-}
-
-.date-separator::before {
-  left: 0;
-}
-
-.date-separator::after {
-  right: 0;
-}
-
-.msg-wrap {
-  display: flex;
-  flex-shrink: 0;
-}
-
-.msg-wrap--me {
-  justify-content: flex-end;
-}
-
-.msg-wrap--them {
-  justify-content: flex-start;
-}
-
-.msg-bubble {
-  max-width: 58%;
-  padding: 0.75rem 1rem;
-  border-radius: 16px;
-  position: relative;
-}
-
-.bubble-me {
-  background: #189c94;
-  border-bottom-right-radius: 4px;
-}
-
-.bubble-them {
-  background: #fde8e4;
-  border-bottom-left-radius: 4px;
-}
-
-.msg-text {
-  margin: 0 0 0.35rem;
-  font-size: 0.88rem;
-  line-height: 1.5;
-  word-break: break-word;
-}
-
-.bubble-me .msg-text {
-  color: #ffffff;
-}
-
-.bubble-them .msg-text {
-  color: #1a1a1a;
-}
-
-.msg-time {
-  font-size: 0.7rem;
-  display: block;
-  text-align: right;
-}
-
-.bubble-me .msg-time {
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.bubble-them .msg-time {
-  color: #aaa;
-}
-
-.chat-input-bar {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #eee;
-  background: #fff;
-  flex-shrink: 0;
-}
-
-.attach-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
-  color: #aaa;
-  padding: 0.3rem;
-  transition: color 0.2s;
-  flex-shrink: 0;
-}
-
-.attach-btn:hover {
-  color: #189c94;
-}
-
-.chat-input {
-  flex: 1;
-  border: 1.5px solid #e0e0e0;
-  border-radius: 30px;
-  padding: 0.65rem 1.2rem;
-  font-size: 0.9rem;
-  color: #333;
-  background: #f9f9f9;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.chat-input:focus {
-  border-color: #189c94;
-  background: #fff;
-}
-
-.send-btn {
-  background: #189c94;
-  border: none;
-  cursor: pointer;
-  color: #fff;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.95rem;
-  flex-shrink: 0;
-  transition: background 0.2s, transform 0.15s;
-}
-
-.send-btn:hover:not(:disabled) {
-  background: #147d76;
-  transform: scale(1.05);
-}
-
-.send-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.no-thread-selected {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  color: #888;
-}
-
-.empty-chat-icon {
-  font-size: 3rem;
-  color: #cbd5e1;
-}
-
-.empty-hint {
-  text-align: center;
-  font-size: 0.85rem;
-  color: #94a3b8;
-  padding: 1.5rem 0;
-}
-
-/* Responsive */
-@media (max-width: 900px) {
-  .messages-shell {
-    margin: -2.5rem -1.5rem;
-  }
-
-  .conv-panel {
-    width: 280px;
-    min-width: 220px;
-  }
-}
-
-@media (max-width: 680px) {
-  .messages-shell {
-    margin: -2.5rem -1rem;
-    flex-direction: column;
-  }
-
-  .conv-panel {
-    width: 100%;
-    min-width: unset;
-    height: 40%;
-    border-right: none;
-    border-bottom: 1px solid #eee;
-  }
-
-  .chat-panel {
-    height: 60%;
-  }
-
-  .msg-bubble {
-    max-width: 80%;
-  }
-}
-</style>

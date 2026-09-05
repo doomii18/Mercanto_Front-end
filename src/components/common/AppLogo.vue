@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import logoImg from "@/assets/logo.png";
-import imagotipoImg from "@/assets/1.1 Imagotipo variacion.png";
+
+import logoImg from "@/assets/LOGO.png";
+
 
 interface Props {
 
@@ -12,9 +12,7 @@ const props = withDefaults(defineProps<Props>(), {
   variant: "logo",
 });
 
-const imageSrc = computed(() =>
-  props.variant === "imagotipo" ? imagotipoImg : logoImg
-);
+
 </script>
 
 <template>
@@ -24,7 +22,7 @@ const imageSrc = computed(() =>
     aria-label="Ir a Mercanto - Inicio"
   >
     <img
-      :src="imageSrc"
+      :src="logoImg"
       alt="Mercanto"
       class="h-full w-auto object-contain pointer-events-none select-none"
       draggable="false"

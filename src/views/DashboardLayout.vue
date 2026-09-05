@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 import { ref } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
@@ -43,7 +44,8 @@ const closeSidebar = () => {
       <AppLogo class="h-9" />
     </header>
 
-    <div class="relative mt-16 flex min-h-[calc(100vh-64px)]">
+    <!-- Wrapper: Strictly fits the remaining viewport height (accounting for the 60px mobile bottom nav) -->
+    <div class="relative mt-16 flex h-[calc(100vh-64px-60px)] md:h-[calc(100vh-64px)] overflow-hidden">
       <!-- Mobile Backdrop -->
       <div
         v-if="sidebarOpen"
@@ -98,7 +100,6 @@ const closeSidebar = () => {
               Mi Perfil
             </span>
           </router-link>
-
           <router-link
             v-if="contextStore.isProvider"
             :to="{ name: 'provider-products' }"
@@ -128,7 +129,6 @@ const closeSidebar = () => {
               Mis Productos
             </span>
           </router-link>
-
           <router-link
             :to="{ name: 'orders' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
@@ -157,7 +157,6 @@ const closeSidebar = () => {
               Pedidos
             </span>
           </router-link>
-
           <router-link
             :to="{ name: 'messages' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
@@ -186,8 +185,7 @@ const closeSidebar = () => {
               Mensajes
             </span>
           </router-link>
-
-          <router-link
+          <router-link v-if="!contextStore.isProvider"
             :to="{ name: 'smart-search' }"
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
@@ -217,20 +215,17 @@ const closeSidebar = () => {
           </router-link>
         </nav>
 
-        <!-- 👇 User Menu pinned to the bottom of the sidebar -->
-        <!-- align="left" prevents it from overflowing the left edge of the screen -->
-        <!-- drop-direction="up" prevents it from being clipped by the bottom of the viewport -->
         <div class="hidden md:flex w-full items-center justify-center px-3 mt-auto">
           <UserMenu :collapsed="!sidebarOpen" align="left" drop-direction="up" />
         </div>
       </aside>
 
-      <!-- Main Content Area -->
+
       <main
         :class="[
-          'flex-1 flex flex-col min-h-[calc(100vh-64px)] bg-[#fdf3f0] p-4 sm:p-6 lg:p-10 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-          'max-md:mb-[60px] max-md:ml-0',
-          sidebarOpen ? 'lg:ml-60 md:ml-[72px]' : 'md:ml-[72px]'
+          'relative flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#fdf3f0] p-4 sm:p-6 lg:p-10 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'max-md:mb-15 max-md:ml-0',
+          sidebarOpen ? 'lg:ml-60 md:ml-18' : 'md:ml-[72px]'
         ]"
       >
         <router-view />
