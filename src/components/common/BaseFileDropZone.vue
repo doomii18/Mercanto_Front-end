@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch, onBeforeUnmount } from "vue";
+import { ref, computed, watch } from "vue";
+import { useFileDialog, useDropZone, tryOnScopeDispose } from "@vueuse/core";
 
 interface Props {
   modelValue?: File[] | File | null;
@@ -38,8 +39,7 @@ interface FileEntry {
   isImage: boolean;
 }
 
-const fileInputRef = ref<HTMLInputElement | null>(null);
-const isDragging = ref(false);
+const dropZoneRef = ref<HTMLElement | null>(null);
 const entries = ref<FileEntry[]>([]);
 
 const canAddMore = computed(() => {
@@ -86,10 +86,7 @@ function syncFromProps() {
 }
 
 watch(() => props.modelValue, syncFromProps, { immediate: true });
-
-onBeforeUnmount(() => {
-  clearEntryUrls();
-});
+tryOnScopeDispose(clearEntryUrls);
 
 function emitChanges() {
   const files = entries.value.map((e) => e.file);
@@ -129,10 +126,10 @@ function validateFile(file: File): boolean {
   return true;
 }
 
-function processIncomingFiles(fileList: FileList | File[]) {
-  if (props.disabled) return;
+function processIncomingFiles(files: File[] | FileList | null) {
+  if (props.disabled || !files) return;
 
-  const filesArray = Array.from(fileList);
+  const filesArray = Array.from(files);
   if (filesArray.length === 0) return;
 
   const validFiles: File[] = [];
@@ -163,29 +160,29 @@ function processIncomingFiles(fileList: FileList | File[]) {
   emitChanges();
 }
 
-function handleFileSelect(e: Event) {
-  const target = e.target as HTMLInputElement;
-  if (target.files) processIncomingFiles(target.files);
-  if (fileInputRef.value) fileInputRef.value.value = "";
-}
+const { open: openFileDialog, onChange: onFileDialogChange } = useFileDialog({
+  accept: props.accept,
+  multiple: props.multiple,
+  reset: true,
+});
 
-function handleDragOver(e: DragEvent) {
-  if (props.disabled) return;
-  e.preventDefault();
-  isDragging.value = true;
-}
+onFileDialogChange((files) => {
+  if (files) processIncomingFiles(files);
+});
 
-function handleDragLeave(e: DragEvent) {
-  if (props.disabled) return;
-  e.preventDefault();
-  isDragging.value = false;
-}
+const { isOverDropZone } = useDropZone(dropZoneRef, {
+  onDrop: (files) => {
+    if (!props.disabled && files) processIncomingFiles(files);
+  },
+});
 
-function handleDrop(e: DragEvent) {
+function triggerFileInput() {
   if (props.disabled) return;
-  e.preventDefault();
-  isDragging.value = false;
-  if (e.dataTransfer?.files) processIncomingFiles(e.dataTransfer.files);
+  openFileDialog({
+    accept: props.accept,
+    multiple: props.multiple,
+    reset: true,
+  });
 }
 
 function removeFile(index: number) {
@@ -193,11 +190,6 @@ function removeFile(index: number) {
   const removed = entries.value.splice(index, 1);
   if (removed[0]?.previewUrl) URL.revokeObjectURL(removed[0].previewUrl);
   emitChanges();
-}
-
-function triggerFileInput() {
-  if (props.disabled) return;
-  fileInputRef.value?.click();
 }
 </script>
 
@@ -208,33 +200,21 @@ function triggerFileInput() {
       disabled ? 'pointer-events-none opacity-60' : ''
     ]"
   >
-    <input
-      ref="fileInputRef"
-      type="file"
-      class="hidden"
-      :accept="accept"
-      :multiple="multiple"
-      :disabled="disabled"
-      @change="handleFileSelect"
-    />
-
     <div
       v-if="canAddMore"
+      ref="dropZoneRef"
       :class="[
         'group flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 text-center transition-colors cursor-pointer',
-        isDragging
+        isOverDropZone
           ? 'border-[#189c94] bg-[#f0fdfa]'
           : 'border-slate-300 bg-slate-50 hover:border-[#189c94] hover:bg-[#f0fdfa]'
       ]"
-      @dragover.prevent="handleDragOver"
-      @dragleave.prevent="handleDragLeave"
-      @drop.prevent="handleDrop"
       @click="triggerFileInput"
     >
       <i
         :class="[
           'fa-solid fa-cloud-arrow-up mb-2 text-3xl transition-colors',
-          isDragging ? 'text-[#189c94]' : 'text-slate-400 group-hover:text-[#189c94]'
+          isOverDropZone ? 'text-[#189c94]' : 'text-slate-400 group-hover:text-[#189c94]'
         ]"
       ></i>
 
