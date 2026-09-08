@@ -36,7 +36,7 @@ export const useAuthStore = defineStore("auth", () => {
           throw new Error("No refresh token available");
         }
 
-        const { data, error } = await useApiFetch("/refresh", { immediate: false })
+        const { data, error } = await useApiFetch("/refresh")
           .post({ refresh_token: tokenStore.refreshToken })
           .json<AuthResponse>();
 
@@ -59,7 +59,7 @@ export const useAuthStore = defineStore("auth", () => {
   async function login(credentials: LoginRequest): Promise<AccountResponse> {
     isLoading.value = true;
     try {
-      const { data: authData, error: authError } = await useApiFetch("/login", { immediate: false })
+      const { data: authData, error: authError } = await useApiFetch("/login")
         .post(credentials)
         .json<AuthResponse>();
 
@@ -70,7 +70,7 @@ export const useAuthStore = defineStore("auth", () => {
       const tokens = AuthResponseSchema.parse(authData.value);
       tokenStore.setTokens(tokens.access_token, tokens.refresh_token);
 
-      const { data: accountData, error: accountError } = await useApiFetch("/accounts/me", { immediate: false })
+      const { data: accountData, error: accountError } = await useApiFetch("/accounts/me")
         .get()
         .json<AccountResponse>();
 
@@ -103,7 +103,7 @@ export const useAuthStore = defineStore("auth", () => {
 
       try {
         await refreshAccessToken();
-        const { data, error } = await useApiFetch("/accounts/me", { immediate: false })
+        const { data, error } = await useApiFetch("/accounts/me")
           .get()
           .json<AccountResponse>();
 
@@ -131,7 +131,7 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (currentRefreshToken) {
       try {
-        await useApiFetch("/logout", { immediate: false }).post({
+        await useApiFetch("/logout").post({
           refresh_token: currentRefreshToken,
         });
       } catch (err) {

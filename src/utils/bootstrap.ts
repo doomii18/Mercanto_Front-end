@@ -13,8 +13,6 @@ export async function bootstrapApp(): Promise<void> {
 
   bootstrapPromise = (async () => {
     const authStore = useAuthStore();
-    await authStore.initialize();
-    return
     const contextStore = useUserContextStore();
     const geoStore = useGeoStore();
     const notificationStore = useNotificationStore();
