@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { useAuthStore } from '../../modules/auth';
 import { productApi } from '../../api';
 import type { ProductImageSearchHit } from '../../api/services/product/types';
+import { useAuthStore } from '@/stores/authStore';
 
 interface DisplayHit extends ProductImageSearchHit {
   imageUrls: string[];

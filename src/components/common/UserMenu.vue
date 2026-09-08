@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { useAuthStore } from "@/modules/auth";
 import { userProfileApi } from "@/api";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
+import { useAuthStore } from "@/stores/authStore";
 
 interface Props {
   collapsed?: boolean;

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { chatApi, quoteApi, userProfileApi, organizationApi } from "../api";
-import { useAuthStore } from "../modules/auth";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { formatUuidv7ToLocalTime } from "../utils/formatters";
@@ -9,6 +8,7 @@ import { NewChatMessageEventSchema } from "../api/services/notifications/payload
 import type { ChatThreadResponse, ChatMessageResponse } from "../api/services/chat/types";
 import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
+import { useAuthStore } from "@/stores/authStore";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useAuthStore } from "../modules/auth";
 import Map from "@/components/common/Map.vue";
 import AppLogo from "@/components/common/AppLogo.vue";
+import { useAuthStore } from "@/stores/authStore";
 
 const router = useRouter();
 const route = useRoute();

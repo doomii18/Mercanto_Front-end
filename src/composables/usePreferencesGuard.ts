@@ -1,7 +1,7 @@
 import { ref } from "vue";
-import { useAuthStore } from "./authStore";
-import { userProfileApi } from "../../api";
-import type { UserInterest } from "../../api/services/user_profile/types";
+import { useAuthStore } from "../stores/authStore";
+import { userProfileApi } from "../api";
+import type { UserInterest } from "../api/services/user_profile/types";
 
 export function usePreferencesGuard() {
   const authStore = useAuthStore();

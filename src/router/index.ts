@@ -1,7 +1,8 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
-import { useAuthStore } from "@/modules/auth";
+
 import { useUserContextStore } from "@/stores/userContextStore";
 import { bootstrapApp } from "@/utils/bootstrap";
+import { useAuthStore } from "@/stores/authStore";
 
 declare module "vue-router" {
   interface RouteMeta {

@@ -2,9 +2,10 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { notificationsApi } from '@/api';
 import type { NotificationEvent, NotificationCallback } from '@/api/services/notifications/types';
-import { useAuthStore } from '@/modules/auth';
+
 import { useToastStore } from './toastStore';
 import { NewChatMessageEventSchema, QuoteStatusChangedEventSchema } from '@/api/services/notifications/payloads';
+import { useAuthStore } from './authStore';
 
 export const useNotificationStore = defineStore('notification', () => {
   // Connection State

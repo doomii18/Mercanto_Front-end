@@ -17,7 +17,7 @@ import { VerificationRequestService } from "./services/verification_request";
 import { VerificationRequestDocumentService } from "./services/verification_request_document";
 import { WalletService } from "./services/wallet";
 import { tokenProvider } from "./token";
-import { useAuthStore } from "../modules/auth/authStore";
+import { useAuthStore } from "../stores/authStore";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 if (!API_BASE_URL)

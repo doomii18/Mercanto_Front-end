@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useAuthStore } from "../modules/auth";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useGeoStore } from "../stores/geo";
 import { userProfileApi, organizationApi } from "../api";
@@ -10,6 +9,7 @@ import EditProfileModal from "../components/profile/EditProfileModal.vue";
 import EditProviderModal from "../components/profile/EditProviderModal.vue";
 import ProviderStatsCard from "../components/profile/ProviderStatsCard.vue";
 import BuyerStatsCards from "@/components/profile/BuyerStatsCards.vue";
+import { useAuthStore } from "@/stores/authStore";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();

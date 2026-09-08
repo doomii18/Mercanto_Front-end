@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, watch } from "vue";
-import { useAuthStore } from "./modules/auth/authStore";
-import { usePreferencesGuard } from "./modules/auth/usePreferencesGuard";
+import { useAuthStore } from "./stores/authStore";
+import { usePreferencesGuard } from "./composables/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 import GlobalAlerts from "./components/common/GlobalAlerts.vue";
 import GlobalToasts from "./components/common/GlobalToasts.vue";
@@ -31,7 +31,6 @@ watch(
 
 <template>
   <router-view />
-
   <UserPreferencesModal
     v-model="showPrompt"
     :initial-preferences="currentPreferences"

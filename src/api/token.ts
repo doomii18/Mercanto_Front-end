@@ -1,3 +1,5 @@
+import { useTokenStore } from "@/stores/tokenStore";
+
 export interface TokenProvider {
   getAccessToken(): string | null;
   setAccessToken(accessToken: string | null): void;
@@ -6,38 +8,26 @@ export interface TokenProvider {
   clear(): void;
 }
 
-export class HybridTokenProvider implements TokenProvider {
-  private accessToken: string | null = null;
-  private readonly REFRESH_TOKEN_KEY = "refresh_token";
-
+export class PiniaBridgedTokenProvider implements TokenProvider {
   getAccessToken(): string | null {
-    return this.accessToken;
+    return useTokenStore().accessToken;
   }
 
   setAccessToken(accessToken: string | null): void {
-    this.accessToken = accessToken;
+    useTokenStore().accessToken = accessToken;
   }
 
   getRefreshToken(): string | null {
-    return localStorage.getItem(this.REFRESH_TOKEN_KEY) ?? localStorage.getItem("refreshToken");
+    return useTokenStore().refreshToken;
   }
 
   setRefreshToken(refreshToken: string | null): void {
-    if (refreshToken) {
-      localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
-    } else {
-      localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-      localStorage.removeItem("refreshToken");
-    }
+    useTokenStore().refreshToken = refreshToken;
   }
 
   clear(): void {
-    this.accessToken = null;
-    localStorage.removeItem(this.REFRESH_TOKEN_KEY);
-    localStorage.removeItem("refreshToken");
-    localStorage.removeItem("access_token");
-    localStorage.removeItem("accessToken");
+    useTokenStore().clearTokens();
   }
 }
 
-export const tokenProvider: TokenProvider = new HybridTokenProvider();
+export const tokenProvider: TokenProvider = new PiniaBridgedTokenProvider();

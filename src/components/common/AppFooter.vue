@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { useAuthStore } from "@/modules/auth";
 import AppLogo from "./AppLogo.vue";
+import { useAuthStore } from "@/stores/authStore";
 
 const authStore = useAuthStore();
 
