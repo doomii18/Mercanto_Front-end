@@ -214,6 +214,7 @@ export const router = createRouter({
 
 router.beforeEach(async (to) => {
   // Unified bootstrap: hydrates auth, provider organization context, and geo cache
+
   await bootstrapApp();
 
   const authStore = useAuthStore();

@@ -12,8 +12,7 @@ import type {
   AuthResponse,
 } from "@/api/services/identity/types";
 import { useUserContextStore } from "./userContextStore";
-import { useOrganizationStore } from "./organizationStore";
-import { blobCache } from "@/modules/blob";
+import { authBus } from "@/events/authEvents";
 
 export const useAuthStore = defineStore("auth", () => {
   const tokenStore = useTokenStore();
@@ -147,9 +146,7 @@ export const useAuthStore = defineStore("auth", () => {
     refreshPromise = null;
     isInitialized.value = true;
 
-    useUserContextStore().reset();
-    useOrganizationStore().resetAllCaches().catch(console.warn);
-    blobCache.clearMemory();
+    authBus.emit({ type: "session_expired" });
   }
 
   return {
