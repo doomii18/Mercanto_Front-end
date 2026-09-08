@@ -4,8 +4,7 @@ export const WsTicketResponseSchema = z.object({
   ticket: z.string(),
 });
 
-export const BaseEventSchema = z.looseObject({
-  type: z.string(),
+export const BaseEventSchema = z.object({
   notification_id: z.uuid(),
 });
 
@@ -26,3 +25,9 @@ export const QuoteStatusChangedEventSchema = BaseEventSchema.extend({
   buyer_id: z.uuid(),
   provider_id: z.uuid(),
 });
+
+// Discriminated union of all incoming socket events
+export const NotificationEventSchema = z.discriminatedUnion("type", [
+  NewChatMessageEventSchema,
+  QuoteStatusChangedEventSchema,
+]);

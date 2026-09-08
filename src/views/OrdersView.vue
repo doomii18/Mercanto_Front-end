@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import { ref, computed, watch, onMounted, onBeforeUnmount } from "vue";
+import { ref, computed, watch, onMounted, onScopeDispose } from "vue";
 import { useRouter } from "vue-router";
 import { quoteApi, organizationApi, userProfileApi } from "../api";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
-import { QuoteStatusChangedEventSchema } from "@/api/services/notifications/payloads";
 import type {
   QuoteAggregateResponse,
   QuoteStatus,
@@ -150,40 +149,33 @@ const loadOrders = async () => {
   }
 };
 
-let unsubscribeQuoteStatus: (() => void) | null = null;
+
+const unsubscribeQuoteStatus = notificationStore.onType(
+  "QuoteStatusChanged",
+  (event) => {
+    const { quote_id, new_status } = event;
+    const isQuoteVisible = quotes.value.some((q) => q.quote.id === quote_id);
+
+    if (isQuoteVisible) {
+      const statusMatchesFilter =
+        currentFilter.value === "all" ||
+        currentFilter.value === new_status;
+
+      if (statusMatchesFilter) {
+        loadOrders();
+      } else {
+        quotes.value = quotes.value.filter((q) => q.quote.id !== quote_id);
+      }
+    }
+  }
+);
+
+onScopeDispose(() => {
+  unsubscribeQuoteStatus();
+});
 
 onMounted(() => {
   loadOrders();
-
-  unsubscribeQuoteStatus = notificationStore.subscribe(
-    "QuoteStatusChanged",
-    (rawEvent) => {
-      const parsed = QuoteStatusChangedEventSchema.safeParse(rawEvent);
-      if (!parsed.success) return;
-
-      const { quote_id, new_status } = parsed.data;
-      const isQuoteVisible = quotes.value.some((q) => q.quote.id === quote_id);
-
-      if (isQuoteVisible) {
-        const statusMatchesFilter =
-          currentFilter.value === "all" ||
-          currentFilter.value === new_status;
-
-        if (statusMatchesFilter) {
-          loadOrders();
-        } else {
-          quotes.value = quotes.value.filter((q) => q.quote.id !== quote_id);
-        }
-      }
-    }
-  );
-});
-
-onBeforeUnmount(() => {
-  if (unsubscribeQuoteStatus) {
-    unsubscribeQuoteStatus();
-    unsubscribeQuoteStatus = null;
-  }
 });
 
 watch(currentFilter, () => {

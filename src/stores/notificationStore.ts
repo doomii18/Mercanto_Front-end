@@ -1,126 +1,132 @@
-import { defineStore } from 'pinia';
-import { ref } from 'vue';
-import { notificationsApi } from '@/api';
-import type { NotificationEvent, NotificationCallback } from '@/api/services/notifications/types';
+import { defineStore } from "pinia";
+import { ref, shallowRef } from "vue";
+import { useWebSocket } from "@vueuse/core";
+import { useApiFetch } from "@/composables/api/useApiFetch";
+import { useAuthStore } from "./authStore";
+import { useToastStore } from "./toastStore";
+import { notificationBus } from "@/events/notificationEvents";
+import {
+  NotificationEventSchema,
+  WsTicketResponseSchema,
+} from "@/api/services/notifications/payloads";
+import type {
+  NotificationEvent,
+  WsTicketResponse,
+} from "@/api/services/notifications/types";
 
-import { useToastStore } from './toastStore';
-import { NewChatMessageEventSchema, QuoteStatusChangedEventSchema } from '@/api/services/notifications/payloads';
-import { useAuthStore } from './authStore';
-
-export const useNotificationStore = defineStore('notification', () => {
-  // Connection State
-  const isConnected = ref(false);
-  const isConnecting = ref(false);
-  const connectionError = ref<Error | null>(null);
+export const useNotificationStore = defineStore("notification", () => {
+  const wsUrl = ref<string>("");
   const recentEvents = ref<NotificationEvent[]>([]);
-  const MAX_EVENTS = 50;
+  const lastRawEvent = shallowRef<NotificationEvent | null>(null);
 
-  let globalUnsub: (() => void) | null = null;
+  const { status, close, open } = useWebSocket(wsUrl, {
+    immediate: false,
+    autoReconnect: {
+      retries: 5,
+      delay: 2500,
+    },
+    onMessage(_ws, event: MessageEvent) {
+      handleIncomingMessage(event.data);
+    },
+  });
 
-  async function connect() {
+  function handleIncomingMessage(rawData: string) {
+    try {
+      const parsedJson = JSON.parse(rawData);
+      const event = NotificationEventSchema.parse(parsedJson);
+
+      lastRawEvent.value = event;
+      recentEvents.value.unshift(event);
+      if (recentEvents.value.length > 50) {
+        recentEvents.value.pop();
+      }
+
+      notificationBus.emit(event);
+      dispatchToast(event);
+    } catch (err) {
+      console.error("[WebSocket] Dropped invalid event frame:", err);
+    }
+  }
+
+  function dispatchToast(event: NotificationEvent) {
+    const authStore = useAuthStore();
+    const currentUserId = authStore.account?.id;
+    const toastStore = useToastStore();
+
+    if (event.type === "NewChatMessage") {
+      if (event.sender_id === currentUserId) return;
+      toastStore.addToast({
+        title: "Nuevo mensaje",
+        message: event.content_preview || "Has recibido un nuevo mensaje.",
+        icon: "fa-regular fa-comment-dots",
+        variant: "info",
+        duration: 5000,
+      });
+    } else if (event.type === "QuoteStatusChanged") {
+      toastStore.addToast({
+        title: "Pedido actualizado",
+        message: `El estado del pedido cambió a "${event.new_status}".`,
+        icon: "fa-solid fa-box",
+        variant: "success",
+        duration: 6000,
+      });
+    }
+  }
+
+  async function connect(): Promise<void> {
     const authStore = useAuthStore();
     if (!authStore.isAuthenticated) return;
-    if (isConnected.value || isConnecting.value) return;
-
-    isConnecting.value = true;
-    connectionError.value = null;
+    if (status.value === "OPEN" || status.value === "CONNECTING") return;
 
     try {
-      await notificationsApi.connect();
-      isConnected.value = true;
+      const { data, error } = await useApiFetch("/notifications/ticket")
+        .post()
+        .json<WsTicketResponse>();
 
-      if (!globalUnsub) {
-        globalUnsub = notificationsApi.subscribeAll((ev) => {
-          const currentUserId = authStore.account?.id;
+      if (error.value || !data.value) return;
+
+      const { ticket } = WsTicketResponseSchema.parse(data.value);
+      const baseUrl = import.meta.env.VITE_API_BASE_URL;
+      const targetUrl = new URL(baseUrl);
+      targetUrl.protocol = targetUrl.protocol === "https:" ? "wss:" : "ws:";
+      targetUrl.pathname = "/notifications";
+      targetUrl.searchParams.set("token", ticket);
+
+      wsUrl.value = targetUrl.toString();
+      open();
+    } catch (err) {
+      console.error("[WebSocket] Ticket exchange failed:", err);
+    }
+  }
+
+  function disconnect(): void {
+    close();
+    wsUrl.value = "";
+    recentEvents.value = [];
+  }
+
+  function on(callback: (event: NotificationEvent) => void) {
+    return notificationBus.on(callback);
+  }
 
 
-          if (ev.type === 'NewChatMessage') {
-            const parsed = NewChatMessageEventSchema.safeParse(ev);
-            // If the message was sent by the currently logged-in user, skip it
-            if (parsed.success && parsed.data.sender_id === currentUserId) {
-              return;
-            }
-          }
-
-
-          recentEvents.value.unshift(ev);
-          if (recentEvents.value.length > MAX_EVENTS) {
-            recentEvents.value.pop();
-          }
-
-
-          const toastStore = useToastStore();
-          let title = 'Nueva notificación';
-          let message = 'Tienes una nueva actividad en tu cuenta.';
-          let icon = 'fa-solid fa-bell';
-          let variant: 'success' | 'info' | 'warning' | 'error' = 'info';
-
-          if (ev.type === 'NewChatMessage') {
-            const parsed = NewChatMessageEventSchema.safeParse(ev);
-            if (parsed.success) {
-              title = 'Nuevo mensaje';
-              message = parsed.data.content_preview || 'Has recibido un nuevo mensaje.';
-              icon = 'fa-regular fa-comment-dots';
-            }
-          } else if (ev.type === 'QuoteStatusChanged') {
-            const parsed = QuoteStatusChangedEventSchema.safeParse(ev);
-            if (parsed.success) {
-              title = 'Pedido actualizado';
-              message = `El estado del pedido cambió a "${parsed.data.new_status}".`;
-              icon = 'fa-solid fa-box';
-              variant = 'success';
-            }
-          }
-
-          toastStore.addToast({
-            title,
-            message,
-            icon,
-            variant,
-            duration: 5000,
-          });
-        });
+  function onType<T extends NotificationEvent["type"]>(
+    type: T,
+    callback: (event: Extract<NotificationEvent, { type: T }>) => void,
+  ) {
+    return notificationBus.on((event) => {
+      if (event.type === type) {
+        callback(event as Extract<NotificationEvent, { type: T }>);
       }
-    } catch (err: any) {
-      connectionError.value = err instanceof Error ? err : new Error(String(err));
-      console.error("Notification connection failed", err);
-    } finally {
-      isConnecting.value = false;
-    }
-  }
-
-  function disconnect() {
-    notificationsApi.disconnect();
-    isConnected.value = false;
-    if (globalUnsub) {
-      globalUnsub();
-      globalUnsub = null;
-    }
-    recentEvents.value = [];
-  }
-
-  function clearEvents() {
-    recentEvents.value = [];
-  }
-
-
-  function subscribe(eventType: string, callback: NotificationCallback): () => void {
-    return notificationsApi.subscribe(eventType, callback);
-  }
-
-  function subscribeAll(callback: NotificationCallback): () => void {
-    return notificationsApi.subscribeAll(callback);
+    });
   }
 
   return {
-    isConnected,
-    isConnecting,
-    connectionError,
+    status,
     recentEvents,
     connect,
     disconnect,
-    clearEvents,
-    subscribe,
-    subscribeAll,
+    on,
+    onType,
   };
 });

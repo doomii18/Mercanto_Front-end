@@ -1,14 +1,13 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, computed, onMounted, onScopeDispose, nextTick } from "vue";
 import { chatApi, quoteApi, userProfileApi, organizationApi } from "../api";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
+import { useAuthStore } from "@/stores/authStore";
 import { formatUuidv7ToLocalTime } from "../utils/formatters";
-import { NewChatMessageEventSchema } from "../api/services/notifications/payloads";
 import type { ChatThreadResponse, ChatMessageResponse } from "../api/services/chat/types";
 import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
-import { useAuthStore } from "@/stores/authStore";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
@@ -34,7 +33,6 @@ const newMessage = ref("");
 const isLoadingThreads = ref(true);
 const isLoadingMessages = ref(false);
 const messagesContainer = ref<HTMLElement | null>(null);
-let unsubs: (() => void)[] = [];
 
 const isProvider = computed(() => contextStore.isProvider);
 const orgId = computed(() => contextStore.activeOrganizationId);
@@ -69,7 +67,9 @@ const filteredThreads = computed(() => {
       t.id.toLowerCase().includes(query) ||
       t.quote_group_id.toLowerCase().includes(query) ||
       (meta?.name && meta.name.toLowerCase().includes(query));
-    const matchesTab = activeTab.value === "todos" || (activeTab.value === "no-leidos" && meta?.hasUnread);
+    const matchesTab =
+      activeTab.value === "todos" ||
+      (activeTab.value === "no-leidos" && meta?.hasUnread);
     return matchesSearch && matchesTab;
   });
 });
@@ -79,9 +79,11 @@ async function selectThread(threadId: string) {
   activeThreadId.value = threadId;
   isLoadingMessages.value = true;
   currentMessages.value = [];
+
   try {
     const res = await chatApi.getThreadMessages(threadId, { limit: 50, offset: 0 });
     currentMessages.value = res.data.reverse();
+
     if (threadPreviews.value[threadId]) {
       threadPreviews.value[threadId].hasUnread = false;
       const lastMsg = currentMessages.value[currentMessages.value.length - 1];
@@ -89,12 +91,15 @@ async function selectThread(threadId: string) {
         threadPreviews.value[threadId].time = formatUuidv7ToLocalTime(lastMsg.id);
       }
     }
+
     const unreadIds = currentMessages.value
       .filter((m) => !m.is_read && m.sender_id !== authStore.account?.id)
       .map((m) => m.id);
+
     if (unreadIds.length > 0) {
       chatApi.markMessagesAsRead({ message_ids: unreadIds }).catch(console.error);
     }
+
     scrollToBottom();
   } catch (err) {
     console.error("Failed to load thread messages:", err);
@@ -106,18 +111,23 @@ async function selectThread(threadId: string) {
 async function sendMessage() {
   const text = newMessage.value.trim();
   if (!text || !activeThreadId.value) return;
+
   const targetThreadId = activeThreadId.value;
   newMessage.value = "";
+
   try {
     const sentMsg = await chatApi.publishChatMessage(targetThreadId, { content: text });
+
     if (!currentMessages.value.some((m) => m.id === sentMsg.id)) {
       currentMessages.value.push(sentMsg);
     }
+
     if (threadPreviews.value[targetThreadId]) {
       threadPreviews.value[targetThreadId].preview = text;
       threadPreviews.value[targetThreadId].time = formatUuidv7ToLocalTime(sentMsg.id);
       threadPreviews.value[targetThreadId].hasUnread = false;
     }
+
     scrollToBottom();
   } catch (err) {
     console.error("Failed to send chat message:", err);
@@ -129,9 +139,13 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
 
   const quotePromises = threadsList.map((t) => {
     if (isProvider.value && orgId.value) {
-      return quoteApi.getProviderQuotes(orgId.value, { quote_group_id: t.quote_group_id, limit: 1 }).catch(() => null);
+      return quoteApi
+        .getProviderQuotes(orgId.value, { quote_group_id: t.quote_group_id, limit: 1 })
+        .catch(() => null);
     } else {
-      return quoteApi.getMyQuotes({ quote_group_id: t.quote_group_id, limit: 1 }).catch(() => null);
+      return quoteApi
+        .getMyQuotes({ quote_group_id: t.quote_group_id, limit: 1 })
+        .catch(() => null);
     }
   });
 
@@ -143,7 +157,10 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
   quoteResults.forEach((res, idx) => {
     if (res && res.data.length > 0) {
       const q = res.data[0].quote;
-      threadQuoteMap.set(threadsList[idx].id, { buyerId: q.buyer_id, providerId: q.provider_id });
+      threadQuoteMap.set(threadsList[idx].id, {
+        buyerId: q.buyer_id,
+        providerId: q.provider_id,
+      });
       const otherId = isProvider.value ? q.buyer_id : q.provider_id;
       if (otherId) otherPartyIds.add(otherId);
     }
@@ -151,9 +168,15 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
 
   const profilePromises = Array.from(otherPartyIds).map((id) => {
     if (isProvider.value) {
-      return userProfileApi.getUserProfile(id).then((p) => ({ id, type: "buyer", data: p })).catch(() => null);
+      return userProfileApi
+        .getUserProfile(id)
+        .then((p) => ({ id, type: "buyer", data: p }))
+        .catch(() => null);
     } else {
-      return organizationApi.getPublicProvider(id).then((p) => ({ id, type: "provider", data: p })).catch(() => null);
+      return organizationApi
+        .getPublicProvider(id)
+        .then((p) => ({ id, type: "provider", data: p }))
+        .catch(() => null);
     }
   });
 
@@ -192,44 +215,44 @@ const resolveThreadMetadata = async (threadsList: ChatThreadResponse[]) => {
   });
 };
 
+// 1. Setup Typed Event Listener with Automatic Scope Cleanup
+const unsubscribeChat = notificationStore.onType("NewChatMessage", (event) => {
+  const existing = threadPreviews.value[event.thread_id];
+  threadPreviews.value[event.thread_id] = {
+    preview: event.content_preview,
+    time: formatUuidv7ToLocalTime(event.message_id),
+    hasUnread: activeThreadId.value !== event.thread_id,
+    name: existing?.name || "Nuevo Mensaje",
+    avatarBlobId: existing?.avatarBlobId || null,
+    quoteGroupId: existing?.quoteGroupId || "",
+  };
+
+  if (activeThreadId.value === event.thread_id) {
+    if (!currentMessages.value.some((m) => m.id === event.message_id)) {
+      currentMessages.value.push({
+        id: event.message_id,
+        thread_id: event.thread_id,
+        sender_id: event.sender_id,
+        content: event.content_preview,
+        is_read: true,
+      });
+      scrollToBottom();
+    }
+    chatApi.markMessagesAsRead({ message_ids: [event.message_id] }).catch(console.error);
+  }
+});
+
+onScopeDispose(() => {
+  unsubscribeChat();
+});
+
+// 2. Lifecycle Initialization
 onMounted(async () => {
   try {
     await authStore.initialize();
     if (!contextStore.isInitialized) {
       await contextStore.initialize();
     }
-
-    const unsub = notificationStore.subscribe("NewChatMessage", (rawEvent) => {
-      try {
-        const event = NewChatMessageEventSchema.parse(rawEvent);
-        const existing = threadPreviews.value[event.thread_id];
-        threadPreviews.value[event.thread_id] = {
-          preview: event.content_preview,
-          time: formatUuidv7ToLocalTime(event.message_id),
-          hasUnread: activeThreadId.value !== event.thread_id,
-          name: existing?.name || "Nuevo Mensaje",
-          avatarBlobId: existing?.avatarBlobId || null,
-          quoteGroupId: existing?.quoteGroupId || "",
-        };
-
-        if (activeThreadId.value === event.thread_id) {
-          if (!currentMessages.value.some((m) => m.id === event.message_id)) {
-            currentMessages.value.push({
-              id: event.message_id,
-              thread_id: event.thread_id,
-              sender_id: event.sender_id,
-              content: event.content_preview,
-              is_read: true,
-            });
-            scrollToBottom();
-          }
-          chatApi.markMessagesAsRead({ message_ids: [event.message_id] }).catch(console.error);
-        }
-      } catch (err) {
-        console.error("Malformed NewChatMessage payload:", err);
-      }
-    });
-    unsubs.push(unsub);
 
     const res = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });
     threads.value = res.data;
@@ -255,10 +278,6 @@ onMounted(async () => {
   } finally {
     isLoadingThreads.value = false;
   }
-});
-
-onBeforeUnmount(() => {
-  unsubs.forEach((fn) => fn());
 });
 </script>
 

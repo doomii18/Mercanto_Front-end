@@ -181,11 +181,6 @@ const routes: RouteRecordRaw[] = [
         redirect: { name: "test-events" },
       },
       {
-        path: "events",
-        name: "test-events",
-        component: () => import("../views/test/TestEventsView.vue"),
-      },
-      {
         path: "image-search",
         name: "test-image-search",
         component: () => import("../views/test/TestImageSearchView.vue"),

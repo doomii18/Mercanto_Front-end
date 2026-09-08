@@ -1,43 +1,51 @@
 <script setup lang="ts">
+import { ref, onScopeDispose } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from '@/stores/notificationStore';
 import type { NotificationEvent } from '@/api/services/notifications/types';
-import { NewChatMessageEventSchema, QuoteStatusChangedEventSchema } from '@/api/services/notifications/payloads';
 
 const router = useRouter();
 const notificationStore = useNotificationStore();
 
+const events = ref<NotificationEvent[]>([...notificationStore.recentEvents]);
+
+const unsubscribe = notificationStore.on((event) => {
+  events.value.unshift(event);
+});
+
+onScopeDispose(() => {
+  unsubscribe();
+});
+
+const clearNotifications = () => {
+  events.value = [];
+};
+
 const getNotificationDetails = (event: NotificationEvent) => {
   if (event.type === 'NewChatMessage') {
-    const parsed = NewChatMessageEventSchema.safeParse(event);
-    if (parsed.success) {
-      return {
-        icon: 'fa-regular fa-comment-dots',
-        color: 'text-teal-600 bg-teal-50',
-        title: 'Nuevo mensaje',
-        description: parsed.data.content_preview || 'Tienes un nuevo mensaje.',
-        route: { name: 'messages' }
-      };
-    }
+    return {
+      icon: 'fa-regular fa-comment-dots',
+      color: 'text-teal-600 bg-teal-50',
+      title: 'Nuevo mensaje',
+      description: event.content_preview || 'Tienes un nuevo mensaje.',
+      route: { name: 'messages' },
+    };
   }
   if (event.type === 'QuoteStatusChanged') {
-    const parsed = QuoteStatusChangedEventSchema.safeParse(event);
-    if (parsed.success) {
-      return {
-        icon: 'fa-solid fa-box',
-        color: 'text-orange-600 bg-orange-50',
-        title: 'Pedido actualizado',
-        description: `El estado cambió a "${parsed.data.new_status}".`,
-        route: { name: 'quote-detail', params: { id: parsed.data.quote_id } }
-      };
-    }
+    return {
+      icon: 'fa-solid fa-box',
+      color: 'text-orange-600 bg-orange-50',
+      title: 'Pedido actualizado',
+      description: `El estado cambió a "${event.new_status}".`,
+      route: { name: 'quote-detail', params: { id: event.quote_id } },
+    };
   }
   return {
     icon: 'fa-solid fa-bell',
     color: 'text-slate-600 bg-slate-50',
     title: 'Notificación',
-    description: event.type || 'Nueva actividad en tu cuenta.',
-    route: null
+    description: 'Nueva actividad en tu cuenta.',
+    route: null,
   };
 };
 
@@ -60,16 +68,16 @@ const goToDetail = (event: NotificationEvent) => {
         <p class="text-slate-500 text-xs sm:text-sm mt-1">Mantente al día con tus mensajes y cambios en tus pedidos.</p>
       </div>
       <button
-        v-if="notificationStore.recentEvents.length > 0"
+        v-if="events.length > 0"
         type="button"
-        class="text-xs sm:text-sm text-slate-500 hover:text-red-500 flex items-center gap-2 transition-colors"
-        @click="notificationStore.clearEvents()"
+        class="text-xs sm:text-sm text-slate-500 hover:text-red-500 flex items-center gap-2 transition-colors cursor-pointer"
+        @click="clearNotifications"
       >
         <i class="fa-regular fa-trash-can"></i> Limpiar
       </button>
     </header>
 
-    <div v-if="notificationStore.recentEvents.length === 0" class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-xs">
+    <div v-if="events.length === 0" class="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-xs">
       <div class="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mb-4">
         <i class="fa-regular fa-bell-slash"></i>
       </div>
@@ -79,7 +87,7 @@ const goToDetail = (event: NotificationEvent) => {
 
     <div v-else class="flex flex-col gap-3">
       <div
-        v-for="event in notificationStore.recentEvents"
+        v-for="event in events"
         :key="event.notification_id"
         class="bg-white rounded-2xl border border-slate-200 p-4 flex items-center gap-4 hover:shadow-md transition-all cursor-pointer group shadow-xs"
         @click="goToDetail(event)"
