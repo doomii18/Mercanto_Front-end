@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { quoteApi, organizationApi, productApi, userProfileApi } from "../api";
+import { quoteApi,  productApi, } from "../api";
 import { useQuoteActions } from "@/composables/useQuoteActions";
 import type { QuoteAggregateResponse } from "../api/services/quote/types";
 import type { PublicProviderDto } from "../api/services/organization/types";
@@ -13,9 +13,15 @@ import QuoteStatusBadge from "../components/quote/QuoteStatusBadge.vue";
 import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
 import FacturaTemplate from "@/components/invoice/FacturaTemplate.vue";
 import DownloadInvoiceButton from "@/components/invoice/DownloadInvoiceButton.vue";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 const route = useRoute();
 const router = useRouter();
+
+const userProfileApi = useUserProfileApi();
+const organizationApi = useOrganizationApi();
+
 
 const facturaTemplateRef = ref<InstanceType<typeof FacturaTemplate> | null>(null);
 const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
@@ -155,7 +161,7 @@ onMounted(() => {
     <!-- Offscreen Printable Container for Canvas Rasterization -->
     <div
       v-if="quoteAggregate"
-      class="fixed -left-[9999px] top-0 pointer-events-none opacity-0 overflow-hidden"
+      class="fixed left-[-9999px] top-0 pointer-events-none opacity-0 overflow-hidden"
       aria-hidden="true"
     >
       <FacturaTemplate

@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { organizationApi } from "../../api";
 import { useGeoStore } from "../../stores/geo";
 import ProviderCard from "./ProviderCard.vue";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 interface TopProviderItem {
   id: string;
@@ -17,6 +17,7 @@ interface TopProviderItem {
 const geoStore = useGeoStore();
 const providers = ref<TopProviderItem[]>([]);
 const isLoading = ref(true);
+const organizationApi = useOrganizationApi();
 
 function resolveLocationText(municipalityId?: string): string {
   if (!municipalityId) return "Nicaragua";
@@ -79,14 +80,14 @@ onMounted(async () => {
       <div
         v-for="n in 3"
         :key="n"
-        class="pointer-events-none flex flex-col items-center rounded-[24px] border-2 border-slate-200 bg-white px-6 py-8"
+        class="pointer-events-none flex flex-col items-center rounded-3xl border-2 border-slate-200 bg-white px-6 py-8"
         aria-hidden="true"
       >
         <div class="mb-4 h-18 w-18 animate-pulse rounded-full bg-slate-200"></div>
         <div class="mb-2.5 h-5 w-[70%] animate-pulse rounded-md bg-slate-200"></div>
         <div class="mb-2.5 h-3.5 w-1/2 animate-pulse rounded-md bg-slate-200"></div>
-        <div class="mb-2.5 h-[22px] w-[35%] animate-pulse rounded-md bg-slate-200"></div>
-        <div class="mt-2.5 h-[42px] w-full animate-pulse rounded-full bg-slate-200"></div>
+        <div class="mb-2.5 h-5.5 w-[35%] animate-pulse rounded-md bg-slate-200"></div>
+        <div class="mt-2.5 h-5.5 w-full animate-pulse rounded-full bg-slate-200"></div>
       </div>
     </div>
 

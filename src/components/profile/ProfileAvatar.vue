@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { computed } from "vue";
 import { useBlobUrl } from "../../modules/blob/useBlob";
-import { userProfileApi } from "../../api";
 import { generateAvatarDataUrl } from "../../utils/avatar";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 
 const props = defineProps<{
   blobId?: string | null;
   alt?: string;
 }>();
+
+const userProfileApi = useUserProfileApi();
 
 const { url, isLoading } = useBlobUrl(
   () => props.blobId,

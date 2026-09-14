@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useGeoStore } from "../stores/geo";
-import { userProfileApi, organizationApi } from "../api";
 import type { OrganizationDetailsDto, PublicProviderDto } from "../api/services/organization/types";
 import AvatarEditor from "../components/profile/AvatarEditor.vue";
 import EditProfileModal from "../components/profile/EditProfileModal.vue";
@@ -10,6 +9,11 @@ import EditProviderModal from "../components/profile/EditProviderModal.vue";
 import ProviderStatsCard from "../components/profile/ProviderStatsCard.vue";
 import BuyerStatsCards from "@/components/profile/BuyerStatsCards.vue";
 import { useAuthStore } from "@/stores/authStore";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+
+const userProfileApi = useUserProfileApi();
+const organizationApi = useOrganizationApi();
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();

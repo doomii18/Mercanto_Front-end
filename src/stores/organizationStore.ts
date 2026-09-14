@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { organizationApi } from "@/api";
 import { StoreCache } from "@/utils/cache";
 import type {
   PublicProviderDto,
@@ -8,10 +7,12 @@ import type {
   ProviderOrganizationPatch,
   RegisterProviderRequest,
 } from "@/api/services/organization/types";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 export const useOrganizationStore = defineStore("organization", () => {
   const isLoading = ref(false);
   const error = ref<Error | null>(null);
+  const organizationApi = useOrganizationApi();
 
   // L1 + L2 (IndexedDB Persistent, 6 Hours TTL)
   const publicProviderCache = new StoreCache<PublicProviderDto>({
@@ -57,7 +58,7 @@ export const useOrganizationStore = defineStore("organization", () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const org = await organizationApi.createOrganization(payload);
+      const org = await organizationApi.registerOrganization(payload);
       await privateOrgCache.set(org.id, org);
       return org;
     } catch (err: any) {

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { cartApi, productApi, organizationApi } from "@/api";
+import { cartApi, productApi } from "@/api";
 import type { CartItemResponse } from "@/api/services/cart/types";
 import type { ProductResponse } from "@/api/services/product/types";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 interface CartProductDisplay {
   cartItem: CartItemResponse;
@@ -12,6 +13,8 @@ interface CartProductDisplay {
   providerName: string;
   providerLogoBlobId: string | null;
 }
+
+const organizationApi = useOrganizationApi();
 
 const cartProducts = ref<CartProductDisplay[]>([]);
 const isLoading = ref(true);

@@ -1,16 +1,18 @@
 import { ref } from "vue";
 import { useAuthStore } from "../stores/authStore";
-import { userProfileApi } from "../api";
 import type { UserInterest } from "../api/services/user_profile/types";
+import { useUserProfileApi } from "./api/useUserProfileApi";
 
 export function usePreferencesGuard() {
   const authStore = useAuthStore();
   const showPrompt = ref(false);
   const isChecking = ref(false);
   const currentPreferences = ref<string[]>([]);
+   const userProfileApi = useUserProfileApi();
 
   const checkPreferences = async () => {
     if (!authStore.account || isChecking.value) return;
+
 
     isChecking.value = true;
     try {

@@ -3,14 +3,14 @@ import { ref, computed, onMounted, watch } from 'vue'
 import mercantoLogo from '@/assets/logo.png?inline'
 import {
   quoteApi,
-  organizationApi,
-  userProfileApi,
   type QuoteAggregateResponse,
   type PublicProviderDto,
   type UserProfileResponse,
   type AccountResponse,
 } from '@/api'
 import { useIdentityApi } from '@/composables/api/useIdentityApi'
+import { useUserProfileApi } from '@/composables/api/useUserProfileApi'
+import { useOrganizationApi } from '@/composables/api/useOrganizationApi'
 
 type QuoteItem = QuoteAggregateResponse['items'][number]
 
@@ -26,6 +26,8 @@ const emit = defineEmits<{
 }>()
 
 const identityApi = useIdentityApi();
+const userProfileApi = useUserProfileApi();
+const organizationApi = useOrganizationApi();
 
 const pageRefs = ref<HTMLElement[]>([])
 const isLoading = ref<boolean>(true)

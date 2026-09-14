@@ -1,12 +1,16 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { organizationApi, userProfileApi } from "@/api";
 import type { OrganizationDetailsDto } from "@/api/services/organization/types";
 import type { UserProfileResponse } from "@/api/services/user_profile/types";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 export type UserGroup = "buyer" | "provider";
 
 export const useUserContextStore = defineStore("userContext", () => {
+  const userProfileApi = useUserProfileApi();
+  const organizationApi = useOrganizationApi();
+
   const organizations = ref<OrganizationDetailsDto[]>([]);
   const activeOrganizationId = ref<string | null>(null);
   const userProfile = ref<UserProfileResponse | null>(null);

@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
-import { organizationApi } from "@/api";
 import { useGeoStore } from "@/stores/geo";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import type { PublicProviderDto } from "@/api/services/organization/types";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 const geoStore = useGeoStore();
 
 const provider = ref<PublicProviderDto | null>(null);
 const isLoading = ref(true);
+const organizationApi = useOrganizationApi();
 
 const resolvedLocation = computed(() => {
   if (!provider.value?.municipality_id) return "Nicaragua";
@@ -56,7 +57,7 @@ onMounted(async () => {
 
     <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
       <!-- Loading State -->
-      <div v-if="isLoading" class="flex min-h-[420px] items-center justify-center">
+      <div v-if="isLoading" class="flex min-h-105 items-center justify-center">
         <i class="fa-solid fa-spinner fa-spin text-3xl text-(--primary-orange)"></i>
       </div>
 
@@ -211,7 +212,7 @@ onMounted(async () => {
       </div>
 
       <!-- Empty State -->
-      <div v-else class="flex min-h-[420px] items-center justify-center text-sm text-slate-500">
+      <div v-else class="flex min-h-105 items-center justify-center text-sm text-slate-500">
         No hay proveedores destacados disponibles en este momento.
       </div>
     </div>

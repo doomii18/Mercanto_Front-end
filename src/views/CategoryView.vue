@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { categoryApi, productApi, organizationApi } from "../api";
+import { categoryApi, productApi } from "../api";
 import type { ProductCategoryResponse } from "../api/services/category/types";
 import type { ProductResponse } from "../api/services/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
 import ProviderCard from "../components/organization/ProviderCard.vue";
 import ProductCard from "../components/product/ProductCard.vue";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 interface ProviderMeta {
   name: string;
@@ -29,6 +30,8 @@ const BUBBLE_CLASSES = ["orange", "teal", "blue", "grey"] as const;
 
 const route = useRoute();
 const router = useRouter();
+
+const organizationApi = useOrganizationApi();
 
 const searchFilter = ref<string>("");
 const categories = ref<ProductCategoryResponse[]>([]);

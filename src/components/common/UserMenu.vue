@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { userProfileApi } from "@/api";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import { useAuthStore } from "@/stores/authStore";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 
 interface Props {
   collapsed?: boolean;
@@ -20,6 +20,7 @@ const props = withDefaults(defineProps<Props>(), {
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const userProfileApi = useUserProfileApi();
 
 const isDropdownOpen = ref(false);
 const menuRef = ref<HTMLElement | null>(null);
@@ -139,7 +140,7 @@ const handleLogout = async () => {
       <template v-else>
         <span
           v-if="!props.collapsed"
-          class="hidden max-w-[110px] truncate text-xs font-semibold text-base-content md:inline"
+          class="hidden max-w-27.5 truncate text-xs font-semibold text-base-content md:inline"
           :title="userFullName"
         >
           {{ userFullName }}
@@ -165,7 +166,7 @@ const handleLogout = async () => {
     <transition name="dropdown-fade">
       <div
         v-if="isDropdownOpen"
-        class="absolute z-[100] w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md"
+        class="absolute z-100 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md"
         :class="[
           props.align === 'left' ? 'left-0' : 'right-0',
           props.dropDirection === 'up' ? 'bottom-full mb-1.5' : 'top-full mt-1.5'

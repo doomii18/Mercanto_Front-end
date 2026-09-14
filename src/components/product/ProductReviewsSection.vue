@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { reviewApi, userProfileApi } from '@/api';
+import { reviewApi } from '@/api';
 import type { ProductReviewResponse } from '@/api/services/review/types';
 import ProfileAvatar from '@/components/profile/ProfileAvatar.vue';
+import { useUserProfileApi } from '@/composables/api/useUserProfileApi';
 
 interface EnrichedReview extends ProductReviewResponse {
   buyerName: string;
@@ -12,6 +13,8 @@ interface EnrichedReview extends ProductReviewResponse {
 const props = defineProps<{
   productId: string;
 }>();
+
+const userProfileApi = useUserProfileApi();
 
 const reviews = ref<EnrichedReview[]>([]);
 const isLoading = ref(true);

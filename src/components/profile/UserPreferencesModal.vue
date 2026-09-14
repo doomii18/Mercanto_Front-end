@@ -2,8 +2,9 @@
 import { ref, watch } from "vue";
 import BaseModal from "../common/BaseModal.vue";
 import CategorySelectCard from "../category/CategorySelectCard.vue";
-import { categoryApi, userProfileApi } from "../../api";
+import { categoryApi } from "../../api";
 import type { ProductCategoryResponse } from "../../api/services/category/types";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 
 interface Props {
   modelValue: boolean;
@@ -22,6 +23,7 @@ const emit = defineEmits<{
   (e: "saved", categoryIds: string[]): void;
 }>();
 
+const userProfileApi = useUserProfileApi();
 const categories = ref<ProductCategoryResponse[]>([]);
 const selectedInterests = ref<Set<string>>(new Set());
 const isLoadingCategories = ref(false);

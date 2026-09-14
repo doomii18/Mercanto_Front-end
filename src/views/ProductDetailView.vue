@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { productApi, organizationApi } from "../api";
+import { productApi } from "../api";
 
 import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
@@ -12,6 +12,7 @@ import ProductReviewsSection from "@/components/product/ProductReviewsSection.vu
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
 import type { PaymentMethod } from "@/api/services/quote/types";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 interface ShippingMethodOption {
     id: string;
@@ -61,7 +62,7 @@ const COLOR_PRESETS: ProductColor[] = [
 
 const route = useRoute();
 const router = useRouter();
-
+const organizationApi = useOrganizationApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();

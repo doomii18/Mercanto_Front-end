@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onScopeDispose } from "vue";
 import { useRouter } from "vue-router";
-import { quoteApi, organizationApi, userProfileApi } from "../api";
+import { quoteApi,  } from "../api";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import type {
@@ -12,6 +12,8 @@ import type {
 } from "../api/services/quote/types";
 import QuoteListItem from "../components/quote/QuoteListItem.vue";
 import QuoteSearchBox from "../components/quote/QuoteSearchBox.vue";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 
 interface CounterpartyInfo {
   name: string;
@@ -36,6 +38,9 @@ interface FilterOption {
 const router = useRouter();
 const contextStore = useUserContextStore();
 const notificationStore = useNotificationStore();
+const organizationApi = useOrganizationApi();
+const userProfileApi = useUserProfileApi();
+
 
 const isProvider = computed(() => contextStore.isProvider);
 const providerId = computed(() => contextStore.activeOrganizationId);

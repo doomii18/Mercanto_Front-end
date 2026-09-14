@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onScopeDispose, nextTick } from "vue";
-import { chatApi, quoteApi, userProfileApi, organizationApi } from "../api";
+import { chatApi, quoteApi} from "../api";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -8,10 +8,14 @@ import { formatUuidv7ToLocalTime } from "../utils/formatters";
 import type { ChatThreadResponse, ChatMessageResponse } from "../api/services/chat/types";
 import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
 const notificationStore = useNotificationStore();
+const userProfileApi = useUserProfileApi();
+const organizationApi = useOrganizationApi();
 
 const threads = ref<ChatThreadResponse[]>([]);
 const activeThreadId = ref<string | null>(null);

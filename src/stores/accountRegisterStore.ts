@@ -1,11 +1,12 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useIdentityApi } from "@/composables/api/useIdentityApi";
-import { userProfileApi } from "@/api";
 import type { RegisterRequest } from "@/api/services/identity/types";
+import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 
 export const useAccountRegisterStore = defineStore("accountRegister", () => {
   const identityApi = useIdentityApi();
+  const userProfileApi = useUserProfileApi();
 
   const firstName = ref("");
   const lastName = ref("");

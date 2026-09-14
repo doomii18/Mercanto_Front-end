@@ -1,17 +1,18 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import {
-  organizationApi,
   verificationRequestApi,
   verificationRequestDocumentApi,
 } from "@/api";
 import { useIdentityApi } from "@/composables/api/useIdentityApi";
 import type { ProviderKind } from "@/api/services/organization/types";
 import { useAccountRegisterStore } from "./accountRegisterStore";
+import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
 export const useProviderRegisterStore = defineStore("providerRegister", () => {
   const accountStore = useAccountRegisterStore();
   const identityApi = useIdentityApi();
+  const organizationApi = useOrganizationApi();
 
   const companyName = ref("");
   const taxId = ref("");
@@ -84,7 +85,7 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
       });
 
       // Create Organization
-      const org = await organizationApi.createOrganization({
+      const org = await organizationApi.registerOrganization({
         company_name: companyName.value.trim(),
         tax_id: taxId.value.trim().toUpperCase(),
         kind: kind.value,
