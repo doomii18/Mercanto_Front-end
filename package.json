@@ -32,7 +32,6 @@
     "@tailwindcss/vite": "^4.3.3",
     "@vue-leaflet/vue-leaflet": "^0.10.1",
     "@vueuse/core": "^14.4.0",
-    "daisyui": "^5.7.22",
     "html-to-image": "^1.11.13",
     "jspdf": "^4.2.1",
     "leaflet": "^1.9.4",
