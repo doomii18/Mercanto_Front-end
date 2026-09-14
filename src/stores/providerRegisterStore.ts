@@ -1,16 +1,17 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import {
-  identityApi,
   organizationApi,
   verificationRequestApi,
   verificationRequestDocumentApi,
 } from "@/api";
+import { useIdentityApi } from "@/composables/api/useIdentityApi";
 import type { ProviderKind } from "@/api/services/organization/types";
 import { useAccountRegisterStore } from "./accountRegisterStore";
 
 export const useProviderRegisterStore = defineStore("providerRegister", () => {
   const accountStore = useAccountRegisterStore();
+  const identityApi = useIdentityApi();
 
   const companyName = ref("");
   const taxId = ref("");
@@ -76,7 +77,7 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
       // Create base Account & User Profile
       await accountStore.submitRegistration(password);
 
-      //  Explicit login to acquire and persist active tokens
+      // Explicit login to acquire and persist active tokens
       await identityApi.login({
         email: accountStore.email.trim(),
         password,
@@ -102,7 +103,7 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
         await organizationApi.uploadOrganizationLogo(org.id, logoFile.value);
       }
 
-      //  Submit Verification Request
+      // Submit Verification Request
       if (verificationDocumentFile.value) {
         const verifReq = await verificationRequestApi.createVerificationRequest({
           organization_id: org.id,

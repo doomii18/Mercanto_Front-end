@@ -1,21 +1,18 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useTokenStore } from "./tokenStore";
-import { useApiFetch } from "@/composables/api/useApiFetch";
-import {
-  AuthResponseSchema,
-  AccountResponseSchema,
-} from "@/api/services/identity/payloads";
+import { useIdentityApi } from "@/composables/api/useIdentityApi";
 import type {
   AccountResponse,
   LoginRequest,
-  AuthResponse,
 } from "@/api/services/identity/types";
 import { useUserContextStore } from "./userContextStore";
 import { authBus } from "@/events/authEvents";
 
 export const useAuthStore = defineStore("auth", () => {
   const tokenStore = useTokenStore();
+  const identityApi = useIdentityApi();
+
   const account = ref<AccountResponse | null>(null);
   const isInitialized = ref(false);
   const isLoading = ref(false);
@@ -35,17 +32,11 @@ export const useAuthStore = defineStore("auth", () => {
           throw new Error("No refresh token available");
         }
 
-        const { data, error } = await useApiFetch("/refresh")
-          .post({ refresh_token: tokenStore.refreshToken })
-          .json<AuthResponse>();
+        const tokens = await identityApi.refresh({
+          refresh_token: tokenStore.refreshToken,
+        });
 
-        if (error.value || !data.value) {
-          throw error.value || new Error("Failed to refresh token");
-        }
-
-        const tokens = AuthResponseSchema.parse(data.value);
         tokenStore.setTokens(tokens.access_token, tokens.refresh_token);
-
         return tokens.access_token;
       } finally {
         refreshPromise = null;
@@ -58,26 +49,10 @@ export const useAuthStore = defineStore("auth", () => {
   async function login(credentials: LoginRequest): Promise<AccountResponse> {
     isLoading.value = true;
     try {
-      const { data: authData, error: authError } = await useApiFetch("/login")
-        .post(credentials)
-        .json<AuthResponse>();
-
-      if (authError.value || !authData.value) {
-        throw authError.value || new Error("Invalid credentials");
-      }
-
-      const tokens = AuthResponseSchema.parse(authData.value);
+      const tokens = await identityApi.login(credentials);
       tokenStore.setTokens(tokens.access_token, tokens.refresh_token);
 
-      const { data: accountData, error: accountError } = await useApiFetch("/accounts/me")
-        .get()
-        .json<AccountResponse>();
-
-      if (accountError.value || !accountData.value) {
-        throw accountError.value || new Error("Failed to load account profile");
-      }
-
-      const profile = AccountResponseSchema.parse(accountData.value);
+      const profile = await identityApi.getMyAccount();
       account.value = profile;
 
       const userContext = useUserContextStore();
@@ -102,15 +77,8 @@ export const useAuthStore = defineStore("auth", () => {
 
       try {
         await refreshAccessToken();
-        const { data, error } = await useApiFetch("/accounts/me")
-          .get()
-          .json<AccountResponse>();
-
-        if (error.value || !data.value) {
-          throw error.value || new Error("Account check failed");
-        }
-
-        account.value = AccountResponseSchema.parse(data.value);
+        const profile = await identityApi.getMyAccount();
+        account.value = profile;
       } catch (err) {
         console.warn("[Auth] Initialization failed or token expired:", err);
         handleSessionExpired();
@@ -130,7 +98,7 @@ export const useAuthStore = defineStore("auth", () => {
 
     if (currentRefreshToken) {
       try {
-        await useApiFetch("/logout").post({
+        await identityApi.logout({
           refresh_token: currentRefreshToken,
         });
       } catch (err) {

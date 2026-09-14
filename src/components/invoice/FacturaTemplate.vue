@@ -5,12 +5,12 @@ import {
   quoteApi,
   organizationApi,
   userProfileApi,
-  identityApi,
   type QuoteAggregateResponse,
   type PublicProviderDto,
   type UserProfileResponse,
   type AccountResponse,
 } from '@/api'
+import { useIdentityApi } from '@/composables/api/useIdentityApi'
 
 type QuoteItem = QuoteAggregateResponse['items'][number]
 
@@ -24,6 +24,8 @@ const emit = defineEmits<{
   (e: 'ready', isReady: boolean): void
   (e: 'error', error: unknown): void
 }>()
+
+const identityApi = useIdentityApi();
 
 const pageRefs = ref<HTMLElement[]>([])
 const isLoading = ref<boolean>(true)

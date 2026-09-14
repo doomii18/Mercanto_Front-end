@@ -4,7 +4,6 @@ import { CategoryService } from "./services/category";
 import { ChatService } from "./services/chat";
 import { GeographyService } from "./services/geography";
 import { HealthService } from "./services/health";
-import { IdentityService } from "./services/identity";
 import { InventoryService } from "./services/inventory";
 import { OrganizationService } from "./services/organization";
 import { ProductService } from "./services/product";
@@ -33,7 +32,6 @@ export const apiClient = new ApiClient(
   tokenProvider,
 );
 
-export const identityApi = new IdentityService(apiClient, tokenProvider);
 export const healthApi = new HealthService(apiClient);
 export const cartApi = new CartService(apiClient);
 export const categoryApi = new CategoryService(apiClient);
