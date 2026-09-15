@@ -1,7 +1,7 @@
 
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { quoteApi } from "@/api";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
 import type {
   ShippingMethod,
   PaymentMethod,
@@ -41,6 +41,8 @@ const DEFAULT_SHIPPING: ShippingMethod = "bus";
 const DEFAULT_PAYMENT: PaymentMethod = "virtual_wallet";
 
 export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
+  const quoteApi = useQuoteApi();
+
   // state
   const drafts = ref<Record<string, QuoteDraft>>({});
   const isSubmitting = ref(false);

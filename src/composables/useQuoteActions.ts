@@ -1,5 +1,5 @@
 import { ref, computed, type Ref } from "vue";
-import { quoteApi } from "@/api";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useToastStore } from "@/stores/toastStore";
 import type {
@@ -34,6 +34,7 @@ export function useQuoteActions(
 ) {
   const contextStore = useUserContextStore();
   const toastStore = useToastStore();
+  const quoteApi = useQuoteApi();
 
   const isProcessing = ref(false);
   const processingAction = ref<QuoteActionType | null>(null);

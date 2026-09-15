@@ -2,7 +2,8 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
-import { productApi, categoryApi } from "@/api";
+import { useProductApi } from "@/composables/api/useProductApi";
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
 import type { CreateProductRequest, UnitOfMeasure } from "@/api/services/product/types";
@@ -14,6 +15,8 @@ import type { ShippingMethod } from "@/api/services/quote/types";
 const router = useRouter();
 const userContext = useUserContextStore();
 const alertStore = useAlertStore();
+const productApi = useProductApi();
+const categoryApi = useCategoryApi();
 
 
 const productName = ref("");

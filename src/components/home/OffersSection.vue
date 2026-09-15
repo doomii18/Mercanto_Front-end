@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { productApi } from "@/api";
+import { useProductApi } from "@/composables/api/useProductApi";
 import type { ProductResponse } from "@/api/services/product/types";
 import ProductImage from "@/components/product/ProductImage.vue";
 
@@ -11,6 +11,7 @@ interface OfferProduct extends ProductResponse {
 }
 
 const offers = ref<OfferProduct[]>([]);
+const productApi = useProductApi();
 const isLoading = ref(true);
 const carouselRef = ref<HTMLElement | null>(null);
 

@@ -4,7 +4,7 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import BaseModal from "./BaseModal.vue";
 import { GeocodingService, useGeoStore } from "../../stores/geo";
-import { geographyApi } from "../../api";
+import { useGeographyApi } from "@/composables/api/useGeographyApi";
 
 export interface AddressPickerResult {
   latitude: number;
@@ -33,6 +33,7 @@ const emit = defineEmits<{
 }>();
 
 const geoStore = useGeoStore();
+const geographyApi = useGeographyApi();
 
 const DEFAULT_CENTER = [12.1328, -86.2504] as [number, number];
 

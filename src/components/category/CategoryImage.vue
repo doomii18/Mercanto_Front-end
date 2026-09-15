@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { useBlobUrl } from "../../modules/blob/useBlob";
-import { categoryApi } from "../../api";
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
 
 const props = defineProps<{
   blobId?: string | null;
   alt?: string;
 }>();
+
+const categoryApi = useCategoryApi();
 
 const { url, isLoading } = useBlobUrl(
   () => props.blobId,

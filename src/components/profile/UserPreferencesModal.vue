@@ -2,7 +2,7 @@
 import { ref, watch } from "vue";
 import BaseModal from "../common/BaseModal.vue";
 import CategorySelectCard from "../category/CategorySelectCard.vue";
-import { categoryApi } from "../../api";
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
 import type { ProductCategoryResponse } from "../../api/services/category/types";
 import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 
@@ -24,6 +24,7 @@ const emit = defineEmits<{
 }>();
 
 const userProfileApi = useUserProfileApi();
+const categoryApi = useCategoryApi();
 const categories = ref<ProductCategoryResponse[]>([]);
 const selectedInterests = ref<Set<string>>(new Set());
 const isLoadingCategories = ref(false);

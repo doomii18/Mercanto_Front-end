@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
-import { geographyApi } from "@/api";
+import { useGeographyApi } from "@/composables/api/useGeographyApi";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
@@ -23,6 +23,7 @@ const router = useRouter();
 const providerStore = useProviderRegisterStore();
 const accountStore = useAccountRegisterStore();
 const alertStore = useAlertStore();
+const geographyApi = useGeographyApi();
 
 const showMapModal = ref(false);
 const errors = ref<Record<string, string>>({});

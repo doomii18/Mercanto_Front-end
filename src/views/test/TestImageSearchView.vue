@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { productApi } from '../../api';
+import { useProductApi } from '@/composables/api/useProductApi';
 import type { ProductImageSearchHit } from '../../api/services/product/types';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -9,6 +9,7 @@ interface DisplayHit extends ProductImageSearchHit {
 }
 
 const authStore = useAuthStore();
+const productApi = useProductApi();
 const fileInput = ref<HTMLInputElement | null>(null);
 const currentFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
@@ -66,7 +67,8 @@ const executeSearch = async () => {
           await Promise.all(
             hit.product.image_blob_ids.map(async (blobId) => {
               try {
-                const url = await productApi.getProductImageBlobUrl(blobId);
+                const blob = await productApi.getProductImageBlob(blobId);
+                const url = URL.createObjectURL(blob);
                 urls.push(url);
               } catch (err) {
                 console.warn(`Failed image load ${blobId}`);

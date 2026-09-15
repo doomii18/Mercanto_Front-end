@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { quoteApi,  productApi, } from "../api";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useProductApi } from "@/composables/api/useProductApi";
 import { useQuoteActions } from "@/composables/useQuoteActions";
 import type { QuoteAggregateResponse } from "../api/services/quote/types";
 import type { PublicProviderDto } from "../api/services/organization/types";
@@ -21,6 +22,8 @@ const router = useRouter();
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
+const quoteApi = useQuoteApi();
+const productApi = useProductApi();
 
 
 const facturaTemplateRef = ref<InstanceType<typeof FacturaTemplate> | null>(null);

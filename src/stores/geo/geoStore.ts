@@ -1,13 +1,15 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { geographyApi } from "@/api";
 import { StoreCache } from "@/utils/cache";
+import { useGeographyApi } from "@/composables/api/useGeographyApi";
 import type { CountryNodeResponse } from "@/api/services/geography/types";
 import type { Country, Department, Municipality } from "./types";
 
 const GEO_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 
 export const useGeoStore = defineStore("geo", () => {
+  const geographyApi = useGeographyApi();
+
   const isInitialized = ref(false);
   const isLoading = ref(false);
   const error = ref<Error | null>(null);
@@ -36,10 +38,8 @@ export const useGeoStore = defineStore("geo", () => {
 
     for (const rawCountry of rawCountries) {
       const countryDepartments: Department[] = [];
-
       for (const rawDept of rawCountry.departments) {
         const deptMunicipalities: Municipality[] = [];
-
         for (const rawMun of rawDept.municipalities) {
           const municipality: Municipality = {
             id: rawMun.id,
@@ -50,7 +50,6 @@ export const useGeoStore = defineStore("geo", () => {
           deptMunicipalities.push(municipality);
           mMap.set(municipality.id, municipality);
         }
-
         const department: Department = {
           id: rawDept.id,
           name: rawDept.name,
@@ -60,7 +59,6 @@ export const useGeoStore = defineStore("geo", () => {
         countryDepartments.push(department);
         dMap.set(department.id, department);
       }
-
       const country: Country = {
         id: rawCountry.id,
         name: rawCountry.name,
@@ -121,6 +119,7 @@ export const useGeoStore = defineStore("geo", () => {
   function resolveLocationHierarchy(municipalityId: string) {
     const mun = municipalities.value.get(municipalityId);
     if (!mun) return null;
+
     return {
       municipality: mun,
       department: departments.value.get(mun.departmentId) ?? null,

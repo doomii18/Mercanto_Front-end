@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { z } from "zod";
 import { useGeoStore } from "@/stores/geo";
 import type { Municipality } from "@/stores/geo";
-import { geographyApi } from "@/api";
+import { useGeographyApi } from "@/composables/api/useGeographyApi";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
@@ -20,6 +20,7 @@ const router = useRouter();
 const geoStore = useGeoStore();
 const registerStore = useAccountRegisterStore();
 const alertStore = useAlertStore();
+const geographyApi = useGeographyApi();
 
 const isGeoLoading = ref(false);
 const errors = ref<Record<string, string>>({});

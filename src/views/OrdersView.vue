@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onScopeDispose } from "vue";
 import { useRouter } from "vue-router";
-import { quoteApi,  } from "../api";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import type {
@@ -40,6 +40,7 @@ const contextStore = useUserContextStore();
 const notificationStore = useNotificationStore();
 const organizationApi = useOrganizationApi();
 const userProfileApi = useUserProfileApi();
+const quoteApi = useQuoteApi();
 
 
 const isProvider = computed(() => contextStore.isProvider);

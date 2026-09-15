@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { productApi, quoteApi } from "@/api";
+import { useProductApi } from "@/composables/api/useProductApi";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import type { PublicProviderDto } from "@/api/services/organization/types";
 
 const contextStore = useUserContextStore();
 const orgStore = useOrganizationStore();
+const productApi = useProductApi();
+const quoteApi = useQuoteApi();
 
 const productsCount = ref<number>(0);
 const ordersCount = ref<number>(0);

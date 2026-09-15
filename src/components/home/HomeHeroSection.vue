@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import { productApi } from '@/api';
+import { useProductApi } from '@/composables/api/useProductApi';
 import type { ProductResponse } from '@/api/services/product/types';
 import ProductImage from '@/components/product/ProductImage.vue';
 
 const searchQuery = ref('');
+const productApi = useProductApi();
 const searchResults = ref<ProductResponse[]>([]);
 const isDropdownOpen = ref(false);
 const isSearching = ref(false);

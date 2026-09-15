@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { productApi, categoryApi, quoteApi, inventoryApi } from "@/api";
+import { useProductApi } from "@/composables/api/useProductApi";
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useInventoryApi } from "@/composables/api/useInventoryApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
 import type { ProductResponse } from "@/api/services/product/types";
@@ -11,6 +14,10 @@ import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const userContext = useUserContextStore();
 const alertStore = useAlertStore();
+const productApi = useProductApi();
+const categoryApi = useCategoryApi();
+const quoteApi = useQuoteApi();
+const inventoryApi = useInventoryApi();
 
 // Core Data State
 const products = ref<ProductResponse[]>([]);

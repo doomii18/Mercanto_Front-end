@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { cartApi, quoteApi } from "@/api";
+import { useCartApi } from "@/composables/api/useCartApi";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
+
+const cartApi = useCartApi();
+const quoteApi = useQuoteApi();
 
 const cartCount = ref<number | null>(null);
 const ordersCount = ref<number | null>(null);

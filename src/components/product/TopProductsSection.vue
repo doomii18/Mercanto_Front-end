@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { productApi } from "../../api";
+import { useProductApi } from "@/composables/api/useProductApi";
 import type { ProductResponse } from "../../api/services/product/types";
 import ProductCard from "./ProductCard.vue";
 import topSellersHeroImg from "../../assets/top-sellers-hero.png";
@@ -20,6 +20,7 @@ interface TopProductItem {
 }
 
 const topProducts = ref<TopProductItem[]>([]);
+const productApi = useProductApi();
 const isLoading = ref(true);
 
 const BUBBLE_CLASSES: TopProductItem["bubbleClass"][] = [

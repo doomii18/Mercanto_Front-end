@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { categoryApi, productApi } from "../../api"; // Added productApi
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
+import { useProductApi } from "@/composables/api/useProductApi";
 import type { ProductCategoryResponse } from "../../api/services/category/types";
 import CategoryImage from "./CategoryImage.vue";
 
@@ -9,6 +10,8 @@ interface CategoryViewItem extends ProductCategoryResponse {
 }
 
 const categories = ref<CategoryViewItem[]>([]);
+const categoryApi = useCategoryApi();
+const productApi = useProductApi();
 const isLoading = ref(true);
 
 const animationDuration = computed(() => {

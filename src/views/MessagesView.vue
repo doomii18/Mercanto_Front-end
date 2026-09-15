@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onScopeDispose, nextTick } from "vue";
-import { chatApi, quoteApi} from "../api";
+import { useChatApi } from "@/composables/api/useChatApi";
+import { useQuoteApi } from "@/composables/api/useQuoteApi";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -16,6 +17,8 @@ const contextStore = useUserContextStore();
 const notificationStore = useNotificationStore();
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
+const chatApi = useChatApi();
+const quoteApi = useQuoteApi();
 
 const threads = ref<ChatThreadResponse[]>([]);
 const activeThreadId = ref<string | null>(null);

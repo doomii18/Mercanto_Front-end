@@ -3,7 +3,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
 import type { QuoteAggregateResponse, QuoteStatus } from "../../api/services/quote/types";
-import { productApi } from "../../api";
+import { useProductApi } from "@/composables/api/useProductApi";
 import ProductImage from "../product/ProductImage.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
 import ProfileAvatar from "../profile/ProfileAvatar.vue";
@@ -25,6 +25,7 @@ const emit = defineEmits<{
 }>();
 
 const contextStore = useUserContextStore();
+const productApi = useProductApi();
 const isProvider = computed(() => contextStore.isProvider);
 
 const productBlobCache = new Map<string, Promise<string | null>>();

@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import mercantoLogo from '@/assets/logo.png?inline'
-import {
-  quoteApi,
-  type QuoteAggregateResponse,
-  type PublicProviderDto,
-  type UserProfileResponse,
-  type AccountResponse,
-} from '@/api'
+import { useQuoteApi } from '@/composables/api/useQuoteApi'
+import type { QuoteAggregateResponse } from '@/api/services/quote/types'
+import type { PublicProviderDto } from '@/api/services/organization/types'
+import type { UserProfileResponse } from '@/api/services/user_profile/types'
+import type { AccountResponse } from '@/api/services/identity/types'
 import { useIdentityApi } from '@/composables/api/useIdentityApi'
 import { useUserProfileApi } from '@/composables/api/useUserProfileApi'
 import { useOrganizationApi } from '@/composables/api/useOrganizationApi'
@@ -28,6 +26,7 @@ const emit = defineEmits<{
 const identityApi = useIdentityApi();
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
+const quoteApi = useQuoteApi();
 
 const pageRefs = ref<HTMLElement[]>([])
 const isLoading = ref<boolean>(true)

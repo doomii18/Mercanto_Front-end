@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { categoryApi } from "../../api";
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
 import type { ProductCategoryResponse } from "../../api/services/category/types";
 import CategoryImage from "./CategoryImage.vue";
 
@@ -22,6 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const items = ref<ProductCategoryResponse[]>([]);
+const categoryApi = useCategoryApi();
 const isLoading = ref(false);
 const carouselRef = ref<HTMLElement | null>(null);
 

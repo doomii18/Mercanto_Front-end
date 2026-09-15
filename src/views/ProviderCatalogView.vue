@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute } from "vue-router";
-import { productApi,  categoryApi, cartApi } from "@/api";
+import { useProductApi } from "@/composables/api/useProductApi";
+import { useCategoryApi } from "@/composables/api/useCategoryApi";
+import { useCartApi } from "@/composables/api/useCartApi";
 import { useGeoStore } from "@/stores/geo";
 import type { ProductResponse } from "@/api/services/product/types";
 import type { PublicProviderDto } from "@/api/services/organization/types";
@@ -15,6 +17,9 @@ const geoStore = useGeoStore();
 
 const providerId = computed(() => route.params.providerId as string);
 const organizationApi = useOrganizationApi();
+const productApi = useProductApi();
+const categoryApi = useCategoryApi();
+const cartApi = useCartApi();
 
 const provider = ref<PublicProviderDto | null>(null);
 const products = ref<ProductResponse[]>([]);

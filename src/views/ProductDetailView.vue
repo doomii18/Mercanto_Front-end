@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { productApi } from "../api";
+import { useProductApi } from "@/composables/api/useProductApi";
 
 import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
@@ -63,6 +63,7 @@ const COLOR_PRESETS: ProductColor[] = [
 const route = useRoute();
 const router = useRouter();
 const organizationApi = useOrganizationApi();
+const productApi = useProductApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();

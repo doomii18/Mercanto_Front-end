@@ -1,9 +1,7 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import {
-  verificationRequestApi,
-  verificationRequestDocumentApi,
-} from "@/api";
+import { useVerificationRequestApi } from "@/composables/api/useVerificationRequestApi";
+import { useVerificationDocumentApi } from "@/composables/api/useVerificationDocumentApi";
 import { useIdentityApi } from "@/composables/api/useIdentityApi";
 import type { ProviderKind } from "@/api/services/organization/types";
 import { useAccountRegisterStore } from "./accountRegisterStore";
@@ -13,6 +11,8 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
   const accountStore = useAccountRegisterStore();
   const identityApi = useIdentityApi();
   const organizationApi = useOrganizationApi();
+  const verificationRequestApi = useVerificationRequestApi();
+  const verificationRequestDocumentApi = useVerificationDocumentApi();
 
   const companyName = ref("");
   const taxId = ref("");
