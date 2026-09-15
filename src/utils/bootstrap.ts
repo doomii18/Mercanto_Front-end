@@ -1,6 +1,5 @@
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useGeoStore } from "@/stores/geo";
-import { useNotificationStore } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
 
 let bootstrapPromise: Promise<void> | null = null;
@@ -15,7 +14,6 @@ export async function bootstrapApp(): Promise<void> {
     const authStore = useAuthStore();
     const contextStore = useUserContextStore();
     const geoStore = useGeoStore();
-    const notificationStore = useNotificationStore();
 
     try {
       const account = await authStore.initialize();
@@ -23,10 +21,6 @@ export async function bootstrapApp(): Promise<void> {
       if (account) {
         await contextStore.initialize().catch((err) => {
           console.error("[Bootstrap] User context initialization failed:", err);
-        });
-
-        notificationStore.connect().catch((err) => {
-          console.warn("[Bootstrap] Non-critical notification connection failed:", err);
         });
       } else {
         contextStore.reset();

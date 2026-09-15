@@ -1,6 +1,5 @@
 import { defineStore } from "pinia";
 import { ref, shallowRef } from "vue";
-import { useWebSocket } from "@vueuse/core";
 import { useApiFetch } from "@/composables/api/useApiFetch";
 import { useAuthStore } from "./authStore";
 import { useToastStore } from "./toastStore";
@@ -15,20 +14,12 @@ import type {
 } from "@/api/services/notifications/types";
 
 export const useNotificationStore = defineStore("notification", () => {
-  const wsUrl = ref<string>("");
+  const status = ref<"OPEN" | "CONNECTING" | "CLOSED">("CLOSED");
   const recentEvents = ref<NotificationEvent[]>([]);
   const lastRawEvent = shallowRef<NotificationEvent | null>(null);
 
-  const { status, close, open } = useWebSocket(wsUrl, {
-    immediate: false,
-    autoReconnect: {
-      retries: 5,
-      delay: 2500,
-    },
-    onMessage(_ws, event: MessageEvent) {
-      handleIncomingMessage(event.data);
-    },
-  });
+  let socket: WebSocket | null = null;
+  let connectAbortController: AbortController | null = null;
 
   function handleIncomingMessage(rawData: string) {
     try {
@@ -78,11 +69,17 @@ export const useNotificationStore = defineStore("notification", () => {
     if (!authStore.isAuthenticated) return;
     if (status.value === "OPEN" || status.value === "CONNECTING") return;
 
+    // Cancel any previous in-flight ticket request
+    connectAbortController?.abort();
+    const controller = new AbortController();
+    connectAbortController = controller;
+
     try {
       const { data, error } = await useApiFetch("/notifications/ticket")
         .post()
         .json<WsTicketResponse>();
 
+      if (controller.signal.aborted) return;
       if (error.value || !data.value) return;
 
       const { ticket } = WsTicketResponseSchema.parse(data.value);
@@ -92,23 +89,54 @@ export const useNotificationStore = defineStore("notification", () => {
       targetUrl.pathname = "/notifications";
       targetUrl.searchParams.set("token", ticket);
 
-      wsUrl.value = targetUrl.toString();
-      open();
+      // Close any lingering socket before opening a new one
+      socket?.close();
+
+      const ws = new WebSocket(targetUrl.toString());
+      socket = ws;
+      status.value = "CONNECTING";
+
+      ws.onopen = () => {
+        if (socket !== ws) return; // superseded
+        status.value = "OPEN";
+      };
+
+      ws.onmessage = (event: MessageEvent) => {
+        handleIncomingMessage(event.data);
+      };
+
+      ws.onerror = () => {
+        console.error("[WebSocket] Connection error.");
+      };
+
+      ws.onclose = () => {
+        if (socket !== ws) return; // superseded
+        socket = null;
+        status.value = "CLOSED";
+      };
     } catch (err) {
-      console.error("[WebSocket] Ticket exchange failed:", err);
+      if (!controller.signal.aborted) {
+        console.error("[WebSocket] Ticket exchange failed:", err);
+      }
+    } finally {
+      if (connectAbortController === controller) {
+        connectAbortController = null;
+      }
     }
   }
 
   function disconnect(): void {
-    close();
-    wsUrl.value = "";
+    connectAbortController?.abort();
+    connectAbortController = null;
+    socket?.close();
+    socket = null;
+    status.value = "CLOSED";
     recentEvents.value = [];
   }
 
   function on(callback: (event: NotificationEvent) => void) {
     return notificationBus.on(callback);
   }
-
 
   function onType<T extends NotificationEvent["type"]>(
     type: T,
