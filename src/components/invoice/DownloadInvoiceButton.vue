@@ -1,7 +1,5 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { toPng } from 'html-to-image'
-import { jsPDF } from 'jspdf'
 import type FacturaTemplate from './FacturaTemplate.vue'
 
 interface Props {
@@ -22,43 +20,49 @@ async function handleDownload() {
     props.templateRef.pageRefs.length === 0 ||
     isExporting.value
   ) {
-    return
+    return;
   }
 
-  isExporting.value = true
-  const pages = props.templateRef.pageRefs
+  isExporting.value = true;
+  const pages = props.templateRef.pageRefs;
 
   try {
+    // Dynamic import to isolate heavy libs into separate on-demand chunks
+    const [{ toPng }, { jsPDF }] = await Promise.all([
+      import('html-to-image'),
+      import('jspdf'),
+    ]);
+
     const pdf = new jsPDF({
       orientation: 'portrait',
       unit: 'mm',
       format: 'a4',
-    })
+    });
 
-    const pdfWidth = pdf.internal.pageSize.getWidth()
-    const pdfHeight = pdf.internal.pageSize.getHeight()
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
 
     for (let i = 0; i < pages.length; i++) {
-      const pageElement = pages[i]
-      if (!pageElement) continue
+      const pageElement = pages[i];
+      if (!pageElement) continue;
 
       const dataUrl = await toPng(pageElement, {
         quality: 0.98,
         pixelRatio: 2,
-      })
+      });
 
       if (i > 0) {
-        pdf.addPage('a4', 'portrait')
+        pdf.addPage('a4', 'portrait');
       }
 
-      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight)
+      pdf.addImage(dataUrl, 'PNG', 0, 0, pdfWidth, pdfHeight);
     }
 
-    pdf.save(props.filename)
+    pdf.save(props.filename);
   } catch (err) {
-    console.error('Failed to generate multi-page PDF:', err)
+    console.error('Failed to generate multi-page PDF:', err);
   } finally {
-    isExporting.value = false
+    isExporting.value = false;
   }
 }
 </script>
