@@ -1,6 +1,7 @@
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useGeoStore } from "@/stores/geo";
 import { useAuthStore } from "@/stores/authStore";
+import { useNotificationStore } from "@/stores/notificationStore";
 
 let bootstrapPromise: Promise<void> | null = null;
 
@@ -9,11 +10,11 @@ export async function bootstrapApp(): Promise<void> {
     return bootstrapPromise;
   }
 
-
   bootstrapPromise = (async () => {
     const authStore = useAuthStore();
     const contextStore = useUserContextStore();
     const geoStore = useGeoStore();
+    const notificationStore = useNotificationStore();
 
     try {
       const account = await authStore.initialize();
@@ -22,7 +23,12 @@ export async function bootstrapApp(): Promise<void> {
         await contextStore.initialize().catch((err) => {
           console.error("[Bootstrap] User context initialization failed:", err);
         });
+
+        notificationStore.connect().catch((err) => {
+          console.warn("[Bootstrap] WebSocket connection failed:", err);
+        });
       } else {
+        notificationStore.disconnect();
         contextStore.reset();
       }
 
@@ -33,6 +39,7 @@ export async function bootstrapApp(): Promise<void> {
       }
     } catch (error) {
       console.error("[Bootstrap] Startup recovery:", error);
+      notificationStore.disconnect();
       contextStore.reset();
     }
   })();

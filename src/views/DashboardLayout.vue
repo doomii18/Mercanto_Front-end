@@ -1,13 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
-import { useNotificationStore } from "@/stores/notificationStore";
 import AppLogo from "@/components/common/AppLogo.vue";
 import UserMenu from "@/components/common/UserMenu.vue";
 import NotificationBell from "@/components/common/NotificationBell.vue";
 
 const contextStore = useUserContextStore();
-const notificationStore = useNotificationStore();
 const sidebarOpen = ref(false);
 
 const toggleSidebar = () => {
@@ -17,16 +15,6 @@ const toggleSidebar = () => {
 const closeSidebar = () => {
   sidebarOpen.value = false;
 };
-
-onMounted(() => {
-  notificationStore.connect().catch((err) => {
-    console.warn("[DashboardLayout] WebSocket connection failed:", err);
-  });
-});
-
-onUnmounted(() => {
-  notificationStore.disconnect();
-});
 </script>
 
 <template>

@@ -1,7 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router";
 
 import { useUserContextStore } from "@/stores/userContextStore";
-import { bootstrapApp } from "@/utils/bootstrap";
 import { useAuthStore } from "@/stores/authStore";
 
 declare module "vue-router" {
@@ -208,10 +207,6 @@ export const router = createRouter({
 });
 
 router.beforeEach(async (to) => {
-  // Unified bootstrap: hydrates auth, provider organization context, and geo cache
-
-  await bootstrapApp();
-
   const authStore = useAuthStore();
   const contextStore = useUserContextStore();
 
