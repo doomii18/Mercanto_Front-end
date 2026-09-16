@@ -80,8 +80,9 @@ const validateStep2 = (): boolean => {
 
 const handleContinue = () => {
   if (!validateStep2()) return;
-  router.push({ name: "provider-step-3" });
+  router.push({ name: "register-provider-3" });
 };
+
 </script>
 
 <template>
@@ -176,7 +177,7 @@ const handleContinue = () => {
     </div>
 
     <div class="step-actions right-align">
-      <router-link :to="{ name: 'provider-step-1' }" class="btn-orange">
+      <router-link :to="{ name: 'register-provider-1' }" class="btn-orange">
         <i class="fa-solid fa-arrow-left"></i> Atrás
       </router-link>
       <button type="button" class="btn-teal" @click="handleContinue">

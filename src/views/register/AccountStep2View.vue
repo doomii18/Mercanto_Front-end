@@ -99,7 +99,7 @@ const finishRegistration = () => {
         </div>
 
         <div class="step-actions center-align">
-            <router-link :to="{ name: 'account-step-1' }" class="btn-orange">
+            <router-link :to="{ name: 'register-buyer-1' }" class="btn-orange">
                 <i class="fa-solid fa-arrow-left"></i> Atrás
             </router-link>
             <button

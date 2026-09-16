@@ -16,14 +16,8 @@ export const routes: RouteRecordRaw[] = [
   ...publicRoutes,
   ...authRoutes,
   ...dashboardRoutes,
-  {
-    path: "/:pathMatch(.*)*",
-    redirect: (to) => ({
-      name: "not-found",
-      params: { pathMatch: to.params.pathMatch },
-    }),
-  },
 ];
+
 
 export const router = createRouter({
   history: createWebHistory(),

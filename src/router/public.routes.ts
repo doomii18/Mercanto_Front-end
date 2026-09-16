@@ -17,17 +17,23 @@ export const publicRoutes: RouteRecordRaw[] = [
       },
       {
         path: "category/:categoryId",
+        alias: "categories/:categoryId",
         name: "category",
+        props: true,
         component: () => import("@/views/CategoryView.vue"),
       },
       {
         path: "product/:id",
+        alias: "products/:id",
         name: "product-detail",
+        props: true,
         component: () => import("@/views/ProductDetailView.vue"),
       },
       {
         path: "catalog/:providerId",
+        alias: "providers/:providerId/catalog",
         name: "provider-catalog",
+        props: true,
         component: () => import("@/views/ProviderCatalogView.vue"),
       },
       {
@@ -36,10 +42,11 @@ export const publicRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/ImageSearchView.vue"),
       },
       {
-        path: "404/:pathMatch(.*)*",
+        path: ":pathMatch(.*)*",
         name: "not-found",
         component: () => import("@/views/NotFoundView.vue"),
       },
     ],
   },
 ];
+

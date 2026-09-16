@@ -311,7 +311,7 @@ onMounted(async () => {
           <span>{{ isExporting ? "Exportando..." : "Exportar catálogo" }}</span>
         </button>
         <router-link
-          to="/dashboard/provider-products/add"
+          :to="{ name: 'provider-add-product' }"
           class="flex-1 sm:flex-none justify-center px-4 py-2 bg-[#ff6a00] hover:bg-[#e05e00] rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:-translate-y-0.5 flex items-center gap-2 no-underline shadow-xs cursor-pointer"
         >
           <i class="fa-solid fa-plus text-xs"></i>

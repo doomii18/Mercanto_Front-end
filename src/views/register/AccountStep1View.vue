@@ -181,7 +181,7 @@ const validateStep1 = (): boolean => {
 
 const handleContinue = () => {
     if (!validateStep1()) return;
-    router.push({ name: "account-step-2" });
+    router.push({ name: "register-buyer-2" });
 };
 </script>
 

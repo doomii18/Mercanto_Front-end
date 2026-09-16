@@ -124,7 +124,7 @@ const validateStep1 = (): boolean => {
 
 const handleContinue = () => {
   if (!validateStep1()) return;
-  router.push({ name: "provider-step-2" });
+  router.push({ name: "register-provider-2" });
 };
 </script>
 

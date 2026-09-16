@@ -130,7 +130,7 @@ const finishRegistration = () => {
   </div>
 
   <div class="global-actions">
-    <router-link :to="{ name: 'provider-step-2' }" class="btn-orange">
+    <router-link :to="{ name: 'register-provider-2' }" class="btn-orange">
       <i class="fa-solid fa-arrow-left"></i> Atrás
     </router-link>
     <button

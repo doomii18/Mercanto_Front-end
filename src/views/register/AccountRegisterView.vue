@@ -4,8 +4,8 @@ import { useRoute } from "vue-router";
 
 const route = useRoute();
 
-const isStep1 = computed(() => route.name === "account-step-1");
-const isStep2 = computed(() => route.name === "account-step-2");
+const isStep1 = computed(() => route.name === "register-buyer-1");
+const isStep2 = computed(() => route.name === "register-buyer-2");
 </script>
 
 <template>

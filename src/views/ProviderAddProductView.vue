@@ -160,7 +160,7 @@ async function handlePublishProduct() {
       icon: "fa-solid fa-circle-check",
       confirmText: "Ver mis productos",
       onConfirm: () => {
-        router.push("/dashboard/provider-products");
+        router.push({ name: "provider-products" });
       },
     });
   } catch (err: any) {
@@ -182,7 +182,7 @@ onMounted(async () => {
   <div class="add-product-page">
     <div class="max-w-[1100px] mx-auto">
       <div class="breadcrumb">
-        <router-link to="/dashboard/provider-products">Mis Productos</router-link>
+        <router-link :to="{ name: 'provider-products' }">Mis Productos</router-link>
         <span class="separator">&gt;</span>
         <span class="current">Agregar nuevo producto</span>
       </div>
@@ -396,7 +396,7 @@ onMounted(async () => {
       <!-- Footer Actions -->
       <div class="form-actions">
         <router-link
-          to="/dashboard/provider-products"
+          :to="{ name: 'provider-products' }"
           class="btn-cancel"
         >
           Cancelar
