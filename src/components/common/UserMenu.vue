@@ -31,6 +31,22 @@ const isProfileLoading = ref(true);
 const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
 const isOnProfile = computed(() => route.name === "profile");
 
+const isStaffRole = computed(() => {
+  const role = authStore.accountRole;
+  return role === "admin" || role === "auditor";
+});
+
+const roleBadgeStyle = computed(() => {
+  const role = authStore.accountRole;
+  if (role === "admin") {
+    return "bg-amber-500/10 text-amber-700 border-amber-500/20";
+  }
+  if (role === "auditor") {
+    return "bg-emerald-500/10 text-emerald-700 border-emerald-500/20";
+  }
+  return "bg-slate-100 text-slate-600 border-slate-200";
+});
+
 const roleLabel = computed(() => {
   const role = authStore.accountRole;
   if (!role) return "Usuario";
@@ -120,10 +136,13 @@ const handleLogout = async () => {
       :aria-expanded="isDropdownOpen"
       aria-haspopup="true"
     >
-      <!-- Role Tag - Hidden when collapsed -->
+      <!-- Role Tag - Only for admin or auditor, hidden when collapsed -->
       <span
-        v-if="!props.collapsed && authStore.accountRole && authStore.accountRole !== 'member'"
-        class="badge badge-accent badge-xs rounded uppercase"
+        v-if="!props.collapsed && isStaffRole"
+        :class="[
+          'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold tracking-wider uppercase border',
+          roleBadgeStyle
+        ]"
       >
         {{ roleLabel }}
       </span>
@@ -179,10 +198,21 @@ const handleLogout = async () => {
             <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
           </div>
           <div class="min-w-0 flex-1">
-            <p class="truncate text-xs font-bold text-[#083c5a]">
-              {{ userFullName || "Usuario" }}
-            </p>
-            <p class="truncate text-[11px] text-slate-400 leading-tight">
+            <div class="flex items-center gap-1.5">
+              <p class="truncate text-xs font-bold text-[#083c5a]">
+                {{ userFullName || "Usuario" }}
+              </p>
+              <span
+                v-if="isStaffRole"
+                :class="[
+                  'inline-flex items-center px-1.5 py-0.2 rounded text-[9px] font-semibold tracking-wider uppercase border shrink-0',
+                  roleBadgeStyle
+                ]"
+              >
+                {{ roleLabel }}
+              </span>
+            </div>
+            <p v-if="!isStaffRole" class="truncate text-[11px] text-slate-400 leading-tight">
               {{ roleLabel }}
             </p>
           </div>

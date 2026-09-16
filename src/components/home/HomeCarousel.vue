@@ -1,38 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useCycleList, useIntervalFn } from '@vueuse/core';
 import HomeHeroSection from './HomeHeroSection.vue';
 import FeaturedProviderSection from './FeaturedProviderSection.vue';
 import OffersSection from './OffersSection.vue';
 
 const slides = [HomeHeroSection, FeaturedProviderSection, OffersSection];
-const activeIndex = ref(0);
-const intervalTime = 15000;
-let timer: number | undefined;
-const nextSlide = () => {
-  activeIndex.value = (activeIndex.value + 1) % slides.length;
+const { state: currentSlide, index: activeIndex, next, go } = useCycleList(slides);
+
+const { pause, resume } = useIntervalFn(
+  () => {
+    next();
+  },
+  15000,
+  { immediate: true }
+);
+
+const setSlide = (targetIndex: number) => {
+  go(targetIndex);
+  resume();
 };
-const startTimer = () => {
-  stopTimer();
-  timer = window.setInterval(nextSlide, intervalTime);
-};
-const stopTimer = () => {
-  if (timer) {
-    clearInterval(timer);
-    timer = undefined;
-  }
-};
-const setSlide = (index: number) => {
-  activeIndex.value = index;
-  startTimer();
-};
-const pause = () => stopTimer();
-const resume = () => startTimer();
-onMounted(() => {
-  startTimer();
-});
-onBeforeUnmount(() => {
-  stopTimer();
-});
 </script>
 <template>
   <section
@@ -44,7 +30,7 @@ onBeforeUnmount(() => {
     <div class="grid w-full grid-cols-1 grid-rows-1 min-h-150 lg:min-h-175" aria-live="polite">
       <transition name="crossfade">
         <component
-          :is="slides[activeIndex]"
+          :is="currentSlide"
           :key="activeIndex"
           class="col-start-1 row-start-1 h-full w-full self-stretch"
         />

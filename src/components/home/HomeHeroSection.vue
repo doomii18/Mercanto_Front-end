@@ -123,8 +123,16 @@ onBeforeUnmount(() => {
               @input="handleInput"
               @focus="handleFocus"
             />
+            <router-link
+              :to="{ name: 'image-search' }"
+              class="ml-2 flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:text-teal-600 hover:bg-neutral-100 transition-colors shrink-0"
+              title="Buscar por imagen"
+              aria-label="Buscar por imagen"
+            >
+              <i class="fa-solid fa-camera text-sm"></i>
+            </router-link>
           </div>
-          <button class="flex w-full items-center justify-center rounded-xl bg-(--primary-orange) px-5.5 py-2.5 text-[0.95rem] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-(--primary-orange-hover) md:w-auto md:rounded-full">
+          <button class="flex w-full items-center justify-center rounded-xl bg-(--primary-orange) px-5.5 py-2.5 text-[0.95rem] font-semibold text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-(--primary-orange-hover) md:w-auto md:rounded-full cursor-pointer">
             Buscar productos
           </button>
         </div>

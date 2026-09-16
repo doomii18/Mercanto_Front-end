@@ -276,6 +276,14 @@ onMounted(async () => {
             :placeholder="`Buscar en ${heroTitle}`"
             class="w-full border-none bg-transparent text-sm text-neutral-900 placeholder-neutral-400 outline-none"
           />
+          <router-link
+            :to="{ name: 'image-search' }"
+            class="mr-2 flex h-8 w-8 items-center justify-center rounded-full text-neutral-400 hover:text-teal-600 hover:bg-neutral-100 transition-colors shrink-0"
+            title="Buscar por imagen"
+            aria-label="Buscar por imagen"
+          >
+            <i class="fa-solid fa-camera text-sm"></i>
+          </router-link>
           <button
             type="button"
             class="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-orange-400 shrink-0 cursor-pointer"
