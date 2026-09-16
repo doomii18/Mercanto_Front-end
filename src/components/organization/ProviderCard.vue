@@ -45,148 +45,47 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="provider-card">
-    <div class="provider-avatar">
+  <div class="relative flex flex-col items-center text-center bg-white border-2 border-[#ff6a00] rounded-3xl p-6 sm:p-8 transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_10px_25px_rgba(255,106,0,0.12)] min-w-0 box-border">
+    <!-- Top Verified Badge -->
+    <div
+      v-if="isVerified"
+      class="absolute top-4 right-4 inline-flex items-center gap-1.5 bg-teal-50 text-teal-700 border border-teal-200 px-3 py-1 rounded-full text-xs font-bold shadow-xs select-none"
+      title="Este proveedor ha sido verificado formalmente por el equipo de Mercanto"
+    >
+      <i class="fa-solid fa-circle-check text-xs text-teal-600"></i>
+      <span>Verificado</span>
+    </div>
+
+    <!-- Provider Avatar -->
+    <div class="w-18 h-18 rounded-full bg-slate-100 flex items-center justify-center text-2xl text-slate-500 mb-4 overflow-hidden border border-slate-200 shrink-0">
       <ProviderLogo :blob-id="logoBlobId" :alt="name" />
     </div>
 
-    <h4 :title="name">{{ name }}</h4>
+    <!-- Provider Name -->
+    <h4 :title="name" class="text-lg font-bold text-[#083c5a] mb-1.5 w-full truncate text-center">
+      {{ name }}
+    </h4>
 
-    <div v-if="isVerified" class="verified-icon">
-      <i class="fa-solid fa-certificate"></i>
-    </div>
-    <p class="provider-status">
-      {{ isVerified ? "Proveedor verificado" : "Proveedor registrado" }}
-    </p>
-
-    <div class="provider-rating" :title="`${reviewCount} valoraciones`">
-      <span class="score">{{ rating > 0 ? rating.toFixed(1) : "0.0" }}</span>
-      <i class="fa-solid fa-star"></i>
+    <!-- Rating -->
+    <div class="text-2xl font-bold text-[#083c5a] flex items-center justify-center gap-1.5 mb-2" :title="`${reviewCount} valoraciones`">
+      <span class="leading-none">{{ rating > 0 ? rating.toFixed(1) : "0.0" }}</span>
+      <i class="fa-solid fa-star text-lg text-[#ff6a00]"></i>
     </div>
 
-    <p class="provider-location" :title="resolvedLocation">
+    <!-- Location -->
+    <p class="text-xs sm:text-sm text-slate-500 mb-5 w-full truncate text-center" :title="resolvedLocation">
       {{ resolvedLocation }}
     </p>
 
+    <!-- Catalog Button -->
     <router-link
-    :to="{
-         name: 'provider-catalog',
-         params: { providerId: id },
-       }"
-      class="btn-orange"
+      :to="{
+        name: 'provider-catalog',
+        params: { providerId: id },
+      }"
+      class="w-full inline-block text-center rounded-full bg-[#ff6a00] hover:bg-[#e05e00] text-white py-3 px-6 text-sm font-semibold transition-colors duration-200 no-underline box-border shadow-xs cursor-pointer"
     >
       Ver catálogo
     </router-link>
   </div>
 </template>
-
-<style scoped>
-.provider-card {
-  background: #ffffff;
-  border: 2px solid var(--primary-orange);
-  border-radius: 24px;
-  padding: 2rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  position: relative;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  min-width: 0;
-  box-sizing: border-box;
-}
-
-.provider-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(255, 106, 0, 0.12);
-}
-
-.provider-avatar {
-  width: 72px;
-  height: 72px;
-  background-color: #f1f5f9;
-  border-radius: 50%;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.8rem;
-  color: #64748b;
-  margin-bottom: 1rem;
-  overflow: hidden;
-  border: 1px solid var(--border-gray);
-  flex-shrink: 0;
-}
-
-.provider-card h4 {
-  font-size: 1.15rem;
-  color: var(--primary-blue);
-  margin: 0 0 0.4rem 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  text-align: center;
-}
-
-.verified-icon {
-  position: absolute;
-  top: 1.5rem;
-  right: 1.5rem;
-  font-size: 1.5rem;
-  color: #0284c7;
-}
-
-.provider-status {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin: 0 0 0.6rem 0;
-  text-align: center;
-}
-
-.provider-rating {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--primary-blue);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  margin-bottom: 0.6rem;
-}
-
-.provider-rating i {
-  color: var(--primary-orange);
-  font-size: 1.2rem;
-}
-
-.provider-location {
-  font-size: 0.85rem;
-  color: #64748b;
-  margin: 0 0 1.2rem 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  text-align: center;
-}
-
-.btn-orange {
-  background-color: var(--primary-orange);
-  color: #ffffff;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 24px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
-  text-decoration: none;
-  display: inline-block;
-  box-sizing: border-box;
-  text-align: center;
-  transition: background-color 0.2s ease;
-}
-
-.btn-orange:hover {
-  background-color: var(--primary-orange-hover);
-}
-</style>

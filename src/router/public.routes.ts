@@ -37,6 +37,12 @@ export const publicRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/ProviderCatalogView.vue"),
       },
       {
+        path: "providers",
+        alias: "proveedores",
+        name: "providers",
+        component: () => import("@/views/ProvidersView.vue"),
+      },
+      {
         path: "image-search",
         name: "image-search",
         component: () => import("@/views/ImageSearchView.vue"),

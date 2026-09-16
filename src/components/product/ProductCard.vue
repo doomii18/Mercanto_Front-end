@@ -16,6 +16,9 @@ export interface ProductCardProps {
   reviewCount?: number;
   badgeText?: string | null;
   badgeIcon?: string;
+  badgeVariant?: "orange" | "teal" | "blue" | "neutral" | string;
+  borderColor?: "orange" | "teal" | "neutral" | "none" | string;
+  objectFit?: "contain" | "cover";
   rank?: number | null;
   bubbleClass?: "orange" | "teal" | "blue" | "grey" | string;
 }
@@ -28,6 +31,9 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
   reviewCount: 0,
   badgeText: null,
   badgeIcon: "fa-solid fa-fire",
+  badgeVariant: "orange",
+  borderColor: "orange",
+  objectFit: "cover",
   rank: null,
   bubbleClass: "orange",
 });
@@ -50,6 +56,27 @@ const bubbleBgClass = computed(() => {
     grey: "bg-[#64748b]",
   };
   return map[props.bubbleClass] || props.bubbleClass;
+});
+
+const borderClass = computed(() => {
+  if (props.borderColor === "orange") return "border-2 border-[#ff6a00] hover:shadow-[0_12px_28px_rgba(255,106,0,0.14)]";
+  if (props.borderColor === "teal") return "border-2 border-teal-500 hover:shadow-[0_12px_28px_rgba(13,148,136,0.14)]";
+  if (props.borderColor === "neutral") return "border border-neutral-200 hover:border-neutral-300 hover:shadow-lg";
+  if (props.borderColor === "none") return "border-0 shadow-sm hover:shadow-lg";
+  return props.borderColor;
+});
+
+const badgeClasses = computed(() => {
+  if (props.badgeVariant === "teal") {
+    return "bg-teal-50/95 text-teal-700 border border-teal-200/80";
+  }
+  if (props.badgeVariant === "blue") {
+    return "bg-blue-50/95 text-[#023859] border border-blue-200/80";
+  }
+  if (props.badgeVariant === "neutral") {
+    return "bg-neutral-100/95 text-neutral-700 border border-neutral-200";
+  }
+  return "bg-[#fff0e6]/95 text-[#ff6a00]";
 });
 
 async function loadProviderInfo() {
@@ -89,13 +116,19 @@ onMounted(() => {
 <template>
   <router-link
     :to="{ name: 'product-detail', params: { id } }"
-    class="group relative flex flex-col rounded-[20px] border-2 border-[#ff6a00] bg-white p-4 text-inherit no-underline transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(255,106,0,0.14)] min-w-0"
+    :class="[
+      'group relative flex flex-col rounded-[20px] bg-white p-4 text-inherit no-underline transition-all duration-200 hover:-translate-y-1 min-w-0',
+      borderClass
+    ]"
   >
     <!-- Image Frame -->
     <div class="relative mb-3 flex aspect-square w-full items-center justify-center overflow-hidden rounded-[14px] border border-slate-100 bg-slate-50">
       <span
         v-if="badgeText"
-        class="absolute left-2 top-2 z-10 inline-flex items-center gap-1.5 rounded-full bg-[#fff0e6]/95 px-2.5 py-0.5 text-[0.72rem] font-bold text-[#ff6a00] shadow-sm backdrop-blur-xs"
+        :class="[
+          'absolute left-2 top-2 z-10 inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[0.72rem] font-bold shadow-sm backdrop-blur-xs',
+          badgeClasses
+        ]"
       >
         <i v-if="badgeIcon" :class="badgeIcon"></i>
         {{ badgeText }}
@@ -104,7 +137,8 @@ onMounted(() => {
       <ProductImage
         :blob-id="imageBlobId"
         :alt="title"
-        class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+        :object-fit="objectFit"
+        img-class="transition-transform duration-300 group-hover:scale-105"
       />
     </div>
 

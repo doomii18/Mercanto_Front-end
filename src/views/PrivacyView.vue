@@ -86,7 +86,7 @@
               <h4>Compra con confianza</h4>
               <p>Nuestro compromiso es ofrecer una plataforma segura para proveedores y comerciantes de toda Nicaragua</p>
             </div>
-            <router-link :to="{ name: 'home' }" class="btn-trust">Ver proveedores</router-link>
+            <router-link :to="{ name: 'providers' }" class="btn-trust">Ver proveedores</router-link>
           </div>
         </div>
       </div>

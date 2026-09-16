@@ -2,10 +2,22 @@
 import { useBlobUrl } from "../../composables/blob/useBlob";
 import { useProductApi } from "@/composables/api/useProductApi";
 
-const props = defineProps<{
-  blobId?: string | null;
-  alt?: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    blobId?: string | null;
+    alt?: string;
+    objectFit?: "contain" | "cover" | "fill" | "none" | "scale-down";
+    fallbackIcon?: string;
+    imgClass?: string;
+  }>(),
+  {
+    blobId: null,
+    alt: "Imagen del producto",
+    objectFit: "contain",
+    fallbackIcon: "fa-solid fa-box",
+    imgClass: "",
+  }
+);
 
 const productApi = useProductApi();
 
@@ -27,7 +39,11 @@ const { url, isLoading } = useBlobUrl(
       v-else-if="url"
       :src="url"
       :alt="alt || 'Imagen del producto'"
-      class="h-full w-full object-contain"
+      :class="[
+        'h-full w-full',
+        objectFit === 'cover' ? 'object-cover' : 'object-contain',
+        imgClass
+      ]"
     />
 
     <div
@@ -35,7 +51,7 @@ const { url, isLoading } = useBlobUrl(
       class="flex h-full w-full items-center justify-center text-2xl text-slate-300"
       aria-hidden="true"
     >
-      <i class="fa-solid fa-box"></i>
+      <i :class="fallbackIcon || 'fa-solid fa-box'"></i>
     </div>
   </div>
 </template>

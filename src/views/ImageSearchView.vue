@@ -250,14 +250,13 @@ onBeforeUnmount(() => {
           <div
             v-for="i in 4"
             :key="i"
-            class="h-80 rounded-2xl bg-white border border-neutral-200 p-4 animate-pulse flex flex-col justify-between"
+            class="flex flex-col rounded-[20px] border border-neutral-200 bg-white p-4 animate-pulse shadow-xs"
           >
-            <div class="w-full h-44 rounded-xl bg-neutral-200"></div>
-            <div class="space-y-2.5">
-              <div class="h-4 bg-neutral-200 rounded w-3/4"></div>
-              <div class="h-3 bg-neutral-200 rounded w-1/2"></div>
-              <div class="h-5 bg-neutral-200 rounded w-1/3"></div>
-            </div>
+            <div class="aspect-square w-full rounded-[14px] bg-neutral-200 mb-3"></div>
+            <div class="mx-auto h-3 w-2/5 rounded bg-neutral-200 mb-2"></div>
+            <div class="h-4 w-4/5 rounded bg-neutral-200 mb-2"></div>
+            <div class="ml-auto h-3 w-1/3 rounded bg-neutral-200 mb-4"></div>
+            <div class="mt-auto h-6 w-full rounded bg-neutral-200"></div>
           </div>
         </div>
 
@@ -297,7 +296,9 @@ onBeforeUnmount(() => {
               :category-name="hit.product.category?.name ?? null"
               :image-blob-id="hit.product.image_blob_ids?.[0] ?? null"
               :badge-text="hit.distance < 0.35 ? 'Alta coincidencia' : 'Similitud visual'"
-              :badge-icon="hit.distance < 0.35 ? 'fa-solid fa-bullseye' : 'fa-solid fa-sparkles'"
+              :badge-icon="hit.distance < 0.35 ? 'fa-solid fa-bullseye' : 'fa-solid fa-wand-magic-sparkles'"
+              badge-variant="teal"
+              border-color="teal"
               bubble-class="teal"
             />
           </div>

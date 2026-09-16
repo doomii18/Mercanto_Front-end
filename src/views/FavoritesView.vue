@@ -202,7 +202,8 @@ onMounted(() => {
           <ProductImage
             :blob-id="item.product.image_blob_ids?.[0]"
             :alt="item.product.title"
-            class="h-full w-full rounded-xl object-cover transition-transform duration-300 group-hover:scale-105"
+            object-fit="cover"
+            img-class="rounded-xl transition-transform duration-300 group-hover:scale-105"
           />
         </div>
 

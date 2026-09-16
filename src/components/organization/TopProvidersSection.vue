@@ -108,7 +108,7 @@ onMounted(async () => {
 
     <div class="text-center md:text-right">
         <router-link
-          :to="{ name: 'home', hash: '#categorias' }"
+          :to="{ name: 'providers' }"
           class="inline-flex items-center gap-2 rounded-full border-2 border-[#00a896] px-[1.4rem] py-2 font-semibold text-[#00a896] transition-all duration-200 hover:bg-[#00a896] hover:text-white"
         >
           Ver todos <i class="fa-solid fa-arrow-right"></i>

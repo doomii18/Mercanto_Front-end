@@ -25,6 +25,7 @@ onMounted(async () => {
 
 const isHomeActive = computed(() => route.name === "home" && !route.hash);
 const isCategoryActive = computed(() => route.name === "category");
+const isProvidersActive = computed(() => route.name === "providers");
 const isOrdersActive = computed(() => route.name === "orders");
 </script>
 
@@ -62,8 +63,8 @@ const isOrdersActive = computed(() => route.name === "orders");
           Categorías
         </router-link>
         <router-link
-          :to="{ name: 'home', hash: '#proveedores' }"
-          class="nav-btn"
+          :to="{ name: 'providers' }"
+          :class="['nav-btn', { 'nav-btn-active': isProvidersActive }]"
           exact-active-class=""
           active-class=""
           @click="closeMenu"
