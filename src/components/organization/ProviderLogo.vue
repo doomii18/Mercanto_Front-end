@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useBlobUrl } from "../../modules/blob/useBlob";
+import { useBlobUrl } from "../../composables/blob/useBlob";
 import { generateAvatarDataUrl } from "../../utils/avatar";
 import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 

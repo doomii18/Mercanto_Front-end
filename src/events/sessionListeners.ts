@@ -1,5 +1,5 @@
 import { authBus } from "./authEvents";
-import { blobCache } from "@/modules/blob";
+import { blobCache } from "@/composables/blob";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import { useUserContextStore } from "@/stores/userContextStore";
 

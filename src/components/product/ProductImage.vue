@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useBlobUrl } from "../../modules/blob/useBlob";
+import { useBlobUrl } from "../../composables/blob/useBlob";
 import { useProductApi } from "@/composables/api/useProductApi";
 
 const props = defineProps<{
