@@ -35,7 +35,7 @@ const handleClick = (event: MouseEvent) => {
     :aria-label="name"
     :disabled="disabled"
     :class="[
-      'group relative flex aspect-square w-full flex-col items-center justify-center rounded-2xl border-2 p-2.5 text-center transition-all duration-150 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a896] focus-visible:ring-offset-2',
+      'group relative flex aspect-square w-full min-h-0 flex-col items-center justify-between rounded-2xl border-2 p-2.5 text-center transition-all duration-150 select-none overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-[#00a896] focus-visible:ring-offset-2',
       selected
         ? 'border-[#ff6a00] bg-[#fffaf5]'
         : 'border-slate-200 bg-white hover:-translate-y-0.5 hover:border-[#00a896]',
@@ -43,17 +43,23 @@ const handleClick = (event: MouseEvent) => {
     ]"
     @click="handleClick"
   >
+    <!-- Spacer for balanced vertical alignment -->
+    <div class="h-1 w-full shrink-0" aria-hidden="true"></div>
+
     <!-- Image Slot -->
-    <div class="mb-2 flex h-14 w-14 items-center justify-center overflow-hidden">
-      <CategoryImage :blob-id="imageBlobId" :alt="name" />
+    <div class="flex flex-1 min-h-0 w-full items-center justify-center p-1">
+      <div class="h-11 w-11 sm:h-12 sm:w-12 max-h-full max-w-full flex items-center justify-center overflow-hidden">
+        <CategoryImage :blob-id="imageBlobId" :alt="name" />
+      </div>
     </div>
 
     <!-- Name Label -->
     <span
       :class="[
-        'line-clamp-2 text-xs font-semibold leading-tight transition-colors',
+        'line-clamp-2 shrink-0 text-[11px] sm:text-xs font-semibold leading-tight transition-colors px-0.5',
         selected ? 'text-[#023859]' : 'text-slate-700 group-hover:text-[#023859]'
       ]"
+      :title="name"
     >
       {{ name }}
     </span>
@@ -61,7 +67,7 @@ const handleClick = (event: MouseEvent) => {
     <!-- Checkmark Badge -->
     <div
       v-if="selected"
-      class="absolute top-2 right-2 flex h-5 w-5 items-center justify-center rounded-full bg-[#ff6a00] text-white shadow-xs"
+      class="absolute top-1.5 right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-[#ff6a00] text-white shadow-xs"
     >
       <i class="fa-solid fa-check text-[10px]"></i>
     </div>

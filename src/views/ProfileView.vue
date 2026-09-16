@@ -9,6 +9,8 @@ import EditProviderModal from "../components/profile/EditProviderModal.vue";
 import ProviderStatsCard from "../components/profile/ProviderStatsCard.vue";
 import BuyerStatsCards from "@/components/profile/BuyerStatsCards.vue";
 import { useAuthStore } from "@/stores/authStore";
+import { useOrganizationStore } from "@/stores/organizationStore";
+import { useAlertStore } from "@/stores/alertStore";
 import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
@@ -17,6 +19,8 @@ const organizationApi = useOrganizationApi();
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
+const orgStore = useOrganizationStore();
+const alertStore = useAlertStore();
 const geoStore = useGeoStore();
 
 const isProvider = computed(() => contextStore.isProvider);
@@ -135,16 +139,45 @@ const handleChangePhotoRequest = () => {
 const handleAvatarSave = async (file: File) => {
   try {
     if (isProvider.value) {
-      // Mock for provider (Wire up organizationApi.uploadOrganizationLogo when ready)
-      alert("Logo de proveedor actualizado (Mock).");
+      const orgId = contextStore.activeOrganizationId;
+      if (!orgId) {
+        alertStore.showError("No se encontró la organización proveedora activa.");
+        return;
+      }
+      await organizationApi.uploadOrganizationLogo(orgId, file);
+      // Invalidate cache and reload provider info
+      await orgStore.invalidateOrganization(orgId);
+      const [updatedDetails, updatedPublic] = await Promise.all([
+        organizationApi.getOrganizationDetails(orgId),
+        organizationApi.getPublicProvider(orgId),
+      ]);
+      providerOrg.value = updatedDetails;
+      providerPublic.value = updatedPublic;
+      contextStore.updateActiveOrganization(updatedDetails);
+
+      alertStore.spawnAlert({
+        title: "Logo actualizado",
+        message: "El logo de tu negocio se ha actualizado correctamente.",
+        iconVariant: "teal",
+        icon: "fa-solid fa-circle-check",
+        confirmText: "Aceptar",
+      });
     } else {
       await userProfileApi.changeProfilePicture(file);
       // Refresh profile from API and sync to context store
       const updatedProfile = await userProfileApi.getMyProfile();
       contextStore.updateUserProfile(updatedProfile);
+
+      alertStore.spawnAlert({
+        title: "Foto actualizada",
+        message: "Tu foto de perfil se ha guardado correctamente.",
+        iconVariant: "teal",
+        icon: "fa-solid fa-circle-check",
+        confirmText: "Aceptar",
+      });
     }
   } catch (err: any) {
-    alert(err.message || "Error al guardar la foto.");
+    alertStore.showError(err.message || "Error al guardar la imagen.");
   }
 };
 
@@ -152,17 +185,44 @@ const handleAvatarDelete = async () => {
   if (!avatarBlobId.value) return;
   try {
     if (isProvider.value) {
-      // Mock for provider
-      if (providerPublic.value) providerPublic.value.logo_blob_id = null;
-      alert("Logo de proveedor eliminado (Mock).");
+      const orgId = contextStore.activeOrganizationId;
+      if (!orgId) {
+        alertStore.showError("No se encontró la organización proveedora activa.");
+        return;
+      }
+      await organizationApi.deleteOrganizationLogo(orgId);
+      await orgStore.invalidateOrganization(orgId);
+      const [updatedDetails, updatedPublic] = await Promise.all([
+        organizationApi.getOrganizationDetails(orgId),
+        organizationApi.getPublicProvider(orgId),
+      ]);
+      providerOrg.value = updatedDetails;
+      providerPublic.value = updatedPublic;
+      contextStore.updateActiveOrganization(updatedDetails);
+
+      alertStore.spawnAlert({
+        title: "Logo eliminado",
+        message: "El logo de tu negocio ha sido eliminado.",
+        iconVariant: "orange",
+        icon: "fa-regular fa-trash-can",
+        confirmText: "Aceptar",
+      });
     } else {
       await userProfileApi.deleteProfilePicture(avatarBlobId.value);
       // Refresh profile from API and sync to context store
       const updatedProfile = await userProfileApi.getMyProfile();
       contextStore.updateUserProfile(updatedProfile);
+
+      alertStore.spawnAlert({
+        title: "Foto eliminada",
+        message: "Tu foto de perfil ha sido eliminada.",
+        iconVariant: "orange",
+        icon: "fa-regular fa-trash-can",
+        confirmText: "Aceptar",
+      });
     }
   } catch (err: any) {
-    alert(err.message || "Error al eliminar la foto.");
+    alertStore.showError(err.message || "Error al eliminar la imagen.");
   }
 };
 

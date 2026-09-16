@@ -39,6 +39,41 @@ type EditorStep = "choice" | "upload" | "camera" | "adjust";
 const editorStep = ref<EditorStep>("choice");
 const previousStep = ref<"choice" | "upload" | "camera">("choice");
 
+// --- Contextual labels (Photo for buyer, Logo for provider) ---
+const entityLabelCapitalized = computed(() =>
+  props.isProvider ? "Logo de Negocio" : "Foto de Perfil"
+);
+const changeActionLabel = computed(() =>
+  props.isProvider ? "Cambiar Logo" : "Cambiar Foto"
+);
+const viewActionLabel = computed(() =>
+  props.isProvider ? "Ver logo completo" : "Ver foto completa"
+);
+const deleteActionLabel = computed(() =>
+  props.isProvider ? "Eliminar Logo" : "Eliminar Foto"
+);
+const deleteConfirmTitle = computed(() =>
+  props.isProvider
+    ? "¿Deseas eliminar el logo de tu negocio?"
+    : "¿Deseas eliminar tu foto de perfil?"
+);
+const deleteConfirmDescription = computed(() =>
+  props.isProvider
+    ? "El logo de tu negocio volverá a mostrar las iniciales de tu empresa. Podrás subir uno nuevo cuando lo desees."
+    : "Tu avatar volverá a mostrar las iniciales de tu cuenta. Podrás subir una nueva foto cuando lo desees."
+);
+const uploadDropzoneTitle = computed(() =>
+  props.isProvider
+    ? "Arrastra el logo de tu negocio aquí"
+    : "Arrastra tu foto de perfil aquí"
+);
+const modalTitle = computed(() => {
+  if (editorStep.value === "camera") return "Tomar Foto";
+  if (editorStep.value === "upload") return props.isProvider ? "Subir Logo" : "Subir Foto";
+  if (editorStep.value === "adjust") return "Ajustar y Encuadrar";
+  return changeActionLabel.value;
+});
+
 // --- VueUse Devices & UserMedia ---
 const selectedCameraId = ref<string>("");
 
@@ -494,7 +529,7 @@ defineExpose({
               <span class="w-8 h-8 rounded-full bg-teal-50 text-(--light-teal) flex items-center justify-center text-xs">
                 <i class="fa-solid fa-camera-rotate"></i>
               </span>
-              <span>Cambiar Foto</span>
+              <span>{{ changeActionLabel }}</span>
             </button>
 
             <button
@@ -507,7 +542,7 @@ defineExpose({
               <span class="w-8 h-8 rounded-full bg-blue-50 text-(--primary-blue) flex items-center justify-center text-xs">
                 <i class="fa-regular fa-image"></i>
               </span>
-              <span>Ver foto completa</span>
+              <span>{{ viewActionLabel }}</span>
             </button>
           </div>
 
@@ -521,7 +556,7 @@ defineExpose({
               <span class="w-8 h-8 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-xs">
                 <i class="fa-regular fa-trash-can"></i>
               </span>
-              <span>Eliminar Foto</span>
+              <span>{{ deleteActionLabel }}</span>
             </button>
           </div>
         </div>
@@ -532,7 +567,7 @@ defineExpose({
     <BaseModal v-model="showViewModal" class="max-w-md" @close="showViewModal = false">
       <template #header>
         <h3 class="text-lg font-bold text-(--primary-blue) text-center">
-          Foto de Perfil
+          {{ entityLabelCapitalized }}
         </h3>
       </template>
       <div class="flex justify-center items-center p-2">
@@ -564,9 +599,9 @@ defineExpose({
     <!-- Delete Confirmation Modal -->
     <ConfirmModal
       v-model="showDeleteModal"
-      title="¿Deseas eliminar tu foto de perfil?"
-      description="Tu avatar volverá a mostrar las iniciales de tu cuenta. Podrás subir una nueva foto cuando lo desees."
-      confirm-text="Eliminar Foto"
+      :title="deleteConfirmTitle"
+      :description="deleteConfirmDescription"
+      :confirm-text="deleteActionLabel"
       cancel-text="Cancelar"
       icon="fa-regular fa-trash-can"
       icon-variant="orange"
@@ -595,15 +630,7 @@ defineExpose({
           <div v-else class="w-8"></div>
 
           <h3 class="text-lg text-(--primary-blue) font-bold">
-            {{
-              editorStep === "camera"
-                ? "Tomar Foto"
-                : editorStep === "upload"
-                ? "Subir Foto"
-                : editorStep === "adjust"
-                ? "Ajustar y Encuadrar"
-                : "Cambiar Foto"
-            }}
+            {{ modalTitle }}
           </h3>
 
           <button
@@ -673,7 +700,7 @@ defineExpose({
           :multiple="false"
           accept="image/png, image/jpeg, image/webp"
           :max-size-mb="3"
-          title="Arrastra tu foto de perfil aquí"
+          :title="uploadDropzoneTitle"
           button-text="Explorar archivos"
           hint="Formatos aceptados: JPG, PNG, WEBP. Tamaño máx: 3MB."
           @update:model-value="handleFileFromDropzone"
@@ -874,7 +901,7 @@ defineExpose({
             @click="saveCroppedAvatar"
           >
             <i :class="isSavingPhoto ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-check'"></i>
-            <span>{{ isSavingPhoto ? "Guardando..." : "Guardar foto" }}</span>
+            <span>{{ isSavingPhoto ? "Guardando..." : isProvider ? "Guardar logo" : "Guardar foto" }}</span>
           </button>
         </div>
       </div>

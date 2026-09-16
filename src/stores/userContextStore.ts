@@ -86,6 +86,15 @@ export const useUserContextStore = defineStore("userContext", () => {
     userProfile.value = profile;
   }
 
+  function updateActiveOrganization(org: OrganizationDetailsDto): void {
+    const idx = organizations.value.findIndex((o) => o.id === org.id);
+    if (idx !== -1) {
+      organizations.value[idx] = org;
+    } else {
+      organizations.value.push(org);
+    }
+  }
+
   function setActiveOrganization(orgId: string): void {
     const exists = organizations.value.some((org) => org.id === orgId);
     if (!exists) {
@@ -117,6 +126,7 @@ export const useUserContextStore = defineStore("userContext", () => {
     error,
     initialize,
     updateUserProfile,
+    updateActiveOrganization,
     setActiveOrganization,
     reset,
   };

@@ -100,7 +100,7 @@ const handleSave = async () => {
 <template>
   <BaseModal
     :model-value="modelValue"
-    class="max-w-2xl"
+    class="max-w-3xl"
     :close-on-backdrop="!isMandatory"
     :close-on-esc="!isMandatory"
     :show-close-button="!isMandatory"
@@ -131,7 +131,7 @@ const handleSave = async () => {
         <span>Cargando categorías...</span>
       </div>
 
-      <div v-else class="grid max-h-105 grid-cols-2 gap-4  overflow-y-auto p-1 sm:grid-cols-3 md:grid-cols-4">
+      <div v-else class="grid max-h-[60vh] grid-cols-2 gap-3.5 overflow-y-auto p-1 sm:grid-cols-3 md:grid-cols-4 sm:gap-4">
         <CategorySelectCard
           v-for="cat in categories"
           :key="cat.id"
