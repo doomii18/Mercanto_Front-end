@@ -270,7 +270,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 w-full max-w-full box-border">
+  <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10 gap-6 box-border">
     <!-- Header Banner -->
     <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-2">
       <div class="flex-1">

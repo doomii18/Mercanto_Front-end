@@ -194,7 +194,7 @@ const handleSelectQuote = (quoteId: string) => {
 </script>
 
 <template>
-  <div class="flex flex-col w-full">
+  <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
     <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4 md:gap-6 mb-7">
       <h1 class="font-serif text-3xl font-bold text-neutral-900 m-0">
         {{ isProvider ? "Pedidos Recibidos" : "Mis Pedidos" }}

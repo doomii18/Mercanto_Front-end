@@ -355,9 +355,25 @@ onMounted(async () => {
 <style scoped>
 /* Base Layout & Cards */
 .profile-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1rem 2rem 1rem;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+@media (min-width: 640px) {
+  .profile-container {
+    padding: 1.5rem 1.5rem 2.5rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-container {
+    padding: 2.5rem 2.5rem 3.5rem 2.5rem;
+  }
 }
 
 .card {

@@ -18,9 +18,9 @@ const closeSidebar = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-white text-[#083c5a]">
-    <!-- Header: Hamburger left, Logo + Bell right -->
-    <header class="fixed top-0 left-0 z-50 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
+  <div class="h-screen w-full flex flex-col overflow-hidden bg-white text-[#083c5a]">
+    <!-- Header: Fixed height 64px (h-16), sits at the top of the column -->
+    <header class="relative z-50 flex h-16 shrink-0 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
       <button
         type="button"
         class="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg border-none bg-transparent p-1 transition-colors duration-200 hover:bg-[#fde8e4] focus:outline-none"
@@ -48,8 +48,8 @@ const closeSidebar = () => {
       </div>
     </header>
 
-    <!-- Wrapper: Strictly fits the remaining viewport height -->
-    <div class="relative mt-16 flex h-[calc(100vh-64px-60px)] md:h-[calc(100vh-64px)] overflow-hidden">
+    <!-- Wrapper: Flex-1 remaining space, zero window-level overflow -->
+    <div class="relative flex-1 min-h-0 flex overflow-hidden">
       <!-- Mobile Backdrop -->
       <div
         v-if="sidebarOpen"
@@ -295,10 +295,10 @@ const closeSidebar = () => {
         </div>
       </aside>
 
-      <!-- Main Content Area -->
+      <!-- Main Content Area: delegates scrolling and viewport handling to each view container -->
       <main
         :class="[
-          'relative flex-1 flex flex-col min-h-0 overflow-y-auto bg-[#fdf3f0] p-4 sm:p-6 lg:p-10 transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'relative flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-[#fdf3f0] transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           'max-md:mb-15 max-md:ml-0',
           sidebarOpen ? 'lg:ml-60 md:ml-18' : 'md:ml-[72px]'
         ]"

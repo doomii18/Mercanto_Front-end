@@ -160,7 +160,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
     <!-- Offscreen Printable Container for Canvas Rasterization -->
     <div
       v-if="quoteAggregate"

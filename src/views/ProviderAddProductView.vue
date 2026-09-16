@@ -180,15 +180,16 @@ onMounted(async () => {
 
 <template>
   <div class="add-product-page">
-    <div class="breadcrumb">
-      <router-link to="/dashboard/provider-products">Mis Productos</router-link>
-      <span class="separator">&gt;</span>
-      <span class="current">Agregar nuevo producto</span>
-    </div>
+    <div class="max-w-[1100px] mx-auto">
+      <div class="breadcrumb">
+        <router-link to="/dashboard/provider-products">Mis Productos</router-link>
+        <span class="separator">&gt;</span>
+        <span class="current">Agregar nuevo producto</span>
+      </div>
 
-    <h1 class="page-title">Agregar nuevo producto</h1>
+      <h1 class="page-title">Agregar nuevo producto</h1>
 
-    <form @submit.prevent="handlePublishProduct" class="form-container">
+      <form @submit.prevent="handlePublishProduct" class="form-container">
       <!-- Section 1: General Info -->
       <div class="form-section">
         <div class="grid-row-3">
@@ -412,14 +413,29 @@ onMounted(async () => {
         </div>
       </div>
     </form>
+    </div>
   </div>
 </template>
 
 <style scoped>
 .add-product-page {
-  max-width: 1100px;
-  margin: 0 auto;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 1rem 1rem 2.5rem 1rem;
   color: #333;
+}
+
+@media (min-width: 640px) {
+  .add-product-page {
+    padding: 1.5rem 1.5rem 3rem 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .add-product-page {
+    padding: 2.5rem 2.5rem 3.5rem 2.5rem;
+  }
 }
 
 .breadcrumb {

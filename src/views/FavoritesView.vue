@@ -94,7 +94,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full space-y-6">
+  <div class="flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10 space-y-6">
     <header class="space-y-1">
       <h1 class="font-serif text-3xl font-bold tracking-tight text-[#023859]">
         Mis Favoritos

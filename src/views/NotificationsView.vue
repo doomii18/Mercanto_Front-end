@@ -58,8 +58,9 @@ const goToDetail = (event: NotificationEvent) => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-6 w-full max-w-4xl mx-auto">
-    <header class="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
+  <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
+    <div class="flex flex-col gap-6 w-full max-w-4xl mx-auto">
+      <header class="flex items-center justify-between bg-white p-5 rounded-2xl border border-slate-200 shadow-xs">
       <div>
         <h1 class="text-xl sm:text-2xl font-bold text-[#023859] flex items-center gap-3">
           <i class="fa-solid fa-bell text-[#ff6a00]"></i>
@@ -106,6 +107,7 @@ const goToDetail = (event: NotificationEvent) => {
           <i class="fa-solid fa-chevron-right"></i>
         </div>
       </div>
+    </div>
     </div>
   </div>
 </template>

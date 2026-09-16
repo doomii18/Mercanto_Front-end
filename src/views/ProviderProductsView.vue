@@ -289,8 +289,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col gap-4 w-full max-w-7xl mx-auto px-2 sm:px-4">
-    <!-- Header -->
+  <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
+    <div class="flex flex-col gap-4 w-full max-w-7xl mx-auto">
+      <!-- Header -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
       <div>
         <h1 class="text-xl sm:text-2xl font-bold text-[#023859] tracking-tight">Mis Productos</h1>
@@ -641,5 +642,6 @@ onMounted(async () => {
       @cancel="productToDelete = null"
       @update:model-value="(val) => !val && (productToDelete = null)"
     />
+    </div>
   </div>
 </template>

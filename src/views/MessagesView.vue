@@ -290,7 +290,7 @@ onMounted(async () => {
 
 <template>
   <!-- Shell -->
-  <div class="flex flex-1 min-h-0 overflow-hidden relative bg-[#fde8e4] -m-4 w-[calc(100%+2rem)] sm:-m-6 sm:w-[calc(100%+3rem)] lg:-m-10 lg:w-[calc(100%+5rem)] max-md:flex-col">
+  <div class="flex flex-1 min-h-0 w-full h-full overflow-hidden relative bg-[#fde8e4] max-md:flex-col">
     <!-- Conversations panel -->
     <aside class="w-[370px] min-w-[260px] min-h-0 bg-white border-r border-[#eee] flex flex-col pt-6 px-5 pb-4 gap-4 overflow-hidden max-md:w-full max-md:min-w-0 max-md:h-2/5 max-md:border-r-0 max-md:border-b">
       <h2 class="text-[1.35rem] font-bold text-[#083c5a] m-0 shrink-0">Mensajes</h2>
