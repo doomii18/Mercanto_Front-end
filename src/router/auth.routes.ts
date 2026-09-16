@@ -23,6 +23,7 @@ export const authRoutes: RouteRecordRaw[] = [
         children: [
           {
             path: "",
+            name: "buyer-register",
             redirect: { name: "register-buyer-1" },
           },
           {
@@ -43,6 +44,7 @@ export const authRoutes: RouteRecordRaw[] = [
         children: [
           {
             path: "",
+            name: "provider-register",
             redirect: { name: "register-provider-1" },
           },
           {

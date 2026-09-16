@@ -56,7 +56,7 @@ import AppLogo from '@/components/common/AppLogo.vue';
 
                 <div class="role-cards">
                     <!-- Buyer Card -->
-                    <router-link :to="{ name: 'buyer-register' }" class="role-card comprador">
+                    <router-link :to="{ name: 'register-buyer-1' }" class="role-card comprador">
                         <div class="role-icon">
                             <i class="fa-solid fa-people-arrows"></i>
                         </div>
@@ -69,7 +69,7 @@ import AppLogo from '@/components/common/AppLogo.vue';
                     </router-link>
 
                     <!-- Supplier Card -->
-                    <router-link :to="{ name: 'provider-register' }" class="role-card proveedor">
+                    <router-link :to="{ name: 'register-provider-1' }" class="role-card proveedor">
                         <div class="role-icon">
                             <i class="fa-solid fa-store"></i>
                         </div>

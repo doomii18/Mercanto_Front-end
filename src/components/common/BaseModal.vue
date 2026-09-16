@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { watch, onBeforeUnmount } from "vue";
 
+defineOptions({
+  inheritAttrs: false,
+});
+
 interface Props {
   modelValue: boolean;
   closeOnBackdrop?: boolean;

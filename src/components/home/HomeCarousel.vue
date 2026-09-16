@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { markRaw } from 'vue';
 import { useCycleList, useIntervalFn } from '@vueuse/core';
 import HomeHeroSection from './HomeHeroSection.vue';
 import FeaturedProviderSection from './FeaturedProviderSection.vue';
 import OffersSection from './OffersSection.vue';
 
-const slides = [HomeHeroSection, FeaturedProviderSection, OffersSection];
+const slides = [markRaw(HomeHeroSection), markRaw(FeaturedProviderSection), markRaw(OffersSection)];
 const { state: currentSlide, index: activeIndex, next, go } = useCycleList(slides);
 
 const { pause, resume } = useIntervalFn(

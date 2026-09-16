@@ -34,5 +34,8 @@ export const router = createRouter({
 });
 
 router.beforeEach(authGuard);
+router.onError((error) => {
+  console.error("Router navigation error:", error);
+});
 
 export default router;
