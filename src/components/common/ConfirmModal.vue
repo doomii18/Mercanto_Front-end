@@ -30,7 +30,7 @@ const emit = defineEmits<{
 <template>
   <BaseModal
     :modelValue="modelValue"
-    max-width="440px"
+    class="max-w-md"
     @update:modelValue="emit('update:modelValue', $event)"
   >
     <div class="confirm-content">

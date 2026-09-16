@@ -100,7 +100,7 @@ const handleSave = async () => {
 <template>
   <BaseModal
     :model-value="modelValue"
-    max-width="720px"
+    class="max-w-2xl"
     :close-on-backdrop="!isMandatory"
     :close-on-esc="!isMandatory"
     :show-close-button="!isMandatory"

@@ -134,7 +134,7 @@ const handleSave = async () => {
 <template>
   <BaseModal
     :model-value="modelValue"
-    max-width="620px"
+    class="max-w-xl"
     :show-close-button="false"
     @close="handleClose"
     @update:model-value="emit('update:modelValue', $event)"

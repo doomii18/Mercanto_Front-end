@@ -122,7 +122,7 @@ defineExpose({ open, close });
 <template>
   <BaseModal
     :model-value="isVisible"
-    max-width="620px"
+    class="max-w-xl"
     :show-close-button="false"
     @close="close"
     @update:model-value="isVisible = $event"

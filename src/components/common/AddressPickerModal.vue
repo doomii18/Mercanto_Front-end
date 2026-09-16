@@ -154,7 +154,7 @@ watch(
 <template>
   <BaseModal
     :model-value="modelValue"
-    max-width="680px"
+    class="max-w-2xl"
     @close="handleCancel"
     @update:model-value="emit('update:modelValue', $event)"
   >

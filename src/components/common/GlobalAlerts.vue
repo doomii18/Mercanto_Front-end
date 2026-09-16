@@ -12,7 +12,7 @@ const handleClose = () => {
 <template>
   <BaseModal
     :model-value="alertStore.isOpen"
-    max-width="420px"
+    class="max-w-md"
     :show-close-button="true"
     :close-on-backdrop="true"
     :close-on-esc="true"

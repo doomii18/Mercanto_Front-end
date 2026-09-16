@@ -3,14 +3,12 @@ import { watch, onBeforeUnmount } from "vue";
 
 interface Props {
   modelValue: boolean;
-  maxWidth?: string;
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
   showCloseButton?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  maxWidth: "480px",
   closeOnBackdrop: true,
   closeOnEsc: true,
   showCloseButton: true,
@@ -66,7 +64,10 @@ onBeforeUnmount(() => {
         aria-modal="true"
         @click.self="handleBackdropClick"
       >
-        <div class="bg-white rounded-2xl p-8 w-full relative shadow-2xl max-h-full overflow-y-auto" :style="{ maxWidth }">
+        <div
+          v-bind="$attrs"
+          class="bg-white rounded-2xl p-8 w-full max-w-lg relative shadow-2xl max-h-full overflow-y-auto"
+        >
           <button
             v-if="showCloseButton"
             type="button"

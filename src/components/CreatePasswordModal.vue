@@ -74,7 +74,7 @@ const handleSubmit = () => {
 <template>
   <BaseModal
     :modelValue="modelValue"
-    max-width="480px"
+    class="max-w-lg"
     :show-close-button="false"
     @close="handleCancel"
     @update:modelValue="emit('update:modelValue', $event)"
