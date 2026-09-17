@@ -24,9 +24,8 @@ onMounted(async () => {
 });
 
 const isHomeActive = computed(() => route.name === "home" && !route.hash);
-const isCategoryActive = computed(() => route.name === "category");
+const isProductsActive = computed(() => route.name === "products" || route.name === "category");
 const isProvidersActive = computed(() => route.name === "providers");
-const isOrdersActive = computed(() => route.name === "orders");
 </script>
 
 <template>
@@ -54,13 +53,13 @@ const isOrdersActive = computed(() => route.name === "orders");
           Inicio
         </router-link>
         <router-link
-          :to="{ name: 'home', hash: '#categorias' }"
-          :class="['nav-btn', { 'nav-btn-active': isCategoryActive }]"
+          :to="{ name: 'products' }"
+          :class="['nav-btn', { 'nav-btn-active': isProductsActive }]"
           exact-active-class=""
           active-class=""
           @click="closeMenu"
         >
-          Categorías
+          Productos
         </router-link>
         <router-link
           :to="{ name: 'providers' }"
@@ -79,18 +78,6 @@ const isOrdersActive = computed(() => route.name === "orders");
           @click="closeMenu"
         >
           Cómo funciona
-        </router-link>
-
-        <!-- Only visible when user is authenticated -->
-        <router-link
-          v-if="authStore.isAuthenticated"
-          :to="{ name: 'orders' }"
-          :class="['nav-btn', { 'nav-btn-active': isOrdersActive }]"
-          exact-active-class=""
-          active-class=""
-          @click="closeMenu"
-        >
-          Pedidos
         </router-link>
       </nav>
 

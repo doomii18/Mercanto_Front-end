@@ -87,8 +87,8 @@ const goBack = () => {
           ¿Buscabas alguna de estas secciones?
         </p>
         <div class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-xs text-neutral-600">
-          <router-link :to="{ name: 'home', hash: '#categorias' }" class="hover:text-[#ff6a00] transition-colors">
-            Explorar Categorías
+          <router-link :to="{ name: 'products' }" class="hover:text-[#ff6a00] transition-colors">
+            Explorar Productos
           </router-link>
           <span class="text-neutral-300">•</span>
           <router-link :to="{ name: 'home', hash: '#como-funciona' }" class="hover:text-[#ff6a00] transition-colors">

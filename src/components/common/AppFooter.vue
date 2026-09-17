@@ -44,10 +44,10 @@ onMounted(() => {
           <router-link :to="{ name: 'home', hash: '#categorias' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
             Categorías
           </router-link>
-          <router-link :to="{ name: 'home', hash: '#proveedores' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+          <router-link :to="{ name: 'providers' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
             Proveedores
           </router-link>
-          <router-link :to="{ name: 'home', hash: '#inicio' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+          <router-link :to="{ name: 'products' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
             Productos
           </router-link>
           <router-link :to="{ name: 'home', hash: '#como-funciona' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">

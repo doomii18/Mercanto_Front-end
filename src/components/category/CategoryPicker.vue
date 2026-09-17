@@ -17,8 +17,9 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: "update:modelValue", id: string): void;
+  (e: "update:modelValue", id: string | null): void;
   (e: "select", category: ProductCategoryResponse): void;
+  (e: "clear"): void;
 }>();
 
 const items = ref<ProductCategoryResponse[]>([]);
@@ -60,8 +61,17 @@ onMounted(() => {
 });
 
 function handleSelect(cat: ProductCategoryResponse): void {
+  if (props.modelValue === cat.id) {
+    handleClear();
+    return;
+  }
   emit("update:modelValue", cat.id);
   emit("select", cat);
+}
+
+function handleClear(): void {
+  emit("update:modelValue", null);
+  emit("clear");
 }
 
 function scroll(direction: "left" | "right"): void {
@@ -109,6 +119,25 @@ function scroll(direction: "left" | "right"): void {
 
         <!-- Category Disks -->
         <template v-else>
+          <!-- All Categories Disk -->
+          <button
+            type="button"
+            aria-label="Todas las categorías"
+            title="Todas las categorías"
+            :class="[
+              'group flex h-16 w-16 shrink-0 cursor-pointer items-center justify-center rounded-full p-[3.5px] transition-all duration-200 focus:outline-none',
+              !modelValue
+                ? 'bg-[#00a896] shadow-md scale-105 ring-2 ring-[#00a896]/30'
+                : 'bg-[#e0f4f2] hover:bg-[#cdece8] hover:scale-105'
+            ]"
+            @click="handleClear"
+          >
+            <div class="flex h-full w-full flex-col items-center justify-center overflow-hidden rounded-full bg-white p-1">
+              <i class="fa-solid fa-border-all text-base text-[#00a896]"></i>
+              <span class="text-[9px] font-bold text-[#023859]">Todas</span>
+            </div>
+          </button>
+
           <button
             v-for="cat in items"
             :key="cat.id"

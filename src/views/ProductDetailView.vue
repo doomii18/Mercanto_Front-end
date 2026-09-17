@@ -369,7 +369,10 @@ const confirmQuote = async () => {
 };
 
 const navigateToCategory = () => {
-    router.push({ name: "category" });
+    router.push({
+        name: "products",
+        query: product.value.category_id ? { categoryId: product.value.category_id } : {},
+    });
 };
 </script>
 
@@ -379,13 +382,22 @@ const navigateToCategory = () => {
             <nav class="mb-8 flex flex-wrap items-center gap-1.5 text-sm text-neutral-500" aria-label="Breadcrumb">
                 <router-link :to="{ name: 'home' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">Inicio</router-link>
                 <span class="font-medium text-neutral-400">&gt;</span>
-                <router-link v-if="product.category_id" :to="{ name: 'category', params: { categoryId: product.category_id } }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">
-                  Categorías
+                <router-link :to="{ name: 'products' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">
+                  Productos
                 </router-link>
-                <span class="font-medium text-neutral-400">&gt;</span>
-                <a href="#" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500" @click.prevent="navigateToCategory">
-                    {{ product.category || "Categoría" }}
-                </a>
+                <template v-if="product.category">
+                    <span class="font-medium text-neutral-400">&gt;</span>
+                    <router-link
+                        v-if="product.category_id"
+                        :to="{ name: 'products', query: { categoryId: product.category_id } }"
+                        class="text-neutral-500 transition-colors duration-200 hover:text-orange-500"
+                    >
+                        {{ product.category }}
+                    </router-link>
+                    <span v-else class="text-neutral-500">
+                        {{ product.category }}
+                    </span>
+                </template>
                 <span class="font-medium text-neutral-400">&gt;</span>
                 <span class="font-semibold text-neutral-600">{{ product.title || "Producto" }}</span>
             </nav>

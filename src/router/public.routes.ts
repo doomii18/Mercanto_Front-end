@@ -16,11 +16,26 @@ export const publicRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/PrivacyView.vue"),
       },
       {
+        path: "products",
+        alias: ["productos", "category"],
+        name: "products",
+        component: () => import("@/views/ProductsView.vue"),
+      },
+      {
+        path: "categories",
+        name: "category",
+        redirect: (to) => ({
+          name: "products",
+          query: to.query,
+        }),
+      },
+      {
         path: "category/:categoryId",
         alias: "categories/:categoryId",
-        name: "category",
-        props: true,
-        component: () => import("@/views/CategoryView.vue"),
+        redirect: (to) => ({
+          name: "products",
+          query: { categoryId: to.params.categoryId },
+        }),
       },
       {
         path: "product/:id",

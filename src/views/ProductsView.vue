@@ -50,7 +50,12 @@ const sortBy = ref<string>("created_at");
 const sortDirection = ref<string>("desc");
 
 const selectedCategoryId = computed<string | null>(() => {
-  return (route.params.categoryId as string) || null;
+  return (
+    (route.query.categoryId as string) ||
+    (route.query.category_id as string) ||
+    (route.query.category as string) ||
+    null
+  );
 });
 
 const currentCategory = computed<ProductCategoryResponse | null>(() => {
@@ -167,11 +172,6 @@ async function loadCategories(): Promise<void> {
 }
 
 async function loadProducts(isAppend = false): Promise<void> {
-  if (!selectedCategoryId.value) {
-    router.push({ name: "home" });
-    return;
-  }
-
   if (isAppend) {
     isLoadingMore.value = true;
   } else {
@@ -183,7 +183,7 @@ async function loadProducts(isAppend = false): Promise<void> {
     const res = await productApi.getProducts({
       limit: PAGE_SIZE,
       offset: offset.value,
-      category_id: selectedCategoryId.value,
+      ...(selectedCategoryId.value ? { category_id: selectedCategoryId.value } : {}),
       sort_by: sortBy.value as any,
       sort_direction: sortDirection.value as any,
     });
@@ -215,9 +215,27 @@ function loadMore(): void {
 }
 
 function handleCategorySelect(category: ProductCategoryResponse): void {
+  if (selectedCategoryId.value === category.id) {
+    handleCategoryClear();
+    return;
+  }
   router.push({
-    name: "category",
-    params: { categoryId: category.id },
+    name: "products",
+    query: {
+      ...route.query,
+      categoryId: category.id,
+    },
+  });
+}
+
+function handleCategoryClear(): void {
+  const newQuery = { ...route.query };
+  delete newQuery.categoryId;
+  delete newQuery.category_id;
+  delete newQuery.category;
+  router.push({
+    name: "products",
+    query: newQuery,
   });
 }
 
@@ -225,18 +243,10 @@ function handleSortChange(): void {
   loadProducts(false);
 }
 
-onMounted(() => {
-  if (!selectedCategoryId.value) {
-    router.push({ name: "home" });
-  }
-});
-
 watch(
-  () => route.params.categoryId,
-  (newCatId) => {
-    if (newCatId) {
-      loadProducts(false);
-    }
+  () => [route.query.categoryId, route.query.category_id, route.query.category],
+  () => {
+    loadProducts(false);
   }
 );
 
@@ -251,19 +261,82 @@ onMounted(async () => {
 <template>
   <div class="min-h-screen bg-white text-neutral-900">
     <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      <CategoryHeroCard
-        :name="heroTitle"
-        :description="heroDescription"
-        :image-blob-id="heroImageBlobId"
-        :product-count="totalProducts"
-      />
+      <!-- Breadcrumb -->
+      <nav class="mb-6 flex items-center gap-2 text-xs font-medium text-neutral-500">
+        <router-link :to="{ name: 'home' }" class="transition-colors hover:text-orange-500">
+          Inicio
+        </router-link>
+        <span class="text-neutral-300">/</span>
+        <router-link
+          v-if="selectedCategoryId && currentCategory"
+          :to="{ name: 'products' }"
+          class="transition-colors hover:text-orange-500"
+          @click.prevent="handleCategoryClear"
+        >
+          Productos
+        </router-link>
+        <span v-else class="text-neutral-800 font-semibold">Productos</span>
+        <template v-if="selectedCategoryId && currentCategory">
+          <span class="text-neutral-300">/</span>
+          <span class="text-neutral-800 font-semibold">{{ currentCategory.name }}</span>
+        </template>
+      </nav>
+
+      <!-- Category Banner (only shown when a category is selected) -->
+      <div v-if="selectedCategoryId && currentCategory" class="relative mb-8">
+        <CategoryHeroCard
+          :name="heroTitle"
+          :description="heroDescription"
+          :image-blob-id="heroImageBlobId"
+          :product-count="totalProducts"
+        />
+        <button
+          type="button"
+          class="absolute top-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white/90 px-3.5 py-1.5 text-xs font-semibold text-neutral-600 shadow-xs backdrop-blur-xs transition-colors hover:bg-neutral-100 hover:text-neutral-900 cursor-pointer"
+          title="Deseleccionar categoría"
+          @click="handleCategoryClear"
+        >
+          <i class="fa-solid fa-xmark"></i>
+          <span>Quitar categoría</span>
+        </button>
+      </div>
+
+      <!-- General Products Header (only shown when no category is selected) -->
+      <div v-else class="mb-8 flex flex-col md:flex-row md:items-end md:justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-200 text-[#ff6a00] text-xs font-semibold uppercase tracking-wider mb-2">
+            <i class="fa-solid fa-boxes-stacked"></i> Catálogo Mayorista
+          </div>
+          <h1 class="font-serif text-3xl sm:text-4xl font-bold text-[#083c5a]">
+            Todos los Productos
+          </h1>
+          <p class="text-neutral-600 text-sm sm:text-base mt-1">
+            Explora la oferta mayorista de nuestros proveedores aliados. Selecciona una categoría para filtrar.
+          </p>
+        </div>
+      </div>
 
       <CategoryPicker
-        v-model="selectedCategoryId"
+        :model-value="selectedCategoryId"
         :categories="categories"
-        title="Explora otras categorías"
+        :title="selectedCategoryId ? 'Explora otras categorías' : 'Filtrar por categoría'"
         @select="handleCategorySelect"
+        @clear="handleCategoryClear"
       />
+
+      <!-- Active filter chip if a category is selected -->
+      <div v-if="selectedCategoryId && currentCategory" class="mb-4 flex items-center gap-2">
+        <span class="text-xs font-medium text-neutral-500">Filtrando por:</span>
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 rounded-full bg-teal-50 border border-teal-200 px-3 py-1 text-xs font-semibold text-teal-700 hover:bg-teal-100 transition-colors cursor-pointer"
+          title="Hacer clic para quitar filtro"
+          @click="handleCategoryClear"
+        >
+          <span>{{ currentCategory.name }}</span>
+          <i class="fa-solid fa-xmark text-[11px]"></i>
+        </button>
+      </div>
 
       <!-- Search & Sort Bar -->
       <section class="mb-8 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -384,7 +457,7 @@ onMounted(async () => {
       <!-- Featured Providers -->
       <section v-if="filteredProducts.length > 0 && featuredProviders.length > 0" class="mb-16">
         <h2 class="mb-10 text-center text-2xl font-bold text-blue-500 sm:text-3xl">
-          Proveedores destacados de {{ heroTitle }}
+          Proveedores destacados {{ currentCategory ? `de ${heroTitle}` : 'de la plataforma' }}
         </h2>
         <div class="grid grid-cols-1 gap-8 md:grid-cols-3">
           <ProviderCard

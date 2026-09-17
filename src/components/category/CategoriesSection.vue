@@ -49,9 +49,18 @@ onMounted(async () => {
 
 <template>
   <section id="categorias" class="mx-auto w-full max-w-7xl px-4 sm:px-6">
-    <div class="mb-8 text-center">
-      <h2 class="mb-2 text-3xl font-bold text-[#023859] sm:text-4xl">Categorías</h2>
-      <p class="text-base text-[#718096]">Explora todas nuestras categorías de productos para ti</p>
+    <div class="mb-8 flex flex-col items-center justify-between gap-4 text-center sm:flex-row sm:text-left">
+      <div>
+        <h2 class="mb-2 text-3xl font-bold text-[#023859] sm:text-4xl">Categorías</h2>
+        <p class="text-base text-[#718096]">Explora todas nuestras categorías de productos para ti</p>
+      </div>
+      <router-link
+        :to="{ name: 'products' }"
+        class="inline-flex items-center gap-2 rounded-full border border-[#023859] bg-white px-5 py-2.5 text-sm font-semibold text-[#023859] transition-all hover:bg-[#023859] hover:text-white shrink-0"
+      >
+        <span>Ver todos los productos</span>
+        <i class="fa-solid fa-arrow-right text-xs"></i>
+      </router-link>
     </div>
     <div class="relative w-full">
       <div class="w-full rounded-2xl bg-[#00a896] px-4 py-6 sm:px-8">
@@ -80,7 +89,7 @@ onMounted(async () => {
               <router-link
                 v-for="(cat, idx) in categories"
                 :key="`${loop}-${cat.id}-${idx}`"
-                :to="{ name: 'category', params: { categoryId: cat.id } }"
+                :to="{ name: 'products', query: { categoryId: cat.id } }"
                 class="flex h-72 w-52 shrink-0 flex-col items-center justify-center rounded-2xl bg-white px-4 py-6 text-center shadow-md border-2 border-transparent transition-colors duration-200 hover:border-[#ff6a00] hover:bg-[#fffaf5]"
                 :aria-hidden="loop === 2"
                 :tabindex="loop === 2 ? -1 : 0"
