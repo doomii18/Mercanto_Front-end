@@ -52,6 +52,31 @@ export const dashboardRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/MessagesView.vue"),
       },
       {
+        path: "wallet",
+        name: "wallet",
+        component: () => import("@/views/wallet/WalletView.vue"),
+      },
+      {
+        path: "wallet/recharge",
+        name: "wallet-recharge",
+        component: () => import("@/views/wallet/WalletRechargeView.vue"),
+      },
+      {
+        path: "wallet/recharge/confirm",
+        name: "wallet-recharge-confirm",
+        component: () => import("@/views/wallet/WalletRechargeConfirmView.vue"),
+      },
+      {
+        path: "wallet/recharge/success",
+        name: "wallet-recharge-success",
+        component: () => import("@/views/wallet/WalletRechargeSuccessView.vue"),
+      },
+      {
+        path: "wallet/transfers",
+        name: "wallet-transfers",
+        component: () => import("@/views/wallet/WalletTransfersView.vue"),
+      },
+      {
         path: "notifications",
         name: "notifications",
         component: () => import("@/views/NotificationsView.vue"),
