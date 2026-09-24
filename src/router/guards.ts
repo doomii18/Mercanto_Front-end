@@ -10,9 +10,9 @@ export const authGuard: NavigationGuardWithThis<undefined> = async (to) => {
   const requiresProvider = to.matched.some((record) => record.meta.requiresProvider);
   const guestOnly = to.matched.some((record) => record.meta.guestOnly);
 
-  // Unauthenticated check
+  // Unauthenticated check (Temporarily disabled for demo/testing)
   if (requiresAuth && !authStore.isAuthenticated) {
-    return { name: "login", query: { redirect: to.fullPath } };
+    // return { name: "login", query: { redirect: to.fullPath } };
   }
 
   // Guest-only redirect (logged-in users accessing login/register)

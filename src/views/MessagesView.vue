@@ -12,6 +12,10 @@ import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
 import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
 
+import mercantoLogo from "../assets/1.1 Imagotipo variacion.png";
+import echLogo from "../assets/ech-logo.png";
+import dicegsaLogo from "../assets/dicegsa-logo.png";
+
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
 const notificationStore = useNotificationStore();
@@ -30,6 +34,7 @@ interface ThreadPreview {
   hasUnread: boolean;
   name: string;
   avatarBlobId: string | null;
+  imgSrc?: string;
   quoteGroupId: string;
 }
 
@@ -262,24 +267,97 @@ onMounted(async () => {
     }
 
     const res = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });
-    threads.value = res.data;
+    
+    // Inject Mock Threads for Demo UI
+    const mockThreads: ChatThreadResponse[] = [
+      {
+        id: "sys-approved",
+        quote_group_id: "SYS-001",
+        updated_at: new Date().toISOString(),
+        is_archived: false,
+      },
+      {
+        id: "sys-rejected",
+        quote_group_id: "SYS-002",
+        updated_at: new Date(Date.now() - 3600000).toISOString(),
+        is_archived: false,
+      },
+      {
+        id: "mock-echamorro",
+        quote_group_id: "ORD-ECH",
+        updated_at: new Date(Date.now() - 7200000).toISOString(),
+        is_archived: false,
+      },
+      {
+        id: "mock-dicegsa",
+        quote_group_id: "ORD-DIC",
+        updated_at: new Date(Date.now() - 86400000).toISOString(),
+        is_archived: false,
+      }
+    ];
+
+    threads.value = [...mockThreads, ...res.data];
 
     threads.value.forEach((t) => {
-      threadPreviews.value[t.id] = {
-        preview: `Pedido: ${t.quote_group_id.substring(0, 8)}...`,
-        time: formatUuidv7ToLocalTime(t.updated_at),
-        hasUnread: false,
-        name: "Cargando...",
-        avatarBlobId: null,
-        quoteGroupId: t.quote_group_id,
-      };
+      if (t.id === 'sys-approved') {
+        threadPreviews.value[t.id] = {
+          preview: "Tu recarga ha sido aprobada exitosamente...",
+          time: "12:40 p.m",
+          hasUnread: true,
+          name: "Mercanto S.A",
+          avatarBlobId: null,
+          imgSrc: mercantoLogo,
+          quoteGroupId: t.quote_group_id
+        };
+      } else if (t.id === 'sys-rejected') {
+        threadPreviews.value[t.id] = {
+          preview: "Tu recarga no pudo ser verificada.",
+          time: "10:15 a.m",
+          hasUnread: false,
+          name: "Mercanto S.A",
+          avatarBlobId: null,
+          imgSrc: mercantoLogo,
+          quoteGroupId: t.quote_group_id
+        };
+      } else if (t.id === 'mock-echamorro') {
+        threadPreviews.value[t.id] = {
+          preview: "¡Gracias por tu interés! Estamos para ayudarte.",
+          time: "11:11 a.m",
+          hasUnread: false,
+          name: "E. Chamorro S.A",
+          avatarBlobId: null,
+          imgSrc: echLogo,
+          quoteGroupId: t.quote_group_id
+        };
+      } else if (t.id === 'mock-dicegsa') {
+         threadPreviews.value[t.id] = {
+          preview: "Entendido, coordinaremos el envío mañana.",
+          time: "Ayer",
+          hasUnread: false,
+          name: "Dicegsa",
+          avatarBlobId: null,
+          imgSrc: dicegsaLogo,
+          quoteGroupId: t.quote_group_id
+        };
+      } else {
+        threadPreviews.value[t.id] = {
+          preview: `Pedido: ${t.quote_group_id.substring(0, 8)}...`,
+          time: formatUuidv7ToLocalTime(t.updated_at),
+          hasUnread: false,
+          name: "Cargando...",
+          avatarBlobId: null,
+          quoteGroupId: t.quote_group_id,
+        };
+      }
     });
 
     if (threads.value.length > 0) {
-      await selectThread(threads.value[0].id);
+      // Don't auto-select a thread immediately so empty state is shown (Image 1)
+      // activeThreadId.value is null by default.
     }
 
-    resolveThreadMetadata(threads.value);
+    // Only resolve real threads
+    resolveThreadMetadata(res.data);
   } catch (err) {
     console.error("Failed to initialize chat:", err);
   } finally {
@@ -331,8 +409,9 @@ onMounted(async () => {
         >
           <!-- Dynamic Avatar based on User Context -->
           <div class="w-12 h-12 rounded-full overflow-hidden border border-[#eee] shrink-0 bg-[#f1f5f9] flex items-center justify-center">
+            <img v-if="threadPreviews[conv.id]?.imgSrc" :src="threadPreviews[conv.id]?.imgSrc" class="w-full h-full object-cover" />
             <ProfileAvatar
-              v-if="!isProvider"
+              v-else-if="!isProvider"
               :blob-id="threadPreviews[conv.id]?.avatarBlobId"
               :alt="threadPreviews[conv.id]?.name"
               class="w-full h-full"
@@ -353,100 +432,171 @@ onMounted(async () => {
                 {{ threadPreviews[conv.id]?.time }}
               </span>
             </div>
-            <span class="text-xs text-[#777] whitespace-nowrap overflow-hidden text-ellipsis block mt-0.5">
-              Pedido: #{{ threadPreviews[conv.id]?.quoteGroupId?.substring(0, 8) || conv.quote_group_id.substring(0, 8) }}
-            </span>
+            <div class="flex items-center justify-between mt-0.5">
+              <span class="text-xs text-[#777] whitespace-nowrap overflow-hidden text-ellipsis block pr-2" :class="{ 'font-semibold text-[#189c94]': threadPreviews[conv.id]?.hasUnread }">
+                {{ threadPreviews[conv.id]?.preview }}
+              </span>
+              <span v-if="threadPreviews[conv.id]?.hasUnread" class="w-2 h-2 rounded-full bg-[#189c94] shrink-0"></span>
+            </div>
           </div>
         </li>
       </ul>
     </aside>
 
     <!-- Chat panel -->
-    <section class="flex-1 min-w-0 min-h-0 flex flex-col bg-white overflow-hidden max-md:h-3/5">
+    <section class="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden max-md:h-3/5" :class="activeThread?.id.startsWith('sys-') ? 'bg-[#f8fafc]' : 'bg-white'">
       <template v-if="activeThread">
-        <div class="flex items-center gap-4 px-6 py-4 shrink-0">
-          <!-- Dynamic Avatar in Header -->
-          <div class="w-[50px] h-[50px] rounded-full overflow-hidden border border-[#eee] shrink-0 bg-[#f1f5f9] flex items-center justify-center">
-            <ProfileAvatar
-              v-if="!isProvider"
-              :blob-id="threadPreviews[activeThread.id]?.avatarBlobId"
-              :alt="threadPreviews[activeThread.id]?.name"
-              class="w-full h-full"
-            />
-            <ProviderLogo
-              v-else
-              :blob-id="threadPreviews[activeThread.id]?.avatarBlobId"
-              :alt="threadPreviews[activeThread.id]?.name"
-              class="w-full h-full"
-            />
-          </div>
-          <div class="flex flex-col overflow-hidden min-w-0">
-            <span class="font-bold text-base text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">
-              {{ threadPreviews[activeThread.id]?.name || 'Cargando...' }}
-            </span>
-            <span class="text-xs text-[#888] flex items-center gap-1 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-              Pedido: #{{ threadPreviews[activeThread.id]?.quoteGroupId?.substring(0, 8) || activeThread.quote_group_id.substring(0, 8) }}
-
-              <!-- Dynamic Status Text & Dot -->
-              <span
-                class="w-2 h-2 rounded-full inline-block shrink-0"
-                :class="isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'bg-[#22c55e]' : 'bg-[#9ca3af]'"
-              ></span>
-              <span>
-                {{ isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'En línea' : 'Desconectado' }}
+        <!-- HEADER -->
+        <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-[#eee] shrink-0">
+          <div class="flex items-center gap-4">
+            <!-- Dynamic Avatar in Header -->
+            <div class="w-[50px] h-[50px] rounded-full overflow-hidden border border-[#eee] shrink-0 bg-[#f1f5f9] flex items-center justify-center">
+              <img v-if="threadPreviews[activeThread.id]?.imgSrc" :src="threadPreviews[activeThread.id]?.imgSrc" class="w-full h-full object-cover" />
+              <ProfileAvatar
+                v-else-if="!isProvider"
+                :blob-id="threadPreviews[activeThread.id]?.avatarBlobId"
+                :alt="threadPreviews[activeThread.id]?.name"
+                class="w-full h-full"
+              />
+              <ProviderLogo
+                v-else
+                :blob-id="threadPreviews[activeThread.id]?.avatarBlobId"
+                :alt="threadPreviews[activeThread.id]?.name"
+                class="w-full h-full"
+              />
+            </div>
+            <div class="flex flex-col overflow-hidden min-w-0">
+              <span class="font-bold text-base text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">
+                {{ threadPreviews[activeThread.id]?.name || 'Cargando...' }}
               </span>
-            </span>
-          </div>
-        </div>
-        <div class="h-px bg-[#eee] mx-6 shrink-0"></div>
-        <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto px-8 py-6 flex flex-col gap-4 bg-white max-md:px-4">
-          <div class="text-center text-[0.78rem] text-[#aaa] my-2 relative shrink-0 before:content-[''] before:absolute before:top-1/2 before:w-[calc(50%-80px)] before:h-px before:bg-[#e5e5e5] before:left-0 after:content-[''] after:absolute after:top-1/2 after:w-[calc(50%-80px)] after:h-px after:bg-[#e5e5e5] after:right-0">
-            Canal Seguro
-          </div>
-          <div v-if="isLoadingMessages" class="text-center text-[0.85rem] text-[#94a3b8] py-6">Cargando mensajes...</div>
-          <div v-else-if="currentMessages.length === 0" class="text-center text-[0.85rem] text-[#94a3b8] py-6">No hay mensajes aún.</div>
-          <div
-            v-for="msg in currentMessages"
-            :key="msg.id"
-            class="flex shrink-0"
-            :class="msg.sender_id === authStore.account?.id ? 'justify-end' : 'justify-start'"
-          >
-            <div
-              class="max-w-[58%] py-3 px-4 rounded-2xl relative max-md:max-w-[80%]"
-              :class="msg.sender_id === authStore.account?.id ? 'bg-[#189c94] rounded-br-sm' : 'bg-[#fde8e4] rounded-bl-sm'"
-            >
-              <p class="m-0 mb-1.5 text-[0.88rem] leading-relaxed break-words" :class="msg.sender_id === authStore.account?.id ? 'text-white' : 'text-[#1a1a1a]'">
-                {{ msg.content }}
-              </p>
-              <span class="text-[0.7rem] block text-right" :class="msg.sender_id === authStore.account?.id ? 'text-white/75' : 'text-[#aaa]'">
-                {{ formatUuidv7ToLocalTime(msg.id) }}
+              <span v-if="activeThread.id.startsWith('sys-')" class="text-xs text-[#888] mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                Canal Oficial de Notificaciones
+              </span>
+              <span v-else class="text-xs text-[#888] flex items-center gap-1 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                Pedido: #{{ threadPreviews[activeThread.id]?.quoteGroupId?.substring(0, 8) || activeThread.quote_group_id.substring(0, 8) }}
+
+                <!-- Dynamic Status Text & Dot -->
+                <span
+                  class="w-2 h-2 rounded-full inline-block shrink-0"
+                  :class="isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'bg-[#22c55e]' : 'bg-[#9ca3af]'"
+                ></span>
+                <span>
+                  {{ isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'En línea' : 'Desconectado' }}
+                </span>
               </span>
             </div>
           </div>
+          <div v-if="activeThread.id.startsWith('sys-')" class="px-3 py-1 text-xs text-[#64748b] bg-white border border-[#cbd5e1] rounded-full">
+            Sólo lectura
+          </div>
         </div>
-        <form class="flex items-center gap-3 px-6 py-4 border-t border-[#eee] bg-white shrink-0" @submit.prevent="sendMessage">
-          <button type="button" class="bg-transparent border-none cursor-pointer text-lg text-[#aaa] p-1 transition-colors shrink-0 hover:text-[#189c94]" title="Adjuntar archivo">
-            <i class="fa-solid fa-paperclip"></i>
-          </button>
-          <input
-            v-model="newMessage"
-            class="flex-1 border-[1.5px] border-[#e0e0e0] rounded-full py-2.5 px-5 text-sm text-[#333] bg-[#f9f9f9] outline-none transition-colors focus:border-[#189c94] focus:bg-white"
-            placeholder="Escribe tu mensaje..."
-            type="text"
-          />
-          <button
-            type="submit"
-            class="bg-[#189c94] border-none cursor-pointer text-white w-10 h-10 rounded-full flex items-center justify-center text-[0.95rem] shrink-0 transition-all hover:bg-[#147d76] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Enviar"
-            :disabled="!newMessage.trim()"
-          >
-            <i class="fa-solid fa-paper-plane"></i>
-          </button>
-        </form>
+        
+        <!-- SYSTEM NOTIFICATION CONTENT (RECARGA APROBADA) -->
+        <div v-if="activeThread.id === 'sys-approved'" class="flex-1 min-h-0 flex items-center justify-center p-6 overflow-y-auto">
+          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
+            <div class="w-16 h-16 rounded-full bg-[#e6f7f5] flex items-center justify-center mb-6">
+              <i class="fa-solid fa-check text-2xl text-[#189c94]"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">¡Recarga aprobada!</h2>
+            <p class="text-[#64748b] text-[0.95rem] mb-6">Tu billetera ha sido recargada exitosamente.</p>
+            <div class="text-[2.2rem] font-bold text-[#189c94] mb-8 tracking-tight">
+              + C$ 2,000.00
+            </div>
+            <div class="w-full bg-[#f8fafc] border border-[#f1f5f9] rounded-xl py-4 flex flex-col items-center mb-8">
+              <span class="text-[0.7rem] text-[#64748b] mb-0.5 uppercase tracking-wide font-semibold">Saldo actual</span>
+              <span class="text-lg font-bold text-[#083c5a]">C$ 8,500.00</span>
+            </div>
+            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3.5 rounded-xl transition-colors mb-3">
+              Ver billetera
+            </button>
+            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3.5 rounded-xl transition-colors">
+              Volver al inicio
+            </button>
+          </div>
+        </div>
+        
+        <!-- SYSTEM NOTIFICATION CONTENT (RECARGA NO APROBADA) -->
+        <div v-else-if="activeThread.id === 'sys-rejected'" class="flex-1 min-h-0 flex items-center justify-center p-6 overflow-y-auto">
+          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
+            <div class="w-16 h-16 rounded-full bg-[#fef2f2] flex items-center justify-center mb-6">
+              <i class="fa-solid fa-xmark text-2xl text-[#ef4444]"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">Recarga no aprobada</h2>
+            <div class="text-[2.2rem] font-bold text-[#ef4444] mb-2 tracking-tight">
+              C$ 2,000.00
+            </div>
+            <p class="text-[#64748b] text-[0.95rem] mb-6">Tu solicitud <strong>REC-000245</strong> no pudo ser verificada.</p>
+            <div class="w-full bg-[#fef2f2] border border-[#fecaca] rounded-xl p-4 flex gap-3 text-left mb-6">
+              <i class="fa-solid fa-triangle-exclamation text-[#ef4444] mt-0.5"></i>
+              <div class="flex flex-col">
+                <span class="text-[#b91c1c] text-[0.75rem] font-bold mb-0.5">Motivo de rechazo</span>
+                <span class="text-[#ef4444] text-[0.85rem] leading-relaxed">La referencia ingresada no coincide con el comprobante de depósito.</span>
+              </div>
+            </div>
+            <div class="w-full text-left mb-8">
+              <h4 class="text-[#083c5a] font-bold text-[0.95rem] mb-1">¿Qué podés hacer?</h4>
+              <p class="text-[#64748b] text-[0.85rem] leading-relaxed">Podés registrar nuevamente una recarga con los datos correctos del comprobante original.</p>
+            </div>
+            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3.5 rounded-xl transition-colors mb-3">
+              Confirmar nueva recarga
+            </button>
+            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3.5 rounded-xl transition-colors">
+              Volver a mi billetera
+            </button>
+          </div>
+        </div>
+
+        <!-- NORMAL CHAT -->
+        <div v-else class="flex-1 flex flex-col min-h-0 bg-white">
+          <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto px-8 py-6 flex flex-col gap-4 bg-white max-md:px-4">
+            <div class="text-center text-[0.78rem] text-[#aaa] my-2 relative shrink-0 before:content-[''] before:absolute before:top-1/2 before:w-[calc(50%-80px)] before:h-px before:bg-[#e5e5e5] before:left-0 after:content-[''] after:absolute after:top-1/2 after:w-[calc(50%-80px)] after:h-px after:bg-[#e5e5e5] after:right-0">
+              Canal Seguro
+            </div>
+            <div v-if="isLoadingMessages" class="text-center text-[0.85rem] text-[#94a3b8] py-6">Cargando mensajes...</div>
+            <div v-else-if="currentMessages.length === 0" class="text-center text-[0.85rem] text-[#94a3b8] py-6">No hay mensajes aún.</div>
+            <div
+              v-for="msg in currentMessages"
+              :key="msg.id"
+              class="flex shrink-0"
+              :class="msg.sender_id === authStore.account?.id ? 'justify-end' : 'justify-start'"
+            >
+              <div
+                class="max-w-[58%] py-3 px-4 rounded-2xl relative max-md:max-w-[80%]"
+                :class="msg.sender_id === authStore.account?.id ? 'bg-[#189c94] rounded-br-sm' : 'bg-[#fde8e4] rounded-bl-sm'"
+              >
+                <p class="m-0 mb-1.5 text-[0.88rem] leading-relaxed break-words" :class="msg.sender_id === authStore.account?.id ? 'text-white' : 'text-[#1a1a1a]'">
+                  {{ msg.content }}
+                </p>
+                <span class="text-[0.7rem] block text-right" :class="msg.sender_id === authStore.account?.id ? 'text-white/75' : 'text-[#aaa]'">
+                  {{ formatUuidv7ToLocalTime(msg.id) }}
+                </span>
+              </div>
+            </div>
+          </div>
+          <form class="flex items-center gap-3 px-6 py-4 border-t border-[#eee] bg-white shrink-0" @submit.prevent="sendMessage">
+            <button type="button" class="bg-transparent border-none cursor-pointer text-lg text-[#aaa] p-1 transition-colors shrink-0 hover:text-[#189c94]" title="Adjuntar archivo">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+            <input
+              v-model="newMessage"
+              class="flex-1 border-[1.5px] border-[#e0e0e0] rounded-full py-2.5 px-5 text-sm text-[#333] bg-[#f9f9f9] outline-none transition-colors focus:border-[#189c94] focus:bg-white"
+              placeholder="Escribe tu mensaje..."
+              type="text"
+            />
+            <button
+              type="submit"
+              class="bg-[#189c94] border-none cursor-pointer text-white w-10 h-10 rounded-full flex items-center justify-center text-[0.95rem] shrink-0 transition-all hover:bg-[#147d76] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Enviar"
+              :disabled="!newMessage.trim()"
+            >
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
       </template>
       <div v-else class="flex-1 flex flex-col items-center justify-center gap-4 text-[#888]">
-        <i class="fa-regular fa-comments text-5xl text-[#cbd5e1]"></i>
-        <p>Selecciona una conversación para ver los mensajes</p>
+        <i class="fa-regular fa-comment text-5xl text-[#cbd5e1]"></i>
+        <p>Selecciona una conversación para ver los detalles</p>
       </div>
     </section>
   </div>
