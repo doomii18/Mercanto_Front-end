@@ -197,8 +197,8 @@ onMounted(() => {
     </div>
 
     <div v-else class="flex flex-col gap-6">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3 sm:gap-5">
           <button
             type="button"
             class="bg-transparent border-0 text-xl text-neutral-900 cursor-pointer flex items-center justify-center p-1"
@@ -208,11 +208,11 @@ onMounted(() => {
             <i class="fa-solid fa-arrow-left"></i>
           </button>
           <div>
-            <div class="flex items-center gap-2">
-              <span class="text-2xl font-bold font-serif text-neutral-900">Detalles del Pedido</span>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xl sm:text-2xl font-bold font-serif text-neutral-900">Detalles del Pedido</span>
               <QuoteIdBadge :quote-id="quoteAggregate.quote.id" size="lg" />
             </div>
-            <p class="text-sm text-neutral-500 mt-1">
+            <p class="text-xs sm:text-sm text-neutral-500 mt-1">
               Realizado el {{ formatDate(quoteAggregate.quote.updated_at) }}
             </p>
           </div>
@@ -220,59 +220,59 @@ onMounted(() => {
         <QuoteStatusBadge :status="quoteAggregate.quote.status" size="md" />
       </div>
 
-      <div class="bg-teal-50 border border-teal-200 rounded-2xl p-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+      <div class="bg-teal-50 border border-teal-200 rounded-2xl p-4 sm:p-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
             <i class="fa-regular fa-calendar-days text-base text-neutral-900"></i>
             <span>Fecha de Compra</span>
           </div>
-          <strong class="text-neutral-900 text-base font-bold">{{
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">{{
             formatDate(quoteAggregate.quote.updated_at)
           }}</strong>
         </div>
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
             <i class="fa-regular fa-money-bill-1 text-base text-neutral-900"></i>
             <span>Total Pagado</span>
           </div>
-          <strong class="text-neutral-900 text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
         </div>
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
             <i class="fa-regular fa-credit-card text-base text-neutral-900"></i>
             <span>Método de Pago</span>
           </div>
-          <strong class="text-neutral-900 text-base font-bold">
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">
             {{
               PAYMENT_LABELS[quoteAggregate.quote.payment_preference] ||
               quoteAggregate.quote.payment_preference
             }}
           </strong>
         </div>
-        <div class="flex flex-col gap-2">
-          <div class="flex items-center gap-2 text-neutral-900 text-sm font-semibold">
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
             <i class="fa-solid fa-bag-shopping text-base text-neutral-900"></i>
             <span>Cantidad de Productos</span>
           </div>
-          <strong class="text-neutral-900 text-base font-bold">
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">
             {{ totalUnits }} {{ totalUnits === 1 ? "producto" : "productos" }}
           </strong>
         </div>
       </div>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-2xl p-6">
+        <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6">
           <h3 class="text-base font-bold text-neutral-900 mb-5 font-serif">
             Productos ({{ quoteAggregate.items.length }})
           </h3>
-          <div class="overflow-x-auto">
-            <table class="w-full border-collapse text-sm">
+          <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table class="w-full border-collapse text-xs sm:text-sm min-w-[480px]">
               <thead>
                 <tr class="border-b border-neutral-100 text-neutral-500 font-medium text-left">
-                  <th class="pb-4 w-1/2">Producto</th>
-                  <th class="pb-4 w-1/5">Precio U.</th>
-                  <th class="pb-4 w-1/6">Cantidad</th>
-                  <th class="pb-4 w-1/6 text-right">Subtotal</th>
+                  <th class="pb-3 w-1/2">Producto</th>
+                  <th class="pb-3 w-1/5">Precio U.</th>
+                  <th class="pb-3 w-1/6">Cantidad</th>
+                  <th class="pb-3 w-1/6 text-right">Subtotal</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-neutral-100">
@@ -280,9 +280,9 @@ onMounted(() => {
                   v-for="item in quoteAggregate.items"
                   :key="item.product_id"
                 >
-                  <td class="py-4 pr-2 align-middle">
-                    <div class="flex items-center gap-4">
-                      <div class="w-14 h-14 border border-neutral-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
+                  <td class="py-3 pr-2 align-middle">
+                    <div class="flex items-center gap-3">
+                      <div class="w-12 h-12 sm:w-14 sm:h-14 border border-neutral-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
                         <ProductImage
                           :blob-id="itemBlobIds[item.product_id]"
                           :alt="item.product_title_snapshot"
@@ -290,37 +290,37 @@ onMounted(() => {
                           object-fit="contain"
                         />
                       </div>
-                      <span class="font-semibold text-neutral-900 leading-snug text-sm">
+                      <span class="font-semibold text-neutral-900 leading-snug text-xs sm:text-sm">
                         {{ item.product_title_snapshot }}
                       </span>
                     </div>
                   </td>
-                  <td class="py-4 px-2 align-middle font-semibold text-neutral-900">
+                  <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">
                     {{ formatMoney(item.unit_price_snapshot) }}
                   </td>
-                  <td class="py-4 px-2 align-middle font-semibold text-neutral-900">
+                  <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">
                     Ud. {{ item.quantity }}
                   </td>
-                  <td class="py-4 pl-2 align-middle font-semibold text-neutral-900 text-right">
+                  <td class="py-3 pl-2 align-middle font-semibold text-neutral-900 text-right whitespace-nowrap">
                     {{ formatMoney(item.quantity * item.unit_price_snapshot) }}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-          <div v-if="quoteAggregate.quote.buyer_notes" class="bg-base-200 p-3.5 rounded-lg mt-4 text-sm text-neutral-500">
+          <div v-if="quoteAggregate.quote.buyer_notes" class="bg-base-200 p-3.5 rounded-lg mt-4 text-xs sm:text-sm text-neutral-500">
             <strong class="font-semibold text-neutral-900">Notas del comprador:</strong>
             <p class="mt-1 text-neutral-700">{{ quoteAggregate.quote.buyer_notes }}</p>
           </div>
-          <div class="bg-teal-100/50 rounded-xl px-6 py-3.5 flex justify-between items-center mt-6 text-neutral-900">
-            <span class="text-sm font-semibold">Total</span>
-            <strong class="text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
+          <div class="bg-teal-100/50 rounded-xl px-4 sm:px-6 py-3.5 flex justify-between items-center mt-6 text-neutral-900">
+            <span class="text-xs sm:text-sm font-semibold">Total</span>
+            <strong class="text-sm sm:text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
           </div>
         </div>
 
         <div class="flex flex-col gap-6">
-          <div class="bg-white border border-neutral-200 rounded-2xl p-6 text-center">
-            <h4 class="text-left mb-5 text-neutral-900 text-base font-bold font-serif">Proveedor</h4>
+          <div class="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 text-center">
+            <h4 class="text-left mb-4 sm:mb-5 text-neutral-900 text-base font-bold font-serif">Proveedor</h4>
             <div class="w-16 h-16 rounded-full border-2 border-neutral-900 bg-white flex items-center justify-center mx-auto mb-3 overflow-hidden p-1">
               <ProviderLogo
                 :blob-id="provider?.logo_blob_id"
@@ -349,8 +349,8 @@ onMounted(() => {
             </router-link>
           </div>
 
-          <div class="bg-white border border-neutral-200 rounded-2xl p-6 text-left">
-            <h4 class="mb-5 text-neutral-900 text-base font-bold font-serif">Dirección de Entrega</h4>
+          <div class="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 text-left">
+            <h4 class="mb-4 sm:mb-5 text-neutral-900 text-base font-bold font-serif">Dirección de Entrega</h4>
             <div class="flex items-center gap-2 text-neutral-900 mb-2.5">
               <i class="fa-solid fa-location-dot text-lg text-neutral-900"></i>
               <span class="font-bold text-sm text-neutral-900">{{ buyerFullName }}</span>
@@ -366,17 +366,18 @@ onMounted(() => {
       </div>
 
       <div class="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-neutral-200 pt-5">
-        <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
           <DownloadInvoiceButton
             :template-ref="facturaTemplateRef"
             :filename="`factura-${quoteAggregate.quote.id.substring(0, 8).toUpperCase()}.pdf`"
+            class="w-full sm:w-auto"
           />
           <button
             type="button"
-            class="inline-flex items-center justify-center gap-2 rounded-lg border border-neutral-300 bg-white px-4 py-2 text-sm font-semibold text-neutral-700 transition hover:bg-neutral-50 hover:border-neutral-400"
+            class="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-600 bg-teal-50/50 px-4 py-2.5 sm:py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-600 hover:text-white max-sm:w-full active:scale-[0.98]"
             @click="handleOpenChat"
           >
-            <i class="fa-regular fa-comment-dots text-neutral-500"></i>
+            <i class="fa-regular fa-comment-dots text-teal-600 group-hover:text-white"></i>
             <span>Enviar mensaje</span>
           </button>
         </div>
@@ -385,6 +386,7 @@ onMounted(() => {
           :actions="availableActions"
           :is-action-processing="isActionProcessing"
           @action="executeAction"
+          class="w-full sm:w-auto"
         />
       </div>
     </div>

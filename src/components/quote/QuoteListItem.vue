@@ -183,7 +183,7 @@ onMounted(() => {
   background-color: #ffffff;
   border: 1.5px solid var(--border-gray, #e0e0e0);
   border-radius: 16px;
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 1.5rem;
   display: grid;
   grid-template-columns: minmax(210px, 1.35fr) 2.1fr minmax(135px, 0.95fr);
   align-items: center;
@@ -202,9 +202,10 @@ onMounted(() => {
 }
 .quote-header-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 0.25rem;
 }
 .quote-order-title {
@@ -259,8 +260,8 @@ onMounted(() => {
   flex: 1;
 }
 .provider-avatar {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1.5px solid var(--border-gray, #e0e0e0);
   background: #ffffff;
@@ -305,8 +306,8 @@ onMounted(() => {
   flex-shrink: 0;
 }
 .product-thumb-card {
-  width: 52px;
-  height: 52px;
+  width: 48px;
+  height: 48px;
   border: 1px solid var(--border-gray, #e0e0e0);
   border-radius: 8px;
   background: #ffffff;
@@ -318,14 +319,14 @@ onMounted(() => {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 .more-products-pill {
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   border: 1px solid var(--border-gray, #e0e0e0);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: #64748b;
   background: #ffffff;
@@ -358,26 +359,63 @@ onMounted(() => {
   background-color: var(--light-teal, #189c94);
   color: #ffffff;
 }
-@media (max-width: 990px) {
+
+@media (max-width: 1024px) {
   .quote-card {
     grid-template-columns: 1fr;
-    gap: 1.25rem;
+    gap: 1rem;
+    padding: 1.25rem 1.25rem;
   }
   .quote-center {
     border-left: none;
     border-right: none;
     border-top: 1px solid var(--border-gray, #e0e0e0);
     border-bottom: 1px solid var(--border-gray, #e0e0e0);
-    padding: 1rem 0;
+    padding: 0.85rem 0;
     flex-wrap: wrap;
+    gap: 1rem;
   }
   .quote-status-action {
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
+    flex-wrap: wrap;
+    gap: 0.75rem;
   }
   .status-date-subtext {
     text-align: left;
+  }
+}
+
+@media (max-width: 640px) {
+  .quote-card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+  .quote-header-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .provider-meta-group {
+    width: 100%;
+  }
+  .products-preview-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+  .quote-status-action {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .btn-outline-teal {
+    width: 100%;
+    text-align: center;
+    padding: 0.5rem;
+  }
+  .status-date-subtext {
+    text-align: center;
   }
 }
 </style>

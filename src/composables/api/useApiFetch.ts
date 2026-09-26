@@ -16,20 +16,32 @@ function flushQueue(token: string) {
   refreshQueue = [];
 }
 
+// FIX: Added <string, string> to the Record type
+function normalizeHeaders(headersInit: HeadersInit | undefined): Record<string, string> {
+  if (!headersInit) return {};
+  if (headersInit instanceof Headers) {
+    return Object.fromEntries(headersInit.entries());
+  }
+  if (Array.isArray(headersInit)) {
+    return Object.fromEntries(headersInit);
+  }
+  return { ...headersInit };
+}
+
 export const useApiFetch = createFetch({
   baseUrl: API_BASE_URL,
   options: {
     updateDataOnError: true,
 
     async beforeFetch({ options, url }) {
-      const headers = new Headers(options.headers);
-      headers.set("Content-Type", "application/json");
+      const headers = normalizeHeaders(options.headers);
+      headers["Content-Type"] = "application/json";
 
       const tokenStore = useTokenStore();
       const isAuthPath = url.includes("/refresh") || url.includes("/login");
 
       if (tokenStore.accessToken && !isAuthPath) {
-        headers.set("Authorization", `Bearer ${tokenStore.accessToken}`);
+        headers["Authorization"] = `Bearer ${tokenStore.accessToken}`;
       }
 
       options.headers = headers;
@@ -44,7 +56,6 @@ export const useApiFetch = createFetch({
         context.url.includes("/login") ||
         context.url.includes("/logout");
 
-      // Handle 401 on regular endpoints with concurrency lock
       if (response?.status === 401 && tokenStore.hasRefreshToken && !isAuthPath) {
         const authStore = useAuthStore();
 
@@ -64,9 +75,9 @@ export const useApiFetch = createFetch({
 
         return new Promise((resolve) => {
           refreshQueue.push(async (newToken: string) => {
-            const headers = new Headers(context.options.headers);
-            headers.set("Authorization", `Bearer ${newToken}`);
-            headers.set("Content-Type", "application/json");
+            const headers = normalizeHeaders(context.options.headers);
+            headers["Authorization"] = `Bearer ${newToken}`;
+            headers["Content-Type"] = "application/json";
             context.options.headers = headers;
 
             const retryResult = await execute();
@@ -75,7 +86,6 @@ export const useApiFetch = createFetch({
         });
       }
 
-      // If refresh failed with 401, kill session
       if (response?.status === 401 && isAuthPath) {
         const authStore = useAuthStore();
         authStore.handleSessionExpired();

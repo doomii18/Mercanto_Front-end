@@ -478,13 +478,15 @@ onMounted(async () => {
 .info-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 1.25rem 1.5rem;
 }
 
 .info-item {
   display: flex;
-  align-items: center;
-  gap: 0.8rem;
+  align-items: flex-start;
+  gap: 0.7rem;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .info-item.full-width {
@@ -493,22 +495,31 @@ onMounted(async () => {
 
 .info-item i {
   color: var(--primary-blue);
-  font-size: 1.1rem;
-  width: 20px;
+  font-size: 1rem;
+  width: 18px;
   text-align: center;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
 }
 
 .info-item .label {
-  width: 140px;
+  flex-shrink: 0;
+  min-width: 80px;
+  max-width: 130px;
   font-weight: 600;
   color: var(--primary-blue);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
+  word-break: break-word;
 }
 
 .info-item .value {
   color: var(--text-dark);
   font-weight: 500;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  min-width: 0;
+  flex: 1;
 }
 
 .info-item .value.link {
@@ -519,19 +530,99 @@ onMounted(async () => {
   text-transform: capitalize;
 }
 
-/* Responsive */
+/* ── Responsive ─────────────────────────────────────── */
+
+/* Tablet: reduce padding & tighten label width */
+@media (max-width: 1024px) {
+  .card {
+    padding: 1.5rem;
+  }
+
+  .profile-card {
+    gap: 1.75rem;
+  }
+
+  .info-item .label {
+    min-width: 70px;
+    max-width: 110px;
+  }
+}
+
+/* Mobile */
 @media (max-width: 768px) {
+  .card {
+    padding: 1.2rem;
+  }
+
   .profile-card {
     flex-direction: column;
     text-align: center;
+    gap: 1.25rem;
   }
 
-  .profile-header, .contact-meta p {
+  .profile-header {
+    justify-content: center;
+  }
+
+  .profile-header h2 {
+    font-size: 1.35rem;
+  }
+
+  .contact-meta p {
     justify-content: center;
   }
 
   .info-grid {
     grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .personal-info-card .card-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .personal-info-card h3 {
+    font-size: 1.1rem;
+  }
+}
+
+/* Small phones: stack label+value vertically */
+@media (max-width: 420px) {
+  .card {
+    padding: 1rem;
+    border-radius: 12px;
+  }
+
+  .profile-header h2 {
+    font-size: 1.15rem;
+  }
+
+  .description {
+    font-size: 0.88rem;
+  }
+
+  .info-item {
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .info-item i {
+    display: none;
+  }
+
+  .info-item .label {
+    max-width: 100%;
+    min-width: unset;
+    font-size: 0.76rem;
+    color: #888;
+    font-weight: 500;
+  }
+
+  .info-item .value {
+    font-size: 0.9rem;
+    font-weight: 600;
   }
 }
 </style>
+

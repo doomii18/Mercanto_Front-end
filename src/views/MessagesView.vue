@@ -368,9 +368,12 @@ onMounted(async () => {
 
 <template>
   <!-- Shell -->
-  <div class="flex flex-1 min-h-0 w-full h-full overflow-hidden relative bg-[#fde8e4] max-md:flex-col">
+  <div class="flex flex-1 min-h-0 w-full h-full overflow-hidden relative bg-[#fde8e4]">
     <!-- Conversations panel -->
-    <aside class="w-[370px] min-w-[260px] min-h-0 bg-white border-r border-[#eee] flex flex-col pt-6 px-5 pb-4 gap-4 overflow-hidden max-md:w-full max-md:min-w-0 max-md:h-2/5 max-md:border-r-0 max-md:border-b">
+    <aside
+      class="w-full md:w-[370px] md:min-w-[260px] min-h-0 bg-white border-r border-[#eee] flex-col pt-6 px-4 sm:px-5 pb-4 gap-4 overflow-hidden"
+      :class="activeThreadId ? 'hidden md:flex' : 'flex'"
+    >
       <h2 class="text-[1.35rem] font-bold text-[#083c5a] m-0 shrink-0">Mensajes</h2>
       <div class="relative shrink-0">
         <input
@@ -444,13 +447,27 @@ onMounted(async () => {
     </aside>
 
     <!-- Chat panel -->
-    <section class="flex-1 min-w-0 min-h-0 flex flex-col overflow-hidden max-md:h-3/5" :class="activeThread?.id.startsWith('sys-') ? 'bg-[#f8fafc]' : 'bg-white'">
+    <section
+      class="flex-1 min-w-0 min-h-0 flex-col overflow-hidden w-full md:w-auto"
+      :class="[
+        activeThreadId ? 'flex' : 'hidden md:flex',
+        activeThread?.id.startsWith('sys-') ? 'bg-[#f8fafc]' : 'bg-white'
+      ]"
+    >
       <template v-if="activeThread">
         <!-- HEADER -->
-        <div class="flex items-center justify-between px-6 py-4 bg-white border-b border-[#eee] shrink-0">
-          <div class="flex items-center gap-4">
+        <div class="flex items-center justify-between px-4 sm:px-6 py-3.5 bg-white border-b border-[#eee] shrink-0">
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              class="md:hidden text-lg text-[#083c5a] p-1.5 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+              title="Volver a conversaciones"
+              @click="activeThreadId = null"
+            >
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
             <!-- Dynamic Avatar in Header -->
-            <div class="w-[50px] h-[50px] rounded-full overflow-hidden border border-[#eee] shrink-0 bg-[#f1f5f9] flex items-center justify-center">
+            <div class="w-10 h-10 sm:w-[50px] sm:h-[50px] rounded-full overflow-hidden border border-[#eee] shrink-0 bg-[#f1f5f9] flex items-center justify-center">
               <img v-if="threadPreviews[activeThread.id]?.imgSrc" :src="threadPreviews[activeThread.id]?.imgSrc" class="w-full h-full object-cover" />
               <ProfileAvatar
                 v-else-if="!isProvider"
@@ -466,81 +483,81 @@ onMounted(async () => {
               />
             </div>
             <div class="flex flex-col overflow-hidden min-w-0">
-              <span class="font-bold text-base text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">
+              <span class="font-bold text-sm sm:text-base text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">
                 {{ threadPreviews[activeThread.id]?.name || 'Cargando...' }}
               </span>
               <span v-if="activeThread.id.startsWith('sys-')" class="text-xs text-[#888] mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 Canal Oficial de Notificaciones
               </span>
               <span v-else class="text-xs text-[#888] flex items-center gap-1 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                Pedido: #{{ threadPreviews[activeThread.id]?.quoteGroupId?.substring(0, 8) || activeThread.quote_group_id.substring(0, 8) }}
+                #{{ threadPreviews[activeThread.id]?.quoteGroupId?.substring(0, 8) || activeThread.quote_group_id.substring(0, 8) }}
 
                 <!-- Dynamic Status Text & Dot -->
                 <span
-                  class="w-2 h-2 rounded-full inline-block shrink-0"
+                  class="w-2 h-2 rounded-full inline-block shrink-0 ml-1"
                   :class="isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'bg-[#22c55e]' : 'bg-[#9ca3af]'"
                 ></span>
-                <span>
+                <span class="hidden sm:inline">
                   {{ isOnline(threadPreviews[activeThread.id]?.avatarBlobId || threadPreviews[activeThread.id]?.name) ? 'En línea' : 'Desconectado' }}
                 </span>
               </span>
             </div>
           </div>
-          <div v-if="activeThread.id.startsWith('sys-')" class="px-3 py-1 text-xs text-[#64748b] bg-white border border-[#cbd5e1] rounded-full">
+          <div v-if="activeThread.id.startsWith('sys-')" class="px-2.5 py-1 text-[11px] sm:text-xs text-[#64748b] bg-white border border-[#cbd5e1] rounded-full shrink-0">
             Sólo lectura
           </div>
         </div>
         
         <!-- SYSTEM NOTIFICATION CONTENT (RECARGA APROBADA) -->
-        <div v-if="activeThread.id === 'sys-approved'" class="flex-1 min-h-0 flex items-center justify-center p-6 overflow-y-auto">
-          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
-            <div class="w-16 h-16 rounded-full bg-[#e6f7f5] flex items-center justify-center mb-6">
-              <i class="fa-solid fa-check text-2xl text-[#189c94]"></i>
+        <div v-if="activeThread.id === 'sys-approved'" class="flex-1 min-h-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sm:p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e6f7f5] flex items-center justify-center mb-4 sm:mb-6">
+              <i class="fa-solid fa-check text-xl sm:text-2xl text-[#189c94]"></i>
             </div>
-            <h2 class="text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">¡Recarga aprobada!</h2>
-            <p class="text-[#64748b] text-[0.95rem] mb-6">Tu billetera ha sido recargada exitosamente.</p>
-            <div class="text-[2.2rem] font-bold text-[#189c94] mb-8 tracking-tight">
+            <h2 class="text-xl sm:text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">¡Recarga aprobada!</h2>
+            <p class="text-[#64748b] text-xs sm:text-[0.95rem] mb-6">Tu billetera ha sido recargada exitosamente.</p>
+            <div class="text-2xl sm:text-[2.2rem] font-bold text-[#189c94] mb-6 sm:mb-8 tracking-tight">
               + C$ 2,000.00
             </div>
-            <div class="w-full bg-[#f8fafc] border border-[#f1f5f9] rounded-xl py-4 flex flex-col items-center mb-8">
+            <div class="w-full bg-[#f8fafc] border border-[#f1f5f9] rounded-xl py-3.5 flex flex-col items-center mb-6 sm:mb-8">
               <span class="text-[0.7rem] text-[#64748b] mb-0.5 uppercase tracking-wide font-semibold">Saldo actual</span>
-              <span class="text-lg font-bold text-[#083c5a]">C$ 8,500.00</span>
+              <span class="text-base sm:text-lg font-bold text-[#083c5a]">C$ 8,500.00</span>
             </div>
-            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3.5 rounded-xl transition-colors mb-3">
+            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-colors mb-3 text-sm">
               Ver billetera
             </button>
-            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3.5 rounded-xl transition-colors">
+            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3 sm:py-3.5 rounded-xl transition-colors text-sm">
               Volver al inicio
             </button>
           </div>
         </div>
         
         <!-- SYSTEM NOTIFICATION CONTENT (RECARGA NO APROBADA) -->
-        <div v-else-if="activeThread.id === 'sys-rejected'" class="flex-1 min-h-0 flex items-center justify-center p-6 overflow-y-auto">
-          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
-            <div class="w-16 h-16 rounded-full bg-[#fef2f2] flex items-center justify-center mb-6">
-              <i class="fa-solid fa-xmark text-2xl text-[#ef4444]"></i>
+        <div v-else-if="activeThread.id === 'sys-rejected'" class="flex-1 min-h-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sm:p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#fef2f2] flex items-center justify-center mb-4 sm:mb-6">
+              <i class="fa-solid fa-xmark text-xl sm:text-2xl text-[#ef4444]"></i>
             </div>
-            <h2 class="text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">Recarga no aprobada</h2>
-            <div class="text-[2.2rem] font-bold text-[#ef4444] mb-2 tracking-tight">
+            <h2 class="text-xl sm:text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">Recarga no aprobada</h2>
+            <div class="text-2xl sm:text-[2.2rem] font-bold text-[#ef4444] mb-2 tracking-tight">
               C$ 2,000.00
             </div>
-            <p class="text-[#64748b] text-[0.95rem] mb-6">Tu solicitud <strong>REC-000245</strong> no pudo ser verificada.</p>
-            <div class="w-full bg-[#fef2f2] border border-[#fecaca] rounded-xl p-4 flex gap-3 text-left mb-6">
+            <p class="text-[#64748b] text-xs sm:text-[0.95rem] mb-6">Tu solicitud <strong>REC-000245</strong> no pudo ser verificada.</p>
+            <div class="w-full bg-[#fef2f2] border border-[#fecaca] rounded-xl p-3.5 sm:p-4 flex gap-3 text-left mb-6">
               <i class="fa-solid fa-triangle-exclamation text-[#ef4444] mt-0.5"></i>
               <div class="flex flex-col">
                 <span class="text-[#b91c1c] text-[0.75rem] font-bold mb-0.5">Motivo de rechazo</span>
-                <span class="text-[#ef4444] text-[0.85rem] leading-relaxed">La referencia ingresada no coincide con el comprobante de depósito.</span>
+                <span class="text-[#ef4444] text-xs sm:text-[0.85rem] leading-relaxed">La referencia ingresada no coincide con el comprobante de depósito.</span>
               </div>
             </div>
-            <div class="w-full text-left mb-8">
-              <h4 class="text-[#083c5a] font-bold text-[0.95rem] mb-1">¿Qué podés hacer?</h4>
-              <p class="text-[#64748b] text-[0.85rem] leading-relaxed">Podés registrar nuevamente una recarga con los datos correctos del comprobante original.</p>
+            <div class="w-full text-left mb-6 sm:mb-8">
+              <h4 class="text-[#083c5a] font-bold text-xs sm:text-[0.95rem] mb-1">¿Qué podés hacer?</h4>
+              <p class="text-[#64748b] text-xs sm:text-[0.85rem] leading-relaxed">Podés registrar nuevamente una recarga con los datos correctos del comprobante original.</p>
             </div>
-            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3.5 rounded-xl transition-colors mb-3">
+            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-colors mb-3 text-sm">
               Confirmar nueva recarga
             </button>
-            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3.5 rounded-xl transition-colors">
+            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3 sm:py-3.5 rounded-xl transition-colors text-sm">
               Volver a mi billetera
             </button>
           </div>
@@ -548,7 +565,7 @@ onMounted(async () => {
 
         <!-- NORMAL CHAT -->
         <div v-else class="flex-1 flex flex-col min-h-0 bg-white">
-          <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto px-8 py-6 flex flex-col gap-4 bg-white max-md:px-4">
+          <div ref="messagesContainer" class="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 flex flex-col gap-4 bg-white">
             <div class="text-center text-[0.78rem] text-[#aaa] my-2 relative shrink-0 before:content-[''] before:absolute before:top-1/2 before:w-[calc(50%-80px)] before:h-px before:bg-[#e5e5e5] before:left-0 after:content-[''] after:absolute after:top-1/2 after:w-[calc(50%-80px)] after:h-px after:bg-[#e5e5e5] after:right-0">
               Canal Seguro
             </div>
@@ -561,31 +578,31 @@ onMounted(async () => {
               :class="msg.sender_id === authStore.account?.id ? 'justify-end' : 'justify-start'"
             >
               <div
-                class="max-w-[58%] py-3 px-4 rounded-2xl relative max-md:max-w-[80%]"
+                class="max-w-[85%] sm:max-w-[65%] md:max-w-[58%] py-2.5 px-3.5 sm:py-3 sm:px-4 rounded-2xl relative"
                 :class="msg.sender_id === authStore.account?.id ? 'bg-[#189c94] rounded-br-sm' : 'bg-[#fde8e4] rounded-bl-sm'"
               >
-                <p class="m-0 mb-1.5 text-[0.88rem] leading-relaxed break-words" :class="msg.sender_id === authStore.account?.id ? 'text-white' : 'text-[#1a1a1a]'">
+                <p class="m-0 mb-1 text-xs sm:text-[0.88rem] leading-relaxed break-words" :class="msg.sender_id === authStore.account?.id ? 'text-white' : 'text-[#1a1a1a]'">
                   {{ msg.content }}
                 </p>
-                <span class="text-[0.7rem] block text-right" :class="msg.sender_id === authStore.account?.id ? 'text-white/75' : 'text-[#aaa]'">
+                <span class="text-[0.68rem] block text-right" :class="msg.sender_id === authStore.account?.id ? 'text-white/75' : 'text-[#aaa]'">
                   {{ formatUuidv7ToLocalTime(msg.id) }}
                 </span>
               </div>
             </div>
           </div>
-          <form class="flex items-center gap-3 px-6 py-4 border-t border-[#eee] bg-white shrink-0" @submit.prevent="sendMessage">
-            <button type="button" class="bg-transparent border-none cursor-pointer text-lg text-[#aaa] p-1 transition-colors shrink-0 hover:text-[#189c94]" title="Adjuntar archivo">
+          <form class="flex items-center gap-2 sm:gap-3 px-3 sm:px-6 py-3 border-t border-[#eee] bg-white shrink-0" @submit.prevent="sendMessage">
+            <button type="button" class="bg-transparent border-none cursor-pointer text-lg text-[#aaa] p-1.5 transition-colors shrink-0 hover:text-[#189c94]" title="Adjuntar archivo">
               <i class="fa-solid fa-paperclip"></i>
             </button>
             <input
               v-model="newMessage"
-              class="flex-1 border-[1.5px] border-[#e0e0e0] rounded-full py-2.5 px-5 text-sm text-[#333] bg-[#f9f9f9] outline-none transition-colors focus:border-[#189c94] focus:bg-white"
+              class="flex-1 border-[1.5px] border-[#e0e0e0] rounded-full py-2 sm:py-2.5 px-4 sm:px-5 text-xs sm:text-sm text-[#333] bg-[#f9f9f9] outline-none transition-colors focus:border-[#189c94] focus:bg-white"
               placeholder="Escribe tu mensaje..."
               type="text"
             />
             <button
               type="submit"
-              class="bg-[#189c94] border-none cursor-pointer text-white w-10 h-10 rounded-full flex items-center justify-center text-[0.95rem] shrink-0 transition-all hover:bg-[#147d76] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="bg-[#189c94] border-none cursor-pointer text-white w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-xs sm:text-[0.95rem] shrink-0 transition-all hover:bg-[#147d76] hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Enviar"
               :disabled="!newMessage.trim()"
             >
@@ -594,9 +611,9 @@ onMounted(async () => {
           </form>
         </div>
       </template>
-      <div v-else class="flex-1 flex flex-col items-center justify-center gap-4 text-[#888]">
+      <div v-else class="flex-1 flex flex-col items-center justify-center gap-4 text-[#888] p-6 text-center">
         <i class="fa-regular fa-comment text-5xl text-[#cbd5e1]"></i>
-        <p>Selecciona una conversación para ver los detalles</p>
+        <p class="text-sm sm:text-base">Selecciona una conversación para ver los detalles</p>
       </div>
     </section>
   </div>
