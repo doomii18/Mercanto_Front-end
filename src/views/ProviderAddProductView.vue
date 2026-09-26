@@ -751,6 +751,9 @@ textarea {
   cursor: not-allowed;
 }
 
+/* ── Responsive ──────────────────────────────────────── */
+
+/* Tablet (up to 900px) */
 @media (max-width: 900px) {
   .grid-row-3 {
     grid-template-columns: 1fr;
@@ -770,4 +773,67 @@ textarea {
     gap: 1.25rem;
   }
 }
+
+/* Small tablets (up to 640px) */
+@media (max-width: 640px) {
+  .add-product-page {
+    padding: 1rem 1rem 2rem 1rem;
+  }
+
+  .page-title {
+    font-size: 1.3rem;
+    margin-bottom: 1rem;
+  }
+
+  .form-section {
+    padding: 1.1rem;
+  }
+
+  .grid-row-2 {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .btn-cancel,
+  .right-actions {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .btn-cancel {
+    text-align: center;
+  }
+
+  .right-actions {
+    flex-direction: column;
+  }
+
+  .btn-publish {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Small phones (up to 420px) */
+@media (max-width: 420px) {
+  .form-section {
+    padding: 0.875rem;
+    border-radius: 8px;
+  }
+
+  .section-title {
+    font-size: 1rem;
+  }
+
+  .tips-box {
+    padding: 0.875rem;
+  }
+}
 </style>
+

@@ -60,9 +60,13 @@ const closeSidebar = () => {
       <!-- Sidebar -->
       <aside
         :class="[
-          'fixed z-40 bg-white transition-[width,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-          'max-md:inset-x-0 max-md:bottom-0 max-md:top-auto max-md:h-[60px] max-md:w-full max-md:border-t max-md:border-slate-200 max-md:shadow-sm',
-          'md:top-16 md:bottom-0 md:left-0 md:flex md:flex-col md:justify-between md:border-r md:border-slate-200 md:py-5',
+          'fixed z-40 bg-white transition-[width,transform,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'top-16 bottom-0 left-0 flex flex-col justify-between border-r border-slate-200 py-5',
+          // Mobile: hidden by default, slide in when open
+          sidebarOpen
+            ? 'max-md:translate-x-0 max-md:w-60 max-md:items-start max-md:shadow-xl'
+            : 'max-md:-translate-x-full max-md:w-60 max-md:items-start',
+          // Desktop
           sidebarOpen
             ? 'md:w-60 md:items-start md:shadow-xl'
             : 'md:w-[72px] md:items-center'
@@ -70,10 +74,8 @@ const closeSidebar = () => {
       >
         <nav
           :class="[
-            'flex',
-            'max-md:h-full max-md:w-full max-md:flex-row max-md:items-center max-md:justify-around max-md:px-2',
-            'md:w-full md:flex-col md:gap-1.5',
-            sidebarOpen ? 'md:px-3' : 'md:px-0'
+            'flex w-full flex-col gap-1.5',
+            sidebarOpen ? 'px-3' : 'md:px-0 px-3'
           ]"
         >
           <!-- Mi Perfil -->
@@ -82,17 +84,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-regular fa-circle-user w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -113,17 +114,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-solid fa-bag-shopping w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -144,17 +144,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-regular fa-heart w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -174,17 +173,16 @@ const closeSidebar = () => {
             active-class="!bg-[#e2e8f0] !text-[#083c5a] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-solid fa-wallet w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -204,17 +202,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-solid fa-cart-shopping w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -234,17 +231,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-regular fa-comment-dots w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -265,17 +261,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-solid fa-magnifying-glass w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -295,17 +290,16 @@ const closeSidebar = () => {
             exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
             :class="[
               'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
-              'max-md:h-11 max-md:w-11 max-md:justify-center',
               sidebarOpen
-                ? 'md:h-11 md:w-full md:justify-start md:gap-3.5 md:px-3.5'
-                : 'md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
             ]"
             @click="closeSidebar"
           >
             <i class="fa-regular fa-bell w-5 text-center text-lg shrink-0"></i>
             <span
               :class="[
-                'max-md:hidden whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
                 sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
               ]"
             >
@@ -320,7 +314,7 @@ const closeSidebar = () => {
           </router-link>
         </nav>
 
-        <div class="hidden md:flex w-full items-center justify-center px-3 mt-auto">
+        <div class="flex w-full items-center justify-center px-3 mt-auto">
           <UserMenu :collapsed="!sidebarOpen" align="left" drop-direction="up" />
         </div>
       </aside>
@@ -329,7 +323,7 @@ const closeSidebar = () => {
       <main
         :class="[
           'relative flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-[#fdf3f0] transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
-          'max-md:mb-15 max-md:ml-0',
+          'max-md:ml-0',
           sidebarOpen ? 'lg:ml-60 md:ml-18' : 'md:ml-[72px]'
         ]"
       >
