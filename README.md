@@ -60,9 +60,9 @@ frontend/
 ## 🚀 Guía de Instalación y Ejecución
 
 ### Requisitos Previos
-* **Node.js**: v18.0.0 o superior (se recomienda versión LTS).
-* **npm**: v9.0.0 o superior.
-* **Just**: Gestor de tareas (opcional pero recomendado).
+* **Podman** y **Podman Compose** (entorno de ejecución de contenedores principal).
+* **Node.js**: v26 (LTS o superior) y `npm` (opcional si se ejecuta directamente en el host).
+* **Just**: Gestor de tareas.
 
 ### 1. Variables de Entorno
 Copia el archivo de ejemplo para configurar la URL del backend:
@@ -70,42 +70,45 @@ Copia el archivo de ejemplo para configurar la URL del backend:
 cp .env.example .env
 ```
 
-Contenido típico de `.env`:
-```env
-VITE_API_BASE_URL=https://localhost:8443
-```
+---
 
-### 2. Instalación de Dependencias
+### 2. Desarrollo con Contenedores (Podman)
+
+El entorno de desarrollo utiliza una imagen **Debian** de Node.js (`node:26-slim`) sincronizada con la versión local, montando el código y la carpeta `node_modules` para evitar reinstalaciones constantes:
+
 ```bash
-# Con just:
-just install
-
-# O con npm:
-npm install
-```
-
-### 3. Servidor de Desarrollo
-Inicia el servidor local con Hot Module Replacement (HMR):
-```bash
-# Con just:
+# Iniciar servidor de desarrollo en contenedor (puerto 5173 con HMR):
 just dev
+# o: podman compose -f debug.compose.yml up
 
-# O con npm:
-npm run dev
+# Detener el contenedor de desarrollo:
+just down-dev
 ```
 
-Por defecto, la aplicación estará disponible en `http://localhost:5173`.
+*(Si prefieres desarrollo local en el host sin contenedores, puedes usar `just install` y `just dev-local`)*.
 
-### 4. Verificación de Tipos y Compilación para Producción
+---
+
+### 3. Compilación y Despliegue de Producción (Nginx)
+
+El empaquetado para producción utiliza un `Containerfile` multi-etapa:
+1. Compila la SPA con `node:26-slim`.
+2. Embebe los binarios estáticos en un contenedor ligero **Nginx Alpine** configurado con soporte para rutas SPA (`try_files $uri $uri/ /index.html;`) y compresión gzip.
+
 ```bash
-# Verificar tipos de TypeScript:
-just typecheck
+# Construir la imagen de producción con Podman:
+just build-image
+# o: podman build -t mercanto-frontend:prod -f Containerfile .
 
-# Compilar para producción (genera la carpeta dist/):
-just build
+# Desplegar el contenedor de producción en segundo plano (puerto 3000):
+just up-prod
+# o: podman compose up -d
 
-# Previsualizar el paquete compilado localmente:
-just preview
+# Ver registros en vivo:
+just logs-prod
+
+# Detener el contenedor de producción:
+just down-prod
 ```
 
 ---
@@ -114,8 +117,16 @@ just preview
 
 | Receta | Comando Equivalente | Descripción |
 | :--- | :--- | :--- |
-| `just install` | `npm install` | Instala dependencias del proyecto. |
-| `just dev` | `npm run dev` | Inicia el servidor de desarrollo Vite. |
-| `just build` | `npm run build` | Ejecuta verificación de tipos y compilación optimizada. |
-| `just typecheck` | `npm run typecheck` | Comprueba tipos TypeScript con `vue-tsc --noEmit`. |
-| `just preview` | `npm run preview` | Sirve la carpeta `dist/` para pruebas locales. |
+| `just dev` | `podman compose -f debug.compose.yml up` | Inicia el entorno de desarrollo en contenedor con Node 26 Debian. |
+| `just down-dev` | `podman compose -f debug.compose.yml down` | Detiene el contenedor de desarrollo. |
+| `just logs-dev` | `podman compose -f debug.compose.yml logs -f` | Sigue los logs del servidor de desarrollo en contenedor. |
+| `just build-image`| `podman build -t mercanto-frontend:prod -f Containerfile .` | Compila la imagen OCI de producción con Nginx. |
+| `just up-prod` | `podman compose up -d` | Despliega el contenedor de producción (`compose.yml`). |
+| `just down-prod` | `podman compose down` | Detiene el contenedor de producción. |
+| `just logs-prod` | `podman compose logs -f` | Sigue los logs del contenedor de producción. |
+| `just install` | `npm install` | Instala dependencias `npm` localmente en el host. |
+| `just dev-local` | `npm run dev` | Inicia el servidor de desarrollo local en el host. |
+| `just build-local`| `npm run build` | Compila estáticos localmente en la carpeta `dist/`. |
+| `just typecheck` | `npm run typecheck` | Ejecuta verificación estática de tipos con `vue-tsc`. |
+| `just preview` | `npm run preview` | Previsualiza el build de producción localmente. |
+
