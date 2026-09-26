@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 import { useGeoStore } from "@/stores/geo";
 import ProviderCard from "@/components/organization/ProviderCard.vue";
-import type { PublicProviderDto, OrganizationSortField } from "@/api/services/organization/types";
+import type { PublicProviderDto, OrganizationSortField } from "@/api/modules/organization/types";
 
 const route = useRoute();
 const router = useRouter();

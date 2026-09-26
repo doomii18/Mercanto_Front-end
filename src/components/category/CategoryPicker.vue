@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from "vue";
-import { useCategoryApi } from "@/composables/api/useCategoryApi";
-import type { ProductCategoryResponse } from "../../api/services/category/types";
+import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
+import type { ProductCategoryResponse } from "@/api/modules/category/types";
 import CategoryImage from "./CategoryImage.vue";
 
 interface Props {

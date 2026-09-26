@@ -4,7 +4,7 @@ import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import BaseModal from "./BaseModal.vue";
 import { GeocodingService, useGeoStore } from "../../stores/geo";
-import { useGeographyApi } from "@/composables/api/useGeographyApi";
+import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 
 export interface AddressPickerResult {
   latitude: number;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onScopeDispose } from "vue";
 import { useRouter } from "vue-router";
-import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import type {
@@ -9,11 +9,11 @@ import type {
   QuoteStatus,
   AccountQuoteFiltersQuery,
   ProviderQuoteFiltersQuery,
-} from "../api/services/quote/types";
+} from "@/api/modules/quote/types";
 import QuoteListItem from "../components/quote/QuoteListItem.vue";
 import QuoteSearchBox from "../components/quote/QuoteSearchBox.vue";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
-import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
 
 interface CounterpartyInfo {
   name: string;

@@ -1,5 +1,5 @@
 
-import type { CountryNodeResponse } from "../../api/services/geography/types";
+import type { CountryNodeResponse } from "@/api/modules/geography/types";
 
 export interface Municipality {
   id: string;

@@ -10,7 +10,7 @@ import {
   personNameSchema,
   emailSchema,
   phoneNumberSchema,
-} from "@/api/services/identity/domain";
+} from "@/api/modules/identity/domain";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();

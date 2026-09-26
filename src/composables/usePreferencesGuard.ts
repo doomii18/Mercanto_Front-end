@@ -1,8 +1,8 @@
 import { ref } from "vue";
 import { useTimeoutFn } from "@vueuse/core";
 import { useAuthStore } from "../stores/authStore";
-import type { UserInterest } from "../api/services/user_profile/types";
-import { useUserProfileApi } from "./api/useUserProfileApi";
+import type { UserInterest } from "@/api/modules/user_profile/types";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
 
 export function usePreferencesGuard(delayMs = 1200) {
   const authStore = useAuthStore();

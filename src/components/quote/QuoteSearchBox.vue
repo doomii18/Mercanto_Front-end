@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
-import type { QuoteAggregateResponse, QuoteResponse } from "../../api/services/quote/types";
+import type { QuoteAggregateResponse, QuoteResponse } from "@/api/modules/quote/types";
 import QuoteStatusBadge from "./QuoteStatusBadge.vue";
 import { uuidToCrockford } from "../../utils/formatters";
 

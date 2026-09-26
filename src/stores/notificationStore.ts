@@ -1,17 +1,17 @@
 import { defineStore } from "pinia";
 import { ref, shallowRef } from "vue";
-import { useApiFetch } from "@/composables/api/useApiFetch";
+import { useApiFetch } from "@/api/useApiFetch";
 import { useAuthStore } from "./authStore";
 import { useToastStore } from "./toastStore";
 import { notificationBus } from "@/events/notificationEvents";
 import {
   NotificationEventSchema,
   WsTicketResponseSchema,
-} from "@/api/services/notifications/payloads";
+} from "@/api/modules/notifications/schemas";
 import type {
   NotificationEvent,
   WsTicketResponse,
-} from "@/api/services/notifications/types";
+} from "@/api/modules/notifications/types";
 
 export const useNotificationStore = defineStore("notification", () => {
   const status = ref<"OPEN" | "CONNECTING" | "CLOSED">("CLOSED");

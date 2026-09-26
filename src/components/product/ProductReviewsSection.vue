@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue';
-import { useReviewApi } from '@/composables/api/useReviewApi';
-import type { ProductReviewResponse } from '@/api/services/review/types';
+import { useReviewApi } from '@/api/modules/review/useReviewApi';
+import type { ProductReviewResponse } from '@/api/modules/review/types';
 import ProfileAvatar from '@/components/profile/ProfileAvatar.vue';
-import { useUserProfileApi } from '@/composables/api/useUserProfileApi';
+import { useUserProfileApi } from '@/api/modules/user_profile/useUserProfileApi';
 
 interface EnrichedReview extends ProductReviewResponse {
   buyerName: string;

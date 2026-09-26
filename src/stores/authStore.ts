@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useTokenStore } from "./tokenStore";
-import { useIdentityApi } from "@/composables/api/useIdentityApi";
+import { useIdentityApi } from "@/api/modules/identity/useIdentityApi";
 import type {
   AccountResponse,
   LoginRequest,
-} from "@/api/services/identity/types";
+} from "@/api/modules/identity/types";
 import { useUserContextStore } from "./userContextStore";
 import { authBus } from "@/events/authEvents";
 

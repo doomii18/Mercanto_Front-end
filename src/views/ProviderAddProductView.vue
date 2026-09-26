@@ -2,15 +2,15 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
-import { useProductApi } from "@/composables/api/useProductApi";
-import { useCategoryApi } from "@/composables/api/useCategoryApi";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
-import type { CreateProductRequest, UnitOfMeasure } from "@/api/services/product/types";
-import type { ProductCategoryResponse } from "@/api/services/category/types";
+import type { CreateProductRequest, UnitOfMeasure } from "@/api/modules/product/types";
+import type { ProductCategoryResponse } from "@/api/modules/category/types";
 
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
-import type { ShippingMethod } from "@/api/services/quote/types";
+import type { ShippingMethod } from "@/api/modules/quote/types";
 
 const router = useRouter();
 const userContext = useUserContextStore();

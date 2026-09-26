@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import type { QuoteStatus } from "../../api/services/quote/types";
+import type { QuoteStatus } from "@/api/modules/quote/types";
 
 interface StatusConfig {
   label: string;

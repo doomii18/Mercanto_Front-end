@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useGeoStore } from "../stores/geo";
-import type { OrganizationDetailsDto, PublicProviderDto } from "../api/services/organization/types";
+import type { OrganizationDetailsDto, PublicProviderDto } from "@/api/modules/organization/types";
 import AvatarEditor from "../components/profile/AvatarEditor.vue";
 import EditProfileModal from "../components/profile/EditProfileModal.vue";
 import EditProviderModal from "../components/profile/EditProviderModal.vue";
@@ -11,8 +11,8 @@ import BuyerStatsCards from "@/components/profile/BuyerStatsCards.vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import { useAlertStore } from "@/stores/alertStore";
-import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();

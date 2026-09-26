@@ -1,15 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useCategoryApi } from "@/composables/api/useCategoryApi";
-import { useProductApi } from "@/composables/api/useProductApi";
-import type { ProductCategoryResponse } from "../api/services/category/types";
-import type { ProductResponse } from "../api/services/product/types";
+import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import type { ProductCategoryResponse } from "@/api/modules/category/types";
+import type { ProductResponse } from "@/api/modules/product/types";
 import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
 import ProviderCard from "../components/organization/ProviderCard.vue";
 import ProductCard from "../components/product/ProductCard.vue";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 interface ProviderMeta {
   name: string;

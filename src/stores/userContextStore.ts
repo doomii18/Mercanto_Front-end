@@ -1,9 +1,9 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import type { OrganizationDetailsDto } from "@/api/services/organization/types";
-import type { UserProfileResponse } from "@/api/services/user_profile/types";
-import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import type { OrganizationDetailsDto } from "@/api/modules/organization/types";
+import type { UserProfileResponse } from "@/api/modules/user_profile/types";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 export type UserGroup = "buyer" | "provider";
 

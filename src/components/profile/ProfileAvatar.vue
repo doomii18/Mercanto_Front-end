@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useBlobUrl } from "../../composables/blob/useBlob";
 import { generateAvatarDataUrl } from "../../utils/avatar";
-import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
 
 const props = defineProps<{
   blobId?: string | null;

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useCartApi } from "@/composables/api/useCartApi";
-import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useCartApi } from "@/api/modules/cart/useCartApi";
+import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
 
 const cartApi = useCartApi();
 const quoteApi = useQuoteApi();

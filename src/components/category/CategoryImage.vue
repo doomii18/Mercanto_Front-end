@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useBlobUrl } from "../../composables/blob/useBlob";
-import { useCategoryApi } from "@/composables/api/useCategoryApi";
+import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
 
 const props = defineProps<{
   blobId?: string | null;

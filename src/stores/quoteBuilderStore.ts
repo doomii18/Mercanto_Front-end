@@ -1,13 +1,13 @@
 
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
 import type {
   ShippingMethod,
   PaymentMethod,
   QuoteAggregateResponse,
   QuoteItemDto,
-} from "@/api/services/quote/types";
+} from "@/api/modules/quote/types";
 
 export interface QuoteItemDraft {
   productId: string;

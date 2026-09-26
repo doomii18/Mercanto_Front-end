@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onScopeDispose, nextTick } from "vue";
-import { useChatApi } from "@/composables/api/useChatApi";
-import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useChatApi } from "@/api/modules/chat/useChatApi";
+import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useNotificationStore } from "@/stores/notificationStore";
 import { useAuthStore } from "@/stores/authStore";
 import { formatUuidv7ToLocalTime } from "../utils/formatters";
-import type { ChatThreadResponse, ChatMessageResponse } from "../api/services/chat/types";
+import type { ChatThreadResponse, ChatMessageResponse } from "@/api/modules/chat/types";
 import ProfileAvatar from "../components/profile/ProfileAvatar.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
-import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 import mercantoLogo from "../assets/1.1 Imagotipo variacion.png";
 import echLogo from "../assets/ech-logo.png";

@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { StoreCache } from "@/utils/cache";
-import { useGeographyApi } from "@/composables/api/useGeographyApi";
-import type { CountryNodeResponse } from "@/api/services/geography/types";
+import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
+import type { CountryNodeResponse } from "@/api/modules/geography/types";
 import type { Country, Department, Municipality } from "./types";
 
 const GEO_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useCartApi } from "@/composables/api/useCartApi";
-import { useProductApi } from "@/composables/api/useProductApi";
-import type { CartItemResponse } from "@/api/services/cart/types";
-import type { ProductResponse } from "@/api/services/product/types";
+import { useCartApi } from "@/api/modules/cart/useCartApi";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import type { CartItemResponse } from "@/api/modules/cart/types";
+import type { ProductResponse } from "@/api/modules/product/types";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 interface CartProductDisplay {
   cartItem: CartItemResponse;

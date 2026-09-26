@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { useProductApi } from "@/composables/api/useProductApi";
-import { useQuoteApi } from "@/composables/api/useQuoteApi";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
-import type { PublicProviderDto } from "@/api/services/organization/types";
+import type { PublicProviderDto } from "@/api/modules/organization/types";
 
 const contextStore = useUserContextStore();
 const orgStore = useOrganizationStore();

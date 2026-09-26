@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount } from "vue";
-import { useProductApi } from "@/composables/api/useProductApi";
-import type { ProductImageSearchHit } from "@/api/services/product/types";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import type { ProductImageSearchHit } from "@/api/modules/product/types";
 import ProductCard from "@/components/product/ProductCard.vue";
 
 const productApi = useProductApi();

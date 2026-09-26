@@ -1,8 +1,8 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useUserContextStore } from "./userContextStore";
-import type { UserProfileResponse } from "@/api/services/user_profile/types";
-import { useUserProfileApi } from "@/composables/api/useUserProfileApi";
+import type { UserProfileResponse } from "@/api/modules/user_profile/types";
+import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
 
 export const useProfileUpdateStore = defineStore("profileUpdate", () => {
   const userProfileApi = useUserProfileApi();

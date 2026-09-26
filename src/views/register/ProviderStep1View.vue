@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
-import { useGeographyApi } from "@/composables/api/useGeographyApi";
+import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
@@ -17,7 +17,7 @@ import {
   phoneNumberSchema,
   addressSchema,
   companyDescriptionSchema,
-} from "@/api/services/organization/domain";
+} from "@/api/modules/organization/domain";
 
 const router = useRouter();
 const providerStore = useProviderRegisterStore();

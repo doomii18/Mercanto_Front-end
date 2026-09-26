@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useProductApi } from "@/composables/api/useProductApi";
+import { useProductApi } from "@/api/modules/product/useProductApi";
 
 import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
@@ -11,8 +11,8 @@ import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
-import type { PaymentMethod } from "@/api/services/quote/types";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import type { PaymentMethod } from "@/api/modules/quote/types";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 interface ShippingMethodOption {
     id: string;

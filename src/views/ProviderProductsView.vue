@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { useProductApi } from "@/composables/api/useProductApi";
-import { useCategoryApi } from "@/composables/api/useCategoryApi";
-import { useQuoteApi } from "@/composables/api/useQuoteApi";
-import { useInventoryApi } from "@/composables/api/useInventoryApi";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
+import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
+import { useInventoryApi } from "@/api/modules/inventory/useInventoryApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
-import type { ProductResponse } from "@/api/services/product/types";
-import type { ProductCategoryResponse } from "@/api/services/category/types";
-import type { InventoryResponse } from "@/api/services/inventory/types";
+import type { ProductResponse } from "@/api/modules/product/types";
+import type { ProductCategoryResponse } from "@/api/modules/category/types";
+import type { InventoryResponse } from "@/api/modules/inventory/types";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 

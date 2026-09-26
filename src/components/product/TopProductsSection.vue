@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useProductApi } from "@/composables/api/useProductApi";
-import type { ProductResponse } from "../../api/services/product/types";
+import { useProductApi } from "@/api/modules/product/useProductApi";
+import type { ProductResponse } from "@/api/modules/product/types";
 import ProductCard from "./ProductCard.vue";
 import topSellersHeroImg from "../../assets/top-sellers-hero.png";
 

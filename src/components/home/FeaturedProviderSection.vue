@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
 import { useGeoStore } from "@/stores/geo";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
-import type { PublicProviderDto } from "@/api/services/organization/types";
-import { useOrganizationApi } from "@/composables/api/useOrganizationApi";
+import type { PublicProviderDto } from "@/api/modules/organization/types";
+import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
 
 const geoStore = useGeoStore();
 

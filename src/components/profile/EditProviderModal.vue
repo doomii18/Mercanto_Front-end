@@ -8,7 +8,7 @@ import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import { useAlertStore } from "@/stores/alertStore";
-import type { ProviderOrganizationPatch } from "@/api/services/organization/types";
+import type { ProviderOrganizationPatch } from "@/api/modules/organization/types";
 
 interface Props {
   modelValue: boolean;

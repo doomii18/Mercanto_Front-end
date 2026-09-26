@@ -4,7 +4,7 @@ import { useRouter } from "vue-router";
 import { z } from "zod";
 import { useGeoStore } from "@/stores/geo";
 import type { Municipality } from "@/stores/geo";
-import { useGeographyApi } from "@/composables/api/useGeographyApi";
+import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
@@ -14,7 +14,7 @@ import {
     phoneNumberSchema,
     emailSchema,
     uuidSchema,
-} from "@/api/services/identity/domain";
+} from "@/api/modules/identity/domain";
 
 const router = useRouter();
 const geoStore = useGeoStore();
