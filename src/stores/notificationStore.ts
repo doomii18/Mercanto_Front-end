@@ -1,43 +1,16 @@
 import { defineStore } from "pinia";
-import { ref, shallowRef } from "vue";
-import { useApiFetch } from "@/api/useApiFetch";
+import { ref, watch } from "vue";
 import { useAuthStore } from "./authStore";
 import { useToastStore } from "./toastStore";
 import { notificationBus } from "@/events/notificationEvents";
-import {
-  NotificationEventSchema,
-  WsTicketResponseSchema,
-} from "@/api/modules/messaging/notifications/responses";
-import type {
-  NotificationEvent,
-  WsTicketResponse,
-} from "@/api";
+import { useNotificationEventSource } from "@/api/modules/messaging/notifications/useNotificationsApi";
+import type { NotificationEvent } from "@/api";
 
 export const useNotificationStore = defineStore("notification", () => {
-  const status = ref<"OPEN" | "CONNECTING" | "CLOSED">("CLOSED");
+  const { status, latestEvent, connect: streamConnect, disconnect: streamDisconnect } =
+    useNotificationEventSource();
+
   const recentEvents = ref<NotificationEvent[]>([]);
-  const lastRawEvent = shallowRef<NotificationEvent | null>(null);
-
-  let socket: WebSocket | null = null;
-  let connectAbortController: AbortController | null = null;
-
-  function handleIncomingMessage(rawData: string) {
-    try {
-      const parsedJson = JSON.parse(rawData);
-      const event = NotificationEventSchema.parse(parsedJson);
-
-      lastRawEvent.value = event;
-      recentEvents.value.unshift(event);
-      if (recentEvents.value.length > 50) {
-        recentEvents.value.pop();
-      }
-
-      notificationBus.emit(event);
-      dispatchToast(event);
-    } catch (err) {
-      console.error("[WebSocket] Dropped invalid event frame:", err);
-    }
-  }
 
   function dispatchToast(event: NotificationEvent) {
     const authStore = useAuthStore();
@@ -64,73 +37,27 @@ export const useNotificationStore = defineStore("notification", () => {
     }
   }
 
+  // React to incoming validated events from the SSE stream
+  watch(latestEvent, (event) => {
+    if (!event) return;
+
+    recentEvents.value.unshift(event);
+    if (recentEvents.value.length > 50) {
+      recentEvents.value.pop();
+    }
+
+    notificationBus.emit(event);
+    dispatchToast(event);
+  });
+
   async function connect(): Promise<void> {
     const authStore = useAuthStore();
     if (!authStore.isAuthenticated) return;
-    if (status.value === "OPEN" || status.value === "CONNECTING") return;
-
-    // Cancel any previous in-flight ticket request
-    connectAbortController?.abort();
-    const controller = new AbortController();
-    connectAbortController = controller;
-
-    try {
-      const { data, error } = await useApiFetch("/notifications/ticket")
-        .post()
-        .json<WsTicketResponse>();
-
-      if (controller.signal.aborted) return;
-      if (error.value || !data.value) return;
-
-      const { ticket } = WsTicketResponseSchema.parse(data.value);
-      const baseUrl = import.meta.env.VITE_API_BASE_URL;
-      const targetUrl = new URL(baseUrl);
-      targetUrl.protocol = targetUrl.protocol === "https:" ? "wss:" : "ws:";
-      targetUrl.pathname = "/notifications";
-      targetUrl.searchParams.set("token", ticket);
-
-      // Close any lingering socket before opening a new one
-      socket?.close();
-
-      const ws = new WebSocket(targetUrl.toString());
-      socket = ws;
-      status.value = "CONNECTING";
-
-      ws.onopen = () => {
-        if (socket !== ws) return; // superseded
-        status.value = "OPEN";
-      };
-
-      ws.onmessage = (event: MessageEvent) => {
-        handleIncomingMessage(event.data);
-      };
-
-      ws.onerror = () => {
-        console.error("[WebSocket] Connection error.");
-      };
-
-      ws.onclose = () => {
-        if (socket !== ws) return; // superseded
-        socket = null;
-        status.value = "CLOSED";
-      };
-    } catch (err) {
-      if (!controller.signal.aborted) {
-        console.error("[WebSocket] Ticket exchange failed:", err);
-      }
-    } finally {
-      if (connectAbortController === controller) {
-        connectAbortController = null;
-      }
-    }
+    await streamConnect();
   }
 
   function disconnect(): void {
-    connectAbortController?.abort();
-    connectAbortController = null;
-    socket?.close();
-    socket = null;
-    status.value = "CLOSED";
+    streamDisconnect();
     recentEvents.value = [];
   }
 
