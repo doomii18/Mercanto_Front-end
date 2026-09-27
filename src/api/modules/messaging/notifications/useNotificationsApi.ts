@@ -4,8 +4,21 @@ import { useApiFetch } from "@/api/useApiFetch";
 import {
   NotificationEventSchema,
   WsTicketResponseSchema,
+  PaginatedNotificationsResponseSchema,
+  UnreadNotificationCountSchema,
 } from "./responses";
-import type { NotificationEvent, WsTicketResponse } from "./types";
+import {
+  MarkNotificationsReadSchema,
+  NotificationHistoryQuerySchema,
+} from "./requests";
+import type {
+  NotificationEvent,
+  WsTicketResponse,
+  PaginatedNotificationsResponse,
+  UnreadNotificationCount,
+  MarkNotificationsRead,
+  NotificationHistoryQuery,
+} from "./types";
 
 export const useNotificationsApi = () => {
   // POST /notifications/ticket
@@ -20,6 +33,51 @@ export const useNotificationsApi = () => {
     return WsTicketResponseSchema.parse(data.value);
   }
 
+  // GET /notifications/history
+  async function getNotificationHistory(
+    params?: NotificationHistoryQuery
+  ): Promise<PaginatedNotificationsResponse> {
+    const validated = params ? NotificationHistoryQuerySchema.parse(params) : undefined;
+    const queryParams = new URLSearchParams();
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+
+    const qs = queryParams.toString();
+    const endpoint = `/notifications/history${qs ? `?${qs}` : ""}`;
+
+    const { data, error } = await useApiFetch(endpoint).get().json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to fetch notification history");
+    }
+
+    return PaginatedNotificationsResponseSchema.parse(data.value);
+  }
+
+  // PATCH /notifications/read
+  async function markNotificationsRead(payload: MarkNotificationsRead): Promise<void> {
+    const validated = MarkNotificationsReadSchema.parse(payload);
+    const { error } = await useApiFetch("/notifications/read")
+      .patch(validated);
+
+    if (error.value) {
+      throw error.value || new Error("Failed to mark notifications as read");
+    }
+  }
+
+  // GET /notifications/unread-count
+  async function getUnreadCount(): Promise<UnreadNotificationCount> {
+    const { data, error } = await useApiFetch("/notifications/unread-count")
+      .get()
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to fetch unread notification count");
+    }
+
+    return UnreadNotificationCountSchema.parse(data.value);
+  }
+
   // Helper to build SSE stream URL
   function getNotificationStreamUrl(ticket: string, baseUrl?: string): string {
     const host = baseUrl || import.meta.env.VITE_API_BASE_URL || window.location.origin;
@@ -31,6 +89,9 @@ export const useNotificationsApi = () => {
 
   return {
     generateTicket,
+    getNotificationHistory,
+    markNotificationsRead,
+    getUnreadCount,
     getNotificationStreamUrl,
   };
 };

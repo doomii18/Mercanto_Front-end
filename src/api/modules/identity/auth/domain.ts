@@ -27,3 +27,6 @@ export const SecurePasswordSchema = PasswordSchema.refine(
 
 // AccountRole | system permission role
 export const AccountRoleSchema = z.enum(["auditor", "member", "admin"]);
+
+// AccountSortField | sortable account fields
+export const AccountSortFieldSchema = z.enum(["created_at", "email"]);

@@ -5,10 +5,12 @@ import {
   RequestPasswordResetSchema,
   ResetPasswordSchema,
   RegisterUserRequestSchema,
+  AccountFiltersQuerySchema,
 } from "./requests";
 import {
   AuthResponseSchema,
   AccountResponseSchema,
+  PaginatedAdminUsersResponseSchema,
 } from "./responses";
 import type {
   LoginRequest,
@@ -18,6 +20,8 @@ import type {
   RegisterUserRequest,
   AuthResponse,
   AccountResponse,
+  AccountFiltersQuery,
+  PaginatedAdminUsersResponse,
 } from "./types";
 
 export const useIdentityApi = () => {
@@ -130,6 +134,62 @@ export const useIdentityApi = () => {
     return AccountResponseSchema.parse(data.value);
   }
 
+  // POST /accounts/{accountId}/suspend
+  async function suspendAccount(accountId: string): Promise<AccountResponse> {
+    const { data, error } = await useApiFetch(`/accounts/${accountId}/suspend`)
+      .post()
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Suspend account ${accountId} failed`);
+    }
+
+    return AccountResponseSchema.parse(data.value);
+  }
+
+  // POST /accounts/{accountId}/unsuspend
+  async function unsuspendAccount(accountId: string): Promise<AccountResponse> {
+    const { data, error } = await useApiFetch(`/accounts/${accountId}/unsuspend`)
+      .post()
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Unsuspend account ${accountId} failed`);
+    }
+
+    return AccountResponseSchema.parse(data.value);
+  }
+
+  // GET /accounts
+  async function listAccounts(
+    params?: AccountFiltersQuery
+  ): Promise<PaginatedAdminUsersResponse> {
+    const validated = params ? AccountFiltersQuerySchema.parse(params) : undefined;
+    const queryParams = new URLSearchParams();
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.search_term !== undefined && validated.search_term.trim() !== "") {
+      queryParams.append("search_term", validated.search_term.trim());
+    }
+    if (validated?.role !== undefined) queryParams.append("role", validated.role);
+    if (validated?.is_suspended !== undefined) {
+      queryParams.append("is_suspended", validated.is_suspended.toString());
+    }
+    if (validated?.sort_by !== undefined) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_dir !== undefined) queryParams.append("sort_dir", validated.sort_dir);
+
+    const qs = queryParams.toString();
+    const endpoint = `/accounts${qs ? `?${qs}` : ""}`;
+
+    const { data, error } = await useApiFetch(endpoint).get().json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("List accounts failed");
+    }
+
+    return PaginatedAdminUsersResponseSchema.parse(data.value);
+  }
+
   return {
     register,
     login,
@@ -140,5 +200,8 @@ export const useIdentityApi = () => {
     resetPassword,
     getMyAccount,
     getAccount,
+    suspendAccount,
+    unsuspendAccount,
+    listAccounts,
   };
 };

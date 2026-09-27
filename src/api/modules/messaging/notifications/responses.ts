@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PaginatedResponseSchema } from "@/api/modules/shared/schemas";
 
 // WsTicketResponseDto | single-use ticket for websocket connection
 export const WsTicketResponseSchema = z.object({
@@ -55,3 +56,20 @@ export const NotificationEventSchema = z.discriminatedUnion("type", [
   ProductOutOfStockEventSchema,
   QuoteRequestReceivedEventSchema,
 ]);
+
+// NotificationResponseDto | persisted notification record
+export const NotificationResponseSchema = z.object({
+  id: z.uuid(),
+  payload: z.record(z.string(), z.any()),
+  is_read: z.boolean(),
+  created_at: z.iso.datetime(),
+});
+
+// PaginatedResponse<NotificationResponseDto>
+export const PaginatedNotificationsResponseSchema = PaginatedResponseSchema(NotificationResponseSchema);
+
+// UnreadNotificationCountDto
+export const UnreadNotificationCountSchema = z.object({
+  count: z.number().int().nonnegative(),
+});
+

@@ -1,7 +1,13 @@
 import { z } from "zod";
-import { EmailSchema, PasswordSchema, SecurePasswordSchema } from "./domain";
+import {
+  EmailSchema,
+  PasswordSchema,
+  SecurePasswordSchema,
+  AccountRoleSchema,
+  AccountSortFieldSchema,
+} from "./domain";
 import { PersonNameSchema, NationalIdSchema } from "../user_profile/domain";
-import { phoneNumberSchema } from "@/api/modules/shared/schemas";
+import { phoneNumberSchema, SortDirectionSchema } from "@/api/modules/shared/schemas";
 
 // LoginRequestDto | user credentials for login
 export const LoginRequestSchema = z.object({
@@ -38,3 +44,14 @@ export const RegisterUserRequestSchema = z.object({
 });
 
 export const RegisterRequestSchema = RegisterUserRequestSchema;
+ 
+// AccountFiltersQuery | query filters for listing accounts
+export const AccountFiltersQuerySchema = z.object({
+  limit: z.number().int().nonnegative().optional(),
+  offset: z.number().int().nonnegative().optional(),
+  search_term: z.string().optional(),
+  role: AccountRoleSchema.optional(),
+  is_suspended: z.boolean().optional(),
+  sort_by: AccountSortFieldSchema.optional(),
+  sort_dir: SortDirectionSchema.optional(),
+});

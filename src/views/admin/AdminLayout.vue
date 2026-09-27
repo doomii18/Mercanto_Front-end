@@ -49,7 +49,7 @@ const closeMobileMenu = () => {
       <!-- Logo Header -->
       <div class="flex h-20 items-center justify-between px-6 pt-3">
         <div class="flex flex-col items-start">
-          <AppLogo variant="logo" class="h-9 shrink-0 brightness-110" />
+          <AppLogo variant="imagotipo" class="h-9 shrink-0 brightness-110" />
           <span class="text-[11px] font-semibold text-slate-300 block pl-1 -mt-0.5">Panel Admin</span>
         </div>
 
