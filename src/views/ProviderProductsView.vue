@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { useProductApi } from "@/api/modules/product/useProductApi";
-import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
-import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
-import { useInventoryApi } from "@/api/modules/inventory/useInventoryApi";
+import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
+import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
+import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
+import { useInventoryApi } from "@/api/modules/catalog/inventory/useInventoryApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
-import type { ProductResponse } from "@/api/modules/product/types";
-import type { ProductCategoryResponse } from "@/api/modules/category/types";
-import type { InventoryResponse } from "@/api/modules/inventory/types";
+import type { ProductResponse, ProductCategoryResponse, InventoryResponse } from "@/api";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
@@ -114,13 +112,6 @@ function getStockInfo(productId: string) {
   if (!inv) {
     return { text: "Sin stock", inStock: false, loading: false };
   }
-  if (inv.type === "Internal") {
-    return {
-      text: inv.available_stock > 0 ? `${inv.available_stock} unds` : "Agotado",
-      inStock: inv.available_stock > 0,
-      loading: false,
-    };
-  }
   return {
     text: inv.is_in_stock ? "En stock" : "Agotado",
     inStock: inv.is_in_stock,
@@ -223,7 +214,7 @@ async function exportCatalogCsv() {
       return [
         escapeCsv(p.id),
         escapeCsv(p.title),
-        escapeCsv(p.category.name),
+        escapeCsv(p.category?.name || "General"),
         escapeCsv(p.base_price),
         escapeCsv(p.unit_of_measure),
         escapeCsv(minQty),
@@ -441,7 +432,7 @@ onMounted(async () => {
               <td class="py-3 px-3.5">
                 <div class="flex items-center gap-3">
                   <div class="w-10 h-10 rounded-lg overflow-hidden shrink-0 border border-slate-200 bg-slate-50">
-                    <ProductImage :blob-id="product.image_blob_ids[0]" :alt="product.title" />
+                    <ProductImage :blob-id="product.image_blob_ids?.[0]" :alt="product.title" />
                   </div>
                   <div class="flex flex-col min-w-0">
                     <router-link
@@ -456,7 +447,7 @@ onMounted(async () => {
               </td>
               <td class="py-3 px-3.5">
                 <span class="py-0.5 px-2.5 rounded-full bg-[#e6f7f5] text-[#00a896] text-xs font-semibold whitespace-nowrap border border-[#00a896]/20">
-                  {{ product.category.name }}
+                  {{ product.category?.name || 'General' }}
                 </span>
               </td>
               <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">
@@ -571,12 +562,12 @@ onMounted(async () => {
         </div>
 
         <div class="h-36 w-full rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center">
-          <ProductImage :blob-id="product.image_blob_ids[0]" :alt="product.title" />
+          <ProductImage :blob-id="product.image_blob_ids?.[0]" :alt="product.title" />
         </div>
 
         <div class="flex flex-col min-w-0">
           <span class="font-bold text-[#023859] text-sm truncate" :title="product.title">{{ product.title }}</span>
-          <span class="text-xs text-slate-500">{{ product.category.name }}</span>
+          <span class="text-xs text-slate-500">{{ product.category?.name || 'General' }}</span>
         </div>
 
         <div class="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-1">

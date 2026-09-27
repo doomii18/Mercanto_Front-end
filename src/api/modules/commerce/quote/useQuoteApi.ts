@@ -7,13 +7,15 @@ import {
 import {
   QuoteResponseSchema,
   QuoteItemResponseSchema,
-  PaginatedQuoteAggregateResponseSchema,
+  PaginatedQuoteResponseSchema,
 } from "./responses";
 import type {
   CreateQuoteRequest,
   QuoteResponse,
   QuoteItemResponse,
+  QuoteAggregateResponse,
   PaginatedQuoteAggregateResponse,
+  PaginatedQuoteResponse,
   AccountQuoteFiltersQuery,
   ProviderQuoteFiltersQuery,
 } from "./types";
@@ -31,12 +33,19 @@ export const useQuoteApi = () => {
   }
 
   // GET /quotes/{id}
-  async function getQuote(id: string): Promise<QuoteResponse> {
-    const { data, error } = await useApiFetch(`/quotes/${id}`).get().json();
-    if (error.value || !data.value) {
-      throw error.value || new Error(`Failed to fetch quote ${id}`);
+  async function getQuote(id: string): Promise<QuoteAggregateResponse> {
+    const [quoteResult, items] = await Promise.all([
+      useApiFetch(`/quotes/${id}`).get().json(),
+      getQuoteItems(id),
+    ]);
+    if (quoteResult.error.value || !quoteResult.data.value) {
+      throw quoteResult.error.value || new Error(`Failed to fetch quote ${id}`);
     }
-    return QuoteResponseSchema.parse(data.value);
+    const quote = QuoteResponseSchema.parse(quoteResult.data.value);
+    return {
+      quote,
+      items,
+    };
   }
 
   // GET /quotes/{id}/items
@@ -62,6 +71,42 @@ export const useQuoteApi = () => {
     return z.record(z.string().uuid(), z.array(QuoteItemResponseSchema)).parse(data.value);
   }
 
+  // Internal helper to hydrate quote items for paginated quotes
+  async function hydrateQuoteAggregates(
+    paginatedQuotes: PaginatedQuoteResponse
+  ): Promise<PaginatedQuoteAggregateResponse> {
+    if (paginatedQuotes.data.length === 0) {
+      return {
+        data: [],
+        total: paginatedQuotes.total,
+        limit: paginatedQuotes.limit,
+        offset: paginatedQuotes.offset,
+      };
+    }
+
+    const quoteIds = paginatedQuotes.data.map((q) => q.id);
+    const itemsMap: Record<string, QuoteItemResponse[]> = {};
+
+    // Batch quote items in chunks of up to 100
+    for (let i = 0; i < quoteIds.length; i += 100) {
+      const chunk = quoteIds.slice(i, i + 100);
+      const batchResult = await getQuoteItemsBatch({ quote_ids: chunk });
+      Object.assign(itemsMap, batchResult);
+    }
+
+    const aggregates: QuoteAggregateResponse[] = paginatedQuotes.data.map((quote) => ({
+      quote,
+      items: itemsMap[quote.id] || [],
+    }));
+
+    return {
+      data: aggregates,
+      total: paginatedQuotes.total,
+      limit: paginatedQuotes.limit,
+      offset: paginatedQuotes.offset,
+    };
+  }
+
   // GET /quotes/me
   async function getMyQuotes(params?: AccountQuoteFiltersQuery): Promise<PaginatedQuoteAggregateResponse> {
     const queryParams = new URLSearchParams();
@@ -83,7 +128,8 @@ export const useQuoteApi = () => {
     if (error.value || !data.value) {
       throw error.value || new Error("Failed to fetch my quotes");
     }
-    return PaginatedQuoteAggregateResponseSchema.parse(data.value);
+    const paginated = PaginatedQuoteResponseSchema.parse(data.value);
+    return hydrateQuoteAggregates(paginated);
   }
 
   // GET /providers/{provider_id}/quotes
@@ -107,7 +153,8 @@ export const useQuoteApi = () => {
     if (error.value || !data.value) {
       throw error.value || new Error(`Failed to fetch quotes for provider ${providerId}`);
     }
-    return PaginatedQuoteAggregateResponseSchema.parse(data.value);
+    const paginated = PaginatedQuoteResponseSchema.parse(data.value);
+    return hydrateQuoteAggregates(paginated);
   }
 
   // GET /accounts/{account_id}/quotes
@@ -131,7 +178,8 @@ export const useQuoteApi = () => {
     if (error.value || !data.value) {
       throw error.value || new Error(`Failed to fetch quotes for account ${accountId}`);
     }
-    return PaginatedQuoteAggregateResponseSchema.parse(data.value);
+    const paginated = PaginatedQuoteResponseSchema.parse(data.value);
+    return hydrateQuoteAggregates(paginated);
   }
 
   // POST /quotes/{id}/accept

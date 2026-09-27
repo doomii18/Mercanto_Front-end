@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
-import { useProductApi } from '@/api/modules/product/useProductApi';
-import type { ProductResponse } from '@/api/modules/product/types';
+import { useProductApi } from '@/api/modules/catalog/product/useProductApi';
+import type { ProductResponse } from '@/api';
 import ProductImage from '@/components/product/ProductImage.vue';
 
 const searchQuery = ref('');

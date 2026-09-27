@@ -3,7 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import { useAuthStore } from "@/stores/authStore";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 
 interface Props {
   collapsed?: boolean;

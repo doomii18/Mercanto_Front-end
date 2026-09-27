@@ -2,20 +2,25 @@
 import { ref, onMounted, computed } from "vue";
 import { useRouter } from "vue-router";
 import { z } from "zod";
-import { useProductApi } from "@/api/modules/product/useProductApi";
-import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
+import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
+import { useProductImageApi } from "@/api/modules/catalog/product_image/useProductImageApi";
+import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
-import type { CreateProductRequest, UnitOfMeasure } from "@/api/modules/product/types";
-import type { ProductCategoryResponse } from "@/api/modules/category/types";
+import type {
+  CreateProductRequest,
+  UnitOfMeasure,
+  ProductCategoryResponse,
+  ShippingMethod,
+} from "@/api";
 
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
-import type { ShippingMethod } from "@/api/modules/quote/types";
 
 const router = useRouter();
 const userContext = useUserContextStore();
 const alertStore = useAlertStore();
 const productApi = useProductApi();
+const productImageApi = useProductImageApi();
 const categoryApi = useCategoryApi();
 
 
@@ -149,7 +154,7 @@ async function handlePublishProduct() {
 
     if (productPhotos.value.length > 0) {
       for (const photo of productPhotos.value) {
-        await productApi.uploadProductImage(createdProduct.id, photo);
+        await productImageApi.uploadProductImage(createdProduct.id, photo);
       }
     }
 

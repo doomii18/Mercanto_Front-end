@@ -6,8 +6,8 @@ import type {
   OrganizationDetailsDto,
   ProviderOrganizationPatch,
   RegisterProviderRequest,
-} from "@/api/modules/organization/types";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+} from "@/api";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
 export const useOrganizationStore = defineStore("organization", () => {
   const isLoading = ref(false);

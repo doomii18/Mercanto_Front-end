@@ -1,16 +1,18 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useVerificationRequestApi } from "@/api/modules/verification_request/useVerificationRequestApi";
-import { useVerificationDocumentApi } from "@/api/modules/verification_request_document/useVerificationDocumentApi";
-import { useIdentityApi } from "@/api/modules/identity/useIdentityApi";
-import type { ProviderKind } from "@/api/modules/organization/types";
+import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
+import { useVerificationDocumentApi } from "@/api/modules/organization/verification_request_document/useVerificationDocumentApi";
+import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
+import type { ProviderKind } from "@/api";
 import { useAccountRegisterStore } from "./accountRegisterStore";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
 
 export const useProviderRegisterStore = defineStore("providerRegister", () => {
   const accountStore = useAccountRegisterStore();
   const identityApi = useIdentityApi();
   const organizationApi = useOrganizationApi();
+  const organizationLogoApi = useOrganizationLogoApi();
   const verificationRequestApi = useVerificationRequestApi();
   const verificationRequestDocumentApi = useVerificationDocumentApi();
 
@@ -101,7 +103,7 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
 
       // Upload Organization Logo
       if (logoFile.value) {
-        await organizationApi.uploadOrganizationLogo(org.id, logoFile.value);
+        await organizationLogoApi.uploadOrganizationLogo(org.id, logoFile.value);
       }
 
       // Submit Verification Request

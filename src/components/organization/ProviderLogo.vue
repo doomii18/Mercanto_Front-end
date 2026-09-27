@@ -2,18 +2,18 @@
 import { computed } from "vue";
 import { useBlobUrl } from "../../composables/blob/useBlob";
 import { generateAvatarDataUrl } from "../../utils/avatar";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
 
 const props = defineProps<{
   blobId?: string | null;
   alt?: string;
 }>();
 
-const organizationApi = useOrganizationApi();
+const organizationLogoApi = useOrganizationLogoApi();
 
 const { url, isLoading } = useBlobUrl(
   () => props.blobId,
-  (id) => organizationApi.getOrganizationLogoBlob(id)
+  (id) => organizationLogoApi.getOrganizationLogoBlob(id)
 );
 
 const fallbackUrl = computed(() => {

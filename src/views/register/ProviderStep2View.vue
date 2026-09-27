@@ -8,9 +8,9 @@ import { useAlertStore } from "@/stores/alertStore";
 import {
   nationalIdSchema,
   personNameSchema,
-  emailSchema,
-  phoneNumberSchema,
-} from "@/api/modules/identity/domain";
+} from "@/api/modules/identity/user_profile/domain";
+import { EmailSchema as emailSchema } from "@/api/modules/identity/auth/domain";
+import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();

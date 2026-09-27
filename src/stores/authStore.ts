@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useTokenStore } from "./tokenStore";
-import { useIdentityApi } from "@/api/modules/identity/useIdentityApi";
+import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import type {
   AccountResponse,
   LoginRequest,
-} from "@/api/modules/identity/types";
+} from "@/api";
 import { useUserContextStore } from "./userContextStore";
 import { authBus } from "@/events/authEvents";
 
@@ -32,7 +32,7 @@ export const useAuthStore = defineStore("auth", () => {
           throw new Error("No refresh token available");
         }
 
-        const tokens = await identityApi.refresh({
+        const tokens = await identityApi.refreshToken({
           refresh_token: tokenStore.refreshToken,
         });
 

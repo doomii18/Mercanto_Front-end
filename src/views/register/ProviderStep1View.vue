@@ -17,7 +17,7 @@ import {
   phoneNumberSchema,
   addressSchema,
   companyDescriptionSchema,
-} from "@/api/modules/organization/domain";
+} from "@/api/modules/organization/organization/domain";
 
 const router = useRouter();
 const providerStore = useProviderRegisterStore();

@@ -2,18 +2,18 @@
 import { computed } from "vue";
 import { useBlobUrl } from "../../composables/blob/useBlob";
 import { generateAvatarDataUrl } from "../../utils/avatar";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
 
 const props = defineProps<{
   blobId?: string | null;
   alt?: string;
 }>();
 
-const userProfileApi = useUserProfileApi();
+const avatarApi = useAvatarApi();
 
 const { url, isLoading } = useBlobUrl(
   () => props.blobId,
-  (id) => userProfileApi.getProfilePictureBlob(id)
+  (id) => avatarApi.getAvatarBlob(id)
 );
 
 const fallbackUrl = computed(() => {

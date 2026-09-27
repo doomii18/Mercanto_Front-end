@@ -20,11 +20,11 @@ export async function bootstrapApp(): Promise<void> {
       const account = await authStore.initialize();
 
       if (account) {
-        await contextStore.initialize().catch((err) => {
+        await contextStore.initialize().catch((err: unknown) => {
           console.error("[Bootstrap] User context initialization failed:", err);
         });
 
-        notificationStore.connect().catch((err) => {
+        notificationStore.connect().catch((err: unknown) => {
           console.warn("[Bootstrap] WebSocket connection failed:", err);
         });
       } else {
@@ -33,7 +33,7 @@ export async function bootstrapApp(): Promise<void> {
       }
 
       if (!geoStore.isInitialized) {
-        geoStore.initialize().catch((err) => {
+        geoStore.initialize().catch((err: unknown) => {
           console.warn("[Bootstrap] Non-critical geo prefetch failed:", err);
         });
       }

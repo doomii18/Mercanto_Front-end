@@ -136,6 +136,7 @@ onMounted(() => {
 
       <ProductImage
         :blob-id="imageBlobId"
+        :product-id="id"
         :alt="title"
         :object-fit="objectFit"
         img-class="transition-transform duration-300 group-hover:scale-105"

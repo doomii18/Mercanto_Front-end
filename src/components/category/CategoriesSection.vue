@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
-import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
-import { useProductApi } from "@/api/modules/product/useProductApi";
-import type { ProductCategoryResponse } from "@/api/modules/category/types";
+import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
+import type { ProductCategoryResponse } from "@/api";
 import CategoryImage from "./CategoryImage.vue";
 
 interface CategoryViewItem extends ProductCategoryResponse {
@@ -11,7 +10,6 @@ interface CategoryViewItem extends ProductCategoryResponse {
 
 const categories = ref<CategoryViewItem[]>([]);
 const categoryApi = useCategoryApi();
-const productApi = useProductApi();
 const isLoading = ref(true);
 
 const animationDuration = computed(() => {
@@ -24,20 +22,14 @@ onMounted(async () => {
     const response = await categoryApi.getCategories({ limit: 50 });
     const cats = response.data;
 
-    // Fetch product counts concurrently for each category using limit=0
-    const counts = await Promise.allSettled(
-      cats.map((cat) =>
-        productApi
-          .getProducts({ category_id: cat.id, limit: 0, offset: 0 })
-          .then((res) => res.total)
-          .catch(() => 0) // Fallback to 0 if the request fails
-      )
-    );
+    // Batch-fetch all category metrics in one request instead of N product requests
+    const metricsMap = await categoryApi
+      .getCategoryMetricsBatch({ category_ids: cats.map((c) => c.id) })
+      .catch(() => ({} as Record<string, { product_count: number }>));
 
-    categories.value = cats.map((cat, index) => ({
+    categories.value = cats.map((cat) => ({
       ...cat,
-      productCount:
-        counts[index].status === "fulfilled" ? counts[index].value : 0,
+      productCount: metricsMap[cat.id]?.product_count ?? 0,
     }));
   } catch (err) {
     console.error("Failed to load categories:", err);

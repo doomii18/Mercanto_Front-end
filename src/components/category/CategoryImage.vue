@@ -1,17 +1,17 @@
 <script setup lang="ts">
 import { useBlobUrl } from "../../composables/blob/useBlob";
-import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
+import { useCategoryImageApi } from "@/api/modules/catalog/category_image/useCategoryImageApi";
 
 const props = defineProps<{
   blobId?: string | null;
   alt?: string;
 }>();
 
-const categoryApi = useCategoryApi();
+const categoryImageApi = useCategoryImageApi();
 
 const { url, isLoading } = useBlobUrl(
   () => props.blobId,
-  (id) => categoryApi.getCategoryImageBlob(id)
+  (id) => categoryImageApi.getCategoryImageBlob(id)
 );
 </script>
 

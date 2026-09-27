@@ -1,13 +1,13 @@
 
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
+import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import type {
   ShippingMethod,
   PaymentMethod,
-  QuoteAggregateResponse,
+  QuoteResponse,
   QuoteItemDto,
-} from "@/api/modules/quote/types";
+} from "@/api";
 
 export interface QuoteItemDraft {
   productId: string;
@@ -46,7 +46,7 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
   // state
   const drafts = ref<Record<string, QuoteDraft>>({});
   const isSubmitting = ref(false);
-  const lastCreatedQuotes = ref<QuoteAggregateResponse[]>([]);
+  const lastCreatedQuotes = ref<QuoteResponse[]>([]);
 
   // helpers
   const getOrCreateDraft = (
@@ -173,7 +173,7 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
   // creation
   async function createQuoteForProvider(
     providerId: string,
-  ): Promise<QuoteAggregateResponse[]> {
+  ): Promise<QuoteResponse[]> {
     const draft = drafts.value[providerId];
     if (!draft) throw new Error(`No draft found for provider ${providerId}`);
     if (draft.items.length === 0) {

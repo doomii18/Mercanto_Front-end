@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 import mercantoLogo from '@/assets/logo.png?inline'
-import { useQuoteApi } from '@/api/modules/quote/useQuoteApi'
-import type { QuoteAggregateResponse } from '@/api/modules/quote/types'
-import type { PublicProviderDto } from '@/api/modules/organization/types'
-import type { UserProfileResponse } from '@/api/modules/user_profile/types'
-import type { AccountResponse } from '@/api/modules/identity/types'
-import { useIdentityApi } from '@/api/modules/identity/useIdentityApi'
-import { useUserProfileApi } from '@/api/modules/user_profile/useUserProfileApi'
-import { useOrganizationApi } from '@/api/modules/organization/useOrganizationApi'
+import { useQuoteApi } from '@/api/modules/commerce/quote/useQuoteApi'
+import type {
+  QuoteAggregateResponse,
+  PublicProviderDto,
+  UserProfileResponse,
+  PublicUserProfileResponse,
+  AccountResponse,
+} from '@/api'
+import { useIdentityApi } from '@/api/modules/identity/auth/useIdentityApi'
+import { useUserProfileApi } from '@/api/modules/identity/user_profile/useUserProfileApi'
+import { useOrganizationApi } from '@/api/modules/organization/organization/useOrganizationApi'
 
 type QuoteItem = QuoteAggregateResponse['items'][number]
 
@@ -34,7 +37,7 @@ const isReady = ref<boolean>(false)
 
 const quoteData = ref<QuoteAggregateResponse | null>(null)
 const providerData = ref<PublicProviderDto | null>(null)
-const buyerProfile = ref<UserProfileResponse | null>(null)
+const buyerProfile = ref<PublicUserProfileResponse | UserProfileResponse | null>(null)
 const buyerAccount = ref<AccountResponse | null>(null)
 
 const FIRST_PAGE_LIMIT = 8

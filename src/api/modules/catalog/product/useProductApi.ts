@@ -34,8 +34,11 @@ import type {
   ShippingMethod,
   BatchProductQuery,
 } from "@/api/modules/shared/types";
+import { useProductImageApi } from "../product_image/useProductImageApi";
 
 export const useProductApi = () => {
+  const productImageApi = useProductImageApi();
+
   // GET /products
   async function getProducts(params?: ProductFiltersRequest): Promise<PaginatedProductResponse> {
     const queryParams = new URLSearchParams();
@@ -57,16 +60,38 @@ export const useProductApi = () => {
     if (error.value || !data.value) {
       throw error.value || new Error("Failed to fetch products");
     }
-    return PaginatedProductResponseSchema.parse(data.value);
+    const paginated = PaginatedProductResponseSchema.parse(data.value);
+    if (paginated.data.length > 0) {
+      const productIds = paginated.data.map((p) => p.id);
+      const imagesMap: Record<string, string[]> = {};
+      for (let i = 0; i < productIds.length; i += 100) {
+        const chunk = productIds.slice(i, i + 100);
+        try {
+          const batchRes = await productImageApi.getProductImagesBatch({ product_ids: chunk });
+          Object.assign(imagesMap, batchRes);
+        } catch {
+          // Non-blocking fallback if batch image lookup fails
+        }
+      }
+      paginated.data.forEach((p) => {
+        p.image_blob_ids = imagesMap[p.id] || [];
+      });
+    }
+    return paginated;
   }
 
   // GET /products/{id}
   async function getProduct(id: string): Promise<ProductResponse> {
-    const { data, error } = await useApiFetch(`/products/${id}`).get().json();
-    if (error.value || !data.value) {
-      throw error.value || new Error(`Failed to fetch product ${id}`);
+    const [prodResult, imageBlobIds] = await Promise.all([
+      useApiFetch(`/products/${id}`).get().json(),
+      productImageApi.getProductImages(id).catch(() => []),
+    ]);
+    if (prodResult.error.value || !prodResult.data.value) {
+      throw prodResult.error.value || new Error(`Failed to fetch product ${id}`);
     }
-    return ProductResponseSchema.parse(data.value);
+    const product = ProductResponseSchema.parse(prodResult.data.value);
+    product.image_blob_ids = imageBlobIds;
+    return product;
   }
 
   // POST /products
@@ -167,7 +192,24 @@ export const useProductApi = () => {
     if (error.value || !data.value) {
       throw error.value || new Error("Failed to search products by image");
     }
-    return PaginatedProductImageSearchResponseSchema.parse(data.value);
+    const hits = PaginatedProductImageSearchResponseSchema.parse(data.value);
+    if (hits.data.length > 0) {
+      const productIds = hits.data.map((h) => h.product.id);
+      const imagesMap: Record<string, string[]> = {};
+      for (let i = 0; i < productIds.length; i += 100) {
+        const chunk = productIds.slice(i, i + 100);
+        try {
+          const batchRes = await productImageApi.getProductImagesBatch({ product_ids: chunk });
+          Object.assign(imagesMap, batchRes);
+        } catch {
+          // Non-blocking fallback
+        }
+      }
+      hits.data.forEach((h) => {
+        h.product.image_blob_ids = imagesMap[h.product.id] || [];
+      });
+    }
+    return hits;
   }
 
   // POST /products/promote

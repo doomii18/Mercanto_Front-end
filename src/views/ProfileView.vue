@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useUserContextStore } from "../stores/userContextStore";
 import { useGeoStore } from "../stores/geo";
-import type { OrganizationDetailsDto, PublicProviderDto } from "@/api/modules/organization/types";
+import type { OrganizationDetailsDto, PublicProviderDto } from "@/api";
 import AvatarEditor from "../components/profile/AvatarEditor.vue";
 import EditProfileModal from "../components/profile/EditProfileModal.vue";
 import EditProviderModal from "../components/profile/EditProviderModal.vue";
@@ -11,11 +11,13 @@ import BuyerStatsCards from "@/components/profile/BuyerStatsCards.vue";
 import { useAuthStore } from "@/stores/authStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import { useAlertStore } from "@/stores/alertStore";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
+const orgLogoApi = useOrganizationLogoApi();
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
@@ -144,7 +146,7 @@ const handleAvatarSave = async (file: File) => {
         alertStore.showError("No se encontró la organización proveedora activa.");
         return;
       }
-      await organizationApi.uploadOrganizationLogo(orgId, file);
+      await orgLogoApi.uploadOrganizationLogo(orgId, file);
       // Invalidate cache and reload provider info
       await orgStore.invalidateOrganization(orgId);
       const [updatedDetails, updatedPublic] = await Promise.all([
@@ -190,7 +192,7 @@ const handleAvatarDelete = async () => {
         alertStore.showError("No se encontró la organización proveedora activa.");
         return;
       }
-      await organizationApi.deleteOrganizationLogo(orgId);
+      await orgLogoApi.deleteOrganizationLogo(orgId);
       await orgStore.invalidateOrganization(orgId);
       const [updatedDetails, updatedPublic] = await Promise.all([
         organizationApi.getOrganizationDetails(orgId),

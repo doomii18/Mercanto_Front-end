@@ -21,7 +21,9 @@ export const PublicProviderDtoSchema = z.object({
   company_description: companyDescriptionSchema.nullable().optional(),
   logo_blob_id: z.string().uuid().nullable().optional(),
   kind: ProviderKindSchema,
-  rating: RatingSummarySchema,
+  rating: RatingSummarySchema.nullish().transform(
+    (val) => val ?? { average_score: 0, review_count: 0 }
+  ),
 });
 
 // OrganizationDetailsDto | full internal/tenant view of an organization

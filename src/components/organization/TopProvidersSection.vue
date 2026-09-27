@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useGeoStore } from "../../stores/geo";
 import ProviderCard from "./ProviderCard.vue";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
 interface TopProviderItem {
   id: string;

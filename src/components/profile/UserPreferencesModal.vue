@@ -2,9 +2,9 @@
 import { ref, watch } from "vue";
 import BaseModal from "../common/BaseModal.vue";
 import CategorySelectCard from "../category/CategorySelectCard.vue";
-import { useCategoryApi } from "@/api/modules/category/useCategoryApi";
-import type { ProductCategoryResponse } from "@/api/modules/category/types";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
+import type { ProductCategoryResponse } from "@/api";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 
 interface Props {
   modelValue: boolean;

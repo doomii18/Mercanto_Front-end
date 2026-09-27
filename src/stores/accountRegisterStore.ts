@@ -1,12 +1,12 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
-import { useIdentityApi } from "@/api/modules/identity/useIdentityApi";
-import type { RegisterRequest } from "@/api/modules/identity/types";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
+import type { RegisterRequest } from "@/api";
+import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
 
 export const useAccountRegisterStore = defineStore("accountRegister", () => {
   const identityApi = useIdentityApi();
-  const userProfileApi = useUserProfileApi();
+  const avatarApi = useAvatarApi();
 
   const firstName = ref("");
   const lastName = ref("");
@@ -60,7 +60,7 @@ export const useAccountRegisterStore = defineStore("accountRegister", () => {
 
       if (avatarFile.value) {
         await identityApi.login({ email: email.value.trim(), password: rawPassword });
-        await userProfileApi.changeProfilePicture(avatarFile.value);
+        await avatarApi.changeAvatar(avatarFile.value);
       }
     } catch (err: any) {
       errorMessage.value = err.message || "Error durante el registro";

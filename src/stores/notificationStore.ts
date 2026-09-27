@@ -7,11 +7,11 @@ import { notificationBus } from "@/events/notificationEvents";
 import {
   NotificationEventSchema,
   WsTicketResponseSchema,
-} from "@/api/modules/notifications/schemas";
+} from "@/api/modules/messaging/notifications/responses";
 import type {
   NotificationEvent,
   WsTicketResponse,
-} from "@/api/modules/notifications/types";
+} from "@/api";
 
 export const useNotificationStore = defineStore("notification", () => {
   const status = ref<"OPEN" | "CONNECTING" | "CLOSED">("CLOSED");

@@ -1,9 +1,8 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import type { OrganizationDetailsDto } from "@/api/modules/organization/types";
-import type { UserProfileResponse } from "@/api/modules/user_profile/types";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import type { OrganizationDetailsDto, UserProfileResponse } from "@/api";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
 export type UserGroup = "buyer" | "provider";
 
@@ -23,7 +22,7 @@ export const useUserContextStore = defineStore("userContext", () => {
   const activeOrganization = computed<OrganizationDetailsDto | null>(() => {
     if (!organizations.value.length) return null;
     return (
-      organizations.value.find((org) => org.id === activeOrganizationId.value) ??
+      organizations.value.find((org: OrganizationDetailsDto) => org.id === activeOrganizationId.value) ??
       organizations.value[0]
     );
   });
@@ -87,7 +86,7 @@ export const useUserContextStore = defineStore("userContext", () => {
   }
 
   function updateActiveOrganization(org: OrganizationDetailsDto): void {
-    const idx = organizations.value.findIndex((o) => o.id === org.id);
+    const idx = organizations.value.findIndex((o: OrganizationDetailsDto) => o.id === org.id);
     if (idx !== -1) {
       organizations.value[idx] = org;
     } else {
@@ -96,7 +95,7 @@ export const useUserContextStore = defineStore("userContext", () => {
   }
 
   function setActiveOrganization(orgId: string): void {
-    const exists = organizations.value.some((org) => org.id === orgId);
+    const exists = organizations.value.some((org: OrganizationDetailsDto) => org.id === orgId);
     if (!exists) {
       throw new Error(`Organization ${orgId} not associated with current account.`);
     }

@@ -8,13 +8,9 @@ import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
-import {
-    personNameSchema,
-    nationalIdSchema,
-    phoneNumberSchema,
-    emailSchema,
-    uuidSchema,
-} from "@/api/modules/identity/domain";
+import { PersonNameSchema, NationalIdSchema } from "@/api/modules/identity/user_profile/domain";
+import { EmailSchema } from "@/api/modules/identity/auth/domain";
+import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 
 const router = useRouter();
 const geoStore = useGeoStore();
@@ -26,13 +22,13 @@ const isGeoLoading = ref(false);
 const errors = ref<Record<string, string>>({});
 
 const AccountStep1Schema = z.object({
-    firstName: personNameSchema,
-    lastName: personNameSchema,
-    nationalId: nationalIdSchema,
+    firstName: PersonNameSchema,
+    lastName: PersonNameSchema,
+    nationalId: NationalIdSchema,
     phoneNumber: phoneNumberSchema,
-    departmentId: uuidSchema,
-    municipalityId: uuidSchema,
-    email: emailSchema,
+    departmentId: z.string().uuid("ID de departamento inválido"),
+    municipalityId: z.string().uuid("ID de municipio inválido"),
+    email: EmailSchema,
 });
 
 const departments = computed(() => geoStore.departmentList);

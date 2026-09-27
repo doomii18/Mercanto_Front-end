@@ -2,8 +2,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
-import type { QuoteAggregateResponse, QuoteStatus } from "@/api/modules/quote/types";
-import { useProductApi } from "@/api/modules/product/useProductApi";
+import type { QuoteAggregateResponse, QuoteStatus } from "@/api";
+import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import ProductImage from "../product/ProductImage.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
 import ProfileAvatar from "../profile/ProfileAvatar.vue";

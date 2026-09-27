@@ -1,11 +1,11 @@
 import { ref, computed, type Ref } from "vue";
-import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
+import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useToastStore } from "@/stores/toastStore";
 import type {
   QuoteAggregateResponse,
   QuoteStatus,
-} from "@/api/modules/quote/types";
+} from "@/api";
 
 export type QuoteActionType =
   | "accept"

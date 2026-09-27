@@ -3,8 +3,8 @@ import { ref, onMounted, computed } from "vue";
 import { RouterLink } from "vue-router";
 import { useGeoStore } from "@/stores/geo";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
-import type { PublicProviderDto } from "@/api/modules/organization/types";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import type { PublicProviderDto } from "@/api";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
 const geoStore = useGeoStore();
 
@@ -21,7 +21,7 @@ const resolvedLocation = computed(() => {
     : hierarchy.municipality.name;
 });
 
-const ratingScore = computed(() => provider.value?.rating.average_score.toFixed(1) ?? "0.0");
+const ratingScore = computed(() => provider.value?.rating?.average_score?.toFixed(1) ?? "0.0");
 
 onMounted(async () => {
   try {

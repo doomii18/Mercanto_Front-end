@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useQuoteApi } from "@/api/modules/quote/useQuoteApi";
-import { useProductApi } from "@/api/modules/product/useProductApi";
+import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
+import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useQuoteActions } from "@/composables/useQuoteActions";
-import type { QuoteAggregateResponse } from "@/api/modules/quote/types";
-import type { PublicProviderDto } from "@/api/modules/organization/types";
-import type { UserProfileResponse } from "@/api/modules/user_profile/types";
+import type {
+  QuoteAggregateResponse,
+  PublicProviderDto,
+  UserProfileResponse,
+} from "@/api";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import QuoteIdBadge from "../components/quote/QuoteIdBadge.vue";
@@ -14,8 +16,8 @@ import QuoteStatusBadge from "../components/quote/QuoteStatusBadge.vue";
 import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
 import FacturaTemplate from "@/components/invoice/FacturaTemplate.vue";
 import DownloadInvoiceButton from "@/components/invoice/DownloadInvoiceButton.vue";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
-import { useOrganizationApi } from "@/api/modules/organization/useOrganizationApi";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
 const route = useRoute();
 const router = useRouter();

@@ -2,7 +2,7 @@
 import { ref, onScopeDispose } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from '@/stores/notificationStore';
-import type { NotificationEvent } from '@/api/modules/notifications/types';
+import type { NotificationEvent } from '@/api';
 
 const router = useRouter();
 const notificationStore = useNotificationStore();

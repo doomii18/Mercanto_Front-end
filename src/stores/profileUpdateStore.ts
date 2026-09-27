@@ -1,11 +1,13 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useUserContextStore } from "./userContextStore";
-import type { UserProfileResponse } from "@/api/modules/user_profile/types";
-import { useUserProfileApi } from "@/api/modules/user_profile/useUserProfileApi";
+import type { UserProfileResponse } from "@/api";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
+import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
 
 export const useProfileUpdateStore = defineStore("profileUpdate", () => {
   const userProfileApi = useUserProfileApi();
+  const avatarApi = useAvatarApi();
 
   const firstName = ref("");
   const lastName = ref("");
@@ -66,12 +68,12 @@ export const useProfileUpdateStore = defineStore("profileUpdate", () => {
         last_name: lastName.value.trim(),
         phone_number: phoneNumber.value.trim() || null,
         national_id: nationalId.value.trim() || null,
-        municipality_id: municipalityId.value || null,
+        municipality_id: municipalityId.value || undefined,
       });
 
       //  Update avatar if a new file was selected
       if (avatarFile.value) {
-        await userProfileApi.changeProfilePicture(avatarFile.value);
+        await avatarApi.changeAvatar(avatarFile.value);
         // Fetch the latest profile to get the new avatar_blob_id
         const latestProfile = await userProfileApi.getMyProfile();
         contextStore.updateUserProfile(latestProfile);
