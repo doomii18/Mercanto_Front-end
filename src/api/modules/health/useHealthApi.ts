@@ -1,22 +1,23 @@
 import { useApiFetch } from "@/api/useApiFetch";
-import { HealthResponseSchema } from "@/api/modules/health/schemas";
-import type { HealthResponse } from "@/api/modules/health/types";
+import { ReadinessResponseSchema } from "./responses";
+import type { ReadinessResponse } from "./types";
 
 export const useHealthApi = () => {
+  // GET /health/live
   async function getLiveness(): Promise<void> {
-    // Liveness endpoints typically return 200/204 with no body
     const { error } = await useApiFetch("/health/live").get();
     if (error.value) {
       throw error.value instanceof Error ? error.value : new Error("Liveness check failed");
     }
   }
 
-  async function getReadiness(): Promise<HealthResponse> {
+  // GET /health/ready
+  async function getReadiness(): Promise<ReadinessResponse> {
     const { data, error } = await useApiFetch("/health/ready").get().json();
     if (error.value || !data.value) {
       throw error.value || new Error("Readiness check failed");
     }
-    return HealthResponseSchema.parse(data.value);
+    return ReadinessResponseSchema.parse(data.value);
   }
 
   return {

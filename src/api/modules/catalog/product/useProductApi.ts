@@ -1,0 +1,199 @@
+import { useApiFetch } from "@/api/useApiFetch";
+import { z } from "zod";
+import {
+  CreateProductRequestSchema,
+  PatchProductRequestSchema,
+  BatchProductQuerySchema,
+  ProductImageSearchUploadSchema,
+  SearchProductsByImageSchema,
+  PromoteProductRequestSchema,
+} from "./requests";
+import {
+  ProductResponseSchema,
+  PaginatedProductResponseSchema,
+  PaginatedProductImageSearchResponseSchema,
+  PromoteProductResponseSchema,
+  BatchProductShippingResponseSchema,
+  UploadUrlResponseSchema,
+} from "./responses";
+import { ShippingMethodSchema } from "./domain";
+import type {
+  ProductResponse,
+  PaginatedProductResponse,
+  ProductFiltersRequest,
+  CreateProductRequest,
+  PatchProductRequest,
+  PaginatedProductImageSearchResponse,
+  BatchProductShippingResponse,
+} from "./types";
+import type {
+  PromoteProductRequest,
+  PromoteProductResponse,
+} from "../product_promotion/types";
+import type {
+  ShippingMethod,
+  BatchProductQuery,
+} from "@/api/modules/shared/types";
+
+export const useProductApi = () => {
+  // GET /products
+  async function getProducts(params?: ProductFiltersRequest): Promise<PaginatedProductResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
+    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (params?.provider_id) queryParams.append("provider_id", params.provider_id);
+    if (params?.category_id) queryParams.append("category_id", params.category_id);
+    if (params?.min_price !== undefined) queryParams.append("min_price", params.min_price.toString());
+    if (params?.max_price !== undefined) queryParams.append("max_price", params.max_price.toString());
+    if (params?.min_score !== undefined) queryParams.append("min_score", params.min_score.toString());
+    if (params?.search_term) queryParams.append("search_term", params.search_term);
+    if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_direction) queryParams.append("sort_direction", params.sort_direction);
+
+    const queryString = queryParams.toString();
+    const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
+
+    const { data, error } = await useApiFetch(endpoint).get().json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to fetch products");
+    }
+    return PaginatedProductResponseSchema.parse(data.value);
+  }
+
+  // GET /products/{id}
+  async function getProduct(id: string): Promise<ProductResponse> {
+    const { data, error } = await useApiFetch(`/products/${id}`).get().json();
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Failed to fetch product ${id}`);
+    }
+    return ProductResponseSchema.parse(data.value);
+  }
+
+  // POST /products
+  async function createProduct(payload: CreateProductRequest): Promise<ProductResponse> {
+    const validatedPayload = CreateProductRequestSchema.parse(payload);
+    const { data, error } = await useApiFetch("/products").post(validatedPayload).json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to create product");
+    }
+    return ProductResponseSchema.parse(data.value);
+  }
+
+  // PATCH /products/{id}
+  async function updateProduct(
+    id: string,
+    payload: PatchProductRequest
+  ): Promise<ProductResponse> {
+    const validatedPayload = PatchProductRequestSchema.parse(payload);
+    const { data, error } = await useApiFetch(`/products/${id}`).patch(validatedPayload).json();
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Failed to update product ${id}`);
+    }
+    return ProductResponseSchema.parse(data.value);
+  }
+
+  // DELETE /products/{id}
+  async function deleteProduct(id: string): Promise<void> {
+    const { error } = await useApiFetch(`/products/${id}`).delete();
+    if (error.value) {
+      throw error.value || new Error(`Failed to delete product ${id}`);
+    }
+  }
+
+  // GET /products/{id}/shipping
+  async function getProductShipping(productId: string): Promise<ShippingMethod[]> {
+    const { data, error } = await useApiFetch(`/products/${productId}/shipping`).get().json();
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Failed to fetch shipping methods for product ${productId}`);
+    }
+    return z.array(ShippingMethodSchema).parse(data.value);
+  }
+
+  // POST /products/shipping/batch
+  async function getProductShippingBatch(
+    payload: BatchProductQuery
+  ): Promise<BatchProductShippingResponse> {
+    const validated = BatchProductQuerySchema.parse(payload);
+    const { data, error } = await useApiFetch("/products/shipping/batch")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to batch fetch product shipping methods");
+    }
+    return BatchProductShippingResponseSchema.parse(data.value);
+  }
+
+  // POST /products/image-search/upload & POST /products/image-search
+  async function searchProductsByImage(
+    file: File,
+    pagination?: { limit?: number; offset?: number }
+  ): Promise<PaginatedProductImageSearchResponse> {
+    const uploadPayload = ProductImageSearchUploadSchema.parse({
+      mime_type: file.type,
+      size_bytes: file.size,
+    });
+
+    const { data: initData, error: initError } = await useApiFetch(
+      "/products/image-search/upload"
+    )
+      .post(uploadPayload)
+      .json();
+
+    if (initError.value || !initData.value) {
+      throw initError.value || new Error("Failed to initialize image search upload");
+    }
+
+    const uploadInfo = UploadUrlResponseSchema.parse(initData.value);
+    const storageResponse = await fetch(uploadInfo.presigned_url, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+
+    if (!storageResponse.ok) {
+      throw new Error("Image search upload failed");
+    }
+
+    const searchPayload = SearchProductsByImageSchema.parse({
+      blob_id: uploadInfo.blob_id,
+      limit: pagination?.limit ?? 20,
+      offset: pagination?.offset ?? 0,
+    });
+
+    const { data, error } = await useApiFetch("/products/image-search")
+      .post(searchPayload)
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to search products by image");
+    }
+    return PaginatedProductImageSearchResponseSchema.parse(data.value);
+  }
+
+  // POST /products/promote
+  async function promoteProduct(
+    payload: PromoteProductRequest
+  ): Promise<PromoteProductResponse> {
+    const validated = PromoteProductRequestSchema.parse(payload);
+    const { data, error } = await useApiFetch("/products/promote")
+      .post(validated)
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to promote product");
+    }
+    return PromoteProductResponseSchema.parse(data.value);
+  }
+
+  return {
+    getProducts,
+    getProduct,
+    createProduct,
+    updateProduct,
+    deleteProduct,
+    getProductShipping,
+    getProductShippingBatch,
+    searchProductsByImage,
+    promoteProduct,
+  };
+};

@@ -54,3 +54,47 @@ export const RatingSummarySchema = z.object({
   average_score: z.number(),
   review_count: z.number().int().nonnegative(),
 });
+
+// ShippingMethod | shared shipping method enum
+export const ShippingMethodSchema = z.enum(["bus", "own_delivery"]);
+
+export const MIN_BATCH_SIZE = 1;
+export const MAX_BATCH_SIZE = 100;
+
+// BatchProductQueryDto | batch query for product ids (1 to 100 items)
+export const BatchProductQuerySchema = z.object({
+  product_ids: z
+    .array(z.uuid("ID de producto inválido"))
+    .min(MIN_BATCH_SIZE, "El lote debe contener al menos 1 producto")
+    .max(MAX_BATCH_SIZE, "El lote no debe exceder los 100 productos"),
+});
+
+// BatchCategoryQueryDto | batch query for category ids (1 to 100 items)
+export const BatchCategoryQuerySchema = z.object({
+  category_ids: z
+    .array(z.uuid("ID de categoría inválido"))
+    .min(MIN_BATCH_SIZE, "El lote debe contener al menos 1 categoría")
+    .max(MAX_BATCH_SIZE, "El lote no debe exceder las 100 categorías"),
+});
+
+// BatchProviderQueryDto | batch query for provider ids (1 to 100 items)
+export const BatchProviderQuerySchema = z.object({
+  provider_ids: z
+    .array(z.uuid("ID de proveedor inválido"))
+    .min(MIN_BATCH_SIZE, "El lote debe contener al menos 1 proveedor")
+    .max(MAX_BATCH_SIZE, "El lote no debe exceder los 100 proveedores"),
+});
+
+// BatchQuoteQueryDto | batch query for quote ids (1 to 100 items)
+export const BatchQuoteQuerySchema = z.object({
+  quote_ids: z
+    .array(z.uuid("ID de cotización inválido"))
+    .min(MIN_BATCH_SIZE, "El lote debe contener al menos 1 cotización")
+    .max(MAX_BATCH_SIZE, "El lote no debe exceder las 100 cotizaciones"),
+});
+
+// GeoPoint | geographic coordinates point
+export const GeoPointSchema = z.object({
+  latitude: z.coerce.number(),
+  longitude: z.coerce.number(),
+});

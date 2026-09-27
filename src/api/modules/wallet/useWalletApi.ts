@@ -1,15 +1,17 @@
 import { useApiFetch } from "@/api/useApiFetch";
+import { WalletLedgerPaginationQuerySchema } from "./requests";
 import {
   VirtualWalletResponseSchema,
   PaginatedLedgerResponseSchema,
-} from "@/api/modules/wallet/schemas";
+} from "./responses";
 import type {
   VirtualWalletResponse,
   PaginatedLedgerResponse,
-} from "@/api/modules/wallet/types";
+  WalletLedgerPaginationQuery,
+} from "./types";
 
 export const useWalletApi = () => {
-  // SPECIFIC WALLET
+  // GET /wallets/{id}
   async function getWallet(walletId: string): Promise<VirtualWalletResponse> {
     const { data, error } = await useApiFetch(`/wallets/${walletId}`).get().json();
     if (error.value || !data.value) {
@@ -18,13 +20,15 @@ export const useWalletApi = () => {
     return VirtualWalletResponseSchema.parse(data.value);
   }
 
+  // GET /wallets/{id}/ledger
   async function getWalletLedger(
     walletId: string,
-    params?: { limit?: number; offset?: number }
+    params?: WalletLedgerPaginationQuery
   ): Promise<PaginatedLedgerResponse> {
+    const validated = params ? WalletLedgerPaginationQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
-    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
-    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
 
     const queryString = queryParams.toString();
     const endpoint = `/wallets/${walletId}/ledger${queryString ? `?${queryString}` : ""}`;
@@ -36,7 +40,7 @@ export const useWalletApi = () => {
     return PaginatedLedgerResponseSchema.parse(data.value);
   }
 
-  // CURRENT USER WALLET
+  // GET /wallets/me
   async function getMyWallet(): Promise<VirtualWalletResponse> {
     const { data, error } = await useApiFetch("/wallets/me").get().json();
     if (error.value || !data.value) {
@@ -45,12 +49,14 @@ export const useWalletApi = () => {
     return VirtualWalletResponseSchema.parse(data.value);
   }
 
+  // GET /wallets/me/ledger
   async function getMyWalletLedger(
-    params?: { limit?: number; offset?: number }
+    params?: WalletLedgerPaginationQuery
   ): Promise<PaginatedLedgerResponse> {
+    const validated = params ? WalletLedgerPaginationQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
-    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
-    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
 
     const queryString = queryParams.toString();
     const endpoint = `/wallets/me/ledger${queryString ? `?${queryString}` : ""}`;
