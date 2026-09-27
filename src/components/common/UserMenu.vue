@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import { useAuthStore } from "@/stores/authStore";
+import { useUserContextStore } from "@/stores/userContextStore";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 
 interface Props {
@@ -20,6 +21,7 @@ const props = withDefaults(defineProps<Props>(), {
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
+const userContext = useUserContextStore();
 const userProfileApi = useUserProfileApi();
 
 const isDropdownOpen = ref(false);
@@ -31,10 +33,7 @@ const isProfileLoading = ref(true);
 const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
 const isOnProfile = computed(() => route.name === "profile");
 
-const isStaffRole = computed(() => {
-  const role = authStore.accountRole;
-  return role === "admin" || role === "auditor";
-});
+const isStaffRole = computed(() => userContext.isStaff);
 
 const roleBadgeStyle = computed(() => {
   const role = authStore.accountRole;
@@ -220,6 +219,19 @@ const handleLogout = async () => {
 
         <!-- Navigation Actions -->
         <div v-if="!isUnderDashboard || !isOnProfile" class="p-1 space-y-0.5">
+          <!-- Opción Panel Administrativo (solo admin/auditor) -->
+          <router-link
+            v-if="isStaffRole"
+            :to="{ name: 'admin' }"
+            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            @click="closeDropdown"
+          >
+            <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-50 text-slate-400">
+              <i class="fa-solid fa-shield-halved text-xs"></i>
+            </div>
+            <span>Panel Administrativo</span>
+          </router-link>
+
           <!-- Opción Dashboard -->
           <router-link
             v-if="!isUnderDashboard"

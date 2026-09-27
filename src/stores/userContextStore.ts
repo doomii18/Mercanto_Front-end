@@ -3,10 +3,12 @@ import { ref, computed } from "vue";
 import type { OrganizationDetailsDto, UserProfileResponse } from "@/api";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useAuthStore } from "@/stores/authStore";
 
 export type UserGroup = "buyer" | "provider";
 
 export const useUserContextStore = defineStore("userContext", () => {
+  const authStore = useAuthStore();
   const userProfileApi = useUserProfileApi();
   const organizationApi = useOrganizationApi();
 
@@ -33,6 +35,12 @@ export const useUserContextStore = defineStore("userContext", () => {
 
   const isProvider = computed(() => userGroup.value === "provider");
   const isBuyer = computed(() => userGroup.value === "buyer");
+
+  // Global staff roles (admin/auditor) belong to the account, not the profile
+  const accountRole = computed(() => authStore.accountRole);
+  const isAdmin = computed(() => authStore.accountRole === "admin");
+  const isAuditor = computed(() => authStore.accountRole === "auditor");
+  const isStaff = computed(() => isAdmin.value || isAuditor.value);
 
   // Helper to easily get the display name based on user type
   const displayName = computed(() => {
@@ -120,6 +128,10 @@ export const useUserContextStore = defineStore("userContext", () => {
     userGroup,
     isProvider,
     isBuyer,
+    accountRole,
+    isAdmin,
+    isAuditor,
+    isStaff,
     isInitialized,
     isLoading,
     error,

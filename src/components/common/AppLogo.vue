@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import logoVariantOne from "@/assets/LOGO.png";
+import logoVariantOne from "@/assets/logo.png";
 import logoVariantTwo from "@/assets/1.1 Imagotipo variacion.png";
 
 type LogoVariant = "logo" | "imagotipo";

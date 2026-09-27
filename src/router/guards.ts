@@ -8,11 +8,25 @@ export const authGuard: NavigationGuardWithThis<undefined> = async (to) => {
 
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
   const requiresProvider = to.matched.some((record) => record.meta.requiresProvider);
+  const requiresStaff = to.matched.some((record) => record.meta.requiresStaff);
   const guestOnly = to.matched.some((record) => record.meta.guestOnly);
 
   // Unauthenticated check (Temporarily disabled for demo/testing)
   if (requiresAuth && !authStore.isAuthenticated) {
     // return { name: "login", query: { redirect: to.fullPath } };
+  }
+
+  // Staff-only sections (administrative dashboard) for admin/auditor accounts
+  if (requiresStaff) {
+    if (!authStore.isInitialized) {
+      await authStore.initialize();
+    }
+    if (!authStore.isAuthenticated) {
+      return { name: "login", query: { redirect: to.fullPath } };
+    }
+    if (!contextStore.isStaff) {
+      return { name: "profile" };
+    }
   }
 
   // Guest-only redirect (logged-in users accessing login/register)

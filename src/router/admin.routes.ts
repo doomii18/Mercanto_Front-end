@@ -1,26 +1,14 @@
 import type { RouteRecordRaw } from "vue-router";
-import { useAdminStore } from "@/stores/adminStore";
 
 export const adminRoutes: RouteRecordRaw[] = [
   {
-    path: "/admin/login",
-    name: "admin-login",
-    component: () => import("@/views/admin/AdminLoginView.vue"),
-  },
-  {
     path: "/admin",
     component: () => import("@/views/admin/AdminLayout.vue"),
-    beforeEnter: (_to, _from, next) => {
-      const adminStore = useAdminStore();
-      if (!adminStore.isAuthenticated) {
-        next({ name: "admin-login" });
-      } else {
-        next();
-      }
-    },
+    meta: { requiresAuth: true, requiresStaff: true },
     children: [
       {
         path: "",
+        name: "admin",
         redirect: { name: "admin-inicio" },
       },
       {

@@ -1,11 +1,14 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { useAdminStore } from "@/stores/adminStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useUserContextStore } from "@/stores/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
+import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 
 const router = useRouter();
-const adminStore = useAdminStore();
+const authStore = useAuthStore();
+const userContext = useUserContextStore();
 
 const isMobileMenuOpen = ref(false);
 
@@ -19,9 +22,30 @@ const navItems = [
   { name: "admin-configuracion", label: "Configuración", icon: "fa-solid fa-gear" },
 ];
 
-const handleLogout = () => {
-  adminStore.logout();
-  router.push({ name: "admin-login" });
+const avatarBlobId = computed(() => userContext.userProfile?.avatar_blob_id ?? null);
+const displayName = computed(() => userContext.displayName);
+const roleLabel = computed(() => {
+  const labels: Record<string, string> = {
+    admin: "Administrador",
+    auditor: "Auditor",
+    member: "Miembro",
+  };
+  return labels[authStore.accountRole ?? ""] ?? "Usuario";
+});
+
+onMounted(async () => {
+  if (!userContext.isInitialized && authStore.isAuthenticated) {
+    try {
+      await userContext.initialize();
+    } catch {
+      // Profile data is non-critical for the layout chrome
+    }
+  }
+});
+
+const handleLogout = async () => {
+  await authStore.logout();
+  router.push({ name: "login" });
 };
 
 const closeMobileMenu = () => {
@@ -45,10 +69,10 @@ const closeMobileMenu = () => {
         isMobileMenuOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'
       ]"
     >
-      <!-- Logo Header with Exact Mercanto Imagotipo (from Footer) -->
+      <!-- Logo Header -->
       <div class="flex h-20 items-center justify-between px-6 pt-3">
         <div class="flex flex-col items-start">
-          <AppLogo variant="imagotipo" class="h-9 shrink-0 brightness-110" />
+          <AppLogo variant="logo" class="h-9 shrink-0 brightness-110" />
           <span class="text-[11px] font-semibold text-slate-300 block pl-1 -mt-0.5">Panel Admin</span>
         </div>
 
@@ -79,17 +103,15 @@ const closeMobileMenu = () => {
         </router-link>
       </nav>
 
-      <!-- Bottom Profile Card (Wendy Blandón) -->
+      <!-- Bottom Profile Card -->
       <div class="border-t border-white/10 p-4 m-2">
         <div class="flex items-center gap-3 rounded-xl p-2 bg-white/5 border border-white/10">
-          <img
-            src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=120"
-            alt="Wendy Blandón"
-            class="h-10 w-10 shrink-0 rounded-full object-cover ring-2 ring-[#00a896]"
-          />
+          <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-[#00a896]">
+            <ProfileAvatar :blob-id="avatarBlobId" :alt="displayName" />
+          </div>
           <div class="flex-1 min-w-0">
-            <p class="text-white text-xs font-bold truncate">Wendy Blandón</p>
-            <p class="text-slate-300 text-[11px] truncate">Administrador</p>
+            <p class="text-white text-xs font-bold truncate">{{ displayName }}</p>
+            <p class="text-slate-300 text-[11px] truncate">{{ roleLabel }}</p>
           </div>
           <button
             @click="handleLogout"
@@ -115,7 +137,7 @@ const closeMobileMenu = () => {
             <i class="fa-solid fa-bars text-lg"></i>
           </button>
           <div class="flex items-center gap-2">
-            <AppLogo variant="imagotipo" class="h-8 shrink-0" />
+            <AppLogo variant="logo" class="h-8 shrink-0" />
             <span class="text-xs font-semibold text-slate-500 block">Admin</span>
           </div>
         </div>
