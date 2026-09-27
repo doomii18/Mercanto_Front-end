@@ -8,6 +8,7 @@ import CategoryHeroCard from "../components/category/CategoryHeroCard.vue";
 import CategoryPicker from "../components/category/CategoryPicker.vue";
 import ProviderCard from "../components/organization/ProviderCard.vue";
 import ProductCard from "../components/product/ProductCard.vue";
+import { useProductOffers } from "@/composables/useProductOffers";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -103,6 +104,9 @@ const filteredProducts = computed<ProductResponse[]>(() => {
     return matchTitle || matchCategory;
   });
 });
+
+const productIds = computed(() => filteredProducts.value.map((product) => product.id));
+const { discountFor } = useProductOffers(productIds);
 
 const featuredProviders = computed<FeaturedProviderItem[]>(() => {
   const reviewedProducts = apiProducts.value.filter(
@@ -457,6 +461,7 @@ onMounted(async () => {
             :review-count="prod.rating?.review_count ?? 0"
             :rank="index + 1"
             :bubble-class="BUBBLE_CLASSES[index % BUBBLE_CLASSES.length]"
+            :discount-percentage="discountFor(prod.id)"
           />
         </div>
 

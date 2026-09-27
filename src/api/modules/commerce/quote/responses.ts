@@ -26,6 +26,8 @@ export const QuoteItemResponseSchema = z.object({
   quantity: z.number().int(),
   unit_price_snapshot: z.coerce.number(),
   product_title_snapshot: z.string(),
+  offer_id: z.uuid().nullable(),
+  discount_percentage: z.number().int().nullable(),
 });
 
 // QuoteAggregateResponse | combined quotation header with its item lines

@@ -21,6 +21,7 @@ export interface ProductCardProps {
   objectFit?: "contain" | "cover";
   rank?: number | null;
   bubbleClass?: "orange" | "teal" | "blue" | "grey" | string;
+  discountPercentage?: number | null;
 }
 
 const props = withDefaults(defineProps<ProductCardProps>(), {
@@ -36,6 +37,7 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
   objectFit: "cover",
   rank: null,
   bubbleClass: "orange",
+  discountPercentage: null,
 });
 
 const orgStore = useOrganizationStore();
@@ -44,7 +46,19 @@ const providerName = ref<string>("Proveedor aliado");
 const providerLogoBlobId = ref<string | null>(null);
 const isProviderLoading = ref<boolean>(true);
 
+const hasDiscount = computed(() => props.discountPercentage !== null && props.discountPercentage !== undefined);
+
+const displayPrice = computed(() =>
+  hasDiscount.value
+    ? Math.round(props.price * (100 - (props.discountPercentage as number))) / 100
+    : props.price
+);
+
 const formattedPrice = computed(() => {
+  return `C$ ${displayPrice.value.toLocaleString("es-NI")}`;
+});
+
+const formattedOriginalPrice = computed(() => {
   return `C$ ${props.price.toLocaleString("es-NI")}`;
 });
 
@@ -134,6 +148,13 @@ onMounted(() => {
         {{ badgeText }}
       </span>
 
+      <span
+        v-if="hasDiscount"
+        class="absolute right-2 top-2 z-10 inline-flex items-center rounded-full bg-[#ff6a00] px-2.5 py-0.5 text-[0.72rem] font-bold text-white shadow-sm"
+      >
+        -{{ discountPercentage }}%
+      </span>
+
       <ProductImage
         :blob-id="imageBlobId"
         :product-id="id"
@@ -153,8 +174,13 @@ onMounted(() => {
       <h4 :title="title" class="m-0 min-w-0 flex-1 truncate text-sm font-semibold text-[#023859]">
         {{ title }}
       </h4>
-      <span class="shrink-0 text-[0.95rem] font-bold text-[#ff6a00]">
-        {{ formattedPrice }}
+      <span class="flex shrink-0 flex-col items-end leading-tight">
+        <span v-if="hasDiscount" class="text-[0.72rem] text-slate-400 line-through">
+          {{ formattedOriginalPrice }}
+        </span>
+        <span class="text-[0.95rem] font-bold text-[#ff6a00]">
+          {{ formattedPrice }}
+        </span>
       </span>
     </div>
 

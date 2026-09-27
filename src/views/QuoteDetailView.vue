@@ -6,6 +6,7 @@ import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useQuoteActions } from "@/composables/useQuoteActions";
 import type {
   QuoteAggregateResponse,
+  QuoteItemResponse,
   PublicProviderDto,
   UserProfileResponse,
 } from "@/api";
@@ -64,10 +65,19 @@ const totalUnits = computed(() => {
   return quoteAggregate.value.items.reduce((acc, item) => acc + item.quantity, 0);
 });
 
+const effectiveUnitPrice = (item: QuoteItemResponse): number =>
+  item.discount_percentage !== null
+    ? Math.round(item.unit_price_snapshot * (100 - item.discount_percentage)) / 100
+    : item.unit_price_snapshot;
+
+const hasAppliedOffer = computed(
+  () => quoteAggregate.value?.items.some((item) => item.discount_percentage !== null) ?? false
+);
+
 const calculatedTotal = computed(() => {
   if (!quoteAggregate.value) return 0;
   return quoteAggregate.value.items.reduce(
-    (acc, item) => acc + item.quantity * item.unit_price_snapshot,
+    (acc, item) => acc + item.quantity * effectiveUnitPrice(item),
     0
   );
 });
@@ -293,13 +303,24 @@ onMounted(() => {
                     </div>
                   </td>
                   <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">
-                    {{ formatMoney(item.unit_price_snapshot) }}
+                    <span class="flex flex-col">
+                      <span v-if="item.discount_percentage !== null" class="text-xs text-neutral-400 line-through">
+                        {{ formatMoney(item.unit_price_snapshot) }}
+                      </span>
+                      <span>{{ formatMoney(effectiveUnitPrice(item)) }}</span>
+                      <span
+                        v-if="item.discount_percentage !== null"
+                        class="mt-0.5 w-fit rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600"
+                      >
+                        -{{ item.discount_percentage }}%
+                      </span>
+                    </span>
                   </td>
                   <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">
                     Ud. {{ item.quantity }}
                   </td>
                   <td class="py-3 pl-2 align-middle font-semibold text-neutral-900 text-right whitespace-nowrap">
-                    {{ formatMoney(item.quantity * item.unit_price_snapshot) }}
+                    {{ formatMoney(item.quantity * effectiveUnitPrice(item)) }}
                   </td>
                 </tr>
               </tbody>
@@ -308,6 +329,10 @@ onMounted(() => {
           <div v-if="quoteAggregate.quote.buyer_notes" class="bg-base-200 p-3.5 rounded-lg mt-4 text-xs sm:text-sm text-neutral-500">
             <strong class="font-semibold text-neutral-900">Notas del comprador:</strong>
             <p class="mt-1 text-neutral-700">{{ quoteAggregate.quote.buyer_notes }}</p>
+          </div>
+          <div v-if="hasAppliedOffer" class="mt-4 flex items-center gap-2 rounded-lg bg-orange-50 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-orange-600">
+            <i class="fa-solid fa-tags"></i>
+            <span>Se aplicó un descuento de oferta a este pedido.</span>
           </div>
           <div class="bg-teal-100/50 rounded-xl px-4 sm:px-6 py-3.5 flex justify-between items-center mt-6 text-neutral-900">
             <span class="text-xs sm:text-sm font-semibold">Total</span>

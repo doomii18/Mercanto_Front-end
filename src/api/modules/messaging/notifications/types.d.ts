@@ -7,7 +7,6 @@ import type {
   NewChatMessageEventSchema,
   QuoteStatusChangedEventSchema,
   ProductOutOfStockEventSchema,
-  ProductPromotedEventSchema,
   QuoteRequestReceivedEventSchema,
 } from "./responses";
 
@@ -19,5 +18,4 @@ export type NotificationEvent = z.infer<typeof NotificationEventSchema>;
 export type NewChatMessageEvent = z.infer<typeof NewChatMessageEventSchema>;
 export type QuoteStatusChangedEvent = z.infer<typeof QuoteStatusChangedEventSchema>;
 export type ProductOutOfStockEvent = z.infer<typeof ProductOutOfStockEventSchema>;
-export type ProductPromotedEvent = z.infer<typeof ProductPromotedEventSchema>;
 export type QuoteRequestReceivedEvent = z.infer<typeof QuoteRequestReceivedEventSchema>;

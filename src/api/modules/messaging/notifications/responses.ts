@@ -38,13 +38,6 @@ export const ProductOutOfStockEventSchema = BaseEventSchema.extend({
   organization_id: z.uuid(),
 });
 
-// ProductPromotedPayload | product promoted notification event
-export const ProductPromotedEventSchema = BaseEventSchema.extend({
-  type: z.literal("ProductPromoted"),
-  product_id: z.uuid(),
-  payload: z.unknown(),
-});
-
 // QuoteRequestReceivedPayload | quote request received notification event
 export const QuoteRequestReceivedEventSchema = BaseEventSchema.extend({
   type: z.literal("QuoteRequestReceived"),
@@ -60,6 +53,5 @@ export const NotificationEventSchema = z.discriminatedUnion("type", [
   NewChatMessageEventSchema,
   QuoteStatusChangedEventSchema,
   ProductOutOfStockEventSchema,
-  ProductPromotedEventSchema,
   QuoteRequestReceivedEventSchema,
 ]);

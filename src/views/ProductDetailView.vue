@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
+import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 
 import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
@@ -11,7 +12,7 @@ import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
-import type { PaymentMethod } from "@/api";
+import type { PaymentMethod, ProductOfferResponse } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -65,6 +66,7 @@ const route = useRoute();
 const router = useRouter();
 const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
+const offerApi = useOfferApi();
 const reviewApi = useReviewApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
@@ -74,6 +76,7 @@ const isLoading = ref(true);
 const selectedShippingMethod = ref("bus");
 const selectedColor = ref<string>("");
 const quantity = ref(1);
+const currentOffer = ref<ProductOfferResponse | null>(null);
 
 const product = ref<ProductDetailData>({
     id: "",
@@ -100,6 +103,10 @@ const providerId = computed(() => product.value.provider.id ?? "");
 const currentDraft = computed(() => providerId.value ? quoteBuilderStore.getDraft(providerId.value) : null);
 const draftItems = computed(() => currentDraft.value?.items ?? []);
 const draftSubtotal = computed(() => providerId.value ? quoteBuilderStore.getSubtotal(providerId.value) : 0);
+const draftDiscountedSubtotal = computed(() =>
+    providerId.value ? quoteBuilderStore.getDiscountedSubtotal(providerId.value) : 0
+);
+const draftHasDiscount = computed(() => draftDiscountedSubtotal.value < draftSubtotal.value);
 
 const showConfirmQuoteModal = ref(false);
 const showAddressPicker = ref(false);
@@ -244,7 +251,14 @@ async function loadProduct(id: string) {
                 description: prodRes.description || "Producto de alta calidad disponible para compra al por mayor.",
                 shippingMethods: mappedShipping,
             };
+
+            try {
+                currentOffer.value = await offerApi.getOfferByProduct(prodRes.id);
+            } catch {
+                currentOffer.value = null;
+            }
         } else {
+            currentOffer.value = null;
             product.value = {
               id,
                 category_id: "",
@@ -296,14 +310,28 @@ const selectedShipping = computed(() => {
     );
 });
 
+const hasOffer = computed(() => currentOffer.value !== null);
+const discountPercentage = computed(() => currentOffer.value?.discount_percentage ?? null);
+const discountedUnitPrice = computed(() =>
+    discountPercentage.value !== null
+        ? Math.round(product.value.price * (100 - discountPercentage.value)) / 100
+        : product.value.price
+);
+
 const subtotal = computed(() => product.value.price * quantity.value);
+const discountedSubtotal = computed(() => discountedUnitPrice.value * quantity.value);
 const shippingCost = computed(() => selectedShipping.value?.cost || 0);
-const total = computed(() => subtotal.value + shippingCost.value);
+const total = computed(() => discountedSubtotal.value + shippingCost.value);
 
 const formatPrice = (val: number | null | undefined) => {
     if (val === null || val === undefined || isNaN(val)) return "0";
     return val.toLocaleString("es-NI");
 };
+
+const itemEffectiveUnitPrice = (unitPrice: number, discountPercentage: number | null) =>
+    discountPercentage !== null
+        ? Math.round(unitPrice * (100 - discountPercentage)) / 100
+        : unitPrice;
 
 const increaseQuantity = () => {
     quantity.value += 1;
@@ -325,6 +353,8 @@ const handleAddToQuote = () => {
         unitPrice: product.value.price,
         imageBlobId: product.value.imageBlobId,
         quantity: quantity.value,
+        offerId: currentOffer.value?.id ?? null,
+        discountPercentage: discountPercentage.value,
     }, {
         name: product.value.provider.name,
         logoBlobId: product.value.provider.logoBlobId,
@@ -455,10 +485,23 @@ const navigateToCategory = () => {
                             <span class="text-sm font-semibold text-neutral-900">{{ product.provider.name }}</span>
                             <i v-if="product.provider.verified" class="fa-solid fa-circle-check text-blue-500 text-base"></i>
                         </div>
-                        <div class="mb-2.5">
-                            <span class="font-serif text-2xl lg:text-3xl font-bold text-orange-500">
+                        <div class="mb-2.5 flex flex-wrap items-center gap-3">
+                            <span v-if="hasOffer" class="text-base text-neutral-400 line-through">
                                 C$ {{ formatPrice(product.price) }}
                             </span>
+                            <span class="font-serif text-2xl lg:text-3xl font-bold text-orange-500">
+                                C$ {{ formatPrice(discountedUnitPrice) }}
+                            </span>
+                            <span
+                                v-if="hasOffer"
+                                class="rounded-full bg-orange-500 px-2.5 py-1 text-xs font-bold text-white"
+                            >
+                                -{{ discountPercentage }}%
+                            </span>
+                        </div>
+                        <div v-if="hasOffer" class="mb-3 inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
+                            <i class="fa-solid fa-tags"></i>
+                            <span>Descuento aplicado al aceptar la cotización</span>
                         </div>
                         <div class="mb-3 text-sm text-neutral-900">
                             <strong class="font-semibold text-neutral-900">Pedido mínimo:</strong>
@@ -624,7 +667,10 @@ const navigateToCategory = () => {
                         <div class="mb-7 flex flex-col gap-2.5 text-sm">
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Precio unitario:</span>
-                                <span class="font-medium text-neutral-900">C$ {{ formatPrice(product.price) }}</span>
+                                <span class="flex items-center gap-2">
+                                    <span v-if="hasOffer" class="text-neutral-400 line-through">C$ {{ formatPrice(product.price) }}</span>
+                                    <span class="font-medium text-neutral-900">C$ {{ formatPrice(discountedUnitPrice) }}</span>
+                                </span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Cantidad:</span>
@@ -637,7 +683,10 @@ const navigateToCategory = () => {
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Subtotal:</span>
-                                <span class="font-medium text-neutral-900">C$ {{ formatPrice(subtotal) }}</span>
+                                <span class="flex items-center gap-2">
+                                    <span v-if="hasOffer" class="text-neutral-400 line-through">C$ {{ formatPrice(subtotal) }}</span>
+                                    <span class="font-medium text-neutral-900">C$ {{ formatPrice(discountedSubtotal) }}</span>
+                                </span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Envío estimado:</span>
@@ -674,7 +723,16 @@ const navigateToCategory = () => {
                             </div>
                             <div class="flex-1 min-w-0">
                                 <h4 class="font-semibold text-neutral-900 truncate">{{ item.productTitle }}</h4>
-                                <p class="text-sm text-neutral-500">{{ item.quantity }} und x C$ {{ formatPrice(item.unitPrice) }}</p>
+                                <p class="text-sm text-neutral-500">
+                                    {{ item.quantity }} und x
+                                    <span v-if="item.discountPercentage" class="text-neutral-400 line-through">C$ {{ formatPrice(item.unitPrice) }}</span>
+                                    <span :class="item.discountPercentage ? 'font-semibold text-orange-500' : ''">
+                                        C$ {{ formatPrice(itemEffectiveUnitPrice(item.unitPrice, item.discountPercentage)) }}
+                                    </span>
+                                    <span v-if="item.discountPercentage" class="ml-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600">
+                                        -{{ item.discountPercentage }}%
+                                    </span>
+                                </p>
                             </div>
                             <div class="flex items-center gap-3">
                                 <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
@@ -694,7 +752,9 @@ const navigateToCategory = () => {
 
                         <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pt-4 border-t border-neutral-300">
                             <span class="text-lg font-bold text-neutral-900">
-                                Subtotal: <span class="text-orange-500">C$ {{ formatPrice(draftSubtotal) }}</span>
+                                Subtotal:
+                                <span v-if="draftHasDiscount" class="text-neutral-400 line-through">C$ {{ formatPrice(draftSubtotal) }}</span>
+                                <span class="text-orange-500">C$ {{ formatPrice(draftHasDiscount ? draftDiscountedSubtotal : draftSubtotal) }}</span>
                             </span>
                             <button @click="openConfirmModal" class="w-full sm:w-auto rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-8 py-3 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
                                 Hacer oficial el pedido

@@ -67,9 +67,3 @@ export const SearchProductsByImageSchema = z.object({
   limit: z.number().int().positive().default(20),
   offset: z.number().int().nonnegative().default(0),
 });
-
-// PromoteProductDto | product promotion signaling payload
-export const PromoteProductRequestSchema = z.object({
-  product_id: z.uuid("ID de producto inválido"),
-  payload: z.unknown(),
-});

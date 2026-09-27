@@ -1,43 +1,70 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
+import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
-import type { ProductResponse } from "@/api";
+import { useProductImageApi } from "@/api/modules/catalog/product_image/useProductImageApi";
+import type { ProductOfferResponse, ProductResponse } from "@/api";
 import ProductImage from "@/components/product/ProductImage.vue";
 
-interface OfferProduct extends ProductResponse {
-  discount: number;
-  originalPrice: number;
-  categoryName: string;
+interface OfferCard {
+  offer: ProductOfferResponse;
+  product: ProductResponse;
+  discountedPrice: number;
 }
 
-const offers = ref<OfferProduct[]>([]);
+const offers = ref<OfferCard[]>([]);
+const offerApi = useOfferApi();
 const productApi = useProductApi();
+const productImageApi = useProductImageApi();
 const isLoading = ref(true);
 const carouselRef = ref<HTMLElement | null>(null);
 
-// Deterministic seed based on product ID to generate 15%, 20%, 25%, or 30% discount
-const calculateSeedDiscount = (id: string) => {
-  const seed = id.charCodeAt(0) + id.charCodeAt(id.length - 1);
-  const discounts = [15, 20, 25, 30];
-  return discounts[seed % discounts.length];
-};
+const hasOffers = computed(() => offers.value.length > 0);
 
-const formatPrice = (val: number) => `C$ ${val.toLocaleString("es-NI", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+const formatPrice = (val: number) =>
+  `C$ ${val.toLocaleString("es-NI", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+
+const applyDiscount = (base: number, percentage: number) =>
+  Math.round(base * (100 - percentage)) / 100;
 
 onMounted(async () => {
   try {
-    const res = await productApi.getProducts({ limit: 8, sort_by: "score", sort_direction: "desc" });
-
-    offers.value = res.data.map(prod => {
-      const discount = calculateSeedDiscount(prod.id);
-      const originalPrice = prod.base_price / (1 - (discount / 100));
-      return {
-        ...prod,
-        discount,
-        originalPrice,
-        categoryName: prod.category?.name || "General"
-      };
+    const res = await offerApi.getOffers({
+      limit: 8,
+      sort_by: "discount_percentage",
+      sort_direction: "desc",
     });
+
+    if (res.data.length === 0) {
+      offers.value = [];
+      return;
+    }
+
+    const productIds = res.data.map((offer) => offer.product_id);
+    const emptyProducts: Record<string, ProductResponse> = {};
+    const emptyImages: Record<string, string[]> = {};
+
+    const [productsMap, imagesMap] = await Promise.all([
+      productApi
+        .getProductsBatch({ product_ids: productIds })
+        .catch(() => emptyProducts),
+      productImageApi
+        .getProductImagesBatch({ product_ids: productIds })
+        .catch(() => emptyImages),
+    ]);
+
+    offers.value = res.data
+      .map((offer) => {
+        const product = productsMap[offer.product_id];
+        if (!product) return null;
+        product.image_blob_ids = imagesMap[offer.product_id] ?? [];
+        return {
+          offer,
+          product,
+          discountedPrice: applyDiscount(product.base_price, offer.discount_percentage),
+        };
+      })
+      .filter((card): card is OfferCard => card !== null);
   } catch (err) {
     console.error("Failed to load offers:", err);
   } finally {
@@ -79,17 +106,21 @@ const scroll = (direction: "left" | "right") => {
           Aprovecha descuentos exclusivos y haz crecer tu negocio pagando menos.
         </p>
 
-        <router-link :to="{ name: 'home' }" class="inline-flex items-center gap-3 rounded-full bg-(--primary-blue) px-6 py-3 text-sm font-bold text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-blue-600">
-          <span>Ver todas las ofertas</span>
+        <router-link :to="{ name: 'products' }" class="inline-flex items-center gap-3 rounded-full bg-(--primary-blue) px-6 py-3 text-sm font-bold text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-blue-600">
+          <span>Ver todos los productos</span>
           <i class="fa-solid fa-chevron-right text-xs"></i>
         </router-link>
       </div>
 
-      <!-- Right Column: Carousel -->
+      <!-- Right Column: Carousel / Empty state -->
       <div class="group relative z-10 flex w-full items-center md:w-2/3">
 
         <!-- Left Nav -->
-        <button @click="scroll('left')" class="absolute -left-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-(--primary-blue) opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+        <button
+          v-if="hasOffers"
+          @click="scroll('left')"
+          class="absolute -left-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-(--primary-blue) opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+        >
           <i class="fa-solid fa-chevron-left"></i>
         </button>
 
@@ -100,31 +131,43 @@ const scroll = (direction: "left" | "right") => {
             <div v-for="n in 4" :key="n" class="h-80 min-w-55 shrink-0 animate-pulse rounded-2xl bg-white p-4 shadow-sm"></div>
           </template>
 
+          <!-- Empty State -->
+          <div
+            v-else-if="!hasOffers"
+            class="flex w-full flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-orange-200 bg-white/70 px-6 py-12 text-center"
+          >
+            <i class="fa-solid fa-tags text-3xl text-(--primary-orange)"></i>
+            <h3 class="font-serif text-lg font-bold text-(--primary-blue)">No hay ofertas disponibles</h3>
+            <p class="max-w-sm text-sm text-neutral-500">
+              En este momento ningún proveedor tiene descuentos activos. Vuelve pronto para encontrar nuevas promociones.
+            </p>
+          </div>
+
           <!-- Product Cards -->
           <template v-else>
-            <router-link v-for="item in offers" :key="item.id" :to="{ name: 'product-detail', params: { id: item.id } }" class="group/card relative flex w-55 min-w-55 snap-start flex-col rounded-2xl bg-white p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl">
+            <router-link v-for="item in offers" :key="item.offer.product_id" :to="{ name: 'product-detail', params: { id: item.offer.product_id } }" class="group/card relative flex w-55 min-w-55 snap-start flex-col rounded-2xl bg-white p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl">
 
               <!-- Discount Badge -->
               <span class="absolute left-3 top-3 z-10 rounded-full bg-(--primary-orange) px-2.5 py-1 text-xs font-bold text-white">
-                -{{ item.discount }}%
+                -{{ item.offer.discount_percentage }}%
               </span>
 
               <!-- Image -->
               <div class="mb-4 h-36 w-full overflow-hidden rounded-xl bg-slate-50 p-2">
-                <ProductImage :blob-id="item.image_blob_ids?.[0]" :alt="item.title" class="h-full w-full object-contain transition-transform group-hover/card:scale-105" />
+                <ProductImage :blob-id="item.product.image_blob_ids?.[0]" :alt="item.product.title" class="h-full w-full object-contain transition-transform group-hover/card:scale-105" />
               </div>
 
               <!-- Content -->
-              <h3 class="mb-2 line-clamp-2 text-sm font-bold text-(--primary-blue)">{{ item.title }}</h3>
+              <h3 class="mb-2 line-clamp-2 text-sm font-bold text-(--primary-blue)">{{ item.product.title }}</h3>
 
               <div class="mb-3 flex items-baseline gap-2">
-                <span class="text-xs text-slate-400 line-through">{{ formatPrice(item.originalPrice) }}</span>
-                <span class="text-lg font-extrabold text-(--primary-orange)">{{ formatPrice(item.base_price) }}</span>
+                <span class="text-xs text-slate-400 line-through">{{ formatPrice(item.product.base_price) }}</span>
+                <span class="text-lg font-extrabold text-(--primary-orange)">{{ formatPrice(item.discountedPrice) }}</span>
               </div>
 
               <!-- Category Pill -->
               <span class="mt-auto w-fit rounded-full bg-neutral-100 px-3 py-1 text-[0.625rem] font-bold text-neutral-500">
-                {{ item.categoryName }}
+                {{ item.product.category?.name || "General" }}
               </span>
             </router-link>
           </template>
@@ -132,7 +175,11 @@ const scroll = (direction: "left" | "right") => {
         </div>
 
         <!-- Right Nav -->
-        <button @click="scroll('right')" class="absolute -right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-(--primary-blue) opacity-0 shadow-lg transition-opacity group-hover:opacity-100">
+        <button
+          v-if="hasOffers"
+          @click="scroll('right')"
+          class="absolute -right-5 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-(--primary-blue) opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
+        >
           <i class="fa-solid fa-chevron-right"></i>
         </button>
 

@@ -6,7 +6,7 @@ export * from "./modules/catalog/category_image/types.d";
 export * from "./modules/catalog/inventory/types.d";
 export * from "./modules/catalog/product/types.d";
 export * from "./modules/catalog/product_image/types.d";
-export * from "./modules/catalog/product_promotion/types.d";
+export * from "./modules/catalog/offer/types.d";
 
 // Commerce
 export * from "./modules/commerce/cart/types.d";

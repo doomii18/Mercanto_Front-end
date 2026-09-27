@@ -5,6 +5,5 @@ export const NotificationEventTypeSchema = z.enum([
   "NewChatMessage",
   "ProductOutOfStock",
   "QuoteStatusChanged",
-  "ProductPromoted",
   "QuoteRequestReceived",
 ]);

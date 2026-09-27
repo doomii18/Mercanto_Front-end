@@ -6,13 +6,12 @@ import {
   BatchProductQuerySchema,
   ProductImageSearchUploadSchema,
   SearchProductsByImageSchema,
-  PromoteProductRequestSchema,
 } from "./requests";
 import {
   ProductResponseSchema,
   PaginatedProductResponseSchema,
   PaginatedProductImageSearchResponseSchema,
-  PromoteProductResponseSchema,
+  BatchProductResponseSchema,
   BatchProductShippingResponseSchema,
   UploadUrlResponseSchema,
 } from "./responses";
@@ -24,12 +23,9 @@ import type {
   CreateProductRequest,
   PatchProductRequest,
   PaginatedProductImageSearchResponse,
+  BatchProductResponse,
   BatchProductShippingResponse,
 } from "./types";
-import type {
-  PromoteProductRequest,
-  PromoteProductResponse,
-} from "../product_promotion/types";
 import type {
   ShippingMethod,
   BatchProductQuery,
@@ -212,30 +208,28 @@ export const useProductApi = () => {
     return hits;
   }
 
-  // POST /products/promote
-  async function promoteProduct(
-    payload: PromoteProductRequest
-  ): Promise<PromoteProductResponse> {
-    const validated = PromoteProductRequestSchema.parse(payload);
-    const { data, error } = await useApiFetch("/products/promote")
+  // POST /products/batch
+  async function getProductsBatch(payload: BatchProductQuery): Promise<BatchProductResponse> {
+    const validated = BatchProductQuerySchema.parse(payload);
+    const { data, error } = await useApiFetch("/products/batch")
       .post(validated)
       .json();
 
     if (error.value || !data.value) {
-      throw error.value || new Error("Failed to promote product");
+      throw error.value || new Error("Failed to batch fetch products");
     }
-    return PromoteProductResponseSchema.parse(data.value);
+    return BatchProductResponseSchema.parse(data.value);
   }
 
   return {
     getProducts,
     getProduct,
+    getProductsBatch,
     createProduct,
     updateProduct,
     deleteProduct,
     getProductShipping,
     getProductShippingBatch,
     searchProductsByImage,
-    promoteProduct,
   };
 };

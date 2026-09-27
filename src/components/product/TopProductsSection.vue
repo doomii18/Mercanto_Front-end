@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
+import { useProductOffers } from "@/composables/useProductOffers";
 import type { ProductResponse } from "@/api";
 import ProductCard from "./ProductCard.vue";
 import topSellersHeroImg from "../../assets/top-sellers-hero.png";
@@ -24,6 +25,9 @@ const topProducts = ref<TopProductItem[]>([]);
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
 const isLoading = ref(true);
+
+const topProductIds = computed(() => topProducts.value.map((product) => product.id));
+const { discountFor } = useProductOffers(topProductIds);
 
 const BUBBLE_CLASSES: TopProductItem["bubbleClass"][] = [
   "orange",
@@ -149,6 +153,7 @@ onMounted(() => {
         :review-count="product.reviewCount"
         :rank="product.rank"
         :bubble-class="product.bubbleClass"
+        :discount-percentage="discountFor(product.id)"
         badge-text="Los más vendidos"
         badge-icon="fa-solid fa-fire"
       />

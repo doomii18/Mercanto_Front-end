@@ -4,6 +4,7 @@ import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import type { ProductImageSearchHit } from "@/api";
 import ProductCard from "@/components/product/ProductCard.vue";
+import { useProductOffers } from "@/composables/useProductOffers";
 
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
@@ -19,6 +20,9 @@ const results = ref<ProductImageSearchHit[]>([]);
 const sortedResults = computed(() => {
   return [...results.value].sort((a, b) => a.distance - b.distance);
 });
+
+const resultProductIds = computed(() => sortedResults.value.map((hit) => hit.product.id));
+const { discountFor } = useProductOffers(resultProductIds);
 
 const handleFile = (file: File) => {
   if (!file.type.startsWith("image/")) {
@@ -324,6 +328,7 @@ onBeforeUnmount(() => {
               badge-variant="teal"
               border-color="teal"
               bubble-class="teal"
+              :discount-percentage="discountFor(hit.product.id)"
             />
           </div>
         </div>

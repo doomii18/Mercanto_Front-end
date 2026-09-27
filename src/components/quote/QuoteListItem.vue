@@ -40,9 +40,21 @@ const totalUnits = computed(() => {
   return items.value.reduce((acc, item) => acc + item.quantity, 0);
 });
 
+const effectiveUnitPrice = (item: {
+  unit_price_snapshot: number;
+  discount_percentage: number | null;
+}): number =>
+  item.discount_percentage !== null
+    ? Math.round(item.unit_price_snapshot * (100 - item.discount_percentage)) / 100
+    : item.unit_price_snapshot;
+
+const hasAppliedOffer = computed(() =>
+  items.value.some((item) => item.discount_percentage !== null)
+);
+
 const calculatedTotal = computed(() => {
   return items.value.reduce(
-    (acc, item) => acc + item.quantity * item.unit_price_snapshot,
+    (acc, item) => acc + item.quantity * effectiveUnitPrice(item),
     0
   );
 });
@@ -117,6 +129,12 @@ onMounted(() => {
       <div class="quote-total-group">
         <p class="quote-total-label">Total</p>
         <h3 class="quote-amount">{{ formatCurrency(calculatedTotal) }}</h3>
+        <span
+          v-if="hasAppliedOffer"
+          class="mt-0.5 w-fit rounded-full bg-orange-100 px-2 py-0.5 text-[0.625rem] font-bold text-orange-600"
+        >
+          Descuento aplicado
+        </span>
       </div>
       <p class="quote-count">
         {{ totalUnits }} {{ totalUnits === 1 ? 'producto' : 'productos' }}

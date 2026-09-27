@@ -16,6 +16,8 @@ export interface QuoteItemDraft {
   unitPrice: number;
   imageBlobId: string | null;
   shippingPreference: ShippingMethod;
+  offerId: string | null;
+  discountPercentage: number | null;
 }
 
 export interface QuoteDraft {
@@ -35,6 +37,8 @@ export interface AddItemInput {
   imageBlobId?: string | null;
   quantity?: number;
   shippingPreference?: ShippingMethod;
+  offerId?: string | null;
+  discountPercentage?: number | null;
 }
 
 const DEFAULT_SHIPPING: ShippingMethod = "bus";
@@ -87,6 +91,9 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     const existing = draft.items.find((i) => i.productId === input.productId);
     if (existing) {
       existing.quantity += input.quantity ?? 1;
+      if (input.offerId !== undefined) existing.offerId = input.offerId;
+      if (input.discountPercentage !== undefined)
+        existing.discountPercentage = input.discountPercentage;
       return;
     }
 
@@ -97,6 +104,8 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
       unitPrice: input.unitPrice,
       imageBlobId: input.imageBlobId ?? null,
       shippingPreference: input.shippingPreference ?? DEFAULT_SHIPPING,
+      offerId: input.offerId ?? null,
+      discountPercentage: input.discountPercentage ?? null,
     });
   }
 
@@ -170,6 +179,20 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     return draft.items.reduce((acc, i) => acc + i.quantity * i.unitPrice, 0);
   }
 
+  // Estimated subtotal applying each item's current offer (applied by the
+  // backend only once the provider accepts the quote).
+  function getDiscountedSubtotal(providerId: string): number {
+    const draft = drafts.value[providerId];
+    if (!draft) return 0;
+    return draft.items.reduce((acc, i) => {
+      const unitPrice =
+        i.discountPercentage !== null
+          ? Math.round(i.unitPrice * (100 - i.discountPercentage)) / 100
+          : i.unitPrice;
+      return acc + i.quantity * unitPrice;
+    }, 0);
+  }
+
   // creation
   async function createQuoteForProvider(
     providerId: string,
@@ -227,6 +250,7 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     getItemCount,
     getTotalUnits,
     getSubtotal,
+    getDiscountedSubtotal,
     addItem,
     removeItem,
     updateItemQuantity,

@@ -23,6 +23,7 @@ import type {
   PaginatedProductResponseSchema,
   ProductImageSearchHitSchema,
   PaginatedProductImageSearchResponseSchema,
+  BatchProductResponseSchema,
   BatchProductShippingResponseSchema,
 } from "./responses";
 
@@ -47,4 +48,5 @@ export type ProductResponse = z.infer<typeof ProductResponseSchema>;
 export type PaginatedProductResponse = z.infer<typeof PaginatedProductResponseSchema>;
 export type ProductImageSearchHit = z.infer<typeof ProductImageSearchHitSchema>;
 export type PaginatedProductImageSearchResponse = z.infer<typeof PaginatedProductImageSearchResponseSchema>;
+export type BatchProductResponse = z.infer<typeof BatchProductResponseSchema>;
 export type BatchProductShippingResponse = z.infer<typeof BatchProductShippingResponseSchema>;

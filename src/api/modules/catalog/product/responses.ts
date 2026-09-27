@@ -39,10 +39,8 @@ export const ProductImageSearchHitSchema = z.object({
 // PaginatedResponseDto<ProductImageSearchHitDto> | paginated similarity search hits
 export const PaginatedProductImageSearchResponseSchema = PaginatedResponseSchema(ProductImageSearchHitSchema);
 
-// PromoteProductResponseDto | product promotion signaling response
-export const PromoteProductResponseSchema = z.object({
-  product_id: z.uuid(),
-});
+// BatchProductResponse | products mapped by product id
+export const BatchProductResponseSchema = z.record(z.uuid(), ProductResponseSchema);
 
 // BatchProductShippingResponse | batch product shipping methods map
 export const BatchProductShippingResponseSchema = z.record(
