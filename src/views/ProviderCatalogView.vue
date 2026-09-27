@@ -9,6 +9,7 @@ import type { ProductResponse, PublicProviderDto, ProductCategoryResponse } from
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 const route = useRoute();
 const geoStore = useGeoStore();
@@ -18,6 +19,7 @@ const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
 const categoryApi = useCategoryApi();
 const cartApi = useCartApi();
+const reviewApi = useReviewApi();
 
 const provider = ref<PublicProviderDto | null>(null);
 const products = ref<ProductResponse[]>([]);
@@ -87,7 +89,17 @@ const fetchProvider = async () => {
   if (!providerId.value) return;
   isLoadingProvider.value = true;
   try {
-    provider.value = await organizationApi.getPublicProvider(providerId.value);
+    const prov = await organizationApi.getPublicProvider(providerId.value);
+    try {
+      const metric = await reviewApi.getProviderMetrics(providerId.value);
+      prov.rating = {
+        average_score: metric.rating_score,
+        review_count: metric.review_count,
+      };
+    } catch {
+      // fallback
+    }
+    provider.value = prov;
   } catch (err) {
     console.error("Failed to fetch provider:", err);
   } finally {
@@ -153,7 +165,24 @@ const fetchProducts = async () => {
       max_price: maxPrice.value !== "" && maxPrice.value !== null ? Number(maxPrice.value) : undefined,
       ...sortParams,
     });
-    products.value = res.data;
+
+    const productIds = res.data.map((p) => p.id);
+    let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
+    if (productIds.length > 0) {
+      metricsMap = await reviewApi
+        .getProductMetricsBatch({ product_ids: productIds })
+        .catch(() => ({}));
+    }
+
+    products.value = res.data.map((p) => {
+      const metric = metricsMap[p.id];
+      return {
+        ...p,
+        rating: metric
+          ? { average_score: metric.rating_score, review_count: metric.review_count }
+          : p.rating,
+      };
+    });
     totalProducts.value = res.total;
     totalPages.value = Math.max(1, Math.ceil(res.total / pageSize));
   } catch (err) {

@@ -3,6 +3,7 @@ import { ref, onMounted } from "vue";
 import { useGeoStore } from "../../stores/geo";
 import ProviderCard from "./ProviderCard.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 interface TopProviderItem {
   id: string;
@@ -18,6 +19,7 @@ const geoStore = useGeoStore();
 const providers = ref<TopProviderItem[]>([]);
 const isLoading = ref(true);
 const organizationApi = useOrganizationApi();
+const reviewApi = useReviewApi();
 
 function resolveLocationText(municipalityId?: string): string {
   if (!municipalityId) return "Nicaragua";
@@ -39,16 +41,35 @@ async function loadTopProviders() {
       sort_by: "score",
       sort_dir: "desc",
     });
-    providers.value = res.data.map((prov) => ({
-      id: prov.id,
-      name: prov.company_name,
-      logoBlobId: prov.logo_blob_id ?? null,
-      rating: prov.rating?.average_score ?? 0,
-      reviewCount: prov.rating?.review_count ?? 0,
-      locationText: resolveLocationText(prov.municipality_id),
-      isVerified:
-        (prov as any).is_verified ?? prov.rating?.review_count > 0,
-    }));
+
+    const providerIds = res.data.map((prov) => prov.id);
+    let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
+
+    if (providerIds.length > 0) {
+      metricsMap = await reviewApi
+        .getProviderMetricsBatch({ provider_ids: providerIds })
+        .catch((err) => {
+          console.warn("Failed to batch fetch provider metrics:", err);
+          return {};
+        });
+    }
+
+    providers.value = res.data.map((prov) => {
+      const metric = metricsMap[prov.id];
+      const rating = metric?.rating_score ?? prov.rating?.average_score ?? 0;
+      const reviewCount = metric?.review_count ?? prov.rating?.review_count ?? 0;
+
+      return {
+        id: prov.id,
+        name: prov.company_name,
+        logoBlobId: prov.logo_blob_id ?? null,
+        rating,
+        reviewCount,
+        locationText: resolveLocationText(prov.municipality_id),
+        isVerified:
+          (prov as any).is_verified ?? reviewCount > 0,
+      };
+    });
   } catch (err) {
     console.error("Failed to load top providers:", err);
   } finally {

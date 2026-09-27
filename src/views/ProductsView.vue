@@ -9,6 +9,7 @@ import CategoryPicker from "../components/category/CategoryPicker.vue";
 import ProviderCard from "../components/organization/ProviderCard.vue";
 import ProductCard from "../components/product/ProductCard.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 interface ProviderMeta {
   name: string;
@@ -34,6 +35,7 @@ const router = useRouter();
 const organizationApi = useOrganizationApi();
 const categoryApi = useCategoryApi();
 const productApi = useProductApi();
+const reviewApi = useReviewApi();
 
 const searchFilter = ref<string>("");
 const categories = ref<ProductCategoryResponse[]>([]);
@@ -189,13 +191,31 @@ async function loadProducts(isAppend = false): Promise<void> {
 
     totalApiProducts.value = res.total;
 
-    if (isAppend) {
-      apiProducts.value.push(...res.data);
-    } else {
-      apiProducts.value = res.data;
+    const productIds = res.data.map((p) => p.id);
+    let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
+    if (productIds.length > 0) {
+      metricsMap = await reviewApi
+        .getProductMetricsBatch({ product_ids: productIds })
+        .catch(() => ({}));
     }
 
-    await resolveFeaturedProviderMeta(res.data);
+    const enrichedProducts = res.data.map((p) => {
+      const metric = metricsMap[p.id];
+      return {
+        ...p,
+        rating: metric
+          ? { average_score: metric.rating_score, review_count: metric.review_count }
+          : p.rating,
+      };
+    });
+
+    if (isAppend) {
+      apiProducts.value.push(...enrichedProducts);
+    } else {
+      apiProducts.value = enrichedProducts;
+    }
+
+    await resolveFeaturedProviderMeta(enrichedProducts);
   } catch (err) {
     console.error("Error loading products:", err);
     if (!isAppend) {

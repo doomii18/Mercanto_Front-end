@@ -18,6 +18,7 @@ import FacturaTemplate from "@/components/invoice/FacturaTemplate.vue";
 import DownloadInvoiceButton from "@/components/invoice/DownloadInvoiceButton.vue";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 const route = useRoute();
 const router = useRouter();
@@ -26,11 +27,13 @@ const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
 const quoteApi = useQuoteApi();
 const productApi = useProductApi();
+const reviewApi = useReviewApi();
 
 
 const facturaTemplateRef = ref<InstanceType<typeof FacturaTemplate> | null>(null);
 const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
 const provider = ref<PublicProviderDto | null>(null);
+const providerMetrics = ref<{ rating_score: number; review_count: number } | null>(null);
 const buyerProfile = ref<UserProfileResponse | null>(null);
 const itemBlobIds = ref<Record<string, string | null>>({});
 const isLoading = ref(true);
@@ -121,6 +124,13 @@ const loadQuoteDetails = async () => {
         provider.value = await organizationApi.getPublicProvider(
           detail.value.quote.provider_id
         );
+        try {
+          providerMetrics.value = await reviewApi.getProviderMetrics(
+            detail.value.quote.provider_id
+          );
+        } catch {
+          providerMetrics.value = null;
+        }
       }
       await Promise.all(
         detail.value.items.map(async (item) => {
@@ -333,12 +343,15 @@ onMounted(() => {
             <h5 class="text-base text-neutral-900 font-bold mb-1.5 font-serif">
               {{ provider?.company_name || "Proveedor" }}
             </h5>
-            <div class="flex justify-center gap-1 text-sm mb-5">
-              <i class="fa-solid fa-star text-amber-500"></i>
-              <i class="fa-solid fa-star text-amber-500"></i>
-              <i class="fa-solid fa-star text-amber-500"></i>
-              <i class="fa-solid fa-star text-amber-500"></i>
-              <i class="fa-regular fa-star text-neutral-300"></i>
+            <div class="flex items-center justify-center gap-1 text-sm mb-5" :title="`${providerMetrics?.review_count ?? 0} valoraciones`">
+              <i
+                v-for="star in 5"
+                :key="star"
+                :class="star <= Math.round(providerMetrics?.rating_score ?? 0) ? 'fa-solid fa-star text-amber-500' : 'fa-regular fa-star text-neutral-300'"
+              ></i>
+              <span class="ml-1 text-xs font-bold text-neutral-700">
+                {{ (providerMetrics?.rating_score ?? 0).toFixed(1) }}
+              </span>
             </div>
             <router-link
               :to="{

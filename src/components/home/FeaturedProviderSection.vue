@@ -5,12 +5,14 @@ import { useGeoStore } from "@/stores/geo";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import type { PublicProviderDto } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 const geoStore = useGeoStore();
 
 const provider = ref<PublicProviderDto | null>(null);
 const isLoading = ref(true);
 const organizationApi = useOrganizationApi();
+const reviewApi = useReviewApi();
 
 const resolvedLocation = computed(() => {
   if (!provider.value?.municipality_id) return "Nicaragua";
@@ -36,7 +38,18 @@ onMounted(async () => {
     });
 
     if (res.data.length > 0) {
-      provider.value = res.data[0];
+      const p = res.data[0];
+      try {
+        const metric = await reviewApi.getProviderMetrics(p.id);
+        p.rating = {
+          average_score: metric.rating_score,
+          review_count: metric.review_count,
+        };
+      } catch (err) {
+        console.warn("Failed to load featured provider metrics:", err);
+        p.rating = p.rating ?? { average_score: 0, review_count: 0 };
+      }
+      provider.value = p;
     }
   } catch (err) {
     console.error("Failed to load featured provider:", err);
@@ -103,7 +116,7 @@ onMounted(async () => {
               <div class="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-teal-50 text-(--light-teal) group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-box-open text-sm"></i>
               </div>
-              <span class="text-[0.6875rem] font-bold tracking-tight text-(--primary-blue)">{{ provider.rating.review_count }}+ Pedidos</span>
+              <span class="text-[0.6875rem] font-bold tracking-tight text-(--primary-blue)">{{ provider.rating?.review_count ?? 0 }}+ Pedidos</span>
               <span class="text-[0.625rem] text-slate-500">Historial activo</span>
             </div>
 
@@ -162,11 +175,11 @@ onMounted(async () => {
               </div>
 
               <div class="mb-1 flex items-center gap-1 text-xs text-(--primary-orange)">
-                <i v-for="n in 5" :key="n" :class="n <= Math.round(provider.rating.average_score) ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
-                <span class="ml-1 text-[0.6875rem] font-bold text-slate-700">{{ provider.rating.average_score.toFixed(1) }}</span>
+                <i v-for="n in 5" :key="n" :class="n <= Math.round(provider.rating?.average_score ?? 0) ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
+                <span class="ml-1 text-[0.6875rem] font-bold text-slate-700">{{ (provider.rating?.average_score ?? 0).toFixed(1) }}</span>
               </div>
               <p class="mb-2 text-[0.625rem] text-slate-400">
-                ({{ provider.rating.review_count }} calificaciones recibidas)
+                ({{ provider.rating?.review_count ?? 0 }} calificaciones recibidas)
               </p>
               <p class="text-[0.625rem] leading-relaxed text-slate-600 line-clamp-2">
                 {{ provider.company_description || 'Proveedor confiable con entregas garantizadas en todo el territorio.' }}
@@ -188,10 +201,10 @@ onMounted(async () => {
               <!-- Floating Rating Pill -->
               <div class="absolute bottom-4 z-20 flex items-center gap-1.5 rounded-full border border-slate-200/80 bg-white/95 px-3.5 py-1.5 shadow-md backdrop-blur-md">
                 <div class="flex items-center gap-0.5 text-[0.625rem] text-(--primary-orange)">
-                  <i v-for="n in 5" :key="n" :class="n <= Math.round(provider.rating.average_score) ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
+                  <i v-for="n in 5" :key="n" :class="n <= Math.round(provider.rating?.average_score ?? 0) ? 'fa-solid fa-star' : 'fa-regular fa-star'"></i>
                 </div>
-                <span class="text-xs font-bold text-(--primary-blue)">{{ provider.rating.average_score.toFixed(1) }}</span>
-                <span class="text-[0.625rem] text-slate-400">({{ provider.rating.review_count }})</span>
+                <span class="text-xs font-bold text-(--primary-blue)">{{ (provider.rating?.average_score ?? 0).toFixed(1) }}</span>
+                <span class="text-[0.625rem] text-slate-400">({{ provider.rating?.review_count ?? 0 }})</span>
               </div>
             </div>
           </div>

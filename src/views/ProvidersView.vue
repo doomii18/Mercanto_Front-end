@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import { useGeoStore } from "@/stores/geo";
 import ProviderCard from "@/components/organization/ProviderCard.vue";
 import type { PublicProviderDto, OrganizationSortField } from "@/api";
@@ -9,6 +10,7 @@ import type { PublicProviderDto, OrganizationSortField } from "@/api";
 const route = useRoute();
 const router = useRouter();
 const organizationApi = useOrganizationApi();
+const reviewApi = useReviewApi();
 const geoStore = useGeoStore();
 
 // Providers State
@@ -65,7 +67,23 @@ async function loadProviders() {
       sort_dir: sortDir.value,
     });
 
-    providers.value = res.data;
+    const providerIds = res.data.map((p) => p.id);
+    let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
+    if (providerIds.length > 0) {
+      metricsMap = await reviewApi
+        .getProviderMetricsBatch({ provider_ids: providerIds })
+        .catch(() => ({}));
+    }
+
+    providers.value = res.data.map((p) => {
+      const metric = metricsMap[p.id];
+      return {
+        ...p,
+        rating: metric
+          ? { average_score: metric.rating_score, review_count: metric.review_count }
+          : p.rating,
+      };
+    });
     totalProviders.value = res.total;
   } catch (err) {
     console.error("Failed to load providers:", err);

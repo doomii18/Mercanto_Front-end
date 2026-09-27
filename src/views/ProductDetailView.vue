@@ -13,6 +13,7 @@ import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
 import type { PaymentMethod } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 interface ShippingMethodOption {
     id: string;
@@ -64,6 +65,7 @@ const route = useRoute();
 const router = useRouter();
 const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
+const reviewApi = useReviewApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();
@@ -190,10 +192,27 @@ async function loadProduct(id: string) {
                 providerName = org.company_name;
                 providerInitial = org.company_name.charAt(0).toUpperCase();
                 providerLocation = resolveLocationText(org.municipality_id);
-                providerRating = org.rating?.average_score || 0;
                 logoBlobId = org.logo_blob_id ?? null;
+                try {
+                    const provMetric = await reviewApi.getProviderMetrics(prodRes.provider_id);
+                    providerRating = provMetric.rating_score;
+                    providerVerified = (org as any).is_verified ?? provMetric.review_count > 0;
+                } catch {
+                    providerRating = org.rating?.average_score || 0;
+                    providerVerified = (org as any).is_verified ?? (org.rating?.review_count ?? 0) > 0;
+                }
             } catch (orgErr) {
                 console.warn("Could not fetch provider metadata:", orgErr);
+            }
+
+            let productRating = prodRes.rating?.average_score || 0;
+            let productReviewCount = prodRes.rating?.review_count || 0;
+            try {
+                const prodMetric = await reviewApi.getProductMetrics(prodRes.id);
+                productRating = prodMetric.rating_score;
+                productReviewCount = prodMetric.review_count;
+            } catch (metricErr) {
+                console.warn("Could not fetch product metrics:", metricErr);
             }
 
             const mappedShipping = resolveShippingMethods(prodRes.shipping_methods);
@@ -209,8 +228,8 @@ async function loadProduct(id: string) {
                 category_id: prodRes.category?.id || "",
                 price: prodRes.base_price,
                 minOrder,
-                rating: prodRes.rating?.average_score || 0,
-                reviewCount: prodRes.rating?.review_count || 0,
+                rating: productRating,
+                reviewCount: productReviewCount,
               providerRating,
 
                 provider: {

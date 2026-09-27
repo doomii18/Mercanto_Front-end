@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import type { ProductImageSearchHit } from "@/api";
 import ProductCard from "@/components/product/ProductCard.vue";
 
 const productApi = useProductApi();
+const reviewApi = useReviewApi();
 const fileInput = ref<HTMLInputElement | null>(null);
 const currentFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
@@ -70,7 +72,27 @@ const executeSearch = async () => {
 
   try {
     const res = await productApi.searchProductsByImage(currentFile.value);
-    results.value = res.data ?? [];
+    const hits = res.data ?? [];
+    const productIds = hits.map((h) => h.product.id);
+    let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
+    if (productIds.length > 0) {
+      metricsMap = await reviewApi
+        .getProductMetricsBatch({ product_ids: productIds })
+        .catch(() => ({}));
+    }
+
+    results.value = hits.map((hit) => {
+      const metric = metricsMap[hit.product.id];
+      return {
+        ...hit,
+        product: {
+          ...hit.product,
+          rating: metric
+            ? { average_score: metric.rating_score, review_count: metric.review_count }
+            : hit.product.rating,
+        },
+      };
+    });
   } catch (err: any) {
     console.error("Image search error:", err);
     errorMessage.value = "No fue posible completar la búsqueda visual. Intenta nuevamente con otra imagen.";
@@ -295,6 +317,8 @@ onBeforeUnmount(() => {
               :provider-id="hit.product.provider_id"
               :category-name="hit.product.category?.name ?? null"
               :image-blob-id="hit.product.image_blob_ids?.[0] ?? null"
+              :rating="hit.product.rating?.average_score ?? 0"
+              :review-count="hit.product.rating?.review_count ?? 0"
               :badge-text="hit.distance < 0.35 ? 'Alta coincidencia' : 'Similitud visual'"
               :badge-icon="hit.distance < 0.35 ? 'fa-solid fa-bullseye' : 'fa-solid fa-wand-magic-sparkles'"
               badge-variant="teal"

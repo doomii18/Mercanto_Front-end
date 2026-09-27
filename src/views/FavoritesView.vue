@@ -6,6 +6,7 @@ import type { CartItemResponse, ProductResponse } from "@/api";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 interface CartProductDisplay {
   cartItem: CartItemResponse;
@@ -17,6 +18,7 @@ interface CartProductDisplay {
 const organizationApi = useOrganizationApi();
 const cartApi = useCartApi();
 const productApi = useProductApi();
+const reviewApi = useReviewApi();
 
 const cartProducts = ref<CartProductDisplay[]>([]);
 const isLoading = ref(true);
@@ -31,6 +33,16 @@ const fetchCartProducts = async () => {
     const promises = items.map(async (item) => {
       try {
         const product = await productApi.getProduct(item.product_id);
+        try {
+          const metric = await reviewApi.getProductMetrics(product.id);
+          product.rating = {
+            average_score: metric.rating_score,
+            review_count: metric.review_count,
+          };
+        } catch {
+          // fallback
+        }
+
         let providerName = "Proveedor";
         let providerLogoBlobId: string | null = null;
 

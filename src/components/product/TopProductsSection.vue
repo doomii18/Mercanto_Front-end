@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import type { ProductResponse } from "@/api";
 import ProductCard from "./ProductCard.vue";
 import topSellersHeroImg from "../../assets/top-sellers-hero.png";
@@ -21,6 +22,7 @@ interface TopProductItem {
 
 const topProducts = ref<TopProductItem[]>([]);
 const productApi = useProductApi();
+const reviewApi = useReviewApi();
 const isLoading = ref(true);
 
 const BUBBLE_CLASSES: TopProductItem["bubbleClass"][] = [
@@ -47,19 +49,37 @@ async function loadTopProducts() {
       sort_direction: "desc",
     });
 
-    topProducts.value = res.data.map((prod, index) => ({
-      id: prod.id,
-      title: prod.title,
-      categoryName: prod.category?.name || "General",
-      price: prod.base_price,
-      minOrder: resolveMinOrder(prod.spec),
-      imageBlobId: prod.image_blob_ids?.[0] ?? null,
-      providerId: prod.provider_id,
-      rating: prod.rating?.average_score ?? 0,
-      reviewCount: prod.rating?.review_count ?? 0,
-      rank: index + 1,
-      bubbleClass: BUBBLE_CLASSES[index % BUBBLE_CLASSES.length],
-    }));
+    const productIds = res.data.map((prod) => prod.id);
+    let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
+
+    if (productIds.length > 0) {
+      metricsMap = await reviewApi
+        .getProductMetricsBatch({ product_ids: productIds })
+        .catch((err) => {
+          console.warn("Failed to batch fetch product metrics:", err);
+          return {};
+        });
+    }
+
+    topProducts.value = res.data.map((prod, index) => {
+      const metric = metricsMap[prod.id];
+      const rating = metric?.rating_score ?? prod.rating?.average_score ?? 0;
+      const reviewCount = metric?.review_count ?? prod.rating?.review_count ?? 0;
+
+      return {
+        id: prod.id,
+        title: prod.title,
+        categoryName: prod.category?.name || "General",
+        price: prod.base_price,
+        minOrder: resolveMinOrder(prod.spec),
+        imageBlobId: prod.image_blob_ids?.[0] ?? null,
+        providerId: prod.provider_id,
+        rating,
+        reviewCount,
+        rank: index + 1,
+        bubbleClass: BUBBLE_CLASSES[index % BUBBLE_CLASSES.length],
+      };
+    });
   } catch (err) {
     console.error("Failed to load top products:", err);
   } finally {

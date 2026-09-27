@@ -2,6 +2,8 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useGeoStore } from "../stores/geo";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
 import mochilaImg from "../assets/mochila.png";
 import utensiliosImg from "../assets/utensilios.png";
@@ -11,6 +13,8 @@ import paletaImg from "../assets/paleta.png";
 const router = useRouter();
 const route = useRoute();
 const geoStore = useGeoStore();
+const organizationApi = useOrganizationApi();
+const reviewApi = useReviewApi();
 
 interface CatalogProduct {
   id: string;
@@ -135,17 +139,21 @@ const filteredCatalog = computed(() => {
   );
 });
 
+const realPrimaryProvider = ref<{ name: string; rating: number; reviewCount: number; verified: boolean; location?: string } | null>(null);
+const realAlternativeProvider = ref<{ name: string; rating: number; reviewCount: number; verified: boolean; location?: string } | null>(null);
+
 const primaryOption = computed(() => {
   const total = 28150;
   const original = 31600;
   const savings = original - total;
   const savingsPct = ((savings / original) * 100).toFixed(1);
+  const name = realPrimaryProvider.value?.name ?? "NicaTech S. A";
   return {
-    providerName: "NicaTech S. A",
-    initial: "N",
-    verified: true,
-    rating: "4.0",
-    location: "Managua, Managua",
+    providerName: name,
+    initial: name.charAt(0).toUpperCase(),
+    verified: realPrimaryProvider.value?.verified ?? true,
+    rating: (realPrimaryProvider.value?.rating ?? 5.0).toFixed(1),
+    location: realPrimaryProvider.value?.location ?? "Managua, Nicaragua",
     deliveryTime: "2 - 3 días",
     deliveryCarrier: "Empresas de paquetería",
     distance: "127 km",
@@ -159,13 +167,14 @@ const primaryOption = computed(() => {
 });
 
 const alternativeOption = computed(() => {
+  const name = realAlternativeProvider.value?.name ?? "Distribuidora El Trébol";
   return {
-    providerName: "Managua S. A",
-    tableProviderName: "Managua Tech S.A",
-    initial: "M",
-    verified: true,
-    rating: "4.0",
-    location: "Managua, Managua",
+    providerName: name,
+    tableProviderName: name,
+    initial: name.charAt(0).toUpperCase(),
+    verified: realAlternativeProvider.value?.verified ?? true,
+    rating: (realAlternativeProvider.value?.rating ?? 4.5).toFixed(1),
+    location: realAlternativeProvider.value?.location ?? "Chinandega, Nicaragua",
     deliveryTime: "2 - 3 días",
     deliveryCarrier: "Empresas de paquetería",
     distance: "127 km",
@@ -265,6 +274,42 @@ onMounted(async () => {
     await geoStore.initialize().catch((err) => {
       console.error("Failed to initialize geo store:", err);
     });
+  }
+
+  try {
+    const orgsRes = await organizationApi.getOrganizations({ limit: 2, sort_by: "score", sort_dir: "desc" });
+    if (orgsRes.data.length >= 1) {
+      const ids = orgsRes.data.map((o) => o.id);
+      const metrics = await reviewApi
+        .getProviderMetricsBatch({ provider_ids: ids })
+        .catch(() => ({} as Record<string, { rating_score: number; review_count: number }>));
+
+      const p1 = orgsRes.data[0];
+      const m1 = metrics[p1.id];
+      const loc1 = p1.municipality_id ? geoStore.resolveLocationHierarchy(p1.municipality_id) : null;
+      realPrimaryProvider.value = {
+        name: p1.company_name,
+        rating: m1?.rating_score ?? 5.0,
+        reviewCount: m1?.review_count ?? 0,
+        verified: (p1 as any).is_verified ?? (m1?.review_count ?? 0) > 0,
+        location: loc1?.municipality?.name ? `${loc1.municipality.name}, ${loc1.department?.name ?? "Nicaragua"}` : "Managua, Nicaragua",
+      };
+
+      if (orgsRes.data.length >= 2) {
+        const p2 = orgsRes.data[1];
+        const m2 = metrics[p2.id];
+        const loc2 = p2.municipality_id ? geoStore.resolveLocationHierarchy(p2.municipality_id) : null;
+        realAlternativeProvider.value = {
+          name: p2.company_name,
+          rating: m2?.rating_score ?? 4.5,
+          reviewCount: m2?.review_count ?? 0,
+          verified: (p2 as any).is_verified ?? (m2?.review_count ?? 0) > 0,
+          location: loc2?.municipality?.name ? `${loc2.municipality.name}, ${loc2.department?.name ?? "Nicaragua"}` : "Chinandega, Nicaragua",
+        };
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to load providers for SmartSearch:", err);
   }
 });
 </script>
@@ -747,9 +792,11 @@ onMounted(async () => {
                 </tr>
                 <tr>
                   <td class="py-3 px-4 font-medium text-slate-600">Calificación</td>
-                  <td class="py-3 px-4">4.0 <i class="fa-regular fa-star text-amber-500"></i></td>
-                  <td class="py-3 px-4">4.5 <i class="fa-regular fa-star text-amber-500"></i></td>
-                  <td class="py-3 px-4 text-red-600 font-semibold">-0.5 ↓</td>
+                  <td class="py-3 px-4">{{ primaryOption.rating }} <i class="fa-solid fa-star text-amber-500"></i></td>
+                  <td class="py-3 px-4">{{ alternativeOption.rating }} <i class="fa-solid fa-star text-amber-500"></i></td>
+                  <td class="py-3 px-4 text-slate-600 font-semibold">
+                    {{ (Number(primaryOption.rating) - Number(alternativeOption.rating)) >= 0 ? '+' : '' }}{{ (Number(primaryOption.rating) - Number(alternativeOption.rating)).toFixed(1) }}
+                  </td>
                 </tr>
                 <tr class="bg-slate-50 font-bold border-t-2 border-slate-200">
                   <td class="py-3 px-4 text-[#083c5a]">Total por tu pedido</td>

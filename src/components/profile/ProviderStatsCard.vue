@@ -2,6 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import type { PublicProviderDto } from "@/api";
@@ -10,6 +11,7 @@ const contextStore = useUserContextStore();
 const orgStore = useOrganizationStore();
 const productApi = useProductApi();
 const quoteApi = useQuoteApi();
+const reviewApi = useReviewApi();
 
 const productsCount = ref<number>(0);
 const ordersCount = ref<number>(0);
@@ -23,7 +25,7 @@ const ratingScore = computed<number>(() => {
   const rating = (providerData.value as any).rating;
   if (typeof rating === "number") return rating;
   if (typeof rating === "object" && rating !== null) {
-    return rating.score ?? rating.average ?? 0;
+    return rating.average_score ?? rating.score ?? rating.average ?? 0;
   }
   return (providerData.value as any).score ?? 0;
 });
@@ -47,10 +49,11 @@ async function fetchStats(): Promise<void> {
 
   isLoading.value = true;
 
-  const [productsRes, quotesRes, orgRes] = await Promise.allSettled([
+  const [productsRes, quotesRes, orgRes, metricsRes] = await Promise.allSettled([
     productApi.getProducts({ provider_id: activeId, limit: 0, offset: 0 }),
     quoteApi.getProviderQuotes(activeId, { limit: 0, offset: 0 }),
     orgStore.getPublicProvider(activeId),
+    reviewApi.getProviderMetrics(activeId),
   ]);
 
   if (productsRes.status === "fulfilled") {
@@ -62,7 +65,14 @@ async function fetchStats(): Promise<void> {
   }
 
   if (orgRes.status === "fulfilled") {
-    providerData.value = orgRes.value;
+    const prov = orgRes.value;
+    if (metricsRes.status === "fulfilled") {
+      prov.rating = {
+        average_score: metricsRes.value.rating_score,
+        review_count: metricsRes.value.review_count,
+      };
+    }
+    providerData.value = prov;
   }
 
   isLoading.value = false;
