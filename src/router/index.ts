@@ -2,6 +2,7 @@ import { createRouter, createWebHistory, type RouteRecordRaw } from "vue-router"
 import { publicRoutes } from "./public.routes";
 import { authRoutes } from "./auth.routes";
 import { dashboardRoutes } from "./dashboard.routes";
+import { adminRoutes } from "./admin.routes";
 import { authGuard } from "./guards";
 
 declare module "vue-router" {
@@ -16,6 +17,7 @@ export const routes: RouteRecordRaw[] = [
   ...publicRoutes,
   ...authRoutes,
   ...dashboardRoutes,
+  ...adminRoutes,
 ];
 
 
