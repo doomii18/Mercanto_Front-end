@@ -44,7 +44,7 @@ const closeSidebar = () => {
 
       <div class="flex items-center gap-3">
         <NotificationBell />
-        <AppLogo class="h-9" />
+        <AppLogo variant="imagotipo" class="h-9" />
       </div>
     </header>
 
