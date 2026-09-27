@@ -14,8 +14,7 @@ import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import QuoteIdBadge from "../components/quote/QuoteIdBadge.vue";
 import QuoteStatusBadge from "../components/quote/QuoteStatusBadge.vue";
 import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
-import FacturaTemplate from "@/components/invoice/FacturaTemplate.vue";
-import DownloadInvoiceButton from "@/components/invoice/DownloadInvoiceButton.vue";
+import DownloadPdfButton from "@/components/invoice/DownloadPdfButton.vue";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
@@ -29,8 +28,6 @@ const quoteApi = useQuoteApi();
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
 
-
-const facturaTemplateRef = ref<InstanceType<typeof FacturaTemplate> | null>(null);
 const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
 const provider = ref<PublicProviderDto | null>(null);
 const providerMetrics = ref<{ rating_score: number; review_count: number } | null>(null);
@@ -173,18 +170,6 @@ onMounted(() => {
 
 <template>
   <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
-    <!-- Offscreen Printable Container for Canvas Rasterization -->
-    <div
-      v-if="quoteAggregate"
-      class="fixed left-[-9999px] top-0 pointer-events-none opacity-0 overflow-hidden"
-      aria-hidden="true"
-    >
-      <FacturaTemplate
-        ref="facturaTemplateRef"
-        :quote-id="quoteAggregate.quote.id"
-      />
-    </div>
-
     <div
       v-if="isLoading"
       class="flex flex-col items-center justify-center py-16 px-4 gap-4 text-base text-neutral-500"
@@ -382,9 +367,9 @@ onMounted(() => {
 
       <div class="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-neutral-200 pt-5">
         <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
-          <DownloadInvoiceButton
-            :template-ref="facturaTemplateRef"
-            :filename="`factura-${quoteAggregate.quote.id.substring(0, 8).toUpperCase()}.pdf`"
+          <DownloadPdfButton
+            :quote-id="quoteAggregate.quote.id"
+            label="Descargar factura"
             class="w-full sm:w-auto"
           />
           <button

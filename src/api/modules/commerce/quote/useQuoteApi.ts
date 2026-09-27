@@ -8,6 +8,7 @@ import {
   QuoteResponseSchema,
   QuoteItemResponseSchema,
   PaginatedQuoteResponseSchema,
+  PrintQuoteResponseSchema,
 } from "./responses";
 import type {
   CreateQuoteRequest,
@@ -16,6 +17,7 @@ import type {
   QuoteAggregateResponse,
   PaginatedQuoteAggregateResponse,
   PaginatedQuoteResponse,
+  PrintQuoteResponse,
   AccountQuoteFiltersQuery,
   ProviderQuoteFiltersQuery,
 } from "./types";
@@ -216,6 +218,13 @@ export const useQuoteApi = () => {
     return QuoteResponseSchema.parse(data.value);
   }
 
+  // POST /quotes/{id}/print
+  async function printQuote(id: string): Promise<PrintQuoteResponse> {
+    const { data, error } = await useApiFetch(`/quotes/${id}/print`).post().json();
+    if (error.value || !data.value) throw error.value || new Error(`Failed to print quote ${id}`);
+    return PrintQuoteResponseSchema.parse(data.value);
+  }
+
   return {
     createQuote,
     getQuote,
@@ -229,5 +238,6 @@ export const useQuoteApi = () => {
     payQuote,
     fulfillQuote,
     cancelQuote,
+    printQuote,
   };
 };

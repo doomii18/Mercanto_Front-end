@@ -43,3 +43,10 @@ export const PaginatedQuoteAggregateResponseSchema = PaginatedResponseSchema(
 export const PaginatedQuoteResponseSchema = PaginatedResponseSchema(
   QuoteResponseSchema,
 );
+
+// PrintQuoteResponseDto | presigned download url and metadata for quote invoice PDF
+export const PrintQuoteResponseSchema = z.object({
+  download_url: z.string().url(),
+  filename: z.string(),
+  expires_at: z.string().datetime(),
+});

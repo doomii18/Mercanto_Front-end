@@ -15,6 +15,7 @@ import type {
   QuoteAggregateResponseSchema,
   PaginatedQuoteAggregateResponseSchema,
   PaginatedQuoteResponseSchema,
+  PrintQuoteResponseSchema,
 } from "./responses";
 
 // Domain types
@@ -33,3 +34,4 @@ export type QuoteItemResponse = z.infer<typeof QuoteItemResponseSchema>;
 export type QuoteAggregateResponse = z.infer<typeof QuoteAggregateResponseSchema>;
 export type PaginatedQuoteAggregateResponse = z.infer<typeof PaginatedQuoteAggregateResponseSchema>;
 export type PaginatedQuoteResponse = z.infer<typeof PaginatedQuoteResponseSchema>;
+export type PrintQuoteResponse = z.infer<typeof PrintQuoteResponseSchema>;
