@@ -1,47 +1,24 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/authStore";
-import { useUserContextStore } from "@/stores/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
-import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
+import AdminUserMenu from "@/components/admin/AdminUserMenu.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
-const userContext = useUserContextStore();
 
 const isMobileMenuOpen = ref(false);
 
 const navItems = [
-  { name: "admin-inicio", label: "Inicio", icon: "fa-solid fa-house" },
-  { name: "admin-pagos", label: "Pagos/Recargas", icon: "fa-solid fa-wallet" },
-  { name: "admin-usuarios", label: "Usuarios", icon: "fa-solid fa-user-group" },
-  { name: "admin-pedidos", label: "Pedidos", icon: "fa-solid fa-cart-shopping" },
-  { name: "admin-reportes", label: "Reportes", icon: "fa-solid fa-chart-simple" },
-  { name: "admin-notificaciones", label: "Notificaciones", icon: "fa-solid fa-bell" },
-  { name: "admin-configuracion", label: "Configuración", icon: "fa-solid fa-gear" },
+  { name: "admin-home", label: "Inicio", icon: "fa-solid fa-house" },
+  { name: "admin-payments", label: "Pagos/Recargas", icon: "fa-solid fa-wallet" },
+  { name: "admin-users", label: "Usuarios", icon: "fa-solid fa-user-group" },
+  { name: "admin-orders", label: "Pedidos", icon: "fa-solid fa-cart-shopping" },
+  { name: "admin-reports", label: "Reportes", icon: "fa-solid fa-chart-simple" },
+  { name: "admin-notifications", label: "Notificaciones", icon: "fa-solid fa-bell" },
+  { name: "admin-settings", label: "Configuración", icon: "fa-solid fa-gear" },
 ];
-
-const avatarBlobId = computed(() => userContext.userProfile?.avatar_blob_id ?? null);
-const displayName = computed(() => userContext.displayName);
-const roleLabel = computed(() => {
-  const labels: Record<string, string> = {
-    admin: "Administrador",
-    auditor: "Auditor",
-    member: "Miembro",
-  };
-  return labels[authStore.accountRole ?? ""] ?? "Usuario";
-});
-
-onMounted(async () => {
-  if (!userContext.isInitialized && authStore.isAuthenticated) {
-    try {
-      await userContext.initialize();
-    } catch {
-      // Profile data is non-critical for the layout chrome
-    }
-  }
-});
 
 const handleLogout = async () => {
   await authStore.logout();
@@ -103,24 +80,9 @@ const closeMobileMenu = () => {
         </router-link>
       </nav>
 
-      <!-- Bottom Profile Card -->
+      <!-- Bottom User Menu -->
       <div class="border-t border-white/10 p-4 m-2">
-        <div class="flex items-center gap-3 rounded-xl p-2 bg-white/5 border border-white/10">
-          <div class="h-10 w-10 shrink-0 overflow-hidden rounded-full ring-2 ring-[#00a896]">
-            <ProfileAvatar :blob-id="avatarBlobId" :alt="displayName" />
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-white text-xs font-bold truncate">{{ displayName }}</p>
-            <p class="text-slate-300 text-[11px] truncate">{{ roleLabel }}</p>
-          </div>
-          <button
-            @click="handleLogout"
-            class="text-slate-300 hover:text-red-300 transition-colors p-1.5 shrink-0"
-            title="Cerrar sesión"
-          >
-            <i class="fa-solid fa-right-from-bracket text-sm"></i>
-          </button>
-        </div>
+        <AdminUserMenu />
       </div>
     </aside>
 

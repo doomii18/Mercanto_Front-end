@@ -87,7 +87,7 @@ const solicitudes = [
 ];
 
 const navigateToDetail = (id: string) => {
-  router.push({ name: "admin-solicitud-detalle", params: { id } });
+  router.push({ name: "admin-payment-detail", params: { id } });
 };
 </script>
 
@@ -136,7 +136,7 @@ const navigateToDetail = (id: string) => {
           Solicitudes de recarga recientes
         </h3>
         <router-link
-          :to="{ name: 'admin-pagos' }"
+          :to="{ name: 'admin-payments' }"
           class="text-xs font-bold text-[#00a896] hover:underline"
         >
           Ver todas las solicitudes

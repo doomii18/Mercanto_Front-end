@@ -2,7 +2,7 @@
 import { ref } from "vue";
 import { useUserContextStore } from "@/stores/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
-import UserMenu from "@/components/common/UserMenu.vue";
+import SidebarUserMenu from "@/components/common/SidebarUserMenu.vue";
 import NotificationBell from "@/components/common/NotificationBell.vue";
 
 const contextStore = useUserContextStore();
@@ -315,7 +315,7 @@ const closeSidebar = () => {
         </nav>
 
         <div class="flex w-full items-center justify-center px-3 mt-auto">
-          <UserMenu :collapsed="!sidebarOpen" align="left" drop-direction="up" />
+          <SidebarUserMenu :collapsed="!sidebarOpen" />
         </div>
       </aside>
 

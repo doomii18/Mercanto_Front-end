@@ -51,7 +51,7 @@ const filteredSolicitudes = computed(() => {
 });
 
 const goToDetail = (id: string) => {
-  router.push({ name: "admin-solicitud-detalle", params: { id } });
+  router.push({ name: "admin-payment-detail", params: { id } });
 };
 </script>
 

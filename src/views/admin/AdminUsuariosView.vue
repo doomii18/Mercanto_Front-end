@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
+import { useRouter } from "vue-router";
 
+const router = useRouter();
 const searchQuery = ref("");
 
 const usuarios = ref([
@@ -30,6 +32,10 @@ const estadoBadge: Record<string, string> = {
 const rolBadge: Record<string, string> = {
   Comprador: "bg-blue-50 text-blue-700",
   Proveedor: "bg-orange-50 text-orange-600",
+};
+
+const viewUserMovements = () => {
+  router.push({ name: "admin-transactions" });
 };
 </script>
 
@@ -84,7 +90,7 @@ const rolBadge: Record<string, string> = {
             </td>
             <td class="px-6 py-4 text-slate-400">{{ usuario.fecha }}</td>
             <td class="px-6 py-4 flex items-center gap-3">
-              <button class="text-xs font-semibold text-[#1a9b8a] hover:underline">Ver</button>
+              <button class="text-xs font-semibold text-[#1a9b8a] hover:underline" @click="viewUserMovements">Ver</button>
               <button class="text-xs font-semibold text-red-400 hover:underline">Suspender</button>
             </td>
           </tr>

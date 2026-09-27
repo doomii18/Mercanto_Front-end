@@ -45,7 +45,7 @@ const confirmReject = () => {
 };
 
 const goBack = () => {
-  router.push({ name: "admin-pagos" });
+  router.push({ name: "admin-payments" });
 };
 </script>
 

@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { useRoute } from "vue-router";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import { useUserMenu } from "@/composables/useUserMenu";
 
-const route = useRoute();
+const props = withDefaults(defineProps<{ collapsed?: boolean }>(), {
+  collapsed: false,
+});
 
 const {
   isDropdownOpen,
@@ -20,67 +21,74 @@ const {
   handleLogout,
 } = useUserMenu();
 
-const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
+// Mirrors the sidebar nav item sizing so the trigger aligns with the rail.
+const triggerClass = computed(() =>
+  props.collapsed
+    ? "group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center"
+    : "group relative flex h-11 w-full items-center gap-3.5 rounded-2xl px-3.5 text-slate-400 transition-colors duration-200 hover:bg-[#fde8e4]"
+);
+
+// Collapsed (rail): fly out to the right. Expanded: open upward, full width.
+const dropdownClass = computed(() =>
+  props.collapsed
+    ? "absolute bottom-0 left-full z-100 ml-2 w-60"
+    : "absolute bottom-full left-0 z-100 mb-2 w-full"
+);
 </script>
 
 <template>
-  <div :ref="setMenuRef" class="relative inline-block">
+  <div :ref="setMenuRef" class="relative w-full">
     <!-- Trigger -->
     <button
       type="button"
-      class="flex items-center gap-1.5 rounded-lg border border-base-300 bg-base-100 px-2 py-1 transition-all hover:border-accent hover:shadow-sm"
+      :class="triggerClass"
       :aria-expanded="isDropdownOpen"
       aria-haspopup="true"
       @click.stop="toggleDropdown"
     >
-      <!-- Role tag (admin / auditor only) -->
-      <span
-        v-if="isStaffRole"
-        :class="[
-          'inline-flex items-center rounded border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider',
-          roleBadgeStyle,
-        ]"
+      <!-- Avatar -->
+      <div
+        :class="props.collapsed ? 'h-8 w-8' : 'h-9 w-9'"
+        class="shrink-0 overflow-hidden rounded-full bg-slate-100 ring-1 ring-slate-200"
       >
-        {{ roleLabel }}
-      </span>
+        <div v-if="isProfileLoading" class="h-full w-full animate-pulse bg-slate-200"></div>
+        <ProfileAvatar v-else :blob-id="avatarBlobId" :alt="userFullName" />
+      </div>
 
-      <!-- Skeleton -->
-      <template v-if="isProfileLoading">
-        <div class="h-3.5 w-16 animate-pulse rounded bg-base-200"></div>
-        <div class="avatar">
-          <div class="w-6 rounded-full bg-base-200"></div>
-        </div>
-      </template>
-
-      <!-- Content -->
-      <template v-else>
-        <span
-          class="hidden max-w-27.5 truncate text-xs font-semibold text-base-content md:inline"
-          :title="userFullName"
-        >
-          {{ userFullName }}
-        </span>
-        <div class="avatar">
-          <div class="w-6 overflow-hidden rounded-full ring-1 ring-base-200">
-            <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
-          </div>
-        </div>
-      </template>
+      <!-- Name + role (expanded only) -->
+      <div v-if="!props.collapsed" class="min-w-0 flex-1">
+        <p class="truncate text-sm font-semibold text-[#083c5a]">
+          {{ userFullName || "Usuario" }}
+        </p>
+        <p class="truncate text-[11px] text-slate-400">
+          {{ roleLabel }}
+        </p>
+      </div>
 
       <i
-        class="fa-solid fa-chevron-down text-[10px] text-base-content/50 transition-transform duration-200"
+        v-if="!props.collapsed"
+        class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"
         :class="{ 'rotate-180': isDropdownOpen }"
       ></i>
+
+      <!-- Tooltip (collapsed rail only) -->
+      <span
+        v-if="props.collapsed"
+        class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white opacity-0 shadow-md transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+      >
+        {{ userFullName || "Mi cuenta" }}
+      </span>
     </button>
 
     <!-- Dropdown -->
-    <transition name="user-menu-fade">
+    <transition name="sidebar-user-menu-fade">
       <div
         v-if="isDropdownOpen"
-        class="absolute right-0 top-full z-100 mt-1.5 w-52 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-md"
+        :class="dropdownClass"
+        class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
       >
         <!-- Identity header -->
-        <div class="flex items-center gap-2.5 border-b border-slate-100 px-3 py-2">
+        <div class="flex items-center gap-2.5 border-b border-slate-100 px-3 py-2.5">
           <div class="h-8 w-8 shrink-0 overflow-hidden rounded-full ring-1 ring-slate-100">
             <ProfileAvatar :blob-id="avatarBlobId" :alt="userFullName" />
           </div>
@@ -103,10 +111,9 @@ const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
           </div>
         </div>
 
-        <!-- Navigation actions -->
-        <div v-if="isStaffRole || !isUnderDashboard" class="space-y-0.5 p-1">
+        <!-- Admin entry (staff only) -->
+        <div v-if="isStaffRole" class="p-1">
           <router-link
-            v-if="isStaffRole"
             :to="{ name: 'admin' }"
             class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             @click="closeDropdown"
@@ -115,18 +122,6 @@ const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
               <i class="fa-solid fa-shield-halved text-xs"></i>
             </div>
             <span>Panel Administrativo</span>
-          </router-link>
-
-          <router-link
-            v-if="!isUnderDashboard"
-            to="/dashboard"
-            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
-            @click="closeDropdown"
-          >
-            <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-50 text-slate-400">
-              <i class="fa-solid fa-gauge-high text-xs"></i>
-            </div>
-            <span>Ir al Dashboard</span>
           </router-link>
         </div>
 
@@ -149,13 +144,13 @@ const isUnderDashboard = computed(() => route.path.startsWith("/dashboard"));
 </template>
 
 <style scoped>
-.user-menu-fade-enter-active,
-.user-menu-fade-leave-active {
+.sidebar-user-menu-fade-enter-active,
+.sidebar-user-menu-fade-leave-active {
   transition: opacity 0.15s ease, transform 0.15s ease;
 }
-.user-menu-fade-enter-from,
-.user-menu-fade-leave-to {
+.sidebar-user-menu-fade-enter-from,
+.sidebar-user-menu-fade-leave-to {
   opacity: 0;
-  transform: translateY(4px);
+  transform: translateY(6px);
 }
 </style>
