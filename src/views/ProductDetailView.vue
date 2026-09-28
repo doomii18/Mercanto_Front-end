@@ -8,6 +8,7 @@ import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
 import { useToastStore } from "@/stores/toastStore";
 import ProductImage from "../components/product/ProductImage.vue";
+import ProductImageCarousel from "../components/product/ProductImageCarousel.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
@@ -47,6 +48,7 @@ interface ProductDetailData {
         logoBlobId?: string | null;
     };
     imageBlobId?: string | null;
+    imageBlobIds?: string[];
     description: string;
     shippingMethods: ShippingMethodOption[];
 }
@@ -248,6 +250,7 @@ async function loadProduct(id: string) {
                     logoBlobId,
                 },
                 imageBlobId: prodRes.image_blob_ids?.[0] ?? null,
+                imageBlobIds: prodRes.image_blob_ids ?? [],
                 description: prodRes.description || "Producto de alta calidad disponible para compra al por mayor.",
                 shippingMethods: mappedShipping,
             };
@@ -458,12 +461,19 @@ const navigateToCategory = () => {
 
             <template v-else>
                 <section class="mb-10 grid grid-cols-1 items-stretch gap-10 lg:grid-cols-[1fr_1.35fr]">
-                    <div class="flex flex-col items-center justify-center p-4">
-                        <div class="flex aspect-square w-full max-w-[500px] items-center justify-center overflow-hidden rounded-2xl bg-neutral-50">
-                            <ProductImage
-                                :blob-id="product.imageBlobId"
+                    <div class="flex flex-col items-center justify-start p-2 sm:p-4 w-full">
+                        <div class="w-full max-w-[500px]">
+                            <ProductImageCarousel
+                                :blob-ids="product.imageBlobIds"
+                                :product-id="product.id"
                                 :alt="product.title"
-                                class="w-full h-full"
+                                :auto-play="false"
+                                :show-arrows="true"
+                                :show-dots="true"
+                                :show-thumbnails="true"
+                                :show-counter="true"
+                                variant="detail"
+                                object-fit="contain"
                             />
                         </div>
                     </div>

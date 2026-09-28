@@ -8,6 +8,7 @@ import { useUserContextStore } from "@/stores/userContextStore";
 import { useAlertStore } from "@/stores/alertStore";
 import type { ProductResponse, ProductCategoryResponse, InventoryResponse } from "@/api";
 import ProductImage from "@/components/product/ProductImage.vue";
+import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const userContext = useUserContextStore();
@@ -562,7 +563,13 @@ onMounted(async () => {
         </div>
 
         <div class="h-36 w-full rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex items-center justify-center">
-          <ProductImage :blob-id="product.image_blob_ids?.[0]" :alt="product.title" />
+          <ProductImageCarousel
+            :blob-ids="product.image_blob_ids"
+            :product-id="product.id"
+            :alt="product.title"
+            object-fit="contain"
+            variant="card"
+          />
         </div>
 
         <div class="flex flex-col min-w-0">

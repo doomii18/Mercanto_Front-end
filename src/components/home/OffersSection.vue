@@ -4,7 +4,7 @@ import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useProductImageApi } from "@/api/modules/catalog/product_image/useProductImageApi";
 import type { ProductOfferResponse, ProductResponse } from "@/api";
-import ProductImage from "@/components/product/ProductImage.vue";
+import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 
 interface OfferCard {
   offer: ProductOfferResponse;
@@ -154,7 +154,13 @@ const scroll = (direction: "left" | "right") => {
 
               <!-- Image -->
               <div class="mb-4 h-36 w-full overflow-hidden rounded-xl bg-slate-50 p-2">
-                <ProductImage :blob-id="item.product.image_blob_ids?.[0]" :alt="item.product.title" class="h-full w-full object-contain transition-transform group-hover/card:scale-105" />
+                <ProductImageCarousel
+                  :blob-ids="item.product.image_blob_ids"
+                  :product-id="item.product.id"
+                  :alt="item.product.title"
+                  object-fit="contain"
+                  variant="card"
+                />
               </div>
 
               <!-- Content -->

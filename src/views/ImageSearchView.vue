@@ -321,6 +321,7 @@ onBeforeUnmount(() => {
               :provider-id="hit.product.provider_id"
               :category-name="hit.product.category?.name ?? null"
               :image-blob-id="hit.product.image_blob_ids?.[0] ?? null"
+              :image-blob-ids="hit.product.image_blob_ids"
               :rating="hit.product.rating?.average_score ?? 0"
               :review-count="hit.product.rating?.review_count ?? 0"
               :badge-text="hit.distance < 0.35 ? 'Alta coincidencia' : 'Similitud visual'"

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import ProductImage from "./ProductImage.vue";
+import ProductImageCarousel from "./ProductImageCarousel.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
 import { useOrganizationStore } from "@/stores/organizationStore";
 
@@ -12,6 +12,8 @@ export interface ProductCardProps {
   categoryName?: string | null;
   minOrder?: number;
   imageBlobId?: string | null;
+  imageBlobIds?: string[] | null;
+  enableCarousel?: boolean;
   rating?: number;
   reviewCount?: number;
   badgeText?: string | null;
@@ -28,6 +30,8 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
   categoryName: null,
   minOrder: 1,
   imageBlobId: null,
+  imageBlobIds: () => [],
+  enableCarousel: true,
   rating: 0,
   reviewCount: 0,
   badgeText: null,
@@ -41,6 +45,16 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
 });
 
 const orgStore = useOrganizationStore();
+
+const effectiveBlobIds = computed(() => {
+  if (Array.isArray(props.imageBlobIds) && props.imageBlobIds.length > 0) {
+    return props.imageBlobIds;
+  }
+  if (props.imageBlobId) {
+    return [props.imageBlobId];
+  }
+  return [];
+});
 
 const providerName = ref<string>("Proveedor aliado");
 const providerLogoBlobId = ref<string | null>(null);
@@ -155,12 +169,15 @@ onMounted(() => {
         -{{ discountPercentage }}%
       </span>
 
-      <ProductImage
-        :blob-id="imageBlobId"
+      <ProductImageCarousel
+        :blob-ids="effectiveBlobIds"
         :product-id="id"
         :alt="title"
         :object-fit="objectFit"
-        img-class="transition-transform duration-300 group-hover:scale-105"
+        :auto-play="enableCarousel"
+        :show-dots="enableCarousel"
+        :show-arrows="enableCarousel"
+        variant="card"
       />
     </div>
 

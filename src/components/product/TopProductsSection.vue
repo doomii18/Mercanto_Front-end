@@ -14,6 +14,7 @@ interface TopProductItem {
   price: number;
   minOrder: number;
   imageBlobId: string | null;
+  imageBlobIds?: string[];
   providerId: string;
   rating: number;
   reviewCount: number;
@@ -77,6 +78,7 @@ async function loadTopProducts() {
         price: prod.base_price,
         minOrder: resolveMinOrder(prod.spec),
         imageBlobId: prod.image_blob_ids?.[0] ?? null,
+        imageBlobIds: prod.image_blob_ids ?? [],
         providerId: prod.provider_id,
         rating,
         reviewCount,
@@ -148,6 +150,7 @@ onMounted(() => {
         :price="product.price"
         :min-order="product.minOrder"
         :image-blob-id="product.imageBlobId"
+        :image-blob-ids="product.imageBlobIds"
         :provider-id="product.providerId"
         :rating="product.rating"
         :review-count="product.reviewCount"

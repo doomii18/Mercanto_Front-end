@@ -457,6 +457,7 @@ onMounted(async () => {
             :category-name="prod.category?.name || 'General'"
             :min-order="resolveMinOrder(prod.spec)"
             :image-blob-id="prod.image_blob_ids?.[0] ?? null"
+            :image-blob-ids="prod.image_blob_ids"
             :rating="prod.rating?.average_score ?? 0"
             :review-count="prod.rating?.review_count ?? 0"
             :rank="index + 1"

@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useCartApi } from "@/api/modules/commerce/cart/useCartApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import type { CartItemResponse, ProductResponse } from "@/api";
-import ProductImage from "@/components/product/ProductImage.vue";
+import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
@@ -210,11 +210,12 @@ onMounted(() => {
               : 'h-28 w-full sm:h-28 sm:w-28 mb-3 sm:mb-0'
           ]"
         >
-          <ProductImage
-            :blob-id="item.product.image_blob_ids?.[0]"
+          <ProductImageCarousel
+            :blob-ids="item.product.image_blob_ids"
+            :product-id="item.product.id"
             :alt="item.product.title"
             object-fit="cover"
-            img-class="rounded-xl transition-transform duration-300 group-hover:scale-105"
+            variant="card"
           />
         </div>
 

@@ -3,6 +3,8 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter, RouterLink } from "vue-router";
 import Map from "@/components/common/Map.vue";
 import AppLogo from "@/components/common/AppLogo.vue";
+import PasswordStrengthIndicator from "@/components/common/PasswordStrengthIndicator.vue";
+import { usePasswordStrength } from "@/composables/usePasswordStrength";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 
 const route = useRoute();
@@ -24,17 +26,22 @@ const showConfirmPassword = ref(false);
 const isLoading = ref(false);
 const errorMessage = ref<string | null>(null);
 
-// Password validation rules matching backend predicate
-const hasMinLength = computed(() => newPassword.value.length >= 8 && newPassword.value.length <= 128);
-const hasUppercase = computed(() => /[A-Z]/.test(newPassword.value));
-const hasLowercase = computed(() => /[a-z]/.test(newPassword.value));
-const hasNumber = computed(() => /\d/.test(newPassword.value));
-const isPasswordValid = computed(() =>
-  hasMinLength.value && hasUppercase.value && hasLowercase.value && hasNumber.value
-);
-const passwordsMatch = computed(() =>
-  confirmPassword.value.length > 0 && newPassword.value === confirmPassword.value
-);
+// Password strength & validation evaluation with Spanish recommendations
+const {
+  score,
+  strengthLabel,
+  strengthColors,
+  warning,
+  suggestions,
+  requirements,
+  meetsAllRequirements: isPasswordValid,
+  passwordsMatch,
+} = usePasswordStrength(newPassword, {
+  confirmPassword,
+  userInputs: computed(() => (email.value ? [email.value] : [])),
+  minLength: 8,
+  maxLength: 128,
+});
 
 onMounted(() => {
   // If user opened a direct link like /reset-password?token=...
@@ -299,24 +306,17 @@ const goToLogin = () => {
                 </button>
               </div>
 
-              <!-- Password rules indicators -->
-              <div class="mt-2 grid grid-cols-2 gap-1 rounded-lg bg-neutral-100/70 p-2 text-[0.72rem]">
-                <div :class="hasMinLength ? 'text-emerald-600 font-medium' : 'text-neutral-500'" class="flex items-center gap-1.5">
-                  <i :class="hasMinLength ? 'fa-solid fa-check' : 'fa-solid fa-circle text-[0.4rem]'"></i>
-                  <span>8 a 128 caracteres</span>
-                </div>
-                <div :class="hasUppercase ? 'text-emerald-600 font-medium' : 'text-neutral-500'" class="flex items-center gap-1.5">
-                  <i :class="hasUppercase ? 'fa-solid fa-check' : 'fa-solid fa-circle text-[0.4rem]'"></i>
-                  <span>Una mayúscula</span>
-                </div>
-                <div :class="hasLowercase ? 'text-emerald-600 font-medium' : 'text-neutral-500'" class="flex items-center gap-1.5">
-                  <i :class="hasLowercase ? 'fa-solid fa-check' : 'fa-solid fa-circle text-[0.4rem]'"></i>
-                  <span>Una minúscula</span>
-                </div>
-                <div :class="hasNumber ? 'text-emerald-600 font-medium' : 'text-neutral-500'" class="flex items-center gap-1.5">
-                  <i :class="hasNumber ? 'fa-solid fa-check' : 'fa-solid fa-circle text-[0.4rem]'"></i>
-                  <span>Un número</span>
-                </div>
+              <!-- Password strength and recommendations -->
+              <div class="mt-2.5">
+                <PasswordStrengthIndicator
+                  :score="score"
+                  :strength-label="strengthLabel"
+                  :strength-colors="strengthColors"
+                  :warning="warning"
+                  :suggestions="suggestions"
+                  :requirements="requirements"
+                  :compact="true"
+                />
               </div>
             </div>
 

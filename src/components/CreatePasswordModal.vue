@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, computed } from "vue";
 import BaseModal from "./common/BaseModal.vue";
+import PasswordStrengthIndicator from "./common/PasswordStrengthIndicator.vue";
+import { usePasswordStrength } from "@/composables/usePasswordStrength";
 
 interface Props {
   modelValue: boolean;
@@ -28,6 +30,23 @@ const showPass = ref(false);
 const showPassConfirm = ref(false);
 const validationError = ref<string | null>(null);
 
+const {
+  score,
+  strengthLabel,
+  strengthColors,
+  warning,
+  suggestions,
+  requirements,
+  meetsAllRequirements,
+  passwordsMatch,
+  isValid,
+} = usePasswordStrength(password, {
+  confirmPassword: passwordConfirm,
+  userInputs: computed(() => (props.email ? [props.email] : [])),
+  minLength: 8,
+  maxLength: 128,
+});
+
 watch(
   () => props.modelValue,
   (isOpen) => {
@@ -54,13 +73,13 @@ const handleSubmit = () => {
     return;
   }
 
-  if (password.value !== passwordConfirm.value) {
-    validationError.value = "Las contraseñas no coinciden.";
+  if (!meetsAllRequirements.value) {
+    validationError.value = "La contraseña debe cumplir con todos los requisitos de seguridad.";
     return;
   }
 
-  if (password.value.length < 8) {
-    validationError.value = "La contraseña debe tener al menos 8 caracteres.";
+  if (!passwordsMatch.value) {
+    validationError.value = "Las contraseñas no coinciden.";
     return;
   }
 
@@ -117,6 +136,18 @@ const handleSubmit = () => {
               @click="showPass = !showPass"
             ></i>
           </div>
+
+          <!-- Password strength and recommendations -->
+          <div class="mt-2.5">
+            <PasswordStrengthIndicator
+              :score="score"
+              :strength-label="strengthLabel"
+              :strength-colors="strengthColors"
+              :warning="warning"
+              :suggestions="suggestions"
+              :requirements="requirements"
+            />
+          </div>
         </div>
 
         <div class="form-group">
@@ -135,6 +166,15 @@ const handleSubmit = () => {
               @click="showPassConfirm = !showPassConfirm"
             ></i>
           </div>
+
+          <p v-if="passwordConfirm && !passwordsMatch" class="mt-1 text-xs text-rose-600 flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            Las contraseñas no coinciden.
+          </p>
+          <p v-else-if="passwordConfirm && passwordsMatch" class="mt-1 text-xs text-emerald-600 flex items-center gap-1 font-medium">
+            <i class="fa-solid fa-check"></i>
+            Las contraseñas coinciden.
+          </p>
         </div>
 
         <div class="card-actions">
@@ -149,7 +189,7 @@ const handleSubmit = () => {
           <button
             type="submit"
             class="btn-save"
-            :disabled="loading"
+            :disabled="loading || !isValid"
           >
             <i v-if="loading" class="fa-solid fa-spinner fa-spin"></i>
             <span>{{ loading ? "Guardando..." : "Guardar y continuar" }}</span>

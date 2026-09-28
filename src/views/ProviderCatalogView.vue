@@ -1,18 +1,23 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 import { useCartApi } from "@/api/modules/commerce/cart/useCartApi";
 import { useGeoStore } from "@/stores/geo";
+import { useAuthStore } from "@/stores/authStore";
+import { useToastStore } from "@/stores/toastStore";
 import type { ProductResponse, PublicProviderDto, ProductCategoryResponse } from "@/api";
-import ProductImage from "@/components/product/ProductImage.vue";
+import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
 const route = useRoute();
+const router = useRouter();
 const geoStore = useGeoStore();
+const authStore = useAuthStore();
+const toastStore = useToastStore();
 
 const providerId = computed(() => route.params.providerId as string);
 const organizationApi = useOrganizationApi();
@@ -120,6 +125,10 @@ const fetchCategories = async () => {
 };
 
 const fetchFavorites = async () => {
+  if (!authStore.isAuthenticated) {
+    favoriteProductIds.value = new Set();
+    return;
+  }
   try {
     const items = await cartApi.getMyCartProducts();
     favoriteProductIds.value = new Set(items.map((item) => item.product_id));
@@ -129,6 +138,17 @@ const fetchFavorites = async () => {
 };
 
 const handleFavoriteClick = async (productId: string) => {
+  if (!authStore.isAuthenticated) {
+    toastStore.addToast({
+      title: "Inicia sesión",
+      message: "Debes iniciar sesión para agregar productos a tus favoritos.",
+      icon: "fa-solid fa-heart",
+      variant: "info",
+    });
+    router.push({ name: "login", query: { redirect: route.fullPath } });
+    return;
+  }
+
   const isInCart = favoriteProductIds.value.has(productId);
   try {
     if (isInCart) {
@@ -219,14 +239,30 @@ watch(providerId, () => {
 
 const formatPrice = (val: number) => `C$ ${val.toLocaleString("es-NI")}`;
 
+watch(
+  () => authStore.isAuthenticated,
+  (isAuth) => {
+    if (isAuth) {
+      fetchFavorites();
+    } else {
+      favoriteProductIds.value = new Set();
+    }
+  }
+);
+
 onMounted(async () => {
   if (!geoStore.isInitialized) {
     await geoStore.initialize().catch(console.warn);
   }
+  if (!authStore.isInitialized) {
+    await authStore.initialize().catch(console.warn);
+  }
   fetchProvider();
   fetchCategories();
   fetchProducts();
-  fetchFavorites();
+  if (authStore.isAuthenticated) {
+    fetchFavorites();
+  }
 });
 </script>
 
@@ -448,11 +484,12 @@ onMounted(async () => {
                     : 'h-28 w-full sm:h-28 sm:w-28 mb-3 sm:mb-0'
                 ]"
               >
-                <ProductImage
-                  :blob-id="product.image_blob_ids?.[0]"
+                <ProductImageCarousel
+                  :blob-ids="product.image_blob_ids"
+                  :product-id="product.id"
                   :alt="product.title"
                   object-fit="cover"
-                  img-class="transition-transform duration-300 group-hover:scale-105"
+                  variant="card"
                 />
               </div>
 
