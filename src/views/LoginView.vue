@@ -222,7 +222,7 @@ const handleLogin = async () => {
                             <input type="checkbox" name="remember" :disabled="isLoading" class="h-4 w-4 cursor-pointer rounded border-[1.5px] border-(--light-teal) accent-(--light-teal)" />
                             <span>Recordarme</span>
                         </label>
-                        <a href="#" class="font-semibold text-(--primary-orange) transition-colors hover:underline">¿Olvidaste tu contraseña?</a>
+                        <router-link :to="{ name: 'reset-password' }" class="font-semibold text-(--primary-orange) transition-colors hover:underline">¿Olvidaste tu contraseña?</router-link>
                     </div>
 
                     <button type="submit" :disabled="isLoading" class="flex w-full items-center justify-center gap-2.5 rounded-xl bg-(--primary-orange) px-4 py-2.5 text-[0.95rem] font-bold text-white transition-all hover:-translate-y-0.5 hover:bg-(--primary-orange-hover) disabled:cursor-not-allowed disabled:opacity-70">

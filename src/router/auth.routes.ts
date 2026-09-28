@@ -8,6 +8,13 @@ export const authRoutes: RouteRecordRaw[] = [
     meta: { guestOnly: true },
   },
   {
+    path: "/reset-password",
+    alias: "/forgot-password",
+    name: "reset-password",
+    component: () => import("@/views/ResetPasswordView.vue"),
+    meta: { guestOnly: true },
+  },
+  {
     path: "/register",
     component: () => import("@/views/register/RegisterLayout.vue"),
     meta: { guestOnly: true },
