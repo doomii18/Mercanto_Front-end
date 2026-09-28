@@ -6,11 +6,13 @@ import {
   BatchProductQuerySchema,
   ProductImageSearchUploadSchema,
   SearchProductsByImageSchema,
+  SmartProductSearchSchema,
 } from "./requests";
 import {
   ProductResponseSchema,
   PaginatedProductResponseSchema,
   PaginatedProductImageSearchResponseSchema,
+  SmartSearchResponseSchema,
   BatchProductResponseSchema,
   BatchProductShippingResponseSchema,
   UploadUrlResponseSchema,
@@ -23,6 +25,8 @@ import type {
   CreateProductRequest,
   PatchProductRequest,
   PaginatedProductImageSearchResponse,
+  SmartSearchResponse,
+  SmartProductSearchRequest,
   BatchProductResponse,
   BatchProductShippingResponse,
 } from "./types";
@@ -221,6 +225,38 @@ export const useProductApi = () => {
     return BatchProductResponseSchema.parse(data.value);
   }
 
+  // POST /products/smart-search
+  async function searchSmartProducts(
+    payload: SmartProductSearchRequest
+  ): Promise<SmartSearchResponse> {
+    const validated = SmartProductSearchSchema.parse(payload);
+    const { data, error } = await useApiFetch("/products/smart-search")
+      .post(validated)
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to execute smart search");
+    }
+    const hits = SmartSearchResponseSchema.parse(data.value);
+    if (hits.data.length > 0) {
+      const productIds = hits.data.map((h) => h.product.id);
+      const imagesMap: Record<string, string[]> = {};
+      for (let i = 0; i < productIds.length; i += 100) {
+        const chunk = productIds.slice(i, i + 100);
+        try {
+          const batchRes = await productImageApi.getProductImagesBatch({ product_ids: chunk });
+          Object.assign(imagesMap, batchRes);
+        } catch {
+          // Non-blocking fallback
+        }
+      }
+      hits.data.forEach((h) => {
+        h.product.image_blob_ids = imagesMap[h.product.id] || [];
+      });
+    }
+    return hits;
+  }
+
   return {
     getProducts,
     getProduct,
@@ -231,5 +267,6 @@ export const useProductApi = () => {
     getProductShipping,
     getProductShippingBatch,
     searchProductsByImage,
+    searchSmartProducts,
   };
 };

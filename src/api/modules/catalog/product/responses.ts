@@ -23,7 +23,7 @@ export const ProductResponseSchema = z.object({
   // Optional enriched fields for frontend UI convenience
   category: CategorySummarySchema.optional(),
   shipping_methods: z.array(ShippingMethodSchema).optional(),
-  image_blob_ids: z.array(z.uuid()).optional(),
+  image_blob_ids: z.array(z.string()).optional(),
   rating: RatingSummarySchema.optional(),
 });
 
@@ -47,5 +47,39 @@ export const BatchProductShippingResponseSchema = z.record(
   z.uuid(),
   z.array(ShippingMethodSchema)
 );
+
+// SmartProductSearchHitDto | multi-criteria smart search hit
+export const SmartProductSearchHitSchema = z.object({
+  product: ProductResponseSchema,
+  rank_score: z.number(),
+  visual_similarity: z.number(),
+  distance_km: z.number(),
+  price_score: z.number(),
+});
+
+// ProviderCoverageDto | provider that can supply part of the requested list
+export const ProviderCoverageSchema = z.object({
+  provider_id: z.uuid(),
+  seed_product_ids: z.array(z.uuid()),
+  item_count: z.number(),
+});
+
+// SmartSearchCoverageDto | exact-ownership analysis of the requested list
+export const SmartSearchCoverageSchema = z.object({
+  single_provider: z.boolean(),
+  total_items: z.number(),
+  covered_items: z.number(),
+  groups: z.array(ProviderCoverageSchema),
+  message: z.string(),
+});
+
+// SmartSearchResponseDto | ranked hits plus provider coverage
+export const SmartSearchResponseSchema = z.object({
+  data: z.array(SmartProductSearchHitSchema),
+  coverage: SmartSearchCoverageSchema,
+  total: z.number(),
+  limit: z.number(),
+  offset: z.number(),
+});
 
 export { UploadUrlResponseSchema };

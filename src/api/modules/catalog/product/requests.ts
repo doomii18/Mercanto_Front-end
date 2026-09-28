@@ -67,3 +67,23 @@ export const SearchProductsByImageSchema = z.object({
   limit: z.number().int().positive().default(20),
   offset: z.number().int().nonnegative().default(0),
 });
+
+// SmartProductSearchDto | multi-criteria smart search query
+export const SmartProductSearchSchema = z.object({
+  seed_product_ids: z
+    .array(z.string().uuid("ID de producto inválido"))
+    .min(1, "Debe seleccionar al menos 1 producto"),
+  buyer_latitude: z.number(),
+  buyer_longitude: z.number(),
+  weights: z
+    .object({
+      price: z.number().min(0).max(1).optional(),
+      geo: z.number().min(0).max(1).optional(),
+      visual: z.number().min(0).max(1).optional(),
+    })
+    .optional(),
+  target_price: z.number().positive().optional(),
+  max_distance_km: z.number().positive().optional(),
+  limit: z.number().int().positive().default(20).optional(),
+  offset: z.number().int().nonnegative().default(0).optional(),
+});

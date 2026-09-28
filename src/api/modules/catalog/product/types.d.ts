@@ -17,6 +17,7 @@ import type {
   ProductFiltersRequestSchema,
   ProductImageSearchUploadSchema,
   SearchProductsByImageSchema,
+  SmartProductSearchSchema,
 } from "./requests";
 import type {
   ProductResponseSchema,
@@ -25,6 +26,10 @@ import type {
   PaginatedProductImageSearchResponseSchema,
   BatchProductResponseSchema,
   BatchProductShippingResponseSchema,
+  SmartProductSearchHitSchema,
+  SmartSearchResponseSchema,
+  SmartSearchCoverageSchema,
+  ProviderCoverageSchema,
 } from "./responses";
 
 export type ProductTitle = z.infer<typeof ProductTitleSchema>;
@@ -43,10 +48,15 @@ export type PatchProductRequest = z.infer<typeof PatchProductRequestSchema>;
 export type ProductFiltersRequest = z.infer<typeof ProductFiltersRequestSchema>;
 export type ProductImageSearchUpload = z.infer<typeof ProductImageSearchUploadSchema>;
 export type SearchProductsByImageRequest = z.infer<typeof SearchProductsByImageSchema>;
+export type SmartProductSearchRequest = z.infer<typeof SmartProductSearchSchema>;
 
 export type ProductResponse = z.infer<typeof ProductResponseSchema>;
 export type PaginatedProductResponse = z.infer<typeof PaginatedProductResponseSchema>;
 export type ProductImageSearchHit = z.infer<typeof ProductImageSearchHitSchema>;
 export type PaginatedProductImageSearchResponse = z.infer<typeof PaginatedProductImageSearchResponseSchema>;
+export type SmartProductSearchHit = z.infer<typeof SmartProductSearchHitSchema>;
+export type SmartSearchCoverage = z.infer<typeof SmartSearchCoverageSchema>;
+export type ProviderCoverage = z.infer<typeof ProviderCoverageSchema>;
+export type SmartSearchResponse = z.infer<typeof SmartSearchResponseSchema>;
 export type BatchProductResponse = z.infer<typeof BatchProductResponseSchema>;
 export type BatchProductShippingResponse = z.infer<typeof BatchProductShippingResponseSchema>;
