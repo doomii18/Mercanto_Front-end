@@ -10,6 +10,7 @@ import AddressPickerModal, {
   type AddressPickerResult,
 } from "@/components/common/AddressPickerModal.vue";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
+import PhoneInput from "@/components/common/PhoneInput.vue";
 import {
   companyNameSchema,
   taxIdSchema,
@@ -90,7 +91,7 @@ const validateStep1 = (): boolean => {
   errors.value = {};
 
   providerStore.taxId = providerStore.taxId.trim().toUpperCase();
-  providerStore.companyPhone = providerStore.companyPhone.replace(/\s+/g, "");
+  providerStore.companyPhone = providerStore.companyPhone.replace(/[\s-]/g, "");
 
   const result = ProviderStep1Schema.safeParse({
     taxId: providerStore.taxId,
@@ -182,14 +183,13 @@ const handleContinue = () => {
       <!-- Teléfono del Negocio -->
       <div class="form-group">
         <label>Teléfono del Negocio <span class="required">*</span></label>
-        <input
+        <PhoneInput
           v-model="providerStore.companyPhone"
-          type="tel"
-          placeholder="+50522220000"
-          :class="{ 'input-error': errors.companyPhone }"
+          :has-error="!!errors.companyPhone"
           @input="clearFieldError('companyPhone')"
         />
         <span v-if="errors.companyPhone" class="field-error-msg">{{ errors.companyPhone }}</span>
+        <span v-else class="field-hint">Selecciona tu país e ingresa el número local</span>
       </div>
 
       <!-- Descripción del Negocio -->
@@ -359,6 +359,12 @@ const handleContinue = () => {
   font-size: 0.8rem;
   font-weight: 500;
   margin-top: 0.15rem;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.2rem;
 }
 
 .btn-mapa {

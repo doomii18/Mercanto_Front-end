@@ -3,10 +3,9 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
-import { useCartApi } from "@/api/modules/commerce/cart/useCartApi";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 import { useGeoStore } from "@/stores/geo";
 import { useAuthStore } from "@/stores/authStore";
-import { useToastStore } from "@/stores/toastStore";
 import type { ProductResponse, PublicProviderDto, ProductCategoryResponse } from "@/api";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
@@ -17,19 +16,17 @@ const route = useRoute();
 const router = useRouter();
 const geoStore = useGeoStore();
 const authStore = useAuthStore();
-const toastStore = useToastStore();
 
 const providerId = computed(() => route.params.providerId as string);
 const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
 const categoryApi = useCategoryApi();
-const cartApi = useCartApi();
+const favoritesStore = useFavoritesStore();
 const reviewApi = useReviewApi();
 
 const provider = ref<PublicProviderDto | null>(null);
 const products = ref<ProductResponse[]>([]);
 const categories = ref<ProductCategoryResponse[]>([]);
-const favoriteProductIds = ref<Set<string>>(new Set());
 
 const isLoadingProvider = ref(true);
 const isLoadingProducts = ref(true);
@@ -124,51 +121,14 @@ const fetchCategories = async () => {
   }
 };
 
-const fetchFavorites = async () => {
-  if (!authStore.isAuthenticated) {
-    favoriteProductIds.value = new Set();
-    return;
-  }
-  try {
-    const items = await cartApi.getMyCartProducts();
-    favoriteProductIds.value = new Set(items.map((item) => item.product_id));
-  } catch (err) {
-    console.warn("Failed to load favorites:", err);
-  }
+const isFavorite = (productId: string) => favoritesStore.isFavorite(productId);
+
+const handleFavoriteClick = (productId: string) => {
+  favoritesStore.toggleFavorite(productId, {
+    router,
+    redirectPath: route.fullPath,
+  });
 };
-
-const handleFavoriteClick = async (productId: string) => {
-  if (!authStore.isAuthenticated) {
-    toastStore.addToast({
-      title: "Inicia sesión",
-      message: "Debes iniciar sesión para agregar productos a tus favoritos.",
-      icon: "fa-solid fa-heart",
-      variant: "info",
-    });
-    router.push({ name: "login", query: { redirect: route.fullPath } });
-    return;
-  }
-
-  const isInCart = favoriteProductIds.value.has(productId);
-  try {
-    if (isInCart) {
-      await cartApi.deleteMyCartProduct(productId);
-    } else {
-      await cartApi.updateMyCartProductQuantity(productId, { quantity_delta: 1 });
-    }
-    const newSet = new Set(favoriteProductIds.value);
-    if (isInCart) {
-      newSet.delete(productId);
-    } else {
-      newSet.add(productId);
-    }
-    favoriteProductIds.value = newSet;
-  } catch (err) {
-    console.error("Failed to update cart:", err);
-  }
-};
-
-const isFavorite = (productId: string) => favoriteProductIds.value.has(productId);
 
 const fetchProducts = async () => {
   if (!providerId.value) return;
@@ -243,9 +203,7 @@ watch(
   () => authStore.isAuthenticated,
   (isAuth) => {
     if (isAuth) {
-      fetchFavorites();
-    } else {
-      favoriteProductIds.value = new Set();
+      favoritesStore.fetchFavorites(true);
     }
   }
 );
@@ -260,8 +218,8 @@ onMounted(async () => {
   fetchProvider();
   fetchCategories();
   fetchProducts();
-  if (authStore.isAuthenticated) {
-    fetchFavorites();
+  if (!favoritesStore.isInitialized) {
+    favoritesStore.fetchFavorites().catch(console.warn);
   }
 });
 </script>
@@ -469,7 +427,7 @@ onMounted(async () => {
                     ? 'bg-red-500 text-white hover:bg-red-600'
                     : 'bg-white/90 text-slate-400 backdrop-blur-xs hover:text-red-500 hover:bg-white'
                 ]"
-                :title="isFavorite(product.id) ? 'Quitar del carrito' : 'Agregar al carrito'"
+                :title="isFavorite(product.id) ? 'Quitar de favoritos' : 'Guardar en favoritos'"
                 @click.stop="handleFavoriteClick(product.id)"
               >
                 <i :class="[isFavorite(product.id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart', 'text-xs']"></i>

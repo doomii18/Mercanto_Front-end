@@ -6,9 +6,16 @@ import { useAlertStore } from "@/stores/alertStore";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
 
+import { useAuthStore } from "@/stores/authStore";
+import { useTokenStore } from "@/stores/tokenStore";
+import { useToastStore } from "@/stores/toastStore";
+
 const router = useRouter();
 const registerStore = useAccountRegisterStore();
 const alertStore = useAlertStore();
+const authStore = useAuthStore();
+const tokenStore = useTokenStore();
+const toastStore = useToastStore();
 
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
@@ -18,6 +25,16 @@ const handleRegistration = async (credentials: {
     password: string;
     passwordConfirm?: string;
 }) => {
+    if (registerStore.avatarFile && registerStore.avatarFile.size > 2 * 1024 * 1024) {
+        showPasswordModal.value = false;
+        toastStore.addToast({
+            title: "Foto de perfil no válida",
+            message: "La foto de perfil supera el límite de 2MB. Por favor regresa al paso 1 y selecciona otra imagen.",
+            variant: "error",
+        });
+        return;
+    }
+
     try {
         await registerStore.submitRegistration(credentials.password);
         showPasswordModal.value = false;
@@ -32,6 +49,9 @@ const handleRegistration = async (credentials: {
 
 const finishRegistration = () => {
     registerStore.resetForm();
+    tokenStore.clearTokens();
+    authStore.account = null;
+    authStore.isInitialized = false;
     router.push({ name: "login" });
 };
 </script>

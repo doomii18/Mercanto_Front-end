@@ -11,6 +11,7 @@ import {
 } from "@/api/modules/identity/user_profile/domain";
 import { EmailSchema as emailSchema } from "@/api/modules/identity/auth/domain";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
+import PhoneInput from "@/components/common/PhoneInput.vue";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();
@@ -49,7 +50,7 @@ const validateStep2 = (): boolean => {
   errors.value = {};
 
   accountStore.nationalId = accountStore.nationalId.trim().toUpperCase();
-  accountStore.phoneNumber = accountStore.phoneNumber.replace(/\s+/g, "");
+  accountStore.phoneNumber = accountStore.phoneNumber.replace(/[\s-]/g, "");
 
   const result = ProviderStep2Schema.safeParse({
     nationalId: accountStore.nationalId,
@@ -165,14 +166,13 @@ const handleContinue = () => {
       <!-- Teléfono -->
       <div class="form-group">
         <label>Teléfono <span class="required">*</span></label>
-        <input
+        <PhoneInput
           v-model="accountStore.phoneNumber"
-          type="tel"
-          placeholder="+50588880000"
-          :class="{ 'input-error': errors.phoneNumber }"
+          :has-error="!!errors.phoneNumber"
           @input="clearFieldError('phoneNumber')"
         />
         <span v-if="errors.phoneNumber" class="field-error-msg">{{ errors.phoneNumber }}</span>
+        <span v-else class="field-hint">Selecciona tu país e ingresa tu número local</span>
       </div>
     </div>
 
@@ -250,6 +250,12 @@ const handleContinue = () => {
   font-size: 0.8rem;
   font-weight: 500;
   margin-top: 0.15rem;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.2rem;
 }
 
 .doc-upload-row {

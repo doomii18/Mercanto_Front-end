@@ -35,6 +35,9 @@ export const useProfileUpdateStore = defineStore("profileUpdate", () => {
     if (!file.type.startsWith("image/")) {
       throw new Error("Solo se permiten archivos de imagen.");
     }
+    if (file.size > 2 * 1024 * 1024) {
+      throw new Error("La imagen supera el límite máximo permitido de 2MB.");
+    }
     if (avatarPreviewUrl.value) URL.revokeObjectURL(avatarPreviewUrl.value);
     avatarFile.value = file;
     avatarPreviewUrl.value = URL.createObjectURL(file);
@@ -66,7 +69,9 @@ export const useProfileUpdateStore = defineStore("profileUpdate", () => {
       const updatedProfile = await userProfileApi.updateMyProfile({
         first_name: firstName.value.trim(),
         last_name: lastName.value.trim(),
-        phone_number: phoneNumber.value.trim() || null,
+        phone_number: phoneNumber.value.trim()
+          ? phoneNumber.value.replace(/[\s-]/g, "")
+          : null,
         national_id: nationalId.value.trim() || null,
         municipality_id: municipalityId.value || undefined,
       });

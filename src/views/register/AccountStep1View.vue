@@ -7,7 +7,9 @@ import type { Municipality } from "@/stores/geo";
 import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
+import { useToastStore } from "@/stores/toastStore";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
+import PhoneInput from "@/components/common/PhoneInput.vue";
 import { PersonNameSchema, NationalIdSchema } from "@/api/modules/identity/user_profile/domain";
 import { EmailSchema } from "@/api/modules/identity/auth/domain";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
@@ -16,6 +18,7 @@ const router = useRouter();
 const geoStore = useGeoStore();
 const registerStore = useAccountRegisterStore();
 const alertStore = useAlertStore();
+const toastStore = useToastStore();
 const geographyApi = useGeographyApi();
 
 const isGeoLoading = ref(false);
@@ -45,15 +48,27 @@ const avatarModel = computed({
             try {
                 registerStore.setAvatar(file);
             } catch (err: any) {
-                alertStore.showError(
-                    err.message || "Error al procesar el archivo seleccionado."
-                );
+                registerStore.clearAvatar();
+                toastStore.addToast({
+                    title: "Foto de perfil no válida",
+                    message: err.message || "Error al procesar el archivo seleccionado.",
+                    variant: "error",
+                });
             }
         } else {
             registerStore.clearAvatar();
         }
     },
 });
+
+const handleAvatarDropError = (msg: string) => {
+    registerStore.clearAvatar();
+    toastStore.addToast({
+        title: "Foto de perfil no válida",
+        message: msg,
+        variant: "error",
+    });
+};
 
 const clearFieldError = (field: string) => {
     if (errors.value[field]) {
@@ -144,7 +159,7 @@ const validateStep1 = (): boolean => {
     errors.value = {};
 
     registerStore.nationalId = registerStore.nationalId.trim().toUpperCase();
-    registerStore.phoneNumber = registerStore.phoneNumber.replace(/\s+/g, "");
+    registerStore.phoneNumber = registerStore.phoneNumber.replace(/[\s-]/g, "");
 
     const result = AccountStep1Schema.safeParse({
         firstName: registerStore.firstName,
@@ -169,6 +184,15 @@ const validateStep1 = (): boolean => {
             "Por favor corrige los campos con errores antes de continuar.",
             "Datos inválidos"
         );
+        return false;
+    }
+
+    if (registerStore.avatarFile && registerStore.avatarFile.size > 2 * 1024 * 1024) {
+        toastStore.addToast({
+            title: "Foto de perfil no válida",
+            message: "La imagen supera el límite de 2MB permitido por el servidor. Por favor selecciona otra imagen antes de continuar.",
+            variant: "error",
+        });
         return false;
     }
 
@@ -229,16 +253,15 @@ const handleContinue = () => {
 
             <div class="form-group">
                 <label>Teléfono <span class="required">*</span></label>
-                <input
+                <PhoneInput
                     v-model="registerStore.phoneNumber"
-                    type="tel"
-                    placeholder="+50587309208"
-                    :class="{ 'input-error': errors.phoneNumber }"
+                    :has-error="!!errors.phoneNumber"
                     @input="clearFieldError('phoneNumber')"
                 />
                 <span v-if="errors.phoneNumber" class="field-error-msg">{{
                     errors.phoneNumber
                 }}</span>
+                <span v-else class="field-hint">Selecciona tu país e ingresa tu número local</span>
             </div>
 
             <div class="form-group full-width auto-geo-wrapper">
@@ -339,11 +362,11 @@ const handleContinue = () => {
                     v-model="avatarModel"
                     :multiple="false"
                     accept="image/png, image/jpeg, image/webp"
-                    :max-size-mb="3"
+                    :max-size-mb="2"
                     title="Arrastra tu foto de perfil aquí"
                     button-text="Seleccionar foto"
-                    hint="Formatos soportados: JPG, PNG, WebP. Tamaño máx.: 3MB"
-                    @error="(msg) => alertStore.showError(msg)"
+                    hint="Formatos soportados: JPG, PNG, WebP. Tamaño máx.: 2MB"
+                    @error="handleAvatarDropError"
                 />
             </div>
         </div>
@@ -448,6 +471,13 @@ const handleContinue = () => {
     font-size: 0.8rem;
     font-weight: 500;
     margin-top: 0.15rem;
+}
+
+.field-hint {
+    color: #64748b;
+    font-size: 0.75rem;
+    margin-top: 0.15rem;
+    display: block;
 }
 
 .auto-geo-wrapper {

@@ -3,17 +3,19 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
+import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 
 import { useGeoStore } from "../stores/geo";
 import { useQuoteBuilderStore } from "@/stores/quoteBuilderStore";
 import { useToastStore } from "@/stores/toastStore";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 import ProductImage from "../components/product/ProductImage.vue";
 import ProductImageCarousel from "../components/product/ProductImageCarousel.vue";
 import ProviderLogo from "../components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
-import type { PaymentMethod, ProductOfferResponse } from "@/api";
+import type { PaymentMethod, ProductOfferResponse, ProductCategoryResponse } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -68,11 +70,24 @@ const route = useRoute();
 const router = useRouter();
 const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
+const categoryApi = useCategoryApi();
 const offerApi = useOfferApi();
+let cachedCategories: ProductCategoryResponse[] | null = null;
 const reviewApi = useReviewApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();
+const favoritesStore = useFavoritesStore();
+
+const isFavorite = computed(() => (product.value.id ? favoritesStore.isFavorite(product.value.id) : false));
+
+function handleFavoriteClick() {
+  if (!product.value.id) return;
+  favoritesStore.toggleFavorite(product.value.id, {
+    router,
+    redirectPath: route.fullPath,
+  });
+}
 
 const isLoading = ref(true);
 const selectedShippingMethod = ref("bus");
@@ -230,11 +245,29 @@ async function loadProduct(id: string) {
                 minOrder = prodRes.spec.Physical.min_order_quantity;
             }
 
+            let categoryName = "General";
+            const categoryId = prodRes.category_id || (prodRes as any).category?.id || "";
+
+            if (categoryId) {
+                if (!cachedCategories) {
+                    try {
+                        const catRes = await categoryApi.getCategories({ limit: 100 });
+                        cachedCategories = catRes.data;
+                    } catch (catErr) {
+                        console.warn("Could not fetch categories:", catErr);
+                    }
+                }
+                const found = cachedCategories?.find((c) => c.id === categoryId);
+                if (found) {
+                    categoryName = found.name;
+                }
+            }
+
             product.value = {
                 id: prodRes.id,
                 title: prodRes.title,
-                category: prodRes.category?.name || "General",
-                category_id: prodRes.category?.id || "",
+                category: categoryName,
+                category_id: categoryId,
                 price: prodRes.base_price,
                 minOrder,
                 rating: productRating,
@@ -301,6 +334,9 @@ watch(
 
 onMounted(() => {
     window.scrollTo({ top: 0, behavior: "smooth" });
+    if (!favoritesStore.isInitialized) {
+        favoritesStore.fetchFavorites().catch(console.warn);
+    }
 });
 
 const selectedShipping = computed(() => {
@@ -431,29 +467,6 @@ const navigateToCategory = () => {
 <template>
     <div class="min-h-screen bg-white text-neutral-900 flex flex-col font-sans">
         <main class="mx-auto w-full max-w-[1200px] px-6 pt-6 pb-16 flex-1">
-            <nav class="mb-8 flex flex-wrap items-center gap-1.5 text-sm text-neutral-500" aria-label="Breadcrumb">
-                <router-link :to="{ name: 'home' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">Inicio</router-link>
-                <span class="font-medium text-neutral-400">&gt;</span>
-                <router-link :to="{ name: 'products' }" class="text-neutral-500 transition-colors duration-200 hover:text-orange-500">
-                  Productos
-                </router-link>
-                <template v-if="product.category">
-                    <span class="font-medium text-neutral-400">&gt;</span>
-                    <router-link
-                        v-if="product.category_id"
-                        :to="{ name: 'products', query: { categoryId: product.category_id } }"
-                        class="text-neutral-500 transition-colors duration-200 hover:text-orange-500"
-                    >
-                        {{ product.category }}
-                    </router-link>
-                    <span v-else class="text-neutral-500">
-                        {{ product.category }}
-                    </span>
-                </template>
-                <span class="font-medium text-neutral-400">&gt;</span>
-                <span class="font-semibold text-neutral-600">{{ product.title || "Producto" }}</span>
-            </nav>
-
             <section v-if="isLoading" class="mb-10 grid min-h-[450px] grid-cols-1 gap-10 lg:grid-cols-[1fr_1.35fr]">
                 <div class="animate-pulse rounded-3xl bg-neutral-200"></div>
                 <div class="animate-pulse rounded-3xl bg-neutral-200"></div>
@@ -478,8 +491,40 @@ const navigateToCategory = () => {
                         </div>
                     </div>
                     <div class="relative flex flex-col rounded-3xl bg-neutral-100 p-8 lg:p-10">
-                        <div class="absolute top-7 right-8 flex flex-col items-end gap-1">
-                            <span class="text-xs italic text-neutral-500">{{ product.category || "General" }}</span>
+                        <div class="absolute top-6 right-6 sm:top-7 sm:right-8 flex items-center gap-2.5 z-10">
+                            <!-- Category Badge -->
+                            <router-link
+                                v-if="product.category_id && product.category"
+                                :to="{ name: 'products', query: { categoryId: product.category_id } }"
+                                class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-700 shadow-2xs transition-colors hover:bg-teal-100 hover:text-teal-800"
+                                :title="`Ver más productos en ${product.category}`"
+                            >
+                                <i class="fa-solid fa-tag text-[10px] text-teal-600"></i>
+                                {{ product.category }}
+                            </router-link>
+                            <span
+                                v-else-if="product.category"
+                                class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200/80 px-3 py-1 text-xs font-semibold text-teal-700 shadow-2xs"
+                            >
+                                <i class="fa-solid fa-tag text-[10px] text-teal-600"></i>
+                                {{ product.category }}
+                            </span>
+
+                            <!-- Favorite / Like Button -->
+                            <button
+                                type="button"
+                                :class="[
+                                    'flex h-9 w-9 items-center justify-center rounded-full shadow-sm transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer',
+                                    isFavorite
+                                        ? 'bg-red-500 text-white hover:bg-red-600 shadow-md'
+                                        : 'bg-white text-slate-400 hover:text-red-500 hover:bg-white border border-slate-200/60'
+                                ]"
+                                :title="isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+                                :aria-label="isFavorite ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+                                @click="handleFavoriteClick"
+                            >
+                                <i :class="[isFavorite ? 'fa-solid fa-heart' : 'fa-regular fa-heart', 'text-sm']"></i>
+                            </button>
                         </div>
                         <h1 class="mb-3 max-w-[75%] font-serif text-2xl lg:text-3xl font-bold text-neutral-900">
                             {{ product.title }}

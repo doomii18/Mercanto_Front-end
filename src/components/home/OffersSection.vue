@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useProductImageApi } from "@/api/modules/catalog/product_image/useProductImageApi";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 import type { ProductOfferResponse, ProductResponse } from "@/api";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 
@@ -12,6 +14,9 @@ interface OfferCard {
   discountedPrice: number;
 }
 
+const router = useRouter();
+const route = useRoute();
+const favoritesStore = useFavoritesStore();
 const offers = ref<OfferCard[]>([]);
 const offerApi = useOfferApi();
 const productApi = useProductApi();
@@ -69,6 +74,10 @@ onMounted(async () => {
     console.error("Failed to load offers:", err);
   } finally {
     isLoading.value = false;
+  }
+
+  if (!favoritesStore.isInitialized) {
+    favoritesStore.fetchFavorites().catch(console.warn);
   }
 });
 
@@ -151,6 +160,22 @@ const scroll = (direction: "left" | "right") => {
               <span class="absolute left-3 top-3 z-10 rounded-full bg-(--primary-orange) px-2.5 py-1 text-xs font-bold text-white">
                 -{{ item.offer.discount_percentage }}%
               </span>
+
+              <!-- Favorite / Like Button -->
+              <button
+                type="button"
+                :class="[
+                  'absolute right-3 top-3 z-20 flex h-7 w-7 items-center justify-center rounded-full shadow-md transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer',
+                  favoritesStore.isFavorite(item.offer.product_id)
+                    ? 'bg-red-500 text-white hover:bg-red-600'
+                    : 'bg-white/90 text-slate-400 backdrop-blur-xs hover:text-red-500 hover:bg-white'
+                ]"
+                :title="favoritesStore.isFavorite(item.offer.product_id) ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+                :aria-label="favoritesStore.isFavorite(item.offer.product_id) ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+                @click.stop.prevent="favoritesStore.toggleFavorite(item.offer.product_id, { router, redirectPath: route.fullPath })"
+              >
+                <i :class="[favoritesStore.isFavorite(item.offer.product_id) ? 'fa-solid fa-heart' : 'fa-regular fa-heart', 'text-xs']"></i>
+              </button>
 
               <!-- Image -->
               <div class="mb-4 h-36 w-full overflow-hidden rounded-xl bg-slate-50 p-2">

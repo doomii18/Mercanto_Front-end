@@ -4,7 +4,9 @@ import { useGeoStore } from "@/stores/geo";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useProfileUpdateStore } from "@/stores/profileUpdateStore";
 import { useAlertStore } from "@/stores/alertStore";
+import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import BaseModal from "@/components/common/BaseModal.vue";
+import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 
 const geoStore = useGeoStore();
@@ -31,7 +33,6 @@ const editErrors = ref({
 function validate(): boolean {
   let isValid = true;
   const lettersRegex = /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/;
-  const digitsRegex = /^[0-9]+$/;
 
   editErrors.value = {
     firstName: "",
@@ -56,9 +57,14 @@ function validate(): boolean {
     isValid = false;
   }
 
-  if (formStore.phoneNumber && !digitsRegex.test(formStore.phoneNumber)) {
-    editErrors.value.phoneNumber = "Solo se permiten números.";
-    isValid = false;
+  if (formStore.phoneNumber && formStore.phoneNumber.trim()) {
+    const parseRes = phoneNumberSchema.safeParse(formStore.phoneNumber);
+    if (!parseRes.success) {
+      editErrors.value.phoneNumber =
+        parseRes.error.issues[0]?.message ||
+        "Formato de teléfono inválido (ej. +50587878787).";
+      isValid = false;
+    }
   }
 
   return isValid;
@@ -200,18 +206,15 @@ defineExpose({ open, close });
 
       <div class="edit-form-group">
         <label>Teléfono</label>
-        <div :class="['input-with-icon', { error: !!editErrors.phoneNumber }]">
-          <i class="fa-solid fa-phone"></i>
-          <input
-            v-model="formStore.phoneNumber"
-            type="tel"
-            placeholder="Teléfono"
-            maxlength="15"
-          />
-        </div>
+        <PhoneInput
+          v-model="formStore.phoneNumber"
+          :has-error="!!editErrors.phoneNumber"
+          @input="editErrors.phoneNumber = ''"
+        />
         <span v-if="editErrors.phoneNumber" class="field-error">{{
           editErrors.phoneNumber
         }}</span>
+        <span v-else class="field-hint">Selecciona tu país e ingresa tu número local</span>
       </div>
 
       <div class="edit-form-group">
@@ -444,6 +447,12 @@ defineExpose({ open, close });
   font-size: 0.78rem;
   margin-top: 0.2rem;
   font-weight: 500;
+}
+
+.field-hint {
+  color: #64748b;
+  font-size: 0.75rem;
+  margin-top: 0.2rem;
 }
 
 /* ── Actions ── */

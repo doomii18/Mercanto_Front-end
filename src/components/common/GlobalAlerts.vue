@@ -16,26 +16,41 @@ const handleClose = () => {
     :show-close-button="true"
     :close-on-backdrop="true"
     :close-on-esc="true"
+    :is-alert="true"
     @update:model-value="handleClose"
   >
-    <div v-if="alertStore.currentAlert" class="alert-body">
-      <div :class="['alert-icon-wrapper', `${alertStore.currentAlert.iconVariant}-bg`]">
-        <i :class="alertStore.currentAlert.icon"></i>
-      </div>
+    <Transition name="alert-fade" mode="out-in">
+      <div
+        v-if="alertStore.currentAlert"
+        :key="alertStore.currentAlert.id"
+        class="alert-body"
+      >
+        <div :class="['alert-icon-wrapper', `${alertStore.currentAlert.iconVariant}-bg`]">
+          <i :class="alertStore.currentAlert.icon"></i>
+        </div>
 
-      <h3 class="alert-title">{{ alertStore.currentAlert.title }}</h3>
-      <p class="alert-message">{{ alertStore.currentAlert.message }}</p>
-
-      <div class="alert-actions">
-        <button
-          type="button"
-          class="btn-dismiss"
-          @click="handleClose"
+        <!-- Optional badge if multiple alerts are queued -->
+        <span
+          v-if="alertStore.queue.length > 1"
+          class="alert-queue-badge"
         >
-          {{ alertStore.currentAlert.confirmText }}
-        </button>
+          Mensaje más reciente (1 de {{ alertStore.queue.length }})
+        </span>
+
+        <h3 class="alert-title">{{ alertStore.currentAlert.title }}</h3>
+        <p class="alert-message">{{ alertStore.currentAlert.message }}</p>
+
+        <div class="alert-actions">
+          <button
+            type="button"
+            class="btn-dismiss"
+            @click="handleClose"
+          >
+            {{ alertStore.currentAlert.confirmText }}
+          </button>
+        </div>
       </div>
-    </div>
+    </Transition>
   </BaseModal>
 </template>
 
@@ -45,6 +60,19 @@ const handleClose = () => {
   flex-direction: column;
   align-items: center;
   text-align: center;
+}
+
+.alert-fade-enter-active,
+.alert-fade-leave-active {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.alert-fade-enter-from {
+  opacity: 0;
+  transform: scale(0.96);
+}
+.alert-fade-leave-to {
+  opacity: 0;
+  transform: scale(1.02);
 }
 
 .alert-icon-wrapper {
@@ -71,6 +99,18 @@ const handleClose = () => {
 .alert-icon-wrapper.teal-bg {
   background-color: #e0f5f4;
   color: var(--light-teal, #189c94);
+}
+
+.alert-queue-badge {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #b91c1c;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 0.15rem 0.55rem;
+  border-radius: 9999px;
+  margin-bottom: 0.5rem;
 }
 
 .alert-title {

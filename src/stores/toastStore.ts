@@ -17,7 +17,8 @@ export const useToastStore = defineStore('toast', () => {
   function addToast(toast: Omit<Toast, 'id'>) {
     const id = crypto.randomUUID();
     const newToast = { ...toast, id };
-    toasts.value.push(newToast);
+    // Put newest toast at the front (top) of the stack
+    toasts.value.unshift(newToast);
 
     const duration = toast.duration ?? 4000;
     if (duration > 0) {

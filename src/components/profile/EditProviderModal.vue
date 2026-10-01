@@ -4,10 +4,12 @@ import BaseModal from "@/components/common/BaseModal.vue";
 import AddressPickerModal, {
   type AddressPickerResult,
 } from "@/components/common/AddressPickerModal.vue";
+import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useUserContextStore } from "@/stores/userContextStore";
 import { useOrganizationStore } from "@/stores/organizationStore";
 import { useAlertStore } from "@/stores/alertStore";
+import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import type { ProviderOrganizationPatch } from "@/api";
 
 interface Props {
@@ -94,12 +96,26 @@ const handleSave = async () => {
     return;
   }
 
+  if (phoneNumber.value.trim()) {
+    const parseRes = phoneNumberSchema.safeParse(phoneNumber.value);
+    if (!parseRes.success) {
+      alertStore.showError(
+        parseRes.error.issues[0]?.message ||
+          "Formato de teléfono inválido (ej. +50587878787).",
+        "Teléfono inválido"
+      );
+      return;
+    }
+  }
+
   isSaving.value = true;
   try {
     const patch: ProviderOrganizationPatch = {
       company_name: companyName.value.trim(),
       company_description: companyDescription.value.trim() || null,
-      phone_number: phoneNumber.value.trim() || null,
+      phone_number: phoneNumber.value.trim()
+        ? phoneNumber.value.replace(/[\s-]/g, "")
+        : null,
     };
 
     if (latitude.value !== null && longitude.value !== null) {
@@ -224,15 +240,10 @@ const handleSave = async () => {
         <!-- Phone -->
         <div class="edit-field-group">
           <label class="edit-field-label">Teléfono</label>
-          <div class="edit-input-wrap">
-            <i class="fa-solid fa-phone edit-input-icon"></i>
-            <input
-              v-model="phoneNumber"
-              type="tel"
-              class="edit-input"
-              placeholder="+505 0000 0000"
-            />
-          </div>
+          <PhoneInput
+            v-model="phoneNumber"
+          />
+          <span class="edit-field-hint">Selecciona tu país e ingresa el número local</span>
         </div>
 
         <!-- Description (NEW) -->
@@ -504,6 +515,13 @@ const handleSave = async () => {
 .edit-input.locked-input {
   color: #666;
   cursor: not-allowed;
+}
+
+.edit-field-hint {
+  font-size: 0.75rem;
+  color: #64748b;
+  margin-top: 0.25rem;
+  display: block;
 }
 
 .edit-textarea-wrap {

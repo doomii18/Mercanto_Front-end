@@ -3,9 +3,17 @@ import { z } from "zod";
 export const phoneNumberSchema = z
   .string({ message: "El número de teléfono es obligatorio" })
   .trim()
-  .min(1, "El número de teléfono no puede estar vacío")
-  .max(20, "El número de teléfono no debe exceder los 20 caracteres")
-  .regex(/^\+?[1-9]\d{1,14}$/, "Formato de teléfono inválido. Use formato E.164 (ej. +50588888888 o 88888888)");
+  .transform((val) => val.replace(/[\s-]/g, ""))
+  .pipe(
+    z
+      .string()
+      .min(1, "El número de teléfono no puede estar vacío")
+      .max(20, "El número de teléfono no debe exceder los 20 caracteres")
+      .regex(
+        /^\+[1-9]\d{6,14}$/,
+        "Formato de teléfono inválido. Debe incluir el código de país con '+' (ej. +50587878787)"
+      )
+  );
 
 export const addressSchema = z
   .string({ message: "La dirección es obligatoria" })

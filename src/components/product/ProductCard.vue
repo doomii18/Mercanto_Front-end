@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
+import { useRouter, useRoute } from "vue-router";
 import ProductImageCarousel from "./ProductImageCarousel.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
 import { useOrganizationStore } from "@/stores/organizationStore";
+import { useFavoritesStore } from "@/stores/favoritesStore";
 
 export interface ProductCardProps {
   id: string;
@@ -45,6 +47,20 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
 });
 
 const orgStore = useOrganizationStore();
+const router = useRouter();
+const route = useRoute();
+const favoritesStore = useFavoritesStore();
+
+const isFav = computed(() => favoritesStore.isFavorite(props.id));
+
+function handleFavoriteClick(e: Event) {
+  e.preventDefault();
+  e.stopPropagation();
+  favoritesStore.toggleFavorite(props.id, {
+    router,
+    redirectPath: route.fullPath,
+  });
+}
 
 const effectiveBlobIds = computed(() => {
   if (Array.isArray(props.imageBlobIds) && props.imageBlobIds.length > 0) {
@@ -138,6 +154,9 @@ watch(
 
 onMounted(() => {
   loadProviderInfo();
+  if (!favoritesStore.isInitialized) {
+    favoritesStore.fetchFavorites().catch(console.warn);
+  }
 });
 </script>
 
@@ -164,10 +183,29 @@ onMounted(() => {
 
       <span
         v-if="hasDiscount"
-        class="absolute right-2 top-2 z-10 inline-flex items-center rounded-full bg-[#ff6a00] px-2.5 py-0.5 text-[0.72rem] font-bold text-white shadow-sm"
+        :class="[
+          'absolute left-2 z-10 inline-flex items-center rounded-full bg-[#ff6a00] px-2.5 py-0.5 text-[0.72rem] font-bold text-white shadow-sm',
+          badgeText ? 'top-8' : 'top-2'
+        ]"
       >
         -{{ discountPercentage }}%
       </span>
+
+      <!-- Favorite / Like Button -->
+      <button
+        type="button"
+        :class="[
+          'absolute right-2 top-2 z-20 flex h-7 w-7 items-center justify-center rounded-full shadow-md transition-all duration-150 hover:scale-110 active:scale-95 cursor-pointer',
+          isFav
+            ? 'bg-red-500 text-white hover:bg-red-600'
+            : 'bg-white/90 text-slate-400 backdrop-blur-xs hover:text-red-500 hover:bg-white'
+        ]"
+        :title="isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+        :aria-label="isFav ? 'Quitar de favoritos' : 'Guardar en favoritos'"
+        @click.stop.prevent="handleFavoriteClick"
+      >
+        <i :class="[isFav ? 'fa-solid fa-heart' : 'fa-regular fa-heart', 'text-xs']"></i>
+      </button>
 
       <ProductImageCarousel
         :blob-ids="effectiveBlobIds"

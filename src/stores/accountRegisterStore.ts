@@ -1,6 +1,8 @@
 import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
+import { useAuthStore } from "./authStore";
+import { useTokenStore } from "./tokenStore";
 import type { RegisterRequest } from "@/api";
 import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
 
@@ -29,6 +31,9 @@ export const useAccountRegisterStore = defineStore("accountRegister", () => {
     if (!file.type.startsWith("image/")) {
       throw new Error("Solo se permiten archivos de imagen.");
     }
+    if (file.size > 2 * 1024 * 1024) {
+      throw new Error("La imagen supera el límite máximo permitido de 2MB.");
+    }
     if (avatarPreviewUrl.value) URL.revokeObjectURL(avatarPreviewUrl.value);
     avatarFile.value = file;
     avatarPreviewUrl.value = URL.createObjectURL(file);
@@ -51,16 +56,35 @@ export const useAccountRegisterStore = defineStore("accountRegister", () => {
         first_name: firstName.value.trim(),
         last_name: lastName.value.trim(),
         national_id: nationalId.value.trim() || null,
-        phone_number: phoneNumber.value.trim() || null,
+        phone_number: phoneNumber.value.trim()
+          ? phoneNumber.value.replace(/[\s-]/g, "")
+          : null,
         municipality_id: municipalityId.value!,
         interests: interests.value,
       };
 
+      // 1. Create user account
       await identityApi.register(payload);
 
+      // 2. Upload avatar if selected (temporarily acquires tokens and uploads)
       if (avatarFile.value) {
-        await identityApi.login({ email: email.value.trim(), password: rawPassword });
-        await avatarApi.changeAvatar(avatarFile.value);
+        const tokenStore = useTokenStore();
+        try {
+          const tokens = await identityApi.login({
+            email: email.value.trim(),
+            password: rawPassword,
+          });
+          tokenStore.setTokens(tokens.access_token, tokens.refresh_token);
+
+          await avatarApi.changeAvatar(avatarFile.value);
+        } catch (avatarErr) {
+          console.warn("No se pudo subir el avatar en el registro:", avatarErr);
+        } finally {
+          // Clear tokens so the session remains unauthenticated until user logs in at /login
+          tokenStore.clearTokens();
+          const authStore = useAuthStore();
+          authStore.account = null;
+        }
       }
     } catch (err: any) {
       errorMessage.value = err.message || "Error durante el registro";

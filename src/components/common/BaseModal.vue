@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { watch, onBeforeUnmount } from "vue";
+import { ref, watch, onBeforeUnmount } from "vue";
+import { registerModal, unregisterModal, isTopModal } from "@/composables/useModalStack";
 
 defineOptions({
   inheritAttrs: false,
@@ -10,18 +11,24 @@ interface Props {
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
   showCloseButton?: boolean;
+  isAlert?: boolean;
+  zIndex?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   closeOnBackdrop: true,
   closeOnEsc: true,
   showCloseButton: true,
+  isAlert: false,
 });
 
 const emit = defineEmits<{
   (e: "update:modelValue", value: boolean): void;
   (e: "close"): void;
 }>();
+
+const modalId = `modal-${crypto.randomUUID()}`;
+const computedZIndex = ref<number | undefined>(props.zIndex);
 
 const close = () => {
   emit("update:modelValue", false);
@@ -34,7 +41,9 @@ const handleBackdropClick = () => {
 
 const handleKeydown = (event: KeyboardEvent) => {
   if (event.key === "Escape" && props.modelValue && props.closeOnEsc) {
-    close();
+    if (isTopModal(modalId)) {
+      close();
+    }
   }
 };
 
@@ -42,10 +51,15 @@ watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      if (props.zIndex !== undefined) {
+        computedZIndex.value = props.zIndex;
+        registerModal(modalId, props.isAlert);
+      } else {
+        computedZIndex.value = registerModal(modalId, props.isAlert);
+      }
       window.addEventListener("keydown", handleKeydown);
     } else {
-      document.body.style.overflow = "";
+      unregisterModal(modalId);
       window.removeEventListener("keydown", handleKeydown);
     }
   },
@@ -53,7 +67,7 @@ watch(
 );
 
 onBeforeUnmount(() => {
-  document.body.style.overflow = "";
+  unregisterModal(modalId);
   window.removeEventListener("keydown", handleKeydown);
 });
 </script>
@@ -63,7 +77,8 @@ onBeforeUnmount(() => {
     <Transition name="modal-fade">
       <div
         v-if="modelValue"
-        class="fixed inset-0 bg-black/50 flex justify-center items-center z-[9999] p-4"
+        class="fixed inset-0 bg-black/50 flex justify-center items-center p-4"
+        :style="{ zIndex: computedZIndex ?? 10000 }"
         role="dialog"
         aria-modal="true"
         @click.self="handleBackdropClick"

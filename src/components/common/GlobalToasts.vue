@@ -23,7 +23,7 @@ const getIconClasses = (variant?: string) => {
 </script>
 
 <template>
-  <div class="fixed top-20 right-4 z-[9999] flex flex-col gap-3 pointer-events-none max-w-sm w-full">
+  <div class="fixed top-20 right-4 z-[30000] flex flex-col gap-3 pointer-events-none max-w-sm w-full">
     <TransitionGroup name="toast-slide">
       <div
         v-for="toast in toastStore.toasts"

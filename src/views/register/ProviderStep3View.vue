@@ -4,6 +4,8 @@ import { useRouter } from "vue-router";
 import { useAccountRegisterStore } from "@/stores/accountRegisterStore";
 import { useProviderRegisterStore } from "@/stores/providerRegisterStore";
 import { useAlertStore } from "@/stores/alertStore";
+import { useAuthStore } from "@/stores/authStore";
+import { useTokenStore } from "@/stores/tokenStore";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
 
@@ -11,6 +13,8 @@ const router = useRouter();
 const accountStore = useAccountRegisterStore();
 const providerStore = useProviderRegisterStore();
 const alertStore = useAlertStore();
+const authStore = useAuthStore();
+const tokenStore = useTokenStore();
 
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
@@ -43,6 +47,9 @@ const handleRegistration = async (credentials: {
 const finishRegistration = () => {
   providerStore.resetForm();
   accountStore.resetForm();
+  tokenStore.clearTokens();
+  authStore.account = null;
+  authStore.isInitialized = false;
   router.push({ name: "login" });
 };
 </script>

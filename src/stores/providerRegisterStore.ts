@@ -2,15 +2,14 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
 import { useVerificationDocumentApi } from "@/api/modules/organization/verification_request_document/useVerificationDocumentApi";
-import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import type { ProviderKind } from "@/api";
 import { useAccountRegisterStore } from "./accountRegisterStore";
+import { useAuthStore } from "./authStore";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
 
 export const useProviderRegisterStore = defineStore("providerRegister", () => {
   const accountStore = useAccountRegisterStore();
-  const identityApi = useIdentityApi();
   const organizationApi = useOrganizationApi();
   const organizationLogoApi = useOrganizationLogoApi();
   const verificationRequestApi = useVerificationRequestApi();
@@ -77,14 +76,16 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
     errorMessage.value = null;
 
     try {
-      // Create base Account & User Profile
+      // Create base Account & User Profile (authenticates and stores tokens)
       await accountStore.submitRegistration(password);
 
-      // Explicit login to acquire and persist active tokens
-      await identityApi.login({
-        email: accountStore.email.trim(),
-        password,
-      });
+      const authStore = useAuthStore();
+      if (!authStore.isAuthenticated) {
+        await authStore.login({
+          email: accountStore.email.trim(),
+          password,
+        });
+      }
 
       // Create Organization
       const org = await organizationApi.registerOrganization({
@@ -97,7 +98,9 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
           latitude: latitude.value,
           longitude: longitude.value,
         },
-        phone_number: companyPhone.value.trim() || undefined,
+        phone_number: companyPhone.value.trim()
+          ? companyPhone.value.replace(/[\s-]/g, "")
+          : undefined,
         company_description: companyDescription.value.trim() || undefined,
       });
 
