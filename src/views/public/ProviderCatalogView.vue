@@ -52,6 +52,13 @@ const resolvedLocation = computed(() => {
     : hierarchy.municipality.name;
 });
 
+const resolveMinOrder = (spec: ProductResponse["spec"]): number => {
+  if ("Physical" in spec && spec.Physical?.min_order_quantity) {
+    return spec.Physical.min_order_quantity;
+  }
+  return 1;
+};
+
 const getSortParams = () => {
   switch (sortOption.value) {
     case "price_asc": return { sort_by: "price" as const, sort_direction: "asc" as const };
@@ -432,9 +439,10 @@ onMounted(async () => {
               </button>
 
               <!-- Image Frame -->
-              <div
+              <router-link
+                :to="{ name: 'product-detail', params: { id: product.id } }"
                 :class="[
-                  'relative shrink-0 overflow-hidden rounded-xl bg-slate-50 flex items-center justify-center',
+                  'relative shrink-0 overflow-hidden rounded-xl bg-slate-50 flex items-center justify-center cursor-pointer group-hover:opacity-95 transition-opacity',
                   viewMode === 'grid'
                     ? 'h-48 w-full mb-3'
                     : 'h-28 w-full sm:h-28 sm:w-28 mb-3 sm:mb-0'
@@ -447,30 +455,50 @@ onMounted(async () => {
                   object-fit="cover"
                   variant="card"
                 />
-              </div>
+              </router-link>
 
               <!-- Product Details -->
               <div class="min-w-0 flex-1">
-                <div v-if="categoryStore.getCategoryName(product.category_id, product.category?.name)" class="mb-1.5 flex">
-                  <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[0.68rem] font-semibold text-teal-700 shadow-2xs">
+                <div v-if="categoryStore.getCategoryName(product.category_id, product.category?.name)" class="mb-1.5 flex items-center justify-between">
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[0.68rem] font-semibold text-teal-700 shadow-2xs cursor-pointer hover:bg-teal-100 hover:text-teal-800 transition-colors"
+                    :title="`Filtrar por ${categoryStore.getCategoryName(product.category_id, product.category?.name)}`"
+                    @click.stop="selectedCategory = product.category_id"
+                  >
                     <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
-                    {{ categoryStore.getCategoryName(product.category_id, product.category?.name) }}
+                    <span class="truncate max-w-[120px]">{{ categoryStore.getCategoryName(product.category_id, product.category?.name) }}</span>
+                  </span>
+
+                  <span v-if="resolveMinOrder(product.spec) > 1" class="text-[0.68rem] text-slate-400 font-medium whitespace-nowrap">
+                    Mín. {{ resolveMinOrder(product.spec) }} und
                   </span>
                 </div>
-                <h2 class="line-clamp-1 font-serif text-sm font-bold text-[#023859]" :title="product.title">
+
+                <router-link
+                  :to="{ name: 'product-detail', params: { id: product.id } }"
+                  class="block line-clamp-2 min-h-[2.5rem] font-serif text-sm font-bold text-[#023859] hover:text-teal-700 transition-colors leading-snug"
+                  :title="product.title"
+                >
                   {{ product.title }}
-                </h2>
+                </router-link>
+
                 <p class="mt-1 text-sm font-bold text-[#ff6a00]">
                   {{ formatPrice(product.base_price) }}
                 </p>
+
                 <div class="mt-1.5 flex items-center justify-between text-[11px]">
-                  <span class="font-semibold text-[#00a896]">
+                  <span
+                    :class="[
+                      'font-semibold',
+                      product.is_active ? 'text-[#00a896]' : 'text-slate-400'
+                    ]"
+                  >
                     {{ product.is_active ? "En stock" : "Agotado" }}
                   </span>
                   <span class="flex items-center gap-1 text-slate-500">
                     <i class="fa-solid fa-star text-[10px] text-amber-400"></i>
-                    <span>{{ product.rating?.average_score?.toFixed(1) || '0.0' }}</span>
-                    <span class="text-slate-400">({{ product.rating?.review_count || 0 }})</span>
+                    <span class="font-bold">{{ product.rating?.average_score?.toFixed(1) || '0.0' }}</span>
+                    <span v-if="product.rating?.review_count" class="text-slate-400 font-normal">({{ product.rating.review_count }})</span>
                   </span>
                 </div>
               </div>

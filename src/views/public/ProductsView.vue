@@ -95,6 +95,13 @@ function resolveMinOrder(spec: ProductResponse["spec"]): number {
   return 1;
 }
 
+function resolveUnitOfMeasure(spec: ProductResponse["spec"]): string | null {
+  if ("Physical" in spec && (spec.Physical as any)?.unit_of_measure) {
+    return (spec.Physical as any).unit_of_measure;
+  }
+  return null;
+}
+
 const filteredProducts = computed<ProductResponse[]>(() => {
   if (!searchFilter.value.trim()) return apiProducts.value;
   const query = searchFilter.value.toLowerCase().trim();
@@ -457,6 +464,8 @@ onMounted(async () => {
             :category-id="prod.category_id"
             :category-name="categoryStore.getCategoryName(prod.category_id, prod.category?.name)"
             :min-order="resolveMinOrder(prod.spec)"
+            :unit-of-measure="resolveUnitOfMeasure(prod.spec)"
+            :is-active="prod.is_active"
             :image-blob-id="prod.image_blob_ids?.[0] ?? null"
             :image-blob-ids="prod.image_blob_ids"
             :rating="prod.rating?.average_score ?? 0"

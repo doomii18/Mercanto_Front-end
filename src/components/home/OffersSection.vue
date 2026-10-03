@@ -156,10 +156,14 @@ const scroll = (direction: "left" | "right") => {
 
           <!-- Product Cards -->
           <template v-else>
-            <router-link v-for="item in offers" :key="item.offer.product_id" :to="{ name: 'product-detail', params: { id: item.offer.product_id } }" class="group/card relative flex w-55 min-w-55 snap-start flex-col rounded-2xl bg-white p-4 shadow-sm transition-transform hover:-translate-y-1 hover:shadow-xl">
-
+            <router-link
+              v-for="item in offers"
+              :key="item.offer.product_id"
+              :to="{ name: 'product-detail', params: { id: item.offer.product_id } }"
+              class="group/card relative flex w-56 min-w-[14rem] snap-start flex-col rounded-2xl bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:shadow-xl"
+            >
               <!-- Discount Badge -->
-              <span class="absolute left-3 top-3 z-10 rounded-full bg-(--primary-orange) px-2.5 py-1 text-xs font-bold text-white">
+              <span class="absolute left-3 top-3 z-10 rounded-full bg-(--primary-orange) px-2.5 py-1 text-xs font-bold text-white shadow-sm">
                 -{{ item.offer.discount_percentage }}%
               </span>
 
@@ -180,7 +184,7 @@ const scroll = (direction: "left" | "right") => {
               </button>
 
               <!-- Image -->
-              <div class="mb-4 h-36 w-full overflow-hidden rounded-xl bg-slate-50 p-2">
+              <div class="mb-3 h-36 w-full overflow-hidden rounded-xl bg-slate-50 p-2 flex items-center justify-center">
                 <ProductImageCarousel
                   :blob-ids="item.product.image_blob_ids"
                   :product-id="item.product.id"
@@ -191,21 +195,33 @@ const scroll = (direction: "left" | "right") => {
               </div>
 
               <!-- Content -->
-              <h3 class="mb-2 line-clamp-2 text-sm font-bold text-(--primary-blue)">{{ item.product.title }}</h3>
+              <h3 class="mb-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-(--primary-blue) group-hover/card:text-teal-700 transition-colors leading-snug">
+                {{ item.product.title }}
+              </h3>
 
               <div class="mb-3 flex items-baseline gap-2">
                 <span class="text-xs text-slate-400 line-through">{{ formatPrice(item.product.base_price) }}</span>
-                <span class="text-lg font-extrabold text-(--primary-orange)">{{ formatPrice(item.discountedPrice) }}</span>
+                <span class="text-base font-extrabold text-(--primary-orange)">{{ formatPrice(item.discountedPrice) }}</span>
               </div>
 
               <!-- Category Tag -->
-              <span
-                class="mt-auto inline-flex w-fit items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 text-[0.68rem] font-semibold text-teal-700 shadow-2xs"
-                :title="`Categoría: ${categoryStore.getCategoryName(item.product.category_id, item.product.category?.name)}`"
-              >
-                <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
-                {{ categoryStore.getCategoryName(item.product.category_id, item.product.category?.name) }}
-              </span>
+              <div class="mt-auto pt-2 flex items-center justify-between border-t border-slate-100">
+                <span
+                  class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 text-[0.68rem] font-semibold text-teal-700 shadow-2xs transition-colors hover:bg-teal-100 hover:text-teal-800 cursor-pointer"
+                  :title="`Ver más productos en ${categoryStore.getCategoryName(item.product.category_id, item.product.category?.name)}`"
+                  @click.stop.prevent="router.push({ name: 'products', query: { categoryId: item.product.category_id } })"
+                >
+                  <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
+                  <span class="truncate max-w-[110px]">{{ categoryStore.getCategoryName(item.product.category_id, item.product.category?.name) }}</span>
+                </span>
+
+                <span
+                  v-if="'Physical' in item.product.spec && item.product.spec.Physical?.min_order_quantity && item.product.spec.Physical.min_order_quantity > 1"
+                  class="text-[0.65rem] text-slate-400 font-medium whitespace-nowrap"
+                >
+                  Mín. {{ item.product.spec.Physical.min_order_quantity }}
+                </span>
+              </div>
             </router-link>
           </template>
 

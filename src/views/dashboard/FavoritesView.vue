@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { useCartApi } from "@/api/modules/commerce/cart/useCartApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import type { CartItemResponse, ProductResponse } from "@/api";
@@ -16,6 +17,7 @@ interface CartProductDisplay {
   providerLogoBlobId: string | null;
 }
 
+const router = useRouter();
 const organizationApi = useOrganizationApi();
 const cartApi = useCartApi();
 const productApi = useProductApi();
@@ -205,9 +207,11 @@ onMounted(() => {
           <i class="fa-solid fa-heart-crack text-xs"></i>
         </button>
 
-        <div
+        <!-- Image Frame -->
+        <router-link
+          :to="{ name: 'product-detail', params: { id: item.product.id } }"
           :class="[
-            'relative overflow-hidden rounded-xl bg-slate-50 flex-shrink-0',
+            'relative overflow-hidden rounded-xl bg-slate-50 flex-shrink-0 cursor-pointer group-hover:opacity-95 transition-opacity',
             viewMode === 'grid'
               ? 'h-48 w-full mb-3'
               : 'h-28 w-full sm:h-28 sm:w-28 mb-3 sm:mb-0'
@@ -220,26 +224,38 @@ onMounted(() => {
             object-fit="cover"
             variant="card"
           />
-        </div>
+        </router-link>
 
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-1.5 mb-1">
-            <div class="h-4 w-4 rounded-full overflow-hidden border border-slate-200 flex-shrink-0">
+          <div
+            class="flex items-center gap-1.5 mb-1 cursor-pointer group/prov"
+            :title="`Ver catálogo de ${item.providerName}`"
+            @click="router.push({ name: 'provider-catalog', params: { providerId: item.product.provider_id } })"
+          >
+            <div class="h-4 w-4 rounded-full overflow-hidden border border-slate-200 flex-shrink-0 group-hover/prov:border-teal-500 transition-colors">
               <ProviderLogo :blob-id="item.providerLogoBlobId" :alt="item.providerName" />
             </div>
-            <p class="truncate text-[11px] text-slate-400">
+            <p class="truncate text-[11px] text-slate-400 group-hover/prov:text-teal-600 transition-colors">
               {{ item.providerName }}
             </p>
           </div>
           <div v-if="categoryStore.getCategoryName(item.product.category_id, item.product.category?.name)" class="mb-1 flex">
-            <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[10px] font-semibold text-teal-700 shadow-2xs">
+            <span
+              class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[10px] font-semibold text-teal-700 shadow-2xs cursor-pointer hover:bg-teal-100 hover:text-teal-800 transition-colors"
+              :title="`Ver más productos en ${categoryStore.getCategoryName(item.product.category_id, item.product.category?.name)}`"
+              @click="router.push({ name: 'products', query: { categoryId: item.product.category_id } })"
+            >
               <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
-              {{ categoryStore.getCategoryName(item.product.category_id, item.product.category?.name) }}
+              <span class="truncate max-w-[120px]">{{ categoryStore.getCategoryName(item.product.category_id, item.product.category?.name) }}</span>
             </span>
           </div>
-          <h2 class="line-clamp-1 font-serif text-sm font-bold text-[#023859]" :title="item.product.title">
+          <router-link
+            :to="{ name: 'product-detail', params: { id: item.product.id } }"
+            class="block line-clamp-2 min-h-[2.5rem] font-serif text-sm font-bold text-[#023859] hover:text-teal-700 transition-colors leading-snug"
+            :title="item.product.title"
+          >
             {{ item.product.title }}
-          </h2>
+          </router-link>
           <p class="mt-1 text-sm font-bold text-[#ff6a00]">
             {{ formatPrice(item.product.base_price) }}
           </p>

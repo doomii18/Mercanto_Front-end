@@ -15,6 +15,8 @@ interface TopProductItem {
   categoryName: string;
   price: number;
   minOrder: number;
+  unitOfMeasure?: string | null;
+  isActive?: boolean;
   imageBlobId: string | null;
   imageBlobIds?: string[];
   providerId: string;
@@ -45,6 +47,13 @@ function resolveMinOrder(spec: ProductResponse["spec"]): number {
     return spec.Physical.min_order_quantity;
   }
   return 1;
+}
+
+function resolveUnitOfMeasure(spec: ProductResponse["spec"]): string | null {
+  if ("Physical" in spec && (spec.Physical as any)?.unit_of_measure) {
+    return (spec.Physical as any).unit_of_measure;
+  }
+  return null;
 }
 
 async function loadTopProducts() {
@@ -84,6 +93,8 @@ async function loadTopProducts() {
         categoryName: categoryStore.getCategoryName(prod.category_id, prod.category?.name || "General"),
         price: prod.base_price,
         minOrder: resolveMinOrder(prod.spec),
+        unitOfMeasure: resolveUnitOfMeasure(prod.spec),
+        isActive: prod.is_active,
         imageBlobId: prod.image_blob_ids?.[0] ?? null,
         imageBlobIds: prod.image_blob_ids ?? [],
         providerId: prod.provider_id,
@@ -157,6 +168,8 @@ onMounted(() => {
         :category-name="product.categoryName"
         :price="product.price"
         :min-order="product.minOrder"
+        :unit-of-measure="product.unitOfMeasure"
+        :is-active="product.isActive"
         :image-blob-id="product.imageBlobId"
         :image-blob-ids="product.imageBlobIds"
         :provider-id="product.providerId"

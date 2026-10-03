@@ -14,6 +14,8 @@ export interface ProductCardProps {
   categoryId?: string | null;
   categoryName?: string | null;
   minOrder?: number;
+  unitOfMeasure?: string | null;
+  isActive?: boolean;
   imageBlobId?: string | null;
   imageBlobIds?: string[] | null;
   enableCarousel?: boolean;
@@ -33,6 +35,8 @@ const props = withDefaults(defineProps<ProductCardProps>(), {
   categoryId: null,
   categoryName: null,
   minOrder: 1,
+  unitOfMeasure: null,
+  isActive: true,
   imageBlobId: null,
   imageBlobIds: () => [],
   enableCarousel: true,
@@ -103,7 +107,22 @@ const providerName = ref<string>("Proveedor aliado");
 const providerLogoBlobId = ref<string | null>(null);
 const isProviderLoading = ref<boolean>(true);
 
-const hasDiscount = computed(() => props.discountPercentage !== null && props.discountPercentage !== undefined);
+const hasDiscount = computed(
+  () =>
+    props.discountPercentage !== null &&
+    props.discountPercentage !== undefined &&
+    props.discountPercentage > 0
+);
+
+function handleProviderClick(e: Event) {
+  if (!props.providerId) return;
+  e.preventDefault();
+  e.stopPropagation();
+  router.push({
+    name: "provider-catalog",
+    params: { providerId: props.providerId },
+  });
+}
 
 const displayPrice = computed(() =>
   hasDiscount.value
@@ -249,58 +268,82 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Category Tag -->
-    <div v-if="resolvedCategoryName" class="mb-2 flex items-center justify-center">
+    <!-- Category Tag & Min Order Header -->
+    <div class="mb-2 flex items-center justify-between gap-1.5 min-h-[22px]">
       <span
+        v-if="resolvedCategoryName"
         :class="[
           'inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 text-[0.7rem] font-semibold text-teal-700 shadow-2xs transition-colors',
           categoryId ? 'cursor-pointer hover:bg-teal-100 hover:text-teal-800' : ''
         ]"
         :title="categoryId ? `Ver más productos en ${resolvedCategoryName}` : `Categoría: ${resolvedCategoryName}`"
-        @click="handleCategoryClick"
+        @click.stop.prevent="handleCategoryClick"
       >
         <i class="fa-solid fa-tag text-[9px] text-teal-600"></i>
         <span class="truncate max-w-[130px]">{{ resolvedCategoryName }}</span>
       </span>
-    </div>
+      <span v-else></span>
 
-    <!-- Product Info -->
-    <div class="mb-1 flex min-w-0 items-center justify-between gap-2">
-      <h4 :title="title" class="m-0 min-w-0 flex-1 truncate text-sm font-semibold text-[#023859]">
-        {{ title }}
-      </h4>
-      <span class="flex shrink-0 flex-col items-end leading-tight">
-        <span v-if="hasDiscount" class="text-[0.72rem] text-slate-400 line-through">
-          {{ formattedOriginalPrice }}
-        </span>
-        <span class="text-[0.95rem] font-bold text-[#ff6a00]">
-          {{ formattedPrice }}
-        </span>
+      <span
+        v-if="minOrder && minOrder > 1"
+        class="text-[0.68rem] text-slate-400 font-medium whitespace-nowrap"
+      >
+        Mín. {{ minOrder }} {{ unitOfMeasure || 'und' }}
       </span>
     </div>
 
-    <!-- Min Order -->
-    <p v-if="minOrder" class="mb-3 text-right text-[0.72rem] text-slate-500">
-      Pedido mín. {{ minOrder }} und
-    </p>
+    <!-- Product Info (Title & Price) -->
+    <div class="mb-2 flex min-w-0 flex-col gap-1">
+      <h4
+        :title="title"
+        class="m-0 min-w-0 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-[#023859] group-hover:text-teal-700 transition-colors leading-snug"
+      >
+        {{ title }}
+      </h4>
 
-    <!-- Provider Info -->
-    <div class="mt-auto flex min-h-[28px] min-w-0 items-center justify-between gap-2 border-t border-slate-200 pt-3 text-xs text-slate-600">
+      <div class="flex items-baseline justify-between gap-2 mt-1">
+        <span class="flex items-baseline gap-1.5">
+          <span class="text-base font-bold text-[#ff6a00]">
+            {{ formattedPrice }}
+          </span>
+          <span v-if="unitOfMeasure" class="text-[0.7rem] text-slate-400 font-normal">
+            / {{ unitOfMeasure }}
+          </span>
+        </span>
+        <span v-if="hasDiscount" class="text-xs text-slate-400 line-through">
+          {{ formattedOriginalPrice }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Provider Info & Rating Footer -->
+    <div class="mt-auto flex min-h-[30px] min-w-0 items-center justify-between gap-2 border-t border-slate-100 pt-2.5 text-xs text-slate-600">
       <div v-if="isProviderLoading" class="flex flex-1 items-center gap-1.5">
         <div class="h-5 w-5 shrink-0 animate-pulse rounded-full bg-slate-200"></div>
-        <div class="h-3 w-[90px] animate-pulse rounded bg-slate-200"></div>
+        <div class="h-3 w-[80px] animate-pulse rounded bg-slate-200"></div>
       </div>
 
-      <div v-else class="flex min-w-0 items-center gap-2 overflow-hidden" :title="providerName">
-        <div class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100">
+      <div
+        v-else
+        class="flex min-w-0 items-center gap-1.5 overflow-hidden group/prov cursor-pointer"
+        :title="`Ver catálogo de ${providerName}`"
+        @click.stop.prevent="handleProviderClick"
+      >
+        <div class="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 group-hover/prov:border-teal-500 transition-colors">
           <ProviderLogo :blob-id="providerLogoBlobId" :alt="providerName" />
         </div>
-        <span class="truncate font-medium text-slate-700">{{ providerName }}</span>
+        <span class="truncate font-medium text-slate-600 group-hover/prov:text-teal-700 transition-colors text-[0.75rem]">
+          {{ providerName }}
+        </span>
       </div>
 
-      <span class="inline-flex shrink-0 items-center gap-1 font-bold text-slate-800" :title="`${reviewCount} valoraciones`">
+      <span
+        class="inline-flex shrink-0 items-center gap-1 font-bold text-slate-800"
+        :title="reviewCount > 0 ? `${rating.toFixed(1)} (${reviewCount} valoraciones)` : 'Sin valoraciones'"
+      >
         <i class="fa-solid fa-star text-[10px] text-amber-400"></i>
-        <span>{{ rating > 0 ? rating.toFixed(1) : "0.0" }}</span>
+        <span class="text-xs">{{ rating > 0 ? rating.toFixed(1) : "0.0" }}</span>
+        <span v-if="reviewCount > 0" class="text-[10px] font-normal text-slate-400">({{ reviewCount }})</span>
       </span>
     </div>
 

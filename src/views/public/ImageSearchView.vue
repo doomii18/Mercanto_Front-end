@@ -108,6 +108,20 @@ const executeSearch = async () => {
   }
 };
 
+function resolveMinOrder(spec: any): number {
+  if (spec && "Physical" in spec && spec.Physical?.min_order_quantity) {
+    return spec.Physical.min_order_quantity;
+  }
+  return 1;
+}
+
+function resolveUnitOfMeasure(spec: any): string | null {
+  if (spec && "Physical" in spec && spec.Physical?.unit_of_measure) {
+    return spec.Physical.unit_of_measure;
+  }
+  return null;
+}
+
 onBeforeUnmount(() => {
   if (previewUrl.value) {
     URL.revokeObjectURL(previewUrl.value);
@@ -325,6 +339,9 @@ onBeforeUnmount(() => {
               :category-name="categoryStore.getCategoryName(hit.product.category_id, hit.product.category?.name)"
               :image-blob-id="hit.product.image_blob_ids?.[0] ?? null"
               :image-blob-ids="hit.product.image_blob_ids"
+              :min-order="resolveMinOrder(hit.product.spec)"
+              :unit-of-measure="resolveUnitOfMeasure(hit.product.spec)"
+              :is-active="hit.product.is_active"
               :rating="hit.product.rating?.average_score ?? 0"
               :review-count="hit.product.rating?.review_count ?? 0"
               :badge-text="hit.distance < 0.35 ? 'Alta coincidencia' : 'Similitud visual'"

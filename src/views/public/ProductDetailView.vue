@@ -9,11 +9,13 @@ import { useQuoteBuilderStore, useFavoritesStore, useCategoryStore } from "@/sto
 import { useToastStore } from "@/stores/ui";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
+import ProductCard from "@/components/product/ProductCard.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
 import type { PaymentMethod, ProductOfferResponse } from "@/api";
+import type { ProductResponse } from "@/api/modules/catalog/product/types";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -91,6 +93,22 @@ const selectedShippingMethod = ref("bus");
 const selectedColor = ref<string>("");
 const quantity = ref(1);
 const currentOffer = ref<ProductOfferResponse | null>(null);
+const relatedProducts = ref<ProductResponse[]>([]);
+const isLoadingRelated = ref(false);
+
+function resolveMinOrder(spec: any): number {
+    if (spec && "Physical" in spec && spec.Physical?.min_order_quantity) {
+        return spec.Physical.min_order_quantity;
+    }
+    return 1;
+}
+
+function resolveUnitOfMeasure(spec: any): string | null {
+    if (spec && "Physical" in spec && spec.Physical?.unit_of_measure) {
+        return spec.Physical.unit_of_measure;
+    }
+    return null;
+}
 
 const product = ref<ProductDetailData>({
     id: "",
@@ -280,8 +298,49 @@ async function loadProduct(id: string) {
             } catch {
                 currentOffer.value = null;
             }
+
+            try {
+                isLoadingRelated.value = true;
+                const promises: Promise<any>[] = [];
+                if (prodRes.category_id) {
+                    promises.push(productApi.getProducts({ category_id: prodRes.category_id, limit: 8 }));
+                }
+                if (prodRes.provider_id) {
+                    promises.push(productApi.getProducts({ provider_id: prodRes.provider_id, limit: 8 }));
+                }
+                const results = await Promise.allSettled(promises);
+                const pool: ProductResponse[] = [];
+                for (const res of results) {
+                    if (res.status === "fulfilled" && res.value?.data) {
+                        for (const item of res.value.data) {
+                            if (item.id !== prodRes.id && !pool.some((p) => p.id === item.id)) {
+                                pool.push(item);
+                            }
+                        }
+                    }
+                }
+                if (pool.length < 4) {
+                    try {
+                        const fallbackRes = await productApi.getProducts({ limit: 8 });
+                        if (fallbackRes?.data) {
+                            for (const item of fallbackRes.data) {
+                                if (item.id !== prodRes.id && !pool.some((p) => p.id === item.id)) {
+                                    pool.push(item);
+                                }
+                            }
+                        }
+                    } catch {}
+                }
+                relatedProducts.value = pool.slice(0, 4);
+            } catch (relatedErr) {
+                console.warn("Could not fetch related products:", relatedErr);
+                relatedProducts.value = [];
+            } finally {
+                isLoadingRelated.value = false;
+            }
         } else {
             currentOffer.value = null;
+            relatedProducts.value = [];
             product.value = {
               id,
                 category_id: "",
@@ -802,6 +861,50 @@ const navigateToCategory = () => {
                                 Hacer oficial el pedido
                             </button>
                         </div>
+                    </div>
+                </section>
+
+                <!-- Productos Relacionados -->
+                <section v-if="relatedProducts.length > 0" class="mt-14 mb-8">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="h-5 w-1.5 rounded-full bg-orange-500"></span>
+                                <h2 class="text-xl sm:text-2xl font-black text-[#083c5a] tracking-tight">
+                                    Productos Relacionados
+                                </h2>
+                            </div>
+                            <p class="text-xs sm:text-sm text-neutral-500 mt-1">
+                                Artículos similares que también podrían interesarte
+                            </p>
+                        </div>
+                        <router-link
+                            v-if="product.category_id"
+                            :to="{ path: '/products', query: { category_id: product.category_id } }"
+                            class="text-xs sm:text-sm font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1.5 transition-colors group self-start sm:self-auto"
+                        >
+                            Ver más en {{ product.category }}
+                            <i class="fa-solid fa-arrow-right text-[10px] transition-transform duration-200 group-hover:translate-x-1"></i>
+                        </router-link>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <ProductCard
+                            v-for="relProd in relatedProducts"
+                            :key="relProd.id"
+                            :id="relProd.id"
+                            :title="relProd.title"
+                            :price="Number(relProd.base_price)"
+                            :provider-id="relProd.provider_id"
+                            :category-id="relProd.category_id"
+                            :image-blob-id="relProd.image_blob_ids?.[0] ?? null"
+                            :image-blob-ids="relProd.image_blob_ids ?? []"
+                            :min-order="resolveMinOrder(relProd.spec)"
+                            :unit-of-measure="resolveUnitOfMeasure(relProd.spec)"
+                            :rating="relProd.rating?.average_score ?? 0"
+                            :review-count="relProd.rating?.review_count ?? 0"
+                            :is-active="relProd.is_active"
+                        />
                     </div>
                 </section>
 

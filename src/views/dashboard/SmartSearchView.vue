@@ -6,6 +6,7 @@ import { useOrganizationStore } from "@/stores/organization";
 import { useAuthStore } from "@/stores/auth";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
+import { useCategoryStore } from "@/stores/commerce";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import type {
   SmartProductSearchHit,
@@ -53,6 +54,7 @@ const orgStore = useOrganizationStore();
 const authStore = useAuthStore();
 const productApi = useProductApi();
 const categoryApi = useCategoryApi();
+const categoryStore = useCategoryStore();
 const quoteApi = useQuoteApi();
 
 interface CatalogProductItem {
@@ -669,6 +671,7 @@ onMounted(async () => {
   }
 
   try {
+    await categoryStore.fetchCategories().catch(console.warn);
     const catRes = await categoryApi.getCategories();
     if (catRes && catRes.data) {
       catRes.data.forEach((c) => {
@@ -692,7 +695,10 @@ onMounted(async () => {
             // Non-blocking
           }
 
-          const catName = categoriesMap.value.get(p.category_id) || "Catálogo General";
+          const catName = categoryStore.getCategoryName(
+            p.category_id,
+            categoriesMap.value.get(p.category_id) || "Catálogo General"
+          );
           const blobId =
             p.image_blob_ids && p.image_blob_ids.length > 0
               ? p.image_blob_ids[0]
@@ -1652,9 +1658,9 @@ onMounted(async () => {
           <div
             v-for="item in filteredCatalog"
             :key="item.id"
-            class="border border-slate-200 rounded-xl p-3.5 flex flex-col bg-white hover:border-teal-500 transition-colors shadow-2xs"
+            class="border border-slate-200 rounded-xl p-3.5 flex flex-col bg-white hover:border-teal-500 hover:shadow-md transition-all shadow-2xs group"
           >
-            <div class="w-full h-28 mb-2 p-1 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center">
+            <div class="w-full h-28 mb-2 p-1 bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center group-hover:scale-[1.02] transition-transform">
               <ProductImage
                 :blob-id="item.imageBlobId"
                 :product-id="item.id"
@@ -1666,12 +1672,14 @@ onMounted(async () => {
                 {{ item.category }}
               </span>
             </div>
-            <h5 class="text-sm font-bold text-[#083c5a] my-0.5 line-clamp-1">{{ item.name }}</h5>
-            <span class="text-xs text-slate-400 mb-1">Por: {{ item.providerName }}</span>
+            <h5 class="text-sm font-bold text-[#083c5a] my-0.5 line-clamp-2 min-h-[2.5rem] leading-tight" :title="item.name">
+              {{ item.name }}
+            </h5>
+            <span class="text-xs text-slate-400 mb-1 truncate" :title="item.providerName">Por: {{ item.providerName }}</span>
             <span class="text-sm font-bold text-[#ff6a00] mb-2.5">C$ {{ item.price.toLocaleString() }}</span>
             <button
               type="button"
-              class="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs py-2 px-3 rounded-lg transition-colors cursor-pointer mt-auto flex items-center justify-center gap-1.5"
+              class="bg-teal-600 hover:bg-teal-700 text-white font-semibold text-xs py-2 px-3 rounded-lg transition-colors cursor-pointer mt-auto flex items-center justify-center gap-1.5 shadow-2xs hover:shadow"
               @click="addProductFromCatalog(item)"
             >
               <Plus :size="14" /> Agregar al Pedido
