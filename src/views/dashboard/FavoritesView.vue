@@ -7,6 +7,7 @@ import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue"
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
+import { useCategoryStore } from "@/stores/commerce";
 
 interface CartProductDisplay {
   cartItem: CartItemResponse;
@@ -19,6 +20,7 @@ const organizationApi = useOrganizationApi();
 const cartApi = useCartApi();
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
+const categoryStore = useCategoryStore();
 
 const cartProducts = ref<CartProductDisplay[]>([]);
 const isLoading = ref(true);
@@ -26,6 +28,7 @@ const searchQuery = ref("");
 const viewMode = ref<"grid" | "list">("grid");
 
 const fetchCartProducts = async () => {
+  categoryStore.fetchCategories().catch(console.warn);
   isLoading.value = true;
   try {
     const items = await cartApi.getMyCartProducts();
@@ -227,6 +230,12 @@ onMounted(() => {
             <p class="truncate text-[11px] text-slate-400">
               {{ item.providerName }}
             </p>
+          </div>
+          <div v-if="categoryStore.getCategoryName(item.product.category_id, item.product.category?.name)" class="mb-1 flex">
+            <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[10px] font-semibold text-teal-700 shadow-2xs">
+              <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
+              {{ categoryStore.getCategoryName(item.product.category_id, item.product.category?.name) }}
+            </span>
           </div>
           <h2 class="line-clamp-1 font-serif text-sm font-bold text-[#023859]" :title="item.product.title">
             {{ item.product.title }}

@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import type { ProductCategoryResponse, ProductResponse } from "@/api";
 import CategoryHeroCard from "@/components/category/CategoryHeroCard.vue";
@@ -9,6 +8,7 @@ import CategoryPicker from "@/components/category/CategoryPicker.vue";
 import ProviderCard from "@/components/organization/ProviderCard.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductOffers } from "@/composables/useProductOffers";
+import { useCategoryStore } from "@/stores/commerce";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -34,7 +34,7 @@ const route = useRoute();
 const router = useRouter();
 
 const organizationApi = useOrganizationApi();
-const categoryApi = useCategoryApi();
+const categoryStore = useCategoryStore();
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
 
@@ -100,7 +100,8 @@ const filteredProducts = computed<ProductResponse[]>(() => {
   const query = searchFilter.value.toLowerCase().trim();
   return apiProducts.value.filter((p) => {
     const matchTitle = p.title.toLowerCase().includes(query);
-    const matchCategory = p.category?.name?.toLowerCase().includes(query);
+    const catName = categoryStore.getCategoryName(p.category_id, p.category?.name);
+    const matchCategory = catName.toLowerCase().includes(query);
     return matchTitle || matchCategory;
   });
 });
@@ -167,8 +168,7 @@ async function resolveFeaturedProviderMeta(items: ProductResponse[]): Promise<vo
 async function loadCategories(): Promise<void> {
   isLoadingCategories.value = true;
   try {
-    const res = await categoryApi.getCategories({ limit: 100 });
-    categories.value = res.data;
+    categories.value = await categoryStore.fetchCategories();
   } catch (err) {
     console.warn("Error loading categories:", err);
   } finally {
@@ -454,7 +454,8 @@ onMounted(async () => {
             :title="prod.title"
             :price="prod.base_price"
             :provider-id="prod.provider_id"
-            :category-name="prod.category?.name || 'General'"
+            :category-id="prod.category_id"
+            :category-name="categoryStore.getCategoryName(prod.category_id, prod.category?.name)"
             :min-order="resolveMinOrder(prod.spec)"
             :image-blob-id="prod.image_blob_ids?.[0] ?? null"
             :image-blob-ids="prod.image_blob_ids"

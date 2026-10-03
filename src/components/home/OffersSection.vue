@@ -4,7 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useProductImageApi } from "@/api/modules/catalog/product_image/useProductImageApi";
-import { useFavoritesStore } from "@/stores/commerce";
+import { useFavoritesStore, useCategoryStore } from "@/stores/commerce";
 import type { ProductOfferResponse, ProductResponse } from "@/api";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 
@@ -17,6 +17,7 @@ interface OfferCard {
 const router = useRouter();
 const route = useRoute();
 const favoritesStore = useFavoritesStore();
+const categoryStore = useCategoryStore();
 const offers = ref<OfferCard[]>([]);
 const offerApi = useOfferApi();
 const productApi = useProductApi();
@@ -33,6 +34,7 @@ const applyDiscount = (base: number, percentage: number) =>
   Math.round(base * (100 - percentage)) / 100;
 
 onMounted(async () => {
+  categoryStore.fetchCategories().catch(console.warn);
   try {
     const res = await offerApi.getOffers({
       limit: 8,
@@ -196,9 +198,13 @@ const scroll = (direction: "left" | "right") => {
                 <span class="text-lg font-extrabold text-(--primary-orange)">{{ formatPrice(item.discountedPrice) }}</span>
               </div>
 
-              <!-- Category Pill -->
-              <span class="mt-auto w-fit rounded-full bg-neutral-100 px-3 py-1 text-[0.625rem] font-bold text-neutral-500">
-                {{ item.product.category?.name || "General" }}
+              <!-- Category Tag -->
+              <span
+                class="mt-auto inline-flex w-fit items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 text-[0.68rem] font-semibold text-teal-700 shadow-2xs"
+                :title="`Categoría: ${categoryStore.getCategoryName(item.product.category_id, item.product.category?.name)}`"
+              >
+                <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
+                {{ categoryStore.getCategoryName(item.product.category_id, item.product.category?.name) }}
               </span>
             </router-link>
           </template>

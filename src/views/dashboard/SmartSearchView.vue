@@ -1660,7 +1660,12 @@ onMounted(async () => {
                 :product-id="item.id"
               />
             </div>
-            <span class="text-[11px] text-slate-500">{{ item.category }}</span>
+            <div class="mb-1 flex">
+              <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[10px] font-semibold text-teal-700 shadow-2xs">
+                <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
+                {{ item.category }}
+              </span>
+            </div>
             <h5 class="text-sm font-bold text-[#083c5a] my-0.5 line-clamp-1">{{ item.name }}</h5>
             <span class="text-xs text-slate-400 mb-1">Por: {{ item.providerName }}</span>
             <span class="text-sm font-bold text-[#ff6a00] mb-2.5">C$ {{ item.price.toLocaleString() }}</span>

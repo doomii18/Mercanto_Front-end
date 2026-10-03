@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import { useProductOffers } from "@/composables/useProductOffers";
+import { useCategoryStore } from "@/stores/commerce";
 import type { ProductResponse } from "@/api";
 import ProductCard from "./ProductCard.vue";
 import topSellersHeroImg from "@/assets/top-sellers-hero.png";
@@ -10,6 +11,7 @@ import topSellersHeroImg from "@/assets/top-sellers-hero.png";
 interface TopProductItem {
   id: string;
   title: string;
+  categoryId: string;
   categoryName: string;
   price: number;
   minOrder: number;
@@ -25,6 +27,7 @@ interface TopProductItem {
 const topProducts = ref<TopProductItem[]>([]);
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
+const categoryStore = useCategoryStore();
 const isLoading = ref(true);
 
 const topProductIds = computed(() => topProducts.value.map((product) => product.id));
@@ -47,12 +50,15 @@ function resolveMinOrder(spec: ProductResponse["spec"]): number {
 async function loadTopProducts() {
   isLoading.value = true;
   try {
-    const res = await productApi.getProducts({
-      limit: 4,
-      offset: 0,
-      sort_by: "score",
-      sort_direction: "desc",
-    });
+    const [res] = await Promise.all([
+      productApi.getProducts({
+        limit: 4,
+        offset: 0,
+        sort_by: "score",
+        sort_direction: "desc",
+      }),
+      categoryStore.fetchCategories().catch(console.warn),
+    ]);
 
     const productIds = res.data.map((prod) => prod.id);
     let metricsMap: Record<string, { rating_score: number; review_count: number }> = {};
@@ -74,7 +80,8 @@ async function loadTopProducts() {
       return {
         id: prod.id,
         title: prod.title,
-        categoryName: prod.category?.name || "General",
+        categoryId: prod.category_id,
+        categoryName: categoryStore.getCategoryName(prod.category_id, prod.category?.name || "General"),
         price: prod.base_price,
         minOrder: resolveMinOrder(prod.spec),
         imageBlobId: prod.image_blob_ids?.[0] ?? null,
@@ -146,6 +153,7 @@ onMounted(() => {
         :key="product.id"
         :id="product.id"
         :title="product.title"
+        :category-id="product.categoryId"
         :category-name="product.categoryName"
         :price="product.price"
         :min-order="product.minOrder"

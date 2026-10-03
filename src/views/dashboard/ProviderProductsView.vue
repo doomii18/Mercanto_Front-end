@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
-import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import { useInventoryApi } from "@/api/modules/catalog/inventory/useInventoryApi";
 import { useUserContextStore } from "@/stores/auth";
+import { useCategoryStore } from "@/stores/commerce";
 import { useAlertStore } from "@/stores/ui";
 import type { ProductResponse, ProductCategoryResponse, InventoryResponse } from "@/api";
 import ProductImage from "@/components/product/ProductImage.vue";
@@ -13,8 +13,8 @@ import ConfirmModal from "@/components/common/ConfirmModal.vue";
 
 const userContext = useUserContextStore();
 const alertStore = useAlertStore();
+const categoryStore = useCategoryStore();
 const productApi = useProductApi();
-const categoryApi = useCategoryApi();
 const quoteApi = useQuoteApi();
 const inventoryApi = useInventoryApi();
 
@@ -59,8 +59,7 @@ const pageNumbers = computed(() => {
 
 async function loadCategories() {
   try {
-    const res = await categoryApi.getCategories({ limit: 100 });
-    categories.value = res.data;
+    categories.value = await categoryStore.fetchCategories();
   } catch (err) {
     console.warn("Error cargando categorías:", err);
   }
@@ -215,7 +214,7 @@ async function exportCatalogCsv() {
       return [
         escapeCsv(p.id),
         escapeCsv(p.title),
-        escapeCsv(p.category?.name || "General"),
+        escapeCsv(categoryStore.getCategoryName(p.category_id, p.category?.name)),
         escapeCsv(p.base_price),
         escapeCsv(p.unit_of_measure),
         escapeCsv(minQty),
@@ -447,8 +446,9 @@ onMounted(async () => {
                 </div>
               </td>
               <td class="py-3 px-3.5">
-                <span class="py-0.5 px-2.5 rounded-full bg-[#e6f7f5] text-[#00a896] text-xs font-semibold whitespace-nowrap border border-[#00a896]/20">
-                  {{ product.category?.name || 'General' }}
+                <span class="inline-flex items-center gap-1.5 py-0.5 px-2.5 rounded-full bg-[#e6f7f5] text-[#00a896] text-xs font-semibold whitespace-nowrap border border-[#00a896]/20">
+                  <i class="fa-solid fa-tag text-[9px] text-[#00a896]"></i>
+                  {{ categoryStore.getCategoryName(product.category_id, product.category?.name) }}
                 </span>
               </td>
               <td class="py-3 px-3.5 font-bold text-slate-900 whitespace-nowrap">
@@ -574,7 +574,12 @@ onMounted(async () => {
 
         <div class="flex flex-col min-w-0">
           <span class="font-bold text-[#023859] text-sm truncate" :title="product.title">{{ product.title }}</span>
-          <span class="text-xs text-slate-500">{{ product.category?.name || 'General' }}</span>
+          <div class="mt-1">
+            <span class="inline-flex items-center gap-1 rounded-full bg-[#e6f7f5] text-[#00a896] text-xs font-semibold px-2 py-0.5 border border-[#00a896]/20 w-fit">
+              <i class="fa-solid fa-tag text-[9px] text-[#00a896]"></i>
+              {{ categoryStore.getCategoryName(product.category_id, product.category?.name) }}
+            </span>
+          </div>
         </div>
 
         <div class="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-1">

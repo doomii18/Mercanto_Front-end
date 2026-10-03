@@ -5,9 +5,11 @@ import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import type { ProductImageSearchHit } from "@/api";
 import ProductCard from "@/components/product/ProductCard.vue";
 import { useProductOffers } from "@/composables/useProductOffers";
+import { useCategoryStore } from "@/stores/commerce";
 
 const productApi = useProductApi();
 const reviewApi = useReviewApi();
+const categoryStore = useCategoryStore();
 const fileInput = ref<HTMLInputElement | null>(null);
 const currentFile = ref<File | null>(null);
 const previewUrl = ref<string | null>(null);
@@ -319,7 +321,8 @@ onBeforeUnmount(() => {
               :title="hit.product.title"
               :price="hit.product.base_price"
               :provider-id="hit.product.provider_id"
-              :category-name="hit.product.category?.name ?? null"
+              :category-id="hit.product.category_id"
+              :category-name="categoryStore.getCategoryName(hit.product.category_id, hit.product.category?.name)"
               :image-blob-id="hit.product.image_blob_ids?.[0] ?? null"
               :image-blob-ids="hit.product.image_blob_ids"
               :rating="hit.product.rating?.average_score ?? 0"

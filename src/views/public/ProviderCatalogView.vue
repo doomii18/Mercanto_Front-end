@@ -2,8 +2,7 @@
 import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
-import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
-import { useFavoritesStore } from "@/stores/commerce";
+import { useFavoritesStore, useCategoryStore } from "@/stores/commerce";
 import { useGeoStore } from "@/stores/geo";
 import { useAuthStore } from "@/stores/auth";
 import type { ProductResponse, PublicProviderDto, ProductCategoryResponse } from "@/api";
@@ -20,7 +19,7 @@ const authStore = useAuthStore();
 const providerId = computed(() => route.params.providerId as string);
 const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
-const categoryApi = useCategoryApi();
+const categoryStore = useCategoryStore();
 const favoritesStore = useFavoritesStore();
 const reviewApi = useReviewApi();
 
@@ -112,8 +111,7 @@ const fetchProvider = async () => {
 const fetchCategories = async () => {
   isLoadingCategories.value = true;
   try {
-    const res = await categoryApi.getCategories({ limit: 100 });
-    categories.value = res.data;
+    categories.value = await categoryStore.fetchCategories();
   } catch (err) {
     console.error("Failed to fetch categories:", err);
   } finally {
@@ -453,6 +451,12 @@ onMounted(async () => {
 
               <!-- Product Details -->
               <div class="min-w-0 flex-1">
+                <div v-if="categoryStore.getCategoryName(product.category_id, product.category?.name)" class="mb-1.5 flex">
+                  <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/80 px-2 py-0.5 text-[0.68rem] font-semibold text-teal-700 shadow-2xs">
+                    <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
+                    {{ categoryStore.getCategoryName(product.category_id, product.category?.name) }}
+                  </span>
+                </div>
                 <h2 class="line-clamp-1 font-serif text-sm font-bold text-[#023859]" :title="product.title">
                   {{ product.title }}
                 </h2>

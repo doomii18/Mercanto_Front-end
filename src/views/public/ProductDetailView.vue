@@ -3,19 +3,17 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
-import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 
 import { useGeoStore } from "@/stores/geo";
-import { useQuoteBuilderStore } from "@/stores/commerce";
+import { useQuoteBuilderStore, useFavoritesStore, useCategoryStore } from "@/stores/commerce";
 import { useToastStore } from "@/stores/ui";
-import { useFavoritesStore } from "@/stores/commerce";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
-import type { PaymentMethod, ProductOfferResponse, ProductCategoryResponse } from "@/api";
+import type { PaymentMethod, ProductOfferResponse } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -70,9 +68,8 @@ const route = useRoute();
 const router = useRouter();
 const organizationApi = useOrganizationApi();
 const productApi = useProductApi();
-const categoryApi = useCategoryApi();
+const categoryStore = useCategoryStore();
 const offerApi = useOfferApi();
-let cachedCategories: ProductCategoryResponse[] | null = null;
 const reviewApi = useReviewApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
@@ -245,22 +242,12 @@ async function loadProduct(id: string) {
                 minOrder = prodRes.spec.Physical.min_order_quantity;
             }
 
-            let categoryName = "General";
             const categoryId = prodRes.category_id || (prodRes as any).category?.id || "";
+            let categoryName = (prodRes as any).category?.name || "General";
 
             if (categoryId) {
-                if (!cachedCategories) {
-                    try {
-                        const catRes = await categoryApi.getCategories({ limit: 100 });
-                        cachedCategories = catRes.data;
-                    } catch (catErr) {
-                        console.warn("Could not fetch categories:", catErr);
-                    }
-                }
-                const found = cachedCategories?.find((c) => c.id === categoryId);
-                if (found) {
-                    categoryName = found.name;
-                }
+                await categoryStore.fetchCategories().catch(console.warn);
+                categoryName = categoryStore.getCategoryName(categoryId, categoryName);
             }
 
             product.value = {

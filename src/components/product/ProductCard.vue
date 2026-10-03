@@ -4,13 +4,14 @@ import { useRouter, useRoute } from "vue-router";
 import ProductImageCarousel from "./ProductImageCarousel.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
 import { useOrganizationStore } from "@/stores/organization";
-import { useFavoritesStore } from "@/stores/commerce";
+import { useFavoritesStore, useCategoryStore } from "@/stores/commerce";
 
 export interface ProductCardProps {
   id: string;
   title: string;
   price: number;
   providerId: string;
+  categoryId?: string | null;
   categoryName?: string | null;
   minOrder?: number;
   imageBlobId?: string | null;
@@ -29,6 +30,7 @@ export interface ProductCardProps {
 }
 
 const props = withDefaults(defineProps<ProductCardProps>(), {
+  categoryId: null,
   categoryName: null,
   minOrder: 1,
   imageBlobId: null,
@@ -50,8 +52,33 @@ const orgStore = useOrganizationStore();
 const router = useRouter();
 const route = useRoute();
 const favoritesStore = useFavoritesStore();
+const categoryStore = useCategoryStore();
 
 const isFav = computed(() => favoritesStore.isFavorite(props.id));
+
+const resolvedCategoryName = computed(() => {
+  if (props.categoryId) {
+    const resolved = categoryStore.getCategoryName(props.categoryId, "");
+    if (resolved && resolved !== "General") return resolved;
+  }
+  if (props.categoryName && props.categoryName !== "General") {
+    return props.categoryName;
+  }
+  if (props.categoryId) {
+    return categoryStore.getCategoryName(props.categoryId, "General");
+  }
+  return props.categoryName || "";
+});
+
+function handleCategoryClick(e: Event) {
+  if (!props.categoryId) return;
+  e.preventDefault();
+  e.stopPropagation();
+  router.push({
+    name: "products",
+    query: { categoryId: props.categoryId },
+  });
+}
 
 function handleFavoriteClick(e: Event) {
   e.preventDefault();
@@ -154,6 +181,9 @@ watch(
 
 onMounted(() => {
   loadProviderInfo();
+  if (props.categoryId && (!props.categoryName || props.categoryName === "General")) {
+    categoryStore.fetchCategories().catch(console.warn);
+  }
   if (!favoritesStore.isInitialized) {
     favoritesStore.fetchFavorites().catch(console.warn);
   }
@@ -219,10 +249,20 @@ onMounted(() => {
       />
     </div>
 
-    <!-- Category -->
-    <p v-if="categoryName" class="mb-1.5 truncate text-center text-[0.72rem] text-slate-500">
-      {{ categoryName }}
-    </p>
+    <!-- Category Tag -->
+    <div v-if="resolvedCategoryName" class="mb-2 flex items-center justify-center">
+      <span
+        :class="[
+          'inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200/80 px-2.5 py-0.5 text-[0.7rem] font-semibold text-teal-700 shadow-2xs transition-colors',
+          categoryId ? 'cursor-pointer hover:bg-teal-100 hover:text-teal-800' : ''
+        ]"
+        :title="categoryId ? `Ver más productos en ${resolvedCategoryName}` : `Categoría: ${resolvedCategoryName}`"
+        @click="handleCategoryClick"
+      >
+        <i class="fa-solid fa-tag text-[9px] text-teal-600"></i>
+        <span class="truncate max-w-[130px]">{{ resolvedCategoryName }}</span>
+      </span>
+    </div>
 
     <!-- Product Info -->
     <div class="mb-1 flex min-w-0 items-center justify-between gap-2">

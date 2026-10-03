@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { useProductApi } from '@/api/modules/catalog/product/useProductApi';
+import { useCategoryStore } from '@/stores/commerce';
 import type { ProductResponse } from '@/api';
 import ProductImage from '@/components/product/ProductImage.vue';
 
 const searchQuery = ref('');
 const productApi = useProductApi();
+const categoryStore = useCategoryStore();
 const searchResults = ref<ProductResponse[]>([]);
 const isDropdownOpen = ref(false);
 const isSearching = ref(false);
@@ -48,6 +50,7 @@ const executeSearch = async () => {
   isDropdownOpen.value = true;
 
   try {
+    categoryStore.fetchCategories().catch(console.warn);
     const res = await productApi.getProducts({ search_term: query, limit: 5 });
     searchResults.value = res.data;
   } catch (err) {
@@ -169,7 +172,12 @@ onBeforeUnmount(() => {
                   </div>
                   <div class="flex-1 min-w-0">
                     <h4 class="text-sm font-semibold text-(--primary-blue) truncate">{{ product.title }}</h4>
-                    <p class="text-xs text-slate-500 truncate">{{ product.category?.name || 'General' }}</p>
+                    <div class="mt-0.5">
+                      <span class="inline-flex items-center gap-1 rounded-full bg-teal-50 border border-teal-200/70 px-2 py-0.5 text-[10px] font-semibold text-teal-700">
+                        <i class="fa-solid fa-tag text-[8px] text-teal-600"></i>
+                        {{ categoryStore.getCategoryName(product.category_id, product.category?.name) }}
+                      </span>
+                    </div>
                   </div>
                   <span class="text-sm font-bold text-(--primary-orange) shrink-0">
                     C$ {{ product.base_price.toLocaleString('es-NI') }}
