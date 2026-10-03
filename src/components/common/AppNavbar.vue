@@ -3,7 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute } from "vue-router";
 import AppLogo from "./AppLogo.vue";
 import UserMenu from "./UserMenu.vue";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
 const authStore = useAuthStore();

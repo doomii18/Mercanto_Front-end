@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import NotificationsView from "@/views/NotificationsView.vue";
+import NotificationsView from "@/views/dashboard/NotificationsView.vue";
 </script>
 
 <template>

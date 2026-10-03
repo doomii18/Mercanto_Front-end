@@ -1,6 +1,6 @@
 import { createFetch } from "@vueuse/core";
-import { useTokenStore } from "@/stores/tokenStore";
-import { useAuthStore } from "@/stores/authStore";
+import { useTokenStore } from "@/stores/auth";
+import { useAuthStore } from "@/stores/auth";
 import { ErrorPayloadSchema } from "@/api/modules/shared/schemas";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;

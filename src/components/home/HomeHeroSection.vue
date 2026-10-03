@@ -187,7 +187,7 @@ onBeforeUnmount(() => {
         <i class="fa-solid fa-bag-shopping"></i> Plataforma de comercio #1 en Nicaragua
       </div>
       <img
-        src="@/assets/hero.png"
+        src="@/assets/home-hero.png"
         alt="Distribución mayorista"
         class="h-auto max-w-full rounded-3xl object-cover"
       />

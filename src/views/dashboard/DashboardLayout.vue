@@ -1,0 +1,334 @@
+<script setup lang="ts">
+import { ref } from "vue";
+import { useUserContextStore } from "@/stores/auth";
+import AppLogo from "@/components/common/AppLogo.vue";
+import SidebarUserMenu from "@/components/common/SidebarUserMenu.vue";
+import NotificationBell from "@/components/common/NotificationBell.vue";
+
+const contextStore = useUserContextStore();
+const sidebarOpen = ref(false);
+
+const toggleSidebar = () => {
+  sidebarOpen.value = !sidebarOpen.value;
+};
+
+const closeSidebar = () => {
+  sidebarOpen.value = false;
+};
+</script>
+
+<template>
+  <div class="h-screen w-full flex flex-col overflow-hidden bg-white text-[#083c5a]">
+    <!-- Header: Fixed height 64px (h-16), sits at the top of the column -->
+    <header class="relative z-50 flex h-16 shrink-0 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
+      <button
+        type="button"
+        class="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg border-none bg-transparent p-1 transition-colors duration-200 hover:bg-[#fde8e4] focus:outline-none"
+        :aria-expanded="sidebarOpen"
+        aria-label="Alternar navegación"
+        @click="toggleSidebar"
+      >
+        <span
+          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+          :class="{ 'translate-y-[7.5px] rotate-45': sidebarOpen }"
+        ></span>
+        <span
+          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+          :class="{ 'scale-x-0 opacity-0': sidebarOpen }"
+        ></span>
+        <span
+          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+          :class="{ '-translate-y-[7.5px] -rotate-45': sidebarOpen }"
+        ></span>
+      </button>
+
+      <div class="flex items-center gap-3">
+        <NotificationBell />
+        <AppLogo variant="logo" class="h-9" />
+      </div>
+    </header>
+
+    <!-- Wrapper: Flex-1 remaining space, zero window-level overflow -->
+    <div class="relative flex-1 min-h-0 flex overflow-hidden">
+      <!-- Mobile Backdrop -->
+      <div
+        v-if="sidebarOpen"
+        class="fixed inset-x-0 top-16 bottom-0 z-40 bg-black/25 backdrop-blur-[1px] lg:hidden"
+        @click="closeSidebar"
+      ></div>
+
+      <!-- Sidebar -->
+      <aside
+        :class="[
+          'fixed z-40 bg-white transition-[width,transform,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'top-16 bottom-0 left-0 flex flex-col justify-between border-r border-slate-200 py-5',
+          // Mobile: hidden by default, slide in when open
+          sidebarOpen
+            ? 'max-md:translate-x-0 max-md:w-60 max-md:items-start max-md:shadow-xl'
+            : 'max-md:-translate-x-full max-md:w-60 max-md:items-start',
+          // Desktop
+          sidebarOpen
+            ? 'md:w-60 md:items-start md:shadow-xl'
+            : 'md:w-[72px] md:items-center'
+        ]"
+      >
+        <nav
+          :class="[
+            'flex w-full flex-col gap-1.5',
+            sidebarOpen ? 'px-3' : 'md:px-0 px-3'
+          ]"
+        >
+          <!-- Mi Perfil -->
+          <router-link
+            :to="{ name: 'profile' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-regular fa-circle-user w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Mi Perfil
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Mi Perfil
+            </span>
+          </router-link>
+
+          <!-- Mis Productos (Provider Only) -->
+          <router-link
+            v-if="contextStore.isProvider"
+            :to="{ name: 'provider-products' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-solid fa-bag-shopping w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Mis Productos
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Mis Productos
+            </span>
+          </router-link>
+
+          <!-- Favoritos (Buyer Only) -->
+          <router-link
+            v-if="!contextStore.isProvider"
+            :to="{ name: 'favorites' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-regular fa-heart w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Favoritos
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Favoritos
+            </span>
+          </router-link>
+
+          <!-- Billetera -->
+          <router-link
+            :to="{ name: 'wallet' }"
+            active-class="!bg-[#e2e8f0] !text-[#083c5a] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-solid fa-wallet w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Billetera
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Billetera
+            </span>
+          </router-link>
+
+          <!-- Pedidos -->
+          <router-link
+            :to="{ name: 'orders' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-solid fa-cart-shopping w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Pedidos
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Pedidos
+            </span>
+          </router-link>
+
+          <!-- Mensajes -->
+          <router-link
+            :to="{ name: 'messages' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-regular fa-comment-dots w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Mensajes
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Mensajes
+            </span>
+          </router-link>
+
+          <!-- Búsqueda Inteligente (Buyer Only) -->
+          <router-link
+            v-if="!contextStore.isProvider"
+            :to="{ name: 'smart-search' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-solid fa-magnifying-glass w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Búsqueda Inteligente
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Búsqueda Inteligente
+            </span>
+          </router-link>
+
+          <!-- Notificaciones (Sidebar link) -->
+          <router-link
+            :to="{ name: 'notifications' }"
+            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            :class="[
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              sidebarOpen
+                ? 'h-11 w-full justify-start gap-3.5 px-3.5'
+                : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
+            ]"
+            @click="closeSidebar"
+          >
+            <i class="fa-regular fa-bell w-5 text-center text-lg shrink-0"></i>
+            <span
+              :class="[
+                'whitespace-nowrap text-sm font-semibold transition-all duration-200',
+                sidebarOpen ? 'opacity-100 max-w-xs' : 'max-w-0 opacity-0 overflow-hidden'
+              ]"
+            >
+              Notificaciones
+            </span>
+            <span
+              v-if="!sidebarOpen"
+              class="pointer-events-none fixed left-20 z-50 hidden rounded-md bg-[#083c5a] px-2.5 py-1 text-xs font-medium text-white shadow-md opacity-0 transition-opacity duration-150 group-hover:opacity-100 md:inline-block"
+            >
+              Notificaciones
+            </span>
+          </router-link>
+        </nav>
+
+        <div class="flex w-full items-center justify-center px-3 mt-auto">
+          <SidebarUserMenu :collapsed="!sidebarOpen" />
+        </div>
+      </aside>
+
+      <!-- Main Content Area: delegates scrolling and viewport handling to each view container -->
+      <main
+        :class="[
+          'relative flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-[#fdf3f0] transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'max-md:ml-0',
+          sidebarOpen ? 'lg:ml-60 md:ml-18' : 'md:ml-[72px]'
+        ]"
+      >
+        <router-view />
+      </main>
+    </div>
+  </div>
+</template>

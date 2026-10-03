@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
-import { useUserContextStore } from "@/stores/userContextStore";
-import { useOrganizationStore } from "@/stores/organizationStore";
+import { useUserContextStore } from "@/stores/auth";
+import { useOrganizationStore } from "@/stores/organization";
 import type { PublicProviderDto } from "@/api";
 
 const contextStore = useUserContextStore();

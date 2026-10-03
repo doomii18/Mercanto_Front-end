@@ -1,9 +1,9 @@
 import { authBus } from "./authEvents";
 import { blobCache } from "@/composables/blob";
-import { useOrganizationStore } from "@/stores/organizationStore";
-import { useUserContextStore } from "@/stores/userContextStore";
-import { useFavoritesStore } from "@/stores/favoritesStore";
-import { useWalletStore } from "@/stores/walletStore";
+import { useOrganizationStore } from "@/stores/organization";
+import { useUserContextStore } from "@/stores/auth";
+import { useFavoritesStore } from "@/stores/commerce";
+import { useWalletStore } from "@/stores/wallet";
 
 export function registerSessionListeners(): void {
   authBus.on(async (event) => {

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import { useGeoStore } from "../../stores/geo";
+import { useGeoStore } from "@/stores/geo";
 import ProviderCard from "./ProviderCard.vue";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";

@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useGeoStore } from "@/stores/geo";
-import { useUserContextStore } from "@/stores/userContextStore";
-import { useProfileUpdateStore } from "@/stores/profileUpdateStore";
-import { useAlertStore } from "@/stores/alertStore";
+import { useUserContextStore } from "@/stores/auth";
+import { useProfileUpdateStore } from "@/stores/auth";
+import { useAlertStore } from "@/stores/ui";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";

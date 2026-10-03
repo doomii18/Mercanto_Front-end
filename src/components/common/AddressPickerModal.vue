@@ -3,7 +3,7 @@ import { ref, watch, onMounted } from "vue";
 import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
 import "leaflet/dist/leaflet.css";
 import BaseModal from "./BaseModal.vue";
-import { GeocodingService, useGeoStore } from "../../stores/geo";
+import { GeocodingService, useGeoStore } from "@/stores/geo";
 import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 
 export interface AddressPickerResult {

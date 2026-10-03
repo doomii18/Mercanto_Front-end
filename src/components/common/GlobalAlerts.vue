@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import BaseModal from "@/components/common/BaseModal.vue";
-import { useAlertStore } from "@/stores/alertStore";
+import { useAlertStore } from "@/stores/ui";
 
 const alertStore = useAlertStore();
 

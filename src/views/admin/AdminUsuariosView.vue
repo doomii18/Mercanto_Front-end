@@ -30,8 +30,8 @@ import {
 } from "reka-ui";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import type { AdminUserItem, AccountRole, AccountFiltersQuery } from "@/api";
-import { useAuthStore } from "@/stores/authStore";
-import { useToastStore } from "@/stores/toastStore";
+import { useAuthStore } from "@/stores/auth";
+import { useToastStore } from "@/stores/ui";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 
 const identityApi = useIdentityApi();

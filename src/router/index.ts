@@ -10,6 +10,9 @@ declare module "vue-router" {
     requiresAuth?: boolean;
     guestOnly?: boolean;
     requiresProvider?: boolean;
+    requiresBuyer?: boolean;
+    userGroup?: "buyer" | "provider";
+    allowedUserGroups?: ("buyer" | "provider")[];
     requiresStaff?: boolean;
   }
 }

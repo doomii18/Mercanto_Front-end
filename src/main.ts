@@ -11,7 +11,7 @@ import "@fontsource/lato/700.css";       // Bold
 import "@fontsource/lato/700-italic.css"; // BoldItalic
 import { registerSessionListeners } from './events/sessionListeners';
 import { bootstrapApp } from './utils/bootstrap';
-import { useAlertStore } from './stores/alertStore';
+import { useAlertStore } from "@/stores/ui";
 
 const app = createApp(App);
 

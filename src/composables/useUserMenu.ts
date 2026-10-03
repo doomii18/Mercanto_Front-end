@@ -1,7 +1,7 @@
 import { ref, computed, onMounted, onBeforeUnmount, watch, type ComponentPublicInstance } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
-import { useUserContextStore } from "@/stores/userContextStore";
+import { useAuthStore } from "@/stores/auth";
+import { useUserContextStore } from "@/stores/auth";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 
 /**

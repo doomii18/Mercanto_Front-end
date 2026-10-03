@@ -1,6 +1,6 @@
 import { ref } from "vue";
 import { useTimeoutFn } from "@vueuse/core";
-import { useAuthStore } from "../stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 import type { UserInterest } from "@/api";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 

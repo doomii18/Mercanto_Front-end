@@ -3,8 +3,8 @@ import { ref, computed, watch, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import ProductImageCarousel from "./ProductImageCarousel.vue";
 import ProviderLogo from "../organization/ProviderLogo.vue";
-import { useOrganizationStore } from "@/stores/organizationStore";
-import { useFavoritesStore } from "@/stores/favoritesStore";
+import { useOrganizationStore } from "@/stores/organization";
+import { useFavoritesStore } from "@/stores/commerce";
 
 export interface ProductCardProps {
   id: string;

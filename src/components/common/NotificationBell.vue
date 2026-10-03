@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
-import { useNotificationStore } from '@/stores/notificationStore';
+import { useNotificationStore } from "@/stores/notifications";
 import type { NotificationEvent } from '@/api';
 import { NewChatMessageEventSchema, QuoteStatusChangedEventSchema } from '@/api/modules/messaging/notifications/responses';
 

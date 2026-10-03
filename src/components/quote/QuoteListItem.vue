@@ -1,7 +1,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
-import { useUserContextStore } from "@/stores/userContextStore";
+import { useUserContextStore } from "@/stores/auth";
 import type { QuoteAggregateResponse, QuoteStatus } from "@/api";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import ProductImage from "../product/ProductImage.vue";

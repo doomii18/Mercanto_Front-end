@@ -1,7 +1,7 @@
-import { useUserContextStore } from "@/stores/userContextStore";
+import { useUserContextStore } from "@/stores/auth";
 import { useGeoStore } from "@/stores/geo";
-import { useAuthStore } from "@/stores/authStore";
-import { useNotificationStore } from "@/stores/notificationStore";
+import { useAuthStore } from "@/stores/auth";
+import { useNotificationStore } from "@/stores/notifications";
 
 let bootstrapPromise: Promise<void> | null = null;
 

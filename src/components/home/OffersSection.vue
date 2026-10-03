@@ -4,7 +4,7 @@ import { useRouter, useRoute } from "vue-router";
 import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useProductImageApi } from "@/api/modules/catalog/product_image/useProductImageApi";
-import { useFavoritesStore } from "@/stores/favoritesStore";
+import { useFavoritesStore } from "@/stores/commerce";
 import type { ProductOfferResponse, ProductResponse } from "@/api";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 

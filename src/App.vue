@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch } from "vue";
-import { useAuthStore } from "./stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 import { usePreferencesGuard } from "./composables/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 import GlobalAlerts from "./components/common/GlobalAlerts.vue";

@@ -6,9 +6,9 @@ import AddressPickerModal, {
 } from "@/components/common/AddressPickerModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
-import { useUserContextStore } from "@/stores/userContextStore";
-import { useOrganizationStore } from "@/stores/organizationStore";
-import { useAlertStore } from "@/stores/alertStore";
+import { useUserContextStore } from "@/stores/auth";
+import { useOrganizationStore } from "@/stores/organization";
+import { useAlertStore } from "@/stores/ui";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import type { ProviderOrganizationPatch } from "@/api";
 

@@ -5,7 +5,7 @@ import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import { useProductOffers } from "@/composables/useProductOffers";
 import type { ProductResponse } from "@/api";
 import ProductCard from "./ProductCard.vue";
-import topSellersHeroImg from "../../assets/top-sellers-hero.png";
+import topSellersHeroImg from "@/assets/top-sellers-hero.png";
 
 interface TopProductItem {
   id: string;

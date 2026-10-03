@@ -3,23 +3,22 @@ import type { RouteRecordRaw } from "vue-router";
 export const publicRoutes: RouteRecordRaw[] = [
   {
     path: "/",
-    component: () => import("@/views/MainLayout.vue"),
+    component: () => import("@/views/public/MainLayout.vue"),
     children: [
       {
         path: "",
         name: "home",
-        component: () => import("@/views/HomeView.vue"),
+        component: () => import("@/views/public/HomeView.vue"),
       },
       {
         path: "privacy",
         name: "privacy",
-        component: () => import("@/views/PrivacyView.vue"),
+        component: () => import("@/views/public/PrivacyView.vue"),
       },
       {
         path: "products",
-        alias: ["productos", "category"],
         name: "products",
-        component: () => import("@/views/ProductsView.vue"),
+        component: () => import("@/views/public/ProductsView.vue"),
       },
       {
         path: "categories",
@@ -31,7 +30,6 @@ export const publicRoutes: RouteRecordRaw[] = [
       },
       {
         path: "category/:categoryId",
-        alias: "categories/:categoryId",
         redirect: (to) => ({
           name: "products",
           query: { categoryId: to.params.categoryId },
@@ -39,33 +37,30 @@ export const publicRoutes: RouteRecordRaw[] = [
       },
       {
         path: "product/:id",
-        alias: "products/:id",
         name: "product-detail",
         props: true,
-        component: () => import("@/views/ProductDetailView.vue"),
+        component: () => import("@/views/public/ProductDetailView.vue"),
       },
       {
         path: "catalog/:providerId",
-        alias: "providers/:providerId/catalog",
         name: "provider-catalog",
         props: true,
-        component: () => import("@/views/ProviderCatalogView.vue"),
+        component: () => import("@/views/public/ProviderCatalogView.vue"),
       },
       {
         path: "providers",
-        alias: "proveedores",
         name: "providers",
-        component: () => import("@/views/ProvidersView.vue"),
+        component: () => import("@/views/public/ProvidersView.vue"),
       },
       {
         path: "image-search",
         name: "image-search",
-        component: () => import("@/views/ImageSearchView.vue"),
+        component: () => import("@/views/public/ImageSearchView.vue"),
       },
       {
         path: ":pathMatch(.*)*",
         name: "not-found",
-        component: () => import("@/views/NotFoundView.vue"),
+        component: () => import("@/views/public/NotFoundView.vue"),
       },
     ],
   },

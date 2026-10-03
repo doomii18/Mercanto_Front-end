@@ -1,7 +1,7 @@
 import { ref, computed, type Ref } from "vue";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
-import { useUserContextStore } from "@/stores/userContextStore";
-import { useToastStore } from "@/stores/toastStore";
+import { useUserContextStore } from "@/stores/auth";
+import { useToastStore } from "@/stores/ui";
 import type {
   QuoteAggregateResponse,
   QuoteStatus,

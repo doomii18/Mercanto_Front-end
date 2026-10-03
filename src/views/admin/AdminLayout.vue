@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useAuthStore } from "@/stores/authStore";
+import { useAuthStore } from "@/stores/auth";
 import AppLogo from "@/components/common/AppLogo.vue";
 import AdminUserMenu from "@/components/admin/AdminUserMenu.vue";
 

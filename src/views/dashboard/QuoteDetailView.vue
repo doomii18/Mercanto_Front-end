@@ -1,0 +1,420 @@
+<script setup lang="ts">
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
+import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
+import { useQuoteActions } from "@/composables/useQuoteActions";
+import type {
+  QuoteAggregateResponse,
+  QuoteItemResponse,
+  PublicProviderDto,
+  UserProfileResponse,
+} from "@/api";
+import ProductImage from "@/components/product/ProductImage.vue";
+import ProviderLogo from "@/components/organization/ProviderLogo.vue";
+import QuoteIdBadge from "@/components/quote/QuoteIdBadge.vue";
+import QuoteStatusBadge from "@/components/quote/QuoteStatusBadge.vue";
+import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
+import DownloadPdfButton from "@/components/invoice/DownloadPdfButton.vue";
+import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
+import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
+
+const route = useRoute();
+const router = useRouter();
+
+const userProfileApi = useUserProfileApi();
+const organizationApi = useOrganizationApi();
+const quoteApi = useQuoteApi();
+const productApi = useProductApi();
+const reviewApi = useReviewApi();
+
+const quoteAggregate = ref<QuoteAggregateResponse | null>(null);
+const provider = ref<PublicProviderDto | null>(null);
+const providerMetrics = ref<{ rating_score: number; review_count: number } | null>(null);
+const buyerProfile = ref<UserProfileResponse | null>(null);
+const itemBlobIds = ref<Record<string, string | null>>({});
+const isLoading = ref(true);
+const errorMessage = ref<string | null>(null);
+const productBlobCache = new Map<string, Promise<string | null>>();
+
+const PAYMENT_LABELS: Record<string, string> = {
+  card: "Tarjeta de crédito / débito",
+  transfer: "Transferencia bancaria",
+  virtual_wallet: "Billetera virtual",
+};
+
+const formatDate = (isoString?: string): string => {
+  if (!isoString) return "—";
+  return new Date(isoString).toLocaleDateString("es-NI", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+};
+
+const formatMoney = (val: number): string => {
+  return `C$${val.toLocaleString("es-NI", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+};
+
+const totalUnits = computed(() => {
+  if (!quoteAggregate.value) return 0;
+  return quoteAggregate.value.items.reduce((acc, item) => acc + item.quantity, 0);
+});
+
+const effectiveUnitPrice = (item: QuoteItemResponse): number =>
+  item.discount_percentage !== null
+    ? Math.round(item.unit_price_snapshot * (100 - item.discount_percentage)) / 100
+    : item.unit_price_snapshot;
+
+const hasAppliedOffer = computed(
+  () => quoteAggregate.value?.items.some((item) => item.discount_percentage !== null) ?? false
+);
+
+const calculatedTotal = computed(() => {
+  if (!quoteAggregate.value) return 0;
+  return quoteAggregate.value.items.reduce(
+    (acc, item) => acc + item.quantity * effectiveUnitPrice(item),
+    0
+  );
+});
+
+const buyerFullName = computed(() => {
+  if (!buyerProfile.value) return "Cliente Registrado";
+  return (
+    `${buyerProfile.value.first_name || ""} ${buyerProfile.value.last_name || ""}`.trim() ||
+    "Cliente Registrado"
+  );
+});
+
+const buyerPhone = computed(() => {
+  if (!buyerProfile.value) return null;
+  return (buyerProfile.value as any).phone_number || null;
+});
+
+const loadProductBlobId = async (productId: string): Promise<string | null> => {
+  if (productBlobCache.has(productId)) {
+    return productBlobCache.get(productId)!;
+  }
+  const promise = (async () => {
+    try {
+      const prod = await productApi.getProduct(productId);
+      return prod.image_blob_ids?.[0] ?? null;
+    } catch {
+      return null;
+    }
+  })();
+  productBlobCache.set(productId, promise);
+  return promise;
+};
+
+const loadQuoteDetails = async () => {
+  const quoteId = route.params.id as string;
+  if (!quoteId) {
+    errorMessage.value = "Identificador de pedido inválido.";
+    isLoading.value = false;
+    return;
+  }
+  isLoading.value = true;
+  errorMessage.value = null;
+  try {
+    const [detail, profile] = await Promise.allSettled([
+      quoteApi.getQuote(quoteId),
+      userProfileApi.getMyProfile(),
+    ]);
+    if (detail.status === "fulfilled") {
+      quoteAggregate.value = detail.value;
+      if (detail.value.quote.provider_id) {
+        provider.value = await organizationApi.getPublicProvider(
+          detail.value.quote.provider_id
+        );
+        try {
+          providerMetrics.value = await reviewApi.getProviderMetrics(
+            detail.value.quote.provider_id
+          );
+        } catch {
+          providerMetrics.value = null;
+        }
+      }
+      await Promise.all(
+        detail.value.items.map(async (item) => {
+          const blobId = await loadProductBlobId(item.product_id);
+          itemBlobIds.value[item.product_id] = blobId;
+        })
+      );
+    } else {
+      throw detail.reason;
+    }
+    if (profile.status === "fulfilled") {
+      buyerProfile.value = profile.value;
+    }
+  } catch (err: any) {
+    console.error("Failed to load quote details:", err);
+    errorMessage.value =
+      err.message || "Error al cargar los detalles del pedido.";
+  } finally {
+    isLoading.value = false;
+  }
+};
+
+const { availableActions, executeAction, isActionProcessing } = useQuoteActions(
+  quoteAggregate,
+  { onReload: loadQuoteDetails }
+);
+
+const goBack = () => {
+  router.push({ name: "orders" });
+};
+
+const handleOpenChat = () => {
+  router.push({ name: "messages" });
+};
+
+onMounted(() => {
+  loadQuoteDetails();
+});
+</script>
+
+<template>
+  <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
+    <div
+      v-if="isLoading"
+      class="flex flex-col items-center justify-center py-16 px-4 gap-4 text-base text-neutral-500"
+    >
+      <i class="fa-solid fa-spinner fa-spin text-2xl"></i>
+      <span>Cargando información del pedido...</span>
+    </div>
+
+    <div
+      v-else-if="errorMessage || !quoteAggregate"
+      class="flex flex-col items-center justify-center py-16 px-4 gap-4 text-base text-neutral-500"
+    >
+      <i class="fa-solid fa-circle-exclamation text-5xl text-error"></i>
+      <p class="text-neutral-900">{{ errorMessage || "No se encontró el pedido solicitado." }}</p>
+      <button
+        type="button"
+        class="inline-flex items-center gap-2 px-5 py-2 border border-teal-700 text-teal-700 font-semibold rounded-lg hover:bg-teal-700 hover:text-white transition-colors"
+        @click="goBack"
+      >
+        <i class="fa-solid fa-arrow-left"></i> Volver a Mis Pedidos
+      </button>
+    </div>
+
+    <div v-else class="flex flex-col gap-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3 sm:gap-5">
+          <button
+            type="button"
+            class="bg-transparent border-0 text-xl text-neutral-900 cursor-pointer flex items-center justify-center p-1"
+            aria-label="Regresar a pedidos"
+            @click="goBack"
+          >
+            <i class="fa-solid fa-arrow-left"></i>
+          </button>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="text-xl sm:text-2xl font-bold font-serif text-neutral-900">Detalles del Pedido</span>
+              <QuoteIdBadge :quote-id="quoteAggregate.quote.id" size="lg" />
+            </div>
+            <p class="text-xs sm:text-sm text-neutral-500 mt-1">
+              Realizado el {{ formatDate(quoteAggregate.quote.updated_at) }}
+            </p>
+          </div>
+        </div>
+        <QuoteStatusBadge :status="quoteAggregate.quote.status" size="md" />
+      </div>
+
+      <div class="bg-teal-50 border border-teal-200 rounded-2xl p-4 sm:p-6 md:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
+            <i class="fa-regular fa-calendar-days text-base text-neutral-900"></i>
+            <span>Fecha de Compra</span>
+          </div>
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">{{
+            formatDate(quoteAggregate.quote.updated_at)
+          }}</strong>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
+            <i class="fa-regular fa-money-bill-1 text-base text-neutral-900"></i>
+            <span>Total Pagado</span>
+          </div>
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
+            <i class="fa-regular fa-credit-card text-base text-neutral-900"></i>
+            <span>Método de Pago</span>
+          </div>
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">
+            {{
+              PAYMENT_LABELS[quoteAggregate.quote.payment_preference] ||
+              quoteAggregate.quote.payment_preference
+            }}
+          </strong>
+        </div>
+        <div class="flex flex-col gap-1.5">
+          <div class="flex items-center gap-2 text-neutral-900 text-xs sm:text-sm font-semibold">
+            <i class="fa-solid fa-bag-shopping text-base text-neutral-900"></i>
+            <span>Cantidad de Productos</span>
+          </div>
+          <strong class="text-neutral-900 text-sm sm:text-base font-bold">
+            {{ totalUnits }} {{ totalUnits === 1 ? "producto" : "productos" }}
+          </strong>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+        <div class="lg:col-span-2 bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6">
+          <h3 class="text-base font-bold text-neutral-900 mb-5 font-serif">
+            Productos ({{ quoteAggregate.items.length }})
+          </h3>
+          <div class="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table class="w-full border-collapse text-xs sm:text-sm min-w-[480px]">
+              <thead>
+                <tr class="border-b border-neutral-100 text-neutral-500 font-medium text-left">
+                  <th class="pb-3 w-1/2">Producto</th>
+                  <th class="pb-3 w-1/5">Precio U.</th>
+                  <th class="pb-3 w-1/6">Cantidad</th>
+                  <th class="pb-3 w-1/6 text-right">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-neutral-100">
+                <tr
+                  v-for="item in quoteAggregate.items"
+                  :key="item.product_id"
+                >
+                  <td class="py-3 pr-2 align-middle">
+                    <div class="flex items-center gap-3">
+                      <div class="w-12 h-12 sm:w-14 sm:h-14 border border-neutral-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shrink-0">
+                        <ProductImage
+                          :blob-id="itemBlobIds[item.product_id]"
+                          :alt="item.product_title_snapshot"
+                          fallback-icon="fa-solid fa-box"
+                          object-fit="contain"
+                        />
+                      </div>
+                      <span class="font-semibold text-neutral-900 leading-snug text-xs sm:text-sm">
+                        {{ item.product_title_snapshot }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">
+                    <span class="flex flex-col">
+                      <span v-if="item.discount_percentage !== null" class="text-xs text-neutral-400 line-through">
+                        {{ formatMoney(item.unit_price_snapshot) }}
+                      </span>
+                      <span>{{ formatMoney(effectiveUnitPrice(item)) }}</span>
+                      <span
+                        v-if="item.discount_percentage !== null"
+                        class="mt-0.5 w-fit rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600"
+                      >
+                        -{{ item.discount_percentage }}%
+                      </span>
+                    </span>
+                  </td>
+                  <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">
+                    Ud. {{ item.quantity }}
+                  </td>
+                  <td class="py-3 pl-2 align-middle font-semibold text-neutral-900 text-right whitespace-nowrap">
+                    {{ formatMoney(item.quantity * effectiveUnitPrice(item)) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-if="quoteAggregate.quote.buyer_notes" class="bg-base-200 p-3.5 rounded-lg mt-4 text-xs sm:text-sm text-neutral-500">
+            <strong class="font-semibold text-neutral-900">Notas del comprador:</strong>
+            <p class="mt-1 text-neutral-700">{{ quoteAggregate.quote.buyer_notes }}</p>
+          </div>
+          <div v-if="hasAppliedOffer" class="mt-4 flex items-center gap-2 rounded-lg bg-orange-50 px-3.5 py-2.5 text-xs sm:text-sm font-semibold text-orange-600">
+            <i class="fa-solid fa-tags"></i>
+            <span>Se aplicó un descuento de oferta a este pedido.</span>
+          </div>
+          <div class="bg-teal-100/50 rounded-xl px-4 sm:px-6 py-3.5 flex justify-between items-center mt-6 text-neutral-900">
+            <span class="text-xs sm:text-sm font-semibold">Total</span>
+            <strong class="text-sm sm:text-base font-bold">{{ formatMoney(calculatedTotal) }}</strong>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-6">
+          <div class="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 text-center">
+            <h4 class="text-left mb-4 sm:mb-5 text-neutral-900 text-base font-bold font-serif">Proveedor</h4>
+            <div class="w-16 h-16 rounded-full border-2 border-neutral-900 bg-white flex items-center justify-center mx-auto mb-3 overflow-hidden p-1">
+              <ProviderLogo
+                :blob-id="provider?.logo_blob_id"
+                :alt="provider?.company_name"
+                :fallback-text="provider?.company_name"
+              />
+            </div>
+            <h5 class="text-base text-neutral-900 font-bold mb-1.5 font-serif">
+              {{ provider?.company_name || "Proveedor" }}
+            </h5>
+            <div class="flex items-center justify-center gap-1 text-sm mb-5" :title="`${providerMetrics?.review_count ?? 0} valoraciones`">
+              <i
+                v-for="star in 5"
+                :key="star"
+                :class="star <= Math.round(providerMetrics?.rating_score ?? 0) ? 'fa-solid fa-star text-amber-500' : 'fa-regular fa-star text-neutral-300'"
+              ></i>
+              <span class="ml-1 text-xs font-bold text-neutral-700">
+                {{ (providerMetrics?.rating_score ?? 0).toFixed(1) }}
+              </span>
+            </div>
+            <router-link
+              v-if="provider?.id"
+              :to="{
+                name: 'provider-catalog',
+                params: { providerId: provider.id },
+              }"
+              class="w-full bg-transparent border border-teal-700 text-teal-700 py-2 px-5 rounded-lg font-semibold text-sm cursor-pointer hover:bg-teal-700 hover:text-white transition-colors capitalize inline-block"
+            >
+              ver proveedor
+            </router-link>
+          </div>
+
+          <div class="bg-white border border-neutral-200 rounded-2xl p-4 sm:p-6 text-left">
+            <h4 class="mb-4 sm:mb-5 text-neutral-900 text-base font-bold font-serif">Dirección de Entrega</h4>
+            <div class="flex items-center gap-2 text-neutral-900 mb-2.5">
+              <i class="fa-solid fa-location-dot text-lg text-neutral-900"></i>
+              <span class="font-bold text-sm text-neutral-900">{{ buyerFullName }}</span>
+            </div>
+            <p class="text-neutral-700 text-xs leading-relaxed font-normal mb-1.5">
+              {{ quoteAggregate.quote.shipping_address || "Dirección no especificada" }}
+            </p>
+            <p v-if="buyerPhone" class="text-neutral-500 text-xs font-normal">
+              Tel. {{ buyerPhone }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-2 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 border-t border-neutral-200 pt-5">
+        <div class="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-2.5 w-full sm:w-auto">
+          <DownloadPdfButton
+            :quote-id="quoteAggregate.quote.id"
+            label="Descargar factura"
+            class="w-full sm:w-auto"
+          />
+          <button
+            type="button"
+            class="inline-flex items-center justify-center gap-2 rounded-lg border border-teal-600 bg-teal-50/50 px-4 py-2.5 sm:py-2 text-sm font-semibold text-teal-700 transition hover:bg-teal-600 hover:text-white max-sm:w-full active:scale-[0.98]"
+            @click="handleOpenChat"
+          >
+            <i class="fa-regular fa-comment-dots text-teal-600 group-hover:text-white"></i>
+            <span>Enviar mensaje</span>
+          </button>
+        </div>
+
+        <QuoteActionBar
+          :actions="availableActions"
+          :is-action-processing="isActionProcessing"
+          @action="executeAction"
+          class="w-full sm:w-auto"
+        />
+      </div>
+    </div>
+  </div>
+</template>
