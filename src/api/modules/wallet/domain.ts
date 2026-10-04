@@ -1,13 +1,28 @@
 import { z } from "zod";
 
 // TransactionType | wallet ledger transaction types
-export const TransactionTypeSchema = z.enum([
-  "deposit",
-  "withdrawal",
-  "payment",
-  "refund",
-  "commission",
-]);
+export const TransactionTypeSchema = z.preprocess(
+  (val) => (typeof val === "string" ? val.toLowerCase() : val),
+  z.enum([
+    "deposit",
+    "withdrawal",
+    "payment",
+    "refund",
+    "commission",
+  ])
+);
+
+// DepositRequestStatus | deposit request status
+export const DepositRequestStatusSchema = z.preprocess(
+  (val) => (typeof val === "string" ? val.toLowerCase() : val),
+  z.enum(["pending", "approved", "rejected"])
+);
+
+// WithdrawalRequestStatus | withdrawal request status
+export const WithdrawalRequestStatusSchema = z.preprocess(
+  (val) => (typeof val === "string" ? val.toLowerCase() : val),
+  z.enum(["pending", "processing", "completed", "rejected"])
+);
 
 // WalletBalance | non-negative virtual wallet balance
 export const WalletBalanceSchema = z.coerce
