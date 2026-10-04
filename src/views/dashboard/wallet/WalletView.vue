@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useWalletStore } from "@/stores/wallet";
-import type { LedgerEntryResponse } from "@/api/modules/wallet/types";
+import type { LedgerEntryResponse } from "@/api";
 
 const router = useRouter();
 const walletStore = useWalletStore();
@@ -29,7 +29,7 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         title: "Acreditación de saldo",
         subtitle: entry.reference_notes || "Depósito acreditado a tu billetera",
         amountStr: `+ ${formatCurrency(entry.amount)}`,
-        icon: "fa-solid fa-arrow-down-left",
+        icon: "fa-solid fa-circle-arrow-down",
         iconClass: "bg-[#e6f7f5] text-[#189c94]",
         amountClass: "text-[#189c94]",
         status: "Aprobada",
@@ -55,9 +55,9 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         title: "Débito de cuenta",
         subtitle: entry.reference_notes || "Retiro o débito realizado",
         amountStr: `- ${formatCurrency(entry.amount)}`,
-        icon: "fa-solid fa-arrow-up-right",
-        iconClass: "bg-[#fef2f2] text-[#ef4444]",
-        amountClass: "text-[#ef4444]",
+        icon: "fa-solid fa-circle-arrow-up",
+        iconClass: "bg-[#fffbeb] text-[#d97706]",
+        amountClass: "text-[#d97706]",
         status: "Debitado",
         statusClass: "bg-[#f1f5f9] text-[#64748b]",
       };
@@ -71,10 +71,10 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
             : "Reembolso acreditado"),
         amountStr: `+ ${formatCurrency(entry.amount)}`,
         icon: "fa-solid fa-rotate-left",
-        iconClass: "bg-[#e6f7f5] text-[#189c94]",
-        amountClass: "text-[#189c94]",
+        iconClass: "bg-[#f0f9ff] text-[#0284c7]",
+        amountClass: "text-[#0284c7]",
         status: "Reembolsado",
-        statusClass: "bg-[#e6f7f5] text-[#189c94]",
+        statusClass: "bg-[#f0f9ff] text-[#0284c7]",
       };
     case "commission":
       return {
@@ -82,10 +82,10 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         subtitle: entry.reference_notes || "Comisión por transacción",
         amountStr: `- ${formatCurrency(entry.amount)}`,
         icon: "fa-solid fa-receipt",
-        iconClass: "bg-[#fffbeb] text-[#f59e0b]",
-        amountClass: "text-[#f59e0b]",
+        iconClass: "bg-[#faf5ff] text-[#9333ea]",
+        amountClass: "text-[#9333ea]",
         status: "Comisión",
-        statusClass: "bg-[#fffbeb] text-[#f59e0b]",
+        statusClass: "bg-[#faf5ff] text-[#9333ea]",
       };
     default:
       return {

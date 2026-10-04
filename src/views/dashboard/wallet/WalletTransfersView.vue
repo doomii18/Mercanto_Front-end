@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useWalletStore } from "@/stores/wallet";
-import type { LedgerEntryResponse } from "@/api/modules/wallet/types";
+import type { LedgerEntryResponse } from "@/api";
 
 const router = useRouter();
 const walletStore = useWalletStore();
@@ -30,7 +30,8 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         title: "Acreditación de saldo",
         subtitle: entry.reference_notes || "Depósito a billetera virtual",
         amountStr: `+ ${formatCurrency(entry.amount)}`,
-        icon: "fa-solid fa-arrow-down-left",
+        icon: "fa-solid fa-circle-arrow-down",
+        iconClass: "bg-[#e6f7f5] text-[#189c94]",
         amountClass: "text-[#189c94]",
         status: "Aprobada",
         statusClass: "bg-[#e6f7f5] text-[#189c94]",
@@ -46,6 +47,7 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
             : "Pago de orden"),
         amountStr: `- ${formatCurrency(entry.amount)}`,
         icon: "fa-solid fa-cart-shopping",
+        iconClass: "bg-[#fef2f2] text-[#ef4444]",
         amountClass: "text-[#ef4444]",
         status: "Completada",
         statusClass: "bg-[#f1f5f9] text-[#64748b]",
@@ -56,8 +58,9 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         title: "Retiro / Débito",
         subtitle: entry.reference_notes || "Débito registrado",
         amountStr: `- ${formatCurrency(entry.amount)}`,
-        icon: "fa-solid fa-arrow-up-right",
-        amountClass: "text-[#ef4444]",
+        icon: "fa-solid fa-circle-arrow-up",
+        iconClass: "bg-[#fffbeb] text-[#d97706]",
+        amountClass: "text-[#d97706]",
         status: "Debitado",
         statusClass: "bg-[#f1f5f9] text-[#64748b]",
         category: "compras",
@@ -72,9 +75,10 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
             : "Reembolso acreditado"),
         amountStr: `+ ${formatCurrency(entry.amount)}`,
         icon: "fa-solid fa-rotate-left",
-        amountClass: "text-[#189c94]",
+        iconClass: "bg-[#f0f9ff] text-[#0284c7]",
+        amountClass: "text-[#0284c7]",
         status: "Reembolsado",
-        statusClass: "bg-[#e6f7f5] text-[#189c94]",
+        statusClass: "bg-[#f0f9ff] text-[#0284c7]",
         category: "recargas",
       };
     case "commission":
@@ -83,9 +87,10 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         subtitle: entry.reference_notes || "Comisión de servicio",
         amountStr: `- ${formatCurrency(entry.amount)}`,
         icon: "fa-solid fa-receipt",
-        amountClass: "text-[#f59e0b]",
+        iconClass: "bg-[#faf5ff] text-[#9333ea]",
+        amountClass: "text-[#9333ea]",
         status: "Comisión",
-        statusClass: "bg-[#fffbeb] text-[#f59e0b]",
+        statusClass: "bg-[#faf5ff] text-[#9333ea]",
         category: "compras",
       };
     default:
@@ -94,6 +99,7 @@ function getTransactionMeta(entry: LedgerEntryResponse) {
         subtitle: entry.reference_notes || "Operación registrada",
         amountStr: formatCurrency(entry.amount),
         icon: "fa-solid fa-wallet",
+        iconClass: "bg-[#f1f5f9] text-[#64748b]",
         amountClass: "text-[#083c5a]",
         status: "Registrada",
         statusClass: "bg-[#f1f5f9] text-[#64748b]",
@@ -237,10 +243,24 @@ const filteredEntries = computed(() => {
               class="border-b border-[#eee] hover:bg-[#f8fafc] transition-colors group"
             >
               <td class="py-5 px-2">
-                <span class="text-[0.85rem] text-[#333] font-semibold">
-                  {{ getTransactionMeta(item).title }}
-                </span>
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-base"
+                    :class="getTransactionMeta(item).iconClass"
+                  >
+                    <i :class="getTransactionMeta(item).icon"></i>
+                  </div>
+                  <div class="flex flex-col">
+                    <span class="text-[0.88rem] text-[#083c5a] font-bold">
+                      {{ getTransactionMeta(item).title }}
+                    </span>
+                    <span class="text-[0.7rem] text-slate-400 capitalize">
+                      {{ item.kind === 'deposit' ? 'Recarga de saldo' : item.kind === 'payment' ? 'Pago de orden' : item.kind === 'withdrawal' ? 'Débito' : item.kind === 'refund' ? 'Reembolso' : item.kind === 'commission' ? 'Comisión' : 'Movimiento' }}
+                    </span>
+                  </div>
+                </div>
               </td>
+
               <td class="py-5 px-2">
                 <div class="flex flex-col">
                   <span class="text-[0.85rem] text-[#083c5a] font-medium">

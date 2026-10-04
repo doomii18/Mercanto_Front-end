@@ -1,12 +1,12 @@
-import type { z } from "zod";
-import type {
+import { z } from "zod";
+import {
   TransactionTypeSchema,
   WalletBalanceSchema,
   WalletLedgerAmountSchema,
   ReferenceNotesSchema,
 } from "./domain";
-import type { WalletLedgerPaginationQuerySchema } from "./requests";
-import type {
+import { WalletLedgerPaginationQuerySchema } from "./requests";
+import {
   VirtualWalletResponseSchema,
   LedgerEntryResponseSchema,
   PaginatedLedgerResponseSchema,
@@ -19,6 +19,11 @@ export type ReferenceNotes = z.infer<typeof ReferenceNotesSchema>;
 
 export type WalletLedgerPaginationQuery = z.infer<typeof WalletLedgerPaginationQuerySchema>;
 
-export type VirtualWalletResponse = z.infer<typeof VirtualWalletResponseSchema>;
-export type LedgerEntryResponse = z.infer<typeof LedgerEntryResponseSchema>;
-export type PaginatedLedgerResponse = z.infer<typeof PaginatedLedgerResponseSchema>;
+export type VirtualWalletResponseDto = z.infer<typeof VirtualWalletResponseSchema>;
+export type VirtualWalletResponse = VirtualWalletResponseDto;
+
+export type LedgerEntryResponseDto = z.infer<typeof LedgerEntryResponseSchema>;
+export type LedgerEntryResponse = LedgerEntryResponseDto;
+
+export type PaginatedLedgerResponseDto = z.infer<typeof PaginatedLedgerResponseSchema>;
+export type PaginatedLedgerResponse = PaginatedLedgerResponseDto;

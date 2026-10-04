@@ -119,16 +119,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="quote-card">
-    <div class="quote-details">
-      <div class="quote-header-row">
-        <h4 class="quote-order-title">Pedido</h4>
+  <div
+    class="bg-white border-[1.5px] border-slate-200 rounded-2xl p-5 sm:px-6 grid grid-cols-1 lg:grid-cols-[minmax(210px,1.35fr)_2.1fr_minmax(135px,0.95fr)] items-center gap-4 lg:gap-6 transition-all duration-200 hover:border-[#00a896] hover:shadow-md"
+  >
+    <div class="flex flex-col gap-1 min-w-0">
+      <div class="flex flex-row items-center flex-wrap gap-2 mb-1">
+        <h4 class="text-[#083c5a] text-[1.05rem] font-bold font-serif m-0">Pedido</h4>
         <QuoteIdBadge :quote-id="quote.id" size="sm" />
       </div>
-      <p class="quote-date">{{ formattedDate }}</p>
-      <div class="quote-total-group">
-        <p class="quote-total-label">Total</p>
-        <h3 class="quote-amount">{{ formatCurrency(calculatedTotal) }}</h3>
+      <p class="text-slate-400 text-xs sm:text-[0.82rem] mb-1.5">{{ formattedDate }}</p>
+      <div class="flex flex-col mb-1">
+        <p class="text-slate-500 text-xs font-medium m-0">Total</p>
+        <h3 class="text-[#083c5a] text-lg font-bold my-0.5">{{ formatCurrency(calculatedTotal) }}</h3>
         <span
           v-if="hasAppliedOffer"
           class="mt-0.5 w-fit rounded-full bg-orange-100 px-2 py-0.5 text-[0.625rem] font-bold text-orange-600"
@@ -136,13 +138,17 @@ onMounted(() => {
           Descuento aplicado
         </span>
       </div>
-      <p class="quote-count">
+      <p class="text-slate-400 text-xs m-0">
         {{ totalUnits }} {{ totalUnits === 1 ? 'producto' : 'productos' }}
       </p>
     </div>
-    <div class="quote-center">
-      <div class="provider-meta-group">
-        <div class="provider-avatar">
+    <div
+      class="flex items-center justify-between gap-4 lg:gap-5 px-0 lg:px-6 py-3.5 lg:py-0 border-y lg:border-y-0 lg:border-x border-slate-200 min-w-0 flex-wrap sm:flex-nowrap"
+    >
+      <div class="flex items-center gap-3.5 min-w-0 flex-1 w-full sm:w-auto">
+        <div
+          class="w-11 h-11 rounded-full border-[1.5px] border-slate-200 bg-white flex items-center justify-center overflow-hidden text-[#00a896] font-bold text-lg shrink-0"
+        >
           <ProfileAvatar
             v-if="isProvider"
             :blob-id="counterparty?.avatarBlobId"
@@ -154,20 +160,23 @@ onMounted(() => {
             :alt="counterparty?.name"
           />
         </div>
-        <div class="provider-text">
-          <p class="provider-name" :title="counterparty?.name">
+        <div class="flex flex-col min-w-0">
+          <p
+            class="font-bold text-[#083c5a] text-sm sm:text-[0.95rem] leading-tight truncate m-0"
+            :title="counterparty?.name"
+          >
             {{ counterparty?.name || (isProvider ? 'Comprador' : 'Proveedor') }}
           </p>
-          <a href="#" class="provider-link" @click.prevent>
+          <a href="#" class="text-xs sm:text-[0.82rem] text-[#00a896] hover:underline font-medium mt-0.5" @click.prevent>
             {{ isProvider ? 'ver comprador' : 'ver proveedor' }}
           </a>
         </div>
       </div>
-      <div class="products-preview-group">
+      <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start">
         <div
           v-for="item in previewItems"
           :key="item.product_id"
-          class="product-thumb-card"
+          class="w-12 h-12 border border-slate-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shadow-xs"
           :title="item.product_title_snapshot"
         >
           <ProductImage
@@ -177,17 +186,22 @@ onMounted(() => {
             object-fit="contain"
           />
         </div>
-        <div v-if="remainingCount > 0" class="more-products-pill">
+        <div
+          v-if="remainingCount > 0"
+          class="w-9.5 h-9.5 rounded-full border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-500 bg-white shrink-0"
+        >
           +{{ remainingCount }}
         </div>
       </div>
     </div>
-    <div class="quote-status-action">
+    <div
+      class="flex flex-row lg:flex-col justify-between lg:justify-center items-center gap-2 w-full lg:w-auto flex-wrap sm:flex-nowrap"
+    >
       <QuoteStatusBadge :status="quote.status" size="sm" />
-      <p v-if="statusDateLabel" class="status-date-subtext">{{ statusDateLabel }}</p>
+      <p v-if="statusDateLabel" class="text-[0.76rem] text-slate-400 m-0 text-left lg:text-center">{{ statusDateLabel }}</p>
       <button
         type="button"
-        class="btn-outline-teal"
+        class="bg-transparent text-[#00a896] border-[1.5px] border-[#00a896] py-1.5 px-5.5 rounded-full font-semibold text-xs sm:text-sm cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-[#00a896] hover:text-white w-full sm:w-auto text-center"
         @click="emit('select', quote.id)"
       >
         ver detalles
@@ -195,245 +209,3 @@ onMounted(() => {
     </div>
   </div>
 </template>
-
-<style scoped>
-.quote-card {
-  background-color: #ffffff;
-  border: 1.5px solid var(--border-gray, #e0e0e0);
-  border-radius: 16px;
-  padding: 1.25rem 1.5rem;
-  display: grid;
-  grid-template-columns: minmax(210px, 1.35fr) 2.1fr minmax(135px, 0.95fr);
-  align-items: center;
-  gap: 1.5rem;
-  transition: box-shadow 0.2s ease, border-color 0.2s ease;
-}
-.quote-card:hover {
-  border-color: var(--light-teal, #189c94);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
-}
-.quote-details {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
-}
-.quote-header-row {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.25rem;
-}
-.quote-order-title {
-  color: var(--primary-blue, #083c5a);
-  font-size: 1.05rem;
-  font-weight: 700;
-  font-family: 'Lora', serif;
-  margin: 0;
-}
-.quote-date {
-  color: #94a3b8;
-  font-size: 0.82rem;
-  margin-bottom: 0.4rem;
-}
-.quote-total-group {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 0.15rem;
-}
-.quote-total-label {
-  color: #64748b;
-  font-size: 0.8rem;
-  font-weight: 500;
-  margin: 0;
-}
-.quote-amount {
-  color: var(--primary-blue, #083c5a);
-  font-size: 1.15rem;
-  font-weight: 700;
-  margin: 0.1rem 0;
-}
-.quote-count {
-  color: #94a3b8;
-  font-size: 0.8rem;
-  margin: 0;
-}
-.quote-center {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.25rem;
-  padding: 0 1.5rem;
-  border-left: 1px solid var(--border-gray, #e0e0e0);
-  border-right: 1px solid var(--border-gray, #e0e0e0);
-  min-width: 0;
-}
-.provider-meta-group {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  min-width: 0;
-  flex: 1;
-}
-.provider-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-gray, #e0e0e0);
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  color: var(--light-teal, #189c94);
-  font-weight: 700;
-  font-size: 1.1rem;
-  flex-shrink: 0;
-}
-.provider-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-.provider-name {
-  font-weight: 700;
-  color: var(--primary-blue, #083c5a);
-  font-size: 0.95rem;
-  line-height: 1.25;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0;
-}
-.provider-link {
-  font-size: 0.82rem;
-  color: var(--light-teal, #189c94);
-  text-decoration: none;
-  font-weight: 500;
-  margin-top: 0.1rem;
-}
-.provider-link:hover {
-  text-decoration: underline;
-}
-.products-preview-group {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  flex-shrink: 0;
-}
-.product-thumb-card {
-  width: 48px;
-  height: 48px;
-  border: 1px solid var(--border-gray, #e0e0e0);
-  border-radius: 8px;
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  padding: 4px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-.more-products-pill {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  border: 1px solid var(--border-gray, #e0e0e0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #64748b;
-  background: #ffffff;
-}
-.quote-status-action {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-.status-date-subtext {
-  font-size: 0.76rem;
-  color: #94a3b8;
-  margin: 0;
-  text-align: center;
-}
-.btn-outline-teal {
-  background-color: transparent;
-  color: var(--light-teal, #189c94);
-  border: 1.5px solid var(--light-teal, #189c94);
-  padding: 0.4rem 1.4rem;
-  border-radius: 20px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
-}
-.btn-outline-teal:hover {
-  background-color: var(--light-teal, #189c94);
-  color: #ffffff;
-}
-
-@media (max-width: 1024px) {
-  .quote-card {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    padding: 1.25rem 1.25rem;
-  }
-  .quote-center {
-    border-left: none;
-    border-right: none;
-    border-top: 1px solid var(--border-gray, #e0e0e0);
-    border-bottom: 1px solid var(--border-gray, #e0e0e0);
-    padding: 0.85rem 0;
-    flex-wrap: wrap;
-    gap: 1rem;
-  }
-  .quote-status-action {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-  .status-date-subtext {
-    text-align: left;
-  }
-}
-
-@media (max-width: 640px) {
-  .quote-card {
-    padding: 1rem;
-    border-radius: 12px;
-  }
-  .quote-header-row {
-    flex-direction: row;
-    justify-content: space-between;
-    width: 100%;
-  }
-  .provider-meta-group {
-    width: 100%;
-  }
-  .products-preview-group {
-    width: 100%;
-    justify-content: flex-start;
-  }
-  .quote-status-action {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  .btn-outline-teal {
-    width: 100%;
-    text-align: center;
-    padding: 0.5rem;
-  }
-  .status-date-subtext {
-    text-align: center;
-  }
-}
-</style>
