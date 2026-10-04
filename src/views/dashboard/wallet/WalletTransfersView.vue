@@ -2,7 +2,7 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useWalletStore } from "@/stores/wallet";
-import type { LedgerEntryResponse } from "@/api/modules/wallet/types";
+import type { LedgerEntryResponse } from "@/api";
 
 const router = useRouter();
 const walletStore = useWalletStore();

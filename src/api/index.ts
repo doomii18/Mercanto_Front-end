@@ -31,4 +31,10 @@ export * from "./modules/organization/verification_request_document/types.d";
 // Standalone Domains
 export * from "./modules/geography/types.d";
 export * from "./modules/health/types.d";
-export * from "./modules/wallet/index";
+
+// Wallet
+export * from "./modules/wallet/wallet/types.d";
+export * from "./modules/wallet/deposit/types.d";
+export * from "./modules/wallet/withdrawal/types.d";
+export * from "./modules/wallet/platform_bank_account/types.d";
+export * from "./modules/wallet/voucher/types.d";

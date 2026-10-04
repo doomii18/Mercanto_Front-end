@@ -1,11 +1,11 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
-import { useWalletApi } from "@/api/modules/wallet/useWalletApi";
+import { useWalletApi } from "@/api/modules/wallet/wallet/useWalletApi";
 import type {
   VirtualWalletResponse,
   LedgerEntryResponse,
   WalletLedgerPaginationQuery,
-} from "@/api/modules/wallet/types";
+} from "@/api";
 
 export interface WalletRechargeDraft {
   amount: number | null;
