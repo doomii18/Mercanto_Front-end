@@ -8,6 +8,7 @@ import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
+import { formatCedula } from "@/utils/formatters";
 
 const geoStore = useGeoStore();
 const contextStore = useUserContextStore();
@@ -89,6 +90,13 @@ async function handleSave() {
     });
     close();
   }
+}
+
+function handleNationalIdInput(e: Event) {
+  const target = e.target as HTMLInputElement;
+  const formatted = formatCedula(target.value);
+  formStore.nationalId = formatted;
+  target.value = formatted;
 }
 
 function handleFileChange(e: Event) {
@@ -222,7 +230,8 @@ defineExpose({ open, close });
         <div class="input-with-icon">
           <i class="fa-regular fa-id-card"></i>
           <input
-            v-model="formStore.nationalId"
+            :value="formStore.nationalId"
+            @input="handleNationalIdInput"
             type="text"
             placeholder="Cédula"
             maxlength="20"

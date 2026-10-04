@@ -68,3 +68,21 @@ export function formatUuidv7ToLocalTime(uuidOrIso: string): string {
     hour12: true,
   }).format(date);
 }
+export function formatCedula(value: string): string {
+    if (!value) return '';
+    let cleaned = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    if (cleaned.length > 14) {
+        cleaned = cleaned.substring(0, 14);
+    }
+    let formatted = '';
+    if (cleaned.length > 0) {
+        formatted += cleaned.substring(0, 3);
+    }
+    if (cleaned.length > 3) {
+        formatted += '-' + cleaned.substring(3, 9);
+    }
+    if (cleaned.length > 9) {
+        formatted += '-' + cleaned.substring(9, 14);
+    }
+    return formatted;
+}
