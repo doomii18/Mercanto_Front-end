@@ -12,9 +12,7 @@ import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
-import mercantoLogo from "@/assets/mercanto-imagotype.png";
-import echLogo from "@/assets/ech-logo.png";
-import dicegsaLogo from "@/assets/dicegsa-logo.png";
+import topSellersHero from "@/assets/top-sellers-hero.png";
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
@@ -281,18 +279,6 @@ onMounted(async () => {
         quote_group_id: "SYS-002",
         updated_at: new Date(Date.now() - 3600000).toISOString(),
         is_archived: false,
-      },
-      {
-        id: "mock-echamorro",
-        quote_group_id: "ORD-ECH",
-        updated_at: new Date(Date.now() - 7200000).toISOString(),
-        is_archived: false,
-      },
-      {
-        id: "mock-dicegsa",
-        quote_group_id: "ORD-DIC",
-        updated_at: new Date(Date.now() - 86400000).toISOString(),
-        is_archived: false,
       }
     ];
 
@@ -306,7 +292,7 @@ onMounted(async () => {
           hasUnread: true,
           name: "Mercanto S.A",
           avatarBlobId: null,
-          imgSrc: mercantoLogo,
+          imgSrc: topSellersHero,
           quoteGroupId: t.quote_group_id
         };
       } else if (t.id === 'sys-rejected') {
@@ -316,27 +302,7 @@ onMounted(async () => {
           hasUnread: false,
           name: "Mercanto S.A",
           avatarBlobId: null,
-          imgSrc: mercantoLogo,
-          quoteGroupId: t.quote_group_id
-        };
-      } else if (t.id === 'mock-echamorro') {
-        threadPreviews.value[t.id] = {
-          preview: "¡Gracias por tu interés! Estamos para ayudarte.",
-          time: "11:11 a.m",
-          hasUnread: false,
-          name: "E. Chamorro S.A",
-          avatarBlobId: null,
-          imgSrc: echLogo,
-          quoteGroupId: t.quote_group_id
-        };
-      } else if (t.id === 'mock-dicegsa') {
-         threadPreviews.value[t.id] = {
-          preview: "Entendido, coordinaremos el envío mañana.",
-          time: "Ayer",
-          hasUnread: false,
-          name: "Dicegsa",
-          avatarBlobId: null,
-          imgSrc: dicegsaLogo,
+          imgSrc: topSellersHero,
           quoteGroupId: t.quote_group_id
         };
       } else {
