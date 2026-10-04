@@ -61,33 +61,40 @@ const isLoading = ref(true);
 const errorMessage = ref<string | null>(null);
 let lastRequestId = 0;
 
-const visibleQuotes = computed(() => quotes.value);
-const filteredQuotes = computed(() => quotes.value);
+const visibleQuotes = computed(() => {
+  return quotes.value.filter((item) =>
+    ALLOWED_STATUSES.includes(item.quote.status as QuoteStatus)
+  );
+});
+
+const filteredQuotes = computed(() => {
+  if (currentFilter.value === "all") {
+    return quotes.value.filter((item) =>
+      ALLOWED_STATUSES.includes(item.quote.status as QuoteStatus)
+    );
+  }
+  return quotes.value.filter((item) => item.quote.status === currentFilter.value);
+});
 
 const loadOrders = async () => {
   const currentRequestId = ++lastRequestId;
   isLoading.value = true;
   errorMessage.value = null;
 
-  const statuses =
-    currentFilter.value === "all"
-      ? ALLOWED_STATUSES
-      : [currentFilter.value];
-
   try {
     let response;
     if (isProvider.value && providerId.value) {
       const params: ProviderQuoteFiltersQuery = {
-        limit: 20,
+        limit: 50,
         offset: 0,
-        statuses,
+        ...(currentFilter.value !== "all" ? { statuses: [currentFilter.value] } : {}),
       };
       response = await quoteApi.getProviderQuotes(providerId.value, params);
     } else {
       const params: AccountQuoteFiltersQuery = {
-        limit: 20,
+        limit: 50,
         offset: 0,
-        statuses,
+        ...(currentFilter.value !== "all" ? { statuses: [currentFilter.value] } : {}),
       };
       response = await quoteApi.getMyQuotes(params);
     }
@@ -207,13 +214,13 @@ const handleSelectQuote = (quoteId: string) => {
       />
     </div>
 
-    <div class="flex items-end gap-6 md:gap-9 w-full border-b border-neutral-200 mb-8 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div class="flex items-center gap-6 md:gap-9 w-full border-b border-neutral-200 mb-8 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pt-1">
       <button
         v-for="filter in filterOptions"
         :key="filter.value"
         type="button"
         :class="[
-          'bg-transparent border-0 border-b-2 pb-2 -mb-px font-serif text-lg font-medium whitespace-nowrap cursor-pointer transition-colors',
+          'bg-transparent border-b-2 pt-1 pb-3 -mb-px font-serif text-lg font-medium whitespace-nowrap cursor-pointer transition-colors leading-normal shrink-0',
           currentFilter === filter.value
             ? 'text-teal-700 border-teal-700'
             : 'text-neutral-500 border-transparent hover:text-teal-700'
