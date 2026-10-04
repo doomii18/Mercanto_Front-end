@@ -14,6 +14,7 @@ import { useAlertStore } from "@/stores/ui";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
+import { formatCedula } from "@/utils/formatters";
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
@@ -329,7 +330,7 @@ onMounted(async () => {
         <div class="info-item">
           <i class="fa-regular fa-id-card"></i>
           <span class="label">Cédula</span>
-          <span class="value">{{ (userProfile as any)?.national_id || "—" }}</span>
+          <span class="value">{{ (userProfile as any)?.national_id ? formatCedula((userProfile as any)?.national_id) : "—" }}</span>
         </div>
         <div class="info-item">
           <i class="fa-regular fa-envelope"></i>

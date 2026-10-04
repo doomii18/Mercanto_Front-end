@@ -40,7 +40,7 @@ onMounted(async () => {
       <div class="stat-text">
         <p class="stat-title">Productos en Carrito</p>
         <h3>{{ cartCount !== null ? cartCount : '...' }}</h3>
-        <router-link :to="{ name: 'orders' }" class="stat-link">ver mi carrito</router-link>
+        <router-link :to="{ name: 'orders' }" class="stat-link">Ver mi carrito</router-link>
       </div>
     </div>
 
@@ -53,7 +53,7 @@ onMounted(async () => {
       <div class="stat-text">
         <p class="stat-title">Pedidos Realizados</p>
         <h3>{{ ordersCount !== null ? ordersCount : '...' }}</h3>
-        <router-link :to="{ name: 'orders' }" class="stat-link">ver mis pedidos</router-link>
+        <router-link :to="{ name: 'orders' }" class="stat-link">Ver mis pedidos</router-link>
       </div>
     </div>
   </div>

@@ -33,6 +33,7 @@ import type { AdminUserItem, AccountRole, AccountFiltersQuery } from "@/api";
 import { useAuthStore } from "@/stores/auth";
 import { useToastStore } from "@/stores/ui";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
+import { formatCedula } from "@/utils/formatters";
 
 const identityApi = useIdentityApi();
 const authStore = useAuthStore();
@@ -636,7 +637,7 @@ function formatFullDateTime(iso: string | null | undefined): string {
               <!-- Cédula / Teléfono -->
               <td class="px-6 py-4 text-xs">
                 <div class="text-slate-700 font-medium font-mono">
-                  {{ user.national_id || "—" }}
+                  {{ user.national_id ? formatCedula(user.national_id) : "—" }}
                 </div>
                 <div class="text-slate-400 mt-0.5">
                   {{ user.phone_number || "—" }}
@@ -912,7 +913,7 @@ function formatFullDateTime(iso: string | null | undefined): string {
 
             <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 space-y-1">
               <span class="text-slate-400 block font-medium">Cédula de Identidad</span>
-              <span class="font-mono font-semibold text-slate-800">{{ viewedUser.national_id || "No especificada" }}</span>
+              <span class="font-mono font-semibold text-slate-800">{{ viewedUser.national_id ? formatCedula(viewedUser.national_id) : "No especificada" }}</span>
             </div>
 
             <div class="rounded-xl border border-slate-100 bg-slate-50/60 p-3 space-y-1">

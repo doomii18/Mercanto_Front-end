@@ -103,7 +103,7 @@ onMounted(() => {
           <h3>{{ productsCount }}</h3>
         </template>
         <router-link :to="{ name: 'provider-products' }" class="stat-link">
-          ver mis productos
+          Ver mis productos
         </router-link>
       </div>
     </div>
@@ -124,7 +124,7 @@ onMounted(() => {
           <h3>{{ ordersCount }}</h3>
         </template>
         <router-link :to="{ name: 'orders' }" class="stat-link">
-          ver mis pedidos
+          Ver mis pedidos
         </router-link>
       </div>
     </div>

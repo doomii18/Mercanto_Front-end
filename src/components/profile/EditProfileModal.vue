@@ -8,6 +8,8 @@ import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
+import { formatCedula } from "@/utils/formatters";
+import { NationalIdSchema } from "@/api/modules/identity/user_profile/domain";
 
 const geoStore = useGeoStore();
 const contextStore = useUserContextStore();
@@ -67,6 +69,16 @@ function validate(): boolean {
     }
   }
 
+  if (formStore.nationalId && formStore.nationalId.trim()) {
+    const parseRes = NationalIdSchema.safeParse(formStore.nationalId);
+    if (!parseRes.success) {
+      editErrors.value.nationalId =
+        parseRes.error.issues[0]?.message ||
+        "Formato de cédula inválido (ej. 001-000000-0000A).";
+      isValid = false;
+    }
+  }
+
   return isValid;
 }
 
@@ -89,6 +101,14 @@ async function handleSave() {
     });
     close();
   }
+}
+
+function handleNationalIdInput(e: Event) {
+  const target = e.target as HTMLInputElement;
+  const formatted = formatCedula(target.value);
+  formStore.nationalId = formatted;
+  target.value = formatted;
+  editErrors.value.nationalId = "";
 }
 
 function handleFileChange(e: Event) {
@@ -222,12 +242,17 @@ defineExpose({ open, close });
         <div class="input-with-icon">
           <i class="fa-regular fa-id-card"></i>
           <input
-            v-model="formStore.nationalId"
+            :value="formStore.nationalId"
             type="text"
-            placeholder="Cédula"
+            placeholder="001-000000-0000A"
             maxlength="20"
+            :class="{ 'input-error': editErrors.nationalId }"
+            @input="handleNationalIdInput"
           />
         </div>
+        <span v-if="editErrors.nationalId" class="field-error">{{
+          editErrors.nationalId
+        }}</span>
       </div>
 
       <div class="edit-form-group full-width">

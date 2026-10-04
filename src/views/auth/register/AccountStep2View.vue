@@ -9,6 +9,7 @@ import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
 import { useAuthStore } from "@/stores/auth";
 import { useTokenStore } from "@/stores/auth";
 import { useToastStore } from "@/stores/ui";
+import { formatCedula } from "@/utils/formatters";
 
 const router = useRouter();
 const registerStore = useAccountRegisterStore();
@@ -88,7 +89,7 @@ const finishRegistration = () => {
                 <div class="review-item">
                     <span class="label">Cédula de Identidad</span>
                     <span class="value">{{
-                        registerStore.nationalId || "-"
+                        registerStore.nationalId ? formatCedula(registerStore.nationalId) : "-"
                     }}</span>
                 </div>
                 <div class="review-item">

@@ -12,6 +12,7 @@ import {
 import { EmailSchema as emailSchema } from "@/api/modules/identity/auth/domain";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import PhoneInput from "@/components/common/PhoneInput.vue";
+import { formatCedula } from "@/utils/formatters";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();
@@ -35,6 +36,14 @@ const clearFieldError = (field: string) => {
   if (errors.value[field]) {
     delete errors.value[field];
   }
+};
+
+const handleNationalIdInput = (e: Event) => {
+  const target = e.target as HTMLInputElement;
+  const formatted = formatCedula(target.value);
+  accountStore.nationalId = formatted;
+  target.value = formatted;
+  clearFieldError('nationalId');
 };
 
 const handleDocumentFile = (event: Event) => {
@@ -95,11 +104,11 @@ const handleContinue = () => {
       <div class="form-group">
         <label>Cédula de Identidad <span class="required">*</span></label>
         <input
-          v-model="accountStore.nationalId"
+          :value="accountStore.nationalId"
           type="text"
           placeholder="001-000000-0000A"
           :class="{ 'input-error': errors.nationalId }"
-          @input="clearFieldError('nationalId')"
+          @input="handleNationalIdInput"
         />
         <span v-if="errors.nationalId" class="field-error-msg">{{ errors.nationalId }}</span>
 

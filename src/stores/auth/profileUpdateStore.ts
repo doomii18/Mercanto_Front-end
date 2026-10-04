@@ -4,6 +4,7 @@ import { useUserContextStore } from "./userContextStore";
 import type { UserProfileResponse } from "@/api";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
+import { formatCedula } from "@/utils/formatters";
 
 export const useProfileUpdateStore = defineStore("profileUpdate", () => {
   const userProfileApi = useUserProfileApi();
@@ -27,7 +28,7 @@ export const useProfileUpdateStore = defineStore("profileUpdate", () => {
     firstName.value = profile.first_name || "";
     lastName.value = profile.last_name || "";
     phoneNumber.value = internal.phone_number || "";
-    nationalId.value = internal.national_id || "";
+    nationalId.value = internal.national_id ? formatCedula(internal.national_id) : "";
     municipalityId.value = internal.municipality_id || null;
   }
 
