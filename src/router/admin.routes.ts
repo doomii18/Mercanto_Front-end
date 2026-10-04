@@ -37,6 +37,11 @@ export const adminRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/admin/AdminUsuariosView.vue"),
       },
       {
+        path: "users/:id",
+        name: "admin-user-detail",
+        component: () => import("@/views/admin/AdminUsuarioDetalleView.vue"),
+      },
+      {
         path: "orders",
         name: "admin-orders",
         component: () => import("@/views/admin/AdminPedidosView.vue"),
