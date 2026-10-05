@@ -91,7 +91,7 @@ const goBack = () => {
             Explorar Productos
           </router-link>
           <span class="text-neutral-300">•</span>
-          <router-link :to="{ name: 'home', hash: '#como-funciona' }" class="hover:text-[#ff6a00] transition-colors">
+          <router-link :to="{ name: 'how-it-works' }" class="hover:text-[#ff6a00] transition-colors">
             Cómo Funciona
           </router-link>
           <span class="text-neutral-300">•</span>

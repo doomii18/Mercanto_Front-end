@@ -50,7 +50,7 @@ onMounted(() => {
           <router-link :to="{ name: 'products' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
             Productos
           </router-link>
-          <router-link :to="{ name: 'home', hash: '#como-funciona' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
+          <router-link :to="{ name: 'how-it-works' }" class="text-sm text-slate-200 hover:text-orange-400 transition-colors">
             Cómo funciona la plataforma
           </router-link>
         </div>

@@ -58,11 +58,21 @@ export const publicRoutes: RouteRecordRaw[] = [
         component: () => import("@/views/public/ImageSearchView.vue"),
       },
       {
+        path: "how-it-works",
+        name: "how-it-works",
+        component: () => import("@/views/public/HowItWorksView.vue"),
+      },
+      {
         path: ":pathMatch(.*)*",
         name: "not-found",
         component: () => import("@/views/public/NotFoundView.vue"),
       },
     ],
+  },
+  {
+    path: "/how-it-works/tutorial",
+    name: "how-it-works-tutorial",
+    component: () => import("@/views/public/TutorialPlayerView.vue"),
   },
 ];
 

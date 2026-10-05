@@ -26,6 +26,7 @@ onMounted(async () => {
 const isHomeActive = computed(() => route.name === "home" && !route.hash);
 const isProductsActive = computed(() => route.name === "products" || route.name === "category");
 const isProvidersActive = computed(() => route.name === "providers");
+const isHowItWorksActive = computed(() => route.name === "how-it-works" || route.name === "how-it-works-tutorial");
 </script>
 
 <template>
@@ -71,8 +72,8 @@ const isProvidersActive = computed(() => route.name === "providers");
           Proveedores
         </router-link>
         <router-link
-          :to="{ name: 'home', hash: '#como-funciona' }"
-          class="nav-btn"
+          :to="{ name: 'how-it-works' }"
+          :class="['nav-btn', { 'nav-btn-active': isHowItWorksActive }]"
           exact-active-class=""
           active-class=""
           @click="closeMenu"
