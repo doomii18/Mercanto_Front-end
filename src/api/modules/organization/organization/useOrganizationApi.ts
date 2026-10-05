@@ -37,6 +37,10 @@ export const useOrganizationApi = () => {
       queryParams.append("municipality_id", params.municipality_id);
     if (params?.min_rating !== undefined)
       queryParams.append("min_rating", params.min_rating.toString());
+    if (params?.status)
+      queryParams.append("status", params.status);
+    if (params?.kind)
+      queryParams.append("kind", params.kind);
     if (params?.sort_by)
       queryParams.append("sort_by", params.sort_by);
     if (params?.sort_dir)

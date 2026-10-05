@@ -17,4 +17,6 @@ export const VerificationRequestSortFieldSchema = z.enum([
   "submitted_at",
   "updated_at",
   "status",
+  "id",
 ]);
+
