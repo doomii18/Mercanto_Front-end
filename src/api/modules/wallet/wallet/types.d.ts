@@ -5,7 +5,10 @@ import {
   WalletLedgerAmountSchema,
   ReferenceNotesSchema,
 } from "./domain";
-import { WalletLedgerPaginationQuerySchema } from "./requests";
+import {
+  WalletLedgerFilterQuerySchema,
+  WalletLedgerPaginationQuerySchema,
+} from "./requests";
 import {
   VirtualWalletResponseSchema,
   LedgerEntryResponseSchema,
@@ -17,7 +20,9 @@ export type WalletBalance = z.infer<typeof WalletBalanceSchema>;
 export type WalletLedgerAmount = z.infer<typeof WalletLedgerAmountSchema>;
 export type ReferenceNotes = z.infer<typeof ReferenceNotesSchema>;
 
-export type WalletLedgerPaginationQuery = z.infer<typeof WalletLedgerPaginationQuerySchema>;
+export type WalletLedgerFilterQuery = z.infer<typeof WalletLedgerFilterQuerySchema>;
+export type WalletLedgerFilterQueryDto = WalletLedgerFilterQuery;
+export type WalletLedgerPaginationQuery = WalletLedgerFilterQuery;
 
 export type VirtualWalletResponseDto = z.infer<typeof VirtualWalletResponseSchema>;
 export type VirtualWalletResponse = VirtualWalletResponseDto;

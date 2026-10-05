@@ -47,9 +47,16 @@ export const useDepositApi = () => {
     const queryParams = new URLSearchParams();
     if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
     if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.wallet_id) queryParams.append("wallet_id", validated.wallet_id);
     if (validated?.status) queryParams.append("status", validated.status);
     if (validated?.platform_bank_account_id)
       queryParams.append("platform_bank_account_id", validated.platform_bank_account_id);
+    if (validated?.min_amount !== undefined) queryParams.append("min_amount", validated.min_amount.toString());
+    if (validated?.max_amount !== undefined) queryParams.append("max_amount", validated.max_amount.toString());
+    if (validated?.created_after) queryParams.append("created_after", validated.created_after);
+    if (validated?.created_before) queryParams.append("created_before", validated.created_before);
+    if (validated?.deposited_after) queryParams.append("deposited_after", validated.deposited_after);
+    if (validated?.deposited_before) queryParams.append("deposited_before", validated.deposited_before);
     if (validated?.search_term) queryParams.append("search_term", validated.search_term);
     if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
     if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
@@ -77,9 +84,16 @@ export const useDepositApi = () => {
     const queryParams = new URLSearchParams();
     if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
     if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.wallet_id) queryParams.append("wallet_id", validated.wallet_id);
     if (validated?.status) queryParams.append("status", validated.status);
     if (validated?.platform_bank_account_id)
       queryParams.append("platform_bank_account_id", validated.platform_bank_account_id);
+    if (validated?.min_amount !== undefined) queryParams.append("min_amount", validated.min_amount.toString());
+    if (validated?.max_amount !== undefined) queryParams.append("max_amount", validated.max_amount.toString());
+    if (validated?.created_after) queryParams.append("created_after", validated.created_after);
+    if (validated?.created_before) queryParams.append("created_before", validated.created_before);
+    if (validated?.deposited_after) queryParams.append("deposited_after", validated.deposited_after);
+    if (validated?.deposited_before) queryParams.append("deposited_before", validated.deposited_before);
     if (validated?.search_term) queryParams.append("search_term", validated.search_term);
     if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
     if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
