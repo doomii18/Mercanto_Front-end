@@ -2,6 +2,7 @@ import type { z } from "zod";
 import type {
   QuoteStatusSchema,
   PaymentMethodSchema,
+  QuoteSortFieldSchema,
 } from "./domain";
 import type {
   QuoteItemDtoSchema,
@@ -22,6 +23,7 @@ import type {
 // Domain types
 export type QuoteStatus = z.infer<typeof QuoteStatusSchema>;
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
+export type QuoteSortField = z.infer<typeof QuoteSortFieldSchema>;
 
 // Request types
 export type QuoteItemDto = z.infer<typeof QuoteItemDtoSchema>;
