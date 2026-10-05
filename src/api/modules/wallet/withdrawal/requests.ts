@@ -23,8 +23,16 @@ export const RejectWithdrawalRequestSchema = z.object({
 
 // WithdrawalFilterQueryDto | query params for listing withdrawal requests
 export const WithdrawalFilterQuerySchema = z.object({
-  page: z.number().int().positive().optional(),
-  per_page: z.number().int().min(1).max(100).optional(),
+  limit: z.number().int().min(1).max(100).optional(),
+  offset: z.number().int().nonnegative().optional(),
+  wallet_id: z.string().uuid().optional(),
   status: WithdrawalRequestStatusSchema.optional(),
-  search: z.string().trim().optional(),
+  min_amount: z.number().nonnegative().optional(),
+  max_amount: z.number().nonnegative().optional(),
+  created_after: z.string().datetime().optional(),
+  created_before: z.string().datetime().optional(),
+  search_term: z.string().trim().optional(),
+  sort_by: z.enum(["created_at", "updated_at", "amount", "status", "id"]).optional(),
+  sort_direction: z.enum(["asc", "desc"]).optional(),
 });
+

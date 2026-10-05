@@ -10,7 +10,7 @@ import { useOrganizationApi } from "@/api/modules/organization/organization/useO
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 import { useCategoryStore } from "@/stores/commerce";
 
-interface CartProductDisplay {
+interface FavoriteProductDisplay {
   cartItem: CartItemResponse;
   product: ProductResponse;
   providerName: string;
@@ -24,16 +24,17 @@ const productApi = useProductApi();
 const reviewApi = useReviewApi();
 const categoryStore = useCategoryStore();
 
-const cartProducts = ref<CartProductDisplay[]>([]);
+const favoriteProducts = ref<FavoriteProductDisplay[]>([]);
 const isLoading = ref(true);
 const searchQuery = ref("");
 const viewMode = ref<"grid" | "list">("grid");
 
-const fetchCartProducts = async () => {
+const fetchFavoriteProducts = async () => {
   categoryStore.fetchCategories().catch(console.warn);
   isLoading.value = true;
   try {
-    const items = await cartApi.getMyCartProducts();
+    const res = await cartApi.getMyCartProducts();
+    const items = res.data;
 
     const promises = items.map(async (item) => {
       try {
@@ -72,18 +73,18 @@ const fetchCartProducts = async () => {
     });
 
     const results = await Promise.all(promises);
-    cartProducts.value = results.filter((r): r is CartProductDisplay => r !== null);
+    favoriteProducts.value = results.filter((r): r is FavoriteProductDisplay => r !== null);
   } catch (err) {
-    console.error("Failed to load cart:", err);
+    console.error("Failed to load favorites:", err);
   } finally {
     isLoading.value = false;
   }
 };
 
 const filteredProducts = computed(() => {
-  if (!searchQuery.value.trim()) return cartProducts.value;
+  if (!searchQuery.value.trim()) return favoriteProducts.value;
   const query = searchQuery.value.toLowerCase().trim();
-  return cartProducts.value.filter((p) => {
+  return favoriteProducts.value.filter((p) => {
     return (
       p.product.title.toLowerCase().includes(query) ||
       p.providerName.toLowerCase().includes(query)
@@ -91,21 +92,21 @@ const filteredProducts = computed(() => {
   });
 });
 
-const removeFromCart = async (productId: string) => {
+const removeFromFavorites = async (productId: string) => {
   try {
     await cartApi.deleteMyCartProduct(productId);
-    cartProducts.value = cartProducts.value.filter(
+    favoriteProducts.value = favoriteProducts.value.filter(
       (p) => p.product.id !== productId
     );
   } catch (err) {
-    console.error("Failed to remove from cart:", err);
+    console.error("Failed to remove from favorites:", err);
   }
 };
 
 const formatPrice = (val: number) => `C$ ${val.toLocaleString("es-NI")}`;
 
 onMounted(() => {
-  fetchCartProducts();
+  fetchFavoriteProducts();
 });
 </script>
 
@@ -116,7 +117,7 @@ onMounted(() => {
         Mis Favoritos
       </h1>
       <p class="text-sm font-normal text-slate-500">
-        Consulta y monitorea los productos en tu carrito de compras
+        Consulta y monitorea tus productos favoritos
       </p>
     </header>
 
@@ -165,18 +166,18 @@ onMounted(() => {
 
     <div v-if="isLoading" class="flex flex-col items-center justify-center py-16 text-center">
       <i class="fa-solid fa-spinner fa-spin text-3xl text-[#00a896] mb-4"></i>
-      <p class="text-sm text-slate-500">Cargando tu carrito...</p>
+      <p class="text-sm text-slate-500">Cargando tus productos favoritos...</p>
     </div>
 
     <div
       v-else-if="filteredProducts.length === 0"
       class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white py-16 text-center"
     >
-      <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100 text-slate-400">
-        <i class="fa-solid fa-cart-shopping text-2xl"></i>
+      <div class="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-rose-50 text-rose-400">
+        <i class="fa-solid fa-heart text-2xl"></i>
       </div>
-      <h3 class="text-sm font-bold text-[#023859]">Tu carrito está vacío</h3>
-      <p class="mt-1 text-xs text-slate-400">Explora el catálogo y agrega productos para verlos aquí.</p>
+      <h3 class="text-sm font-bold text-[#023859]">No tienes productos favoritos</h3>
+      <p class="mt-1 text-xs text-slate-400">Explora el catálogo y guarda productos en tus favoritos para verlos aquí.</p>
     </div>
 
     <section
@@ -202,7 +203,7 @@ onMounted(() => {
           type="button"
           class="absolute left-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white shadow-md transition-all hover:scale-110 hover:bg-red-600"
           title="Eliminar de favoritos"
-          @click="removeFromCart(item.product.id)"
+          @click="removeFromFavorites(item.product.id)"
         >
           <i class="fa-solid fa-heart-crack text-xs"></i>
         </button>
@@ -260,8 +261,8 @@ onMounted(() => {
             {{ formatPrice(item.product.base_price) }}
           </p>
           <div class="mt-1.5 flex items-center justify-between text-[11px]">
-            <span class="font-semibold text-[#00a896]">
-              Cantidad: {{ item.cartItem.quantity }}
+            <span class="inline-flex items-center gap-1 font-semibold text-[#00a896]">
+              <i class="fa-solid fa-heart text-[10px]"></i> Favorito
             </span>
             <span class="flex items-center gap-1 text-slate-500">
               <i class="fa-solid fa-star text-[10px] text-amber-400"></i>

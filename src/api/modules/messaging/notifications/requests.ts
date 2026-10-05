@@ -14,5 +14,6 @@ export const MarkNotificationsReadSchema = z.object({
 export const NotificationHistoryQuerySchema = z.object({
   limit: z.number().int().nonnegative().optional(),
   offset: z.number().int().nonnegative().optional(),
+  is_read: z.boolean().optional(),
 });
 

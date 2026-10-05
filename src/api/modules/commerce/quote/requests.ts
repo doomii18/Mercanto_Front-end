@@ -51,3 +51,18 @@ export const ProviderQuoteFiltersQuerySchema = z.object({
   created_before: z.string().datetime().optional(),
   search_term: z.string().optional(),
 });
+
+// GlobalQuoteFiltersQuery | query filters for global quotation list (Admin / Auditor)
+export const GlobalQuoteFiltersQuerySchema = z.object({
+  limit: z.number().int().positive().optional(),
+  offset: z.number().int().nonnegative().optional(),
+  buyer_id: z.string().uuid().optional(),
+  provider_id: z.string().uuid().optional(),
+  quote_group_id: z.string().uuid().optional(),
+  statuses: z.array(QuoteStatusSchema).optional(),
+  payment_preference: PaymentMethodSchema.optional(),
+  shipping_preference: ShippingMethodSchema.optional(),
+  created_after: z.string().datetime().optional(),
+  created_before: z.string().datetime().optional(),
+  search_term: z.string().optional(),
+});

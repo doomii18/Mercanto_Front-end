@@ -7,7 +7,7 @@ import type {
   LoginRequest,
 } from "@/api";
 import { useUserContextStore } from "./userContextStore";
-import { authBus } from "@/events/authEvents";
+import { emitAuthEvent } from "@/events/authEvents";
 
 export const useAuthStore = defineStore("auth", () => {
   const tokenStore = useTokenStore();
@@ -58,6 +58,8 @@ export const useAuthStore = defineStore("auth", () => {
       const userContext = useUserContextStore();
       await userContext.initialize(true);
 
+      emitAuthEvent({ type: "login", accountId: profile.id });
+
       return profile;
     } finally {
       isLoading.value = false;
@@ -94,7 +96,13 @@ export const useAuthStore = defineStore("auth", () => {
 
   async function logout(): Promise<void> {
     const currentRefreshToken = tokenStore.refreshToken;
-    handleSessionExpired();
+    tokenStore.clearTokens();
+    account.value = null;
+    initPromise = null;
+    refreshPromise = null;
+    isInitialized.value = true;
+
+    emitAuthEvent({ type: "logout" });
 
     if (currentRefreshToken) {
       try {
@@ -114,7 +122,7 @@ export const useAuthStore = defineStore("auth", () => {
     refreshPromise = null;
     isInitialized.value = true;
 
-    authBus.emit({ type: "session_expired" });
+    emitAuthEvent({ type: "session_expired" });
   }
 
   return {

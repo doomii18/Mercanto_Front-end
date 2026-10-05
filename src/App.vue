@@ -5,6 +5,7 @@ import { usePreferencesGuard } from "./composables/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 import GlobalAlerts from "./components/common/GlobalAlerts.vue";
 import GlobalToasts from "./components/common/GlobalToasts.vue";
+import AuthPromptDialog from "./components/common/AuthPromptDialog.vue";
 
 const authStore = useAuthStore();
 const { showPrompt, currentPreferences, checkPreferences, savePreferences } =
@@ -38,6 +39,7 @@ watch(
     :save-handler="savePreferences"
   />
 
+  <AuthPromptDialog />
   <GlobalAlerts />
   <GlobalToasts />
 </template>

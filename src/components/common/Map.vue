@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useDocumentVisibility, useWindowFocus, useIntervalFn } from '@vueuse/core'
 
 interface Traveler {
   id: number
@@ -20,6 +21,10 @@ interface Ripple {
   maxRadius: number
   progress: number
 }
+
+// Concurrency limits to prevent performance degradation
+const MAX_ACTIVE_TRAVELERS = 8
+const MAX_ACTIVE_RIPPLES = 12
 
 // Verified inner land coordinates
 const landPoints = [
@@ -46,7 +51,11 @@ const landPoints = [
 
 const activeTravelers = ref<Traveler[]>([])
 const activeRipples = ref<Ripple[]>([])
-let timer: number | null = null
+
+// Tab focus & visibility tracking via VueUse composables
+const visibility = useDocumentVisibility()
+const isWindowFocused = useWindowFocus()
+const isTabActive = computed(() => visibility.value === 'visible' && isWindowFocused.value)
 
 const getBezierPoint = (p0: number, p1: number, p2: number, t: number) => {
   return (1 - t) * (1 - t) * p0 + 2 * (1 - t) * t * p1 + t * t * p2
@@ -65,6 +74,10 @@ const getPartialPath = (startX: number, startY: number, cx: number, cy: number, 
 }
 
 const triggerShockwave = (x: number, y: number, maxRadius = 18) => {
+  if (!isTabActive.value || activeRipples.value.length >= MAX_ACTIVE_RIPPLES) {
+    return
+  }
+
   const ripple: Ripple = {
     id: Date.now() + Math.random(),
     x,
@@ -79,13 +92,18 @@ const triggerShockwave = (x: number, y: number, maxRadius = 18) => {
   const duration = 700
 
   const animateRipple = (currentTime: number) => {
+    if (!isTabActive.value) {
+      activeRipples.value = []
+      return
+    }
+
+    const index = activeRipples.value.findIndex(r => r.id === ripple.id)
+    if (index === -1) return
+
     const elapsed = currentTime - startTime
     const progress = Math.min(elapsed / duration, 1)
 
-    const index = activeRipples.value.findIndex(r => r.id === ripple.id)
-    if (index !== -1) {
-      activeRipples.value[index].progress = progress
-    }
+    activeRipples.value[index].progress = progress
 
     if (progress < 1) {
       requestAnimationFrame(animateRipple)
@@ -98,6 +116,11 @@ const triggerShockwave = (x: number, y: number, maxRadius = 18) => {
 }
 
 const spawnTraveler = (customStart?: { x: number; y: number }, sourcePointName?: string) => {
+  // Prevent spawning when tab is inactive or capacity is reached
+  if (!isTabActive.value || activeTravelers.value.length >= MAX_ACTIVE_TRAVELERS) {
+    return
+  }
+
   let origin = customStart ? { name: sourcePointName || 'custom', x: customStart.x, y: customStart.y } : landPoints[Math.floor(Math.random() * landPoints.length)]
   let destination = landPoints[Math.floor(Math.random() * landPoints.length)]
   while (destination.name === origin.name) {
@@ -144,13 +167,18 @@ const spawnTraveler = (customStart?: { x: number; y: number }, sourcePointName?:
   const startTime = performance.now()
 
   const animate = (currentTime: number) => {
+    if (!isTabActive.value) {
+      activeTravelers.value = []
+      return
+    }
+
+    const index = activeTravelers.value.findIndex(t => t.id === traveler.id)
+    if (index === -1) return
+
     const elapsed = currentTime - startTime
     const progress = Math.min(elapsed / duration, 1)
 
-    const index = activeTravelers.value.findIndex(t => t.id === traveler.id)
-    if (index !== -1) {
-      activeTravelers.value[index].progress = progress
-    }
+    activeTravelers.value[index].progress = progress
 
     if (progress < 1) {
       requestAnimationFrame(animate)
@@ -159,7 +187,11 @@ const spawnTraveler = (customStart?: { x: number; y: number }, sourcePointName?:
       activeTravelers.value = activeTravelers.value.filter(t => t.id !== traveler.id)
 
       const CHAIN_PROBABILITY = 0.35
-      if (Math.random() < CHAIN_PROBABILITY) {
+      if (
+        isTabActive.value &&
+        activeTravelers.value.length < MAX_ACTIVE_TRAVELERS &&
+        Math.random() < CHAIN_PROBABILITY
+      ) {
         spawnTraveler({ x: traveler.destX, y: traveler.destY }, destination.name)
       }
     }
@@ -168,12 +200,23 @@ const spawnTraveler = (customStart?: { x: number; y: number }, sourcePointName?:
   requestAnimationFrame(animate)
 }
 
-onMounted(() => {
-  timer = window.setInterval(() => spawnTraveler(), 450)
-})
+// Automatically manages interval and stops when component unmounts
+const { pause: pauseSpawner, resume: resumeSpawner } = useIntervalFn(() => {
+  if (isTabActive.value && activeTravelers.value.length < MAX_ACTIVE_TRAVELERS) {
+    spawnTraveler()
+  }
+}, 450, { immediate: true })
 
-onUnmounted(() => {
-  if (timer) clearInterval(timer)
+// Clean up points and pause spawner when window/tab loses focus or becomes hidden
+watch(isTabActive, (active) => {
+  if (!active) {
+    pauseSpawner()
+    activeTravelers.value = []
+    activeRipples.value = []
+  } else {
+    resumeSpawner()
+    spawnTraveler()
+  }
 })
 </script>
 

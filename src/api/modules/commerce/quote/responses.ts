@@ -16,6 +16,7 @@ export const QuoteResponseSchema = z.object({
   payment_preference: PaymentMethodSchema,
   buyer_notes: z.string().optional().nullable(),
   shipping_address: z.string(),
+  created_at: z.string().datetime().optional(),
   updated_at: z.string().datetime(),
 });
 

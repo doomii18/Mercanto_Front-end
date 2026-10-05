@@ -120,17 +120,19 @@ onMounted(() => {
 
 <template>
   <div
-    class="bg-white border-[1.5px] border-slate-200 rounded-2xl p-5 sm:px-6 grid grid-cols-1 lg:grid-cols-[minmax(210px,1.35fr)_2.1fr_minmax(135px,0.95fr)] items-center gap-4 lg:gap-6 transition-all duration-200 hover:border-[#00a896] hover:shadow-md"
+    class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 lg:p-7 shadow-xs hover:border-[#00a896]/60 hover:shadow-md transition-all duration-200 flex flex-col lg:flex-row lg:items-center justify-between gap-6"
   >
-    <div class="flex flex-col gap-1 min-w-0">
-      <div class="flex flex-row items-center flex-wrap gap-2 mb-1">
-        <h4 class="text-[#083c5a] text-[1.05rem] font-bold font-serif m-0">Pedido</h4>
+    <!-- Left: Pedido Info -->
+    <div class="flex flex-col shrink-0 min-w-0 lg:w-64 xl:w-72">
+      <h4 class="text-[#083c5a] text-sm sm:text-base font-bold font-serif m-0 mb-2">Pedido</h4>
+      <div class="mb-2.5">
         <QuoteIdBadge :quote-id="quote.id" size="sm" />
       </div>
-      <p class="text-slate-400 text-xs sm:text-[0.82rem] mb-1.5">{{ formattedDate }}</p>
-      <div class="flex flex-col mb-1">
-        <p class="text-slate-500 text-xs font-medium m-0">Total</p>
-        <h3 class="text-[#083c5a] text-lg font-bold my-0.5">{{ formatCurrency(calculatedTotal) }}</h3>
+      <p class="text-slate-400 text-xs sm:text-[0.82rem] m-0 mb-3">{{ formattedDate }}</p>
+
+      <div class="flex flex-col">
+        <p class="text-slate-400 text-xs font-normal m-0">Total</p>
+        <h3 class="text-[#083c5a] text-lg sm:text-xl font-bold font-serif my-0.5">{{ formatCurrency(calculatedTotal) }}</h3>
         <span
           v-if="hasAppliedOffer"
           class="mt-0.5 w-fit rounded-full bg-orange-100 px-2 py-0.5 text-[0.625rem] font-bold text-orange-600"
@@ -138,16 +140,18 @@ onMounted(() => {
           Descuento aplicado
         </span>
       </div>
-      <p class="text-slate-400 text-xs m-0">
+
+      <p class="text-slate-400 text-xs m-0 mt-1">
         {{ totalUnits }} {{ totalUnits === 1 ? 'producto' : 'productos' }}
       </p>
     </div>
-    <div
-      class="flex items-center justify-between gap-4 lg:gap-5 px-0 lg:px-6 py-3.5 lg:py-0 border-y lg:border-y-0 lg:border-x border-slate-200 min-w-0 flex-wrap sm:flex-nowrap"
-    >
-      <div class="flex items-center gap-3.5 min-w-0 flex-1 w-full sm:w-auto">
+
+    <!-- Center Group: Buyer + Products -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between lg:justify-between gap-6 flex-1 min-w-0 lg:px-6 xl:px-10">
+      <!-- Buyer info -->
+      <div class="flex items-center gap-3.5 min-w-0">
         <div
-          class="w-11 h-11 rounded-full border-[1.5px] border-slate-200 bg-white flex items-center justify-center overflow-hidden text-[#00a896] font-bold text-lg shrink-0"
+          class="w-12 h-12 rounded-full border border-slate-200 bg-white flex items-center justify-center overflow-hidden text-[#00a896] font-bold text-lg shrink-0 shadow-2xs"
         >
           <ProfileAvatar
             v-if="isProvider"
@@ -167,16 +171,18 @@ onMounted(() => {
           >
             {{ counterparty?.name || (isProvider ? 'Comprador' : 'Proveedor') }}
           </p>
-          <a href="#" class="text-xs sm:text-[0.82rem] text-[#00a896] hover:underline font-medium mt-0.5" @click.prevent>
+          <a href="#" class="text-xs sm:text-[0.82rem] text-[#00a896] hover:underline font-medium mt-1 cursor-pointer" @click.prevent>
             {{ isProvider ? 'ver comprador' : 'ver proveedor' }}
           </a>
         </div>
       </div>
-      <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-start">
+
+      <!-- Products Preview -->
+      <div class="flex items-center gap-2.5 shrink-0">
         <div
           v-for="item in previewItems"
           :key="item.product_id"
-          class="w-12 h-12 border border-slate-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shadow-xs"
+          class="w-12 h-12 border border-slate-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shadow-2xs shrink-0"
           :title="item.product_title_snapshot"
         >
           <ProductImage
@@ -188,20 +194,25 @@ onMounted(() => {
         </div>
         <div
           v-if="remainingCount > 0"
-          class="w-9.5 h-9.5 rounded-full border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-500 bg-white shrink-0"
+          class="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center text-xs font-semibold text-slate-500 bg-white shrink-0"
         >
           +{{ remainingCount }}
         </div>
       </div>
     </div>
+
+    <!-- Vertical Divider (desktop only, between products and status) -->
+    <div class="hidden lg:block w-px h-12 bg-slate-200 shrink-0"></div>
+
+    <!-- Right Group: Status & Action -->
     <div
-      class="flex flex-row lg:flex-col justify-between lg:justify-center items-center gap-2 w-full lg:w-auto flex-wrap sm:flex-nowrap"
+      class="flex flex-col items-center justify-center gap-1.5 shrink-0 w-full sm:w-auto lg:w-48 text-center pt-4 lg:pt-0 border-t lg:border-t-0 border-slate-100"
     >
       <QuoteStatusBadge :status="quote.status" size="sm" />
-      <p v-if="statusDateLabel" class="text-[0.76rem] text-slate-400 m-0 text-left lg:text-center">{{ statusDateLabel }}</p>
+      <p v-if="statusDateLabel" class="text-xs text-slate-400 m-0 whitespace-nowrap">{{ statusDateLabel }}</p>
       <button
         type="button"
-        class="bg-transparent text-[#00a896] border-[1.5px] border-[#00a896] py-1.5 px-5.5 rounded-full font-semibold text-xs sm:text-sm cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-[#00a896] hover:text-white w-full sm:w-auto text-center"
+        class="mt-1 bg-transparent text-[#00a896] border-[1.5px] border-[#00a896] py-1.5 px-6 rounded-full font-semibold text-xs sm:text-sm cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-[#00a896] hover:text-white"
         @click="emit('select', quote.id)"
       >
         ver detalles

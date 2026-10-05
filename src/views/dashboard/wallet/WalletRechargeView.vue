@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useClipboard } from "@vueuse/core";
 import {
@@ -40,38 +40,27 @@ const handleCopyAccount = (number: string, bankId: string) => {
   }, 2500);
 };
 
-const BANK_OPTIONS = [
-  {
-    id: "lafise",
-    name: "Banco Lafise",
-    accountNumber: "1234-5678-9012",
-    accountType: "Cuenta Corriente - C$",
-    iconClass: "bg-[#e6f7f5] text-[#189c94]",
-  },
-  {
-    id: "bac",
-    name: "BAC Credomatic",
-    accountNumber: "9876-5432-1098",
-    accountType: "Cuenta de Ahorros - C$",
-    iconClass: "bg-[#fef2f2] text-[#ef4444]",
-  },
-  {
-    id: "banpro",
-    name: "Banpro Grupo Promerica",
-    accountNumber: "1002-3344-5566",
-    accountType: "Cuenta Corriente - C$",
-    iconClass: "bg-[#ecfdf5] text-[#059669]",
-  },
-  {
-    id: "ficohsa",
-    name: "Banco Ficohsa",
-    accountNumber: "4567-8901-2345",
-    accountType: "Cuenta de Ahorros - C$",
-    iconClass: "bg-[#fffbeb] text-[#d97706]",
-  },
-];
+const getBankStyle = (name: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes("lafise")) return { iconClass: "bg-[#e6f7f5] text-[#189c94]" };
+  if (lower.includes("bac")) return { iconClass: "bg-[#fef2f2] text-[#ef4444]" };
+  if (lower.includes("banpro")) return { iconClass: "bg-[#ecfdf5] text-[#059669]" };
+  if (lower.includes("ficohsa")) return { iconClass: "bg-[#fffbeb] text-[#d97706]" };
+  return { iconClass: "bg-[#f0f9ff] text-[#0284c7]" };
+};
 
-const selectedBankId = ref(walletStore.rechargeDraft.bank || "lafise");
+const bankAccounts = computed(() => {
+  return walletStore.platformBankAccounts.map((account) => ({
+    id: account.id,
+    name: account.bank_name,
+    accountNumber: account.account_number,
+    accountType: account.account_type,
+    accountHolder: account.account_holder,
+    ...getBankStyle(account.bank_name),
+  }));
+});
+
+const selectedBankId = ref<string>(walletStore.rechargeDraft.platformBankAccountId || "");
 const amount = ref<number | null>(walletStore.rechargeDraft.amount || null);
 const referenceNumber = ref(walletStore.rechargeDraft.referenceNumber || "");
 const depositDate = ref(
@@ -83,8 +72,15 @@ const depositTime = ref(walletStore.rechargeDraft.depositTime || formattedCurren
 const depositorName = ref(walletStore.rechargeDraft.depositorName || "");
 const voucherFile = ref<File | null>(walletStore.rechargeDraft.voucherFile || null);
 
+onMounted(async () => {
+  await walletStore.fetchPlatformBankAccounts();
+  if (!selectedBankId.value && bankAccounts.value.length > 0) {
+    selectedBankId.value = bankAccounts.value[0].id;
+  }
+});
+
 const currentBank = computed(
-  () => BANK_OPTIONS.find((b) => b.id === selectedBankId.value) || BANK_OPTIONS[0]
+  () => bankAccounts.value.find((b) => b.id === selectedBankId.value) || bankAccounts.value[0]
 );
 
 const handleDropError = (msg: string) => {
@@ -105,10 +101,28 @@ const handleContinue = () => {
     return;
   }
 
+  if (!currentBank.value) {
+    toastStore.addToast({
+      title: "Cuenta bancaria requerida",
+      message: "Selecciona una cuenta de destino.",
+      variant: "warning",
+    });
+    return;
+  }
+
   if (!referenceNumber.value.trim()) {
     toastStore.addToast({
       title: "Número de referencia requerido",
       message: "Ingresa el número de referencia del comprobante bancario.",
+      variant: "warning",
+    });
+    return;
+  }
+
+  if (!voucherFile.value) {
+    toastStore.addToast({
+      title: "Comprobante requerido",
+      message: "Debes adjuntar el comprobante o voucher de la transferencia.",
       variant: "warning",
     });
     return;
@@ -121,7 +135,8 @@ const handleContinue = () => {
 
   walletStore.setRechargeDraft({
     amount: amount.value,
-    bank: selectedBankId.value,
+    platformBankAccountId: currentBank.value.id,
+    bank: currentBank.value.name.toLowerCase().replace(/\s+/g, "-"),
     bankName: currentBank.value.name,
     accountNumber: currentBank.value.accountNumber,
     accountType: currentBank.value.accountType,
@@ -168,10 +183,15 @@ const handleContinue = () => {
       <div class="flex-1">
         <h3 class="text-lg font-bold text-[#083c5a] font-serif mb-4">1. Cuentas bancarias oficiales de Mercanto</h3>
         
+        <!-- Loading State for Bank Accounts -->
+        <div v-if="walletStore.isAccountsLoading" class="grid grid-cols-2 gap-4 mb-8 max-md:grid-cols-1">
+          <div v-for="i in 2" :key="i" class="border border-slate-200 rounded-2xl p-5 animate-pulse bg-slate-50 h-36"></div>
+        </div>
+
         <!-- Bank Accounts Grid -->
-        <div class="grid grid-cols-2 gap-4 mb-8 max-md:grid-cols-1">
+        <div v-else class="grid grid-cols-2 gap-4 mb-8 max-md:grid-cols-1">
           <div
-            v-for="b in BANK_OPTIONS"
+            v-for="b in bankAccounts"
             :key="b.id"
             class="border rounded-2xl p-5 flex flex-col transition-all cursor-pointer"
             :class="
@@ -201,7 +221,7 @@ const handleContinue = () => {
             <span class="text-lg font-mono font-bold text-[#083c5a] tracking-wider mb-1">
               {{ b.accountNumber }}
             </span>
-            <span class="text-xs text-[#64748b] mb-4">Titular: Mercanto S.A.</span>
+            <span class="text-xs text-[#64748b] mb-4">Titular: {{ b.accountHolder || "Mercanto S.A." }}</span>
             <button
               type="button"
               class="w-full py-2 bg-white border border-[#083c5a] text-[#083c5a] rounded-lg text-xs font-bold flex items-center justify-center gap-2 hover:bg-[#f8fafc] transition-colors mt-auto active:scale-98"
@@ -251,98 +271,106 @@ const handleContinue = () => {
                 </SelectTrigger>
                 <SelectPortal>
                   <SelectContent
-                    class="z-[15000] min-w-[220px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-xl"
+                    position="popper"
+                    :side-offset="4"
+                    class="z-50 min-w-(--reka-select-trigger-width) overflow-hidden rounded-xl border border-slate-200 bg-white p-1 shadow-lg animate-in fade-in-80"
                   >
                     <SelectViewport>
                       <SelectItem
-                        v-for="b in BANK_OPTIONS"
+                        v-for="b in bankAccounts"
                         :key="b.id"
                         :value="b.id"
-                        class="relative flex cursor-pointer select-none items-center rounded-lg py-2 pl-8 pr-3 text-xs font-semibold text-slate-700 outline-none hover:bg-[#e6f7f5] hover:text-[#189c94] data-[highlighted]:bg-[#e6f7f5] data-[highlighted]:text-[#189c94]"
+                        class="flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs font-medium text-[#083c5a] outline-none transition-colors hover:bg-[#e6f7f5] hover:text-[#189c94] cursor-pointer"
                       >
-                        <SelectItemIndicator class="absolute left-2.5 inline-flex items-center">
+                        <SelectItemText>{{ b.name }} ({{ b.accountNumber }})</SelectItemText>
+                        <SelectItemIndicator>
                           <i class="fa-solid fa-check text-xs text-[#189c94]"></i>
                         </SelectItemIndicator>
-                        <SelectItemText>{{ b.name }} ({{ b.accountType }})</SelectItemText>
                       </SelectItem>
                     </SelectViewport>
                   </SelectContent>
                 </SelectPortal>
               </SelectRoot>
             </div>
+          </div>
 
+          <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
             <!-- Número de referencia -->
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-bold text-[#083c5a]">Número de referencia / transferencia *</label>
+              <label class="text-xs font-bold text-[#083c5a]">Número de referencia bancaria *</label>
               <input
                 v-model="referenceNumber"
                 type="text"
                 required
-                placeholder="Ej: 12345678"
-                class="w-full border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm text-[#083c5a] outline-none focus:border-[#189c94] focus:ring-2 focus:ring-[#189c94]/15 transition-all"
+                placeholder="Ej. 1234567"
+                class="w-full border border-slate-200 rounded-xl py-2 px-3 text-sm text-[#083c5a] outline-none focus:border-[#189c94] focus:ring-2 focus:ring-[#189c94]/15 font-mono font-medium transition-all"
               />
             </div>
 
-            <!-- Fecha y Hora de depósito -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-[#083c5a]">Fecha de depósito *</label>
+            <!-- Nombre de quien depositó -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-bold text-[#083c5a]">Nombre del titular que depositó (opcional)</label>
+              <input
+                v-model="depositorName"
+                type="text"
+                placeholder="Ej. Juan Pérez"
+                class="w-full border border-slate-200 rounded-xl py-2 px-3 text-sm text-[#083c5a] outline-none focus:border-[#189c94] focus:ring-2 focus:ring-[#189c94]/15 font-medium transition-all"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+            <!-- Fecha de depósito -->
+            <div class="flex flex-col gap-1.5">
+              <label class="text-xs font-bold text-[#083c5a]">Fecha del depósito *</label>
+              <div class="relative">
                 <input
                   v-model="depositDate"
                   type="date"
                   required
-                  class="h-10 w-full border border-slate-200 rounded-xl px-3.5 text-sm text-[#083c5a] outline-none focus:border-[#189c94] focus:ring-2 focus:ring-[#189c94]/15 transition-all bg-white"
+                  class="w-full border border-slate-200 rounded-xl py-2 px-3 text-sm text-[#083c5a] outline-none focus:border-[#189c94] focus:ring-2 focus:ring-[#189c94]/15 font-medium transition-all"
                 />
               </div>
-
-              <BaseTimeInput
-                v-model="depositTime"
-                label="Hora del depósito *"
-                label-class="text-xs font-bold text-[#083c5a]"
-                :hour-cycle="12"
-              />
             </div>
 
-            <!-- Titular del depósito -->
+            <!-- Hora de depósito -->
             <div class="flex flex-col gap-1.5">
-              <label class="text-xs font-bold text-[#083c5a]">Nombre del depositante</label>
-              <input
-                v-model="depositorName"
-                type="text"
-                placeholder="Ej: Juan Carlos Pérez"
-                class="w-full border border-slate-200 rounded-xl py-2.5 px-3.5 text-sm text-[#083c5a] outline-none focus:border-[#189c94] focus:ring-2 focus:ring-[#189c94]/15 transition-all"
+              <label class="text-xs font-bold text-[#083c5a]">Hora del depósito</label>
+              <BaseTimeInput
+                v-model="depositTime"
+                placeholder="Selecciona la hora"
               />
             </div>
           </div>
 
-          <!-- BaseFileDropZone component -->
+          <!-- Comprobante / Voucher File Dropzone -->
           <div class="flex flex-col gap-1.5 mt-2">
-            <label class="text-xs font-bold text-[#083c5a]">Comprobante de depósito *</label>
+            <label class="text-xs font-bold text-[#083c5a]">Comprobante de transferencia o depósito *</label>
             <BaseFileDropZone
               v-model="voucherFile"
-              :multiple="false"
-              accept="image/png, image/jpeg, image/webp, application/pdf"
-              :max-size-mb="5"
-              title="Sube tu comprobante de depósito"
-              button-text="Seleccionar comprobante"
-              hint="Formatos aceptados: PNG, JPG, WEBP, PDF (Máx. 5MB)"
+              accept="image/*,application/pdf"
+              :max-size-m-b="10"
+              upload-text="Arrastra tu comprobante aquí o haz clic para seleccionarlo"
+              support-text="Formatos permitidos: PNG, JPG, JPEG o PDF (máx. 10MB)"
               @error="handleDropError"
             />
           </div>
 
+          <!-- Buttons -->
           <div class="flex gap-4 mt-6">
             <button
               type="button"
               class="flex-1 py-3 bg-white border-2 border-[#083c5a] text-[#083c5a] rounded-xl font-bold hover:bg-[#f8fafc] transition-colors flex items-center justify-center gap-2 text-sm"
               @click="router.push({ name: 'wallet' })"
             >
-              <i class="fa-solid fa-arrow-left"></i> Volver a la billetera
+              Cancelar
             </button>
             <button
               type="submit"
-              class="flex-1 py-3 bg-[#f97316] text-white rounded-xl font-bold hover:bg-[#ea580c] transition-colors text-sm shadow-md"
+              class="flex-1 py-3.5 bg-[#f97316] text-white rounded-xl font-bold hover:bg-[#ea580c] transition-colors text-base shadow-md flex items-center justify-center gap-2 active:scale-99"
             >
-              Continuar al paso 2
+              <span>Continuar</span>
+              <i class="fa-solid fa-arrow-right"></i>
             </button>
           </div>
         </form>

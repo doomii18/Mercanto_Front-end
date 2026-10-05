@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import type { AdminUserItem } from "@/api";
@@ -297,7 +297,17 @@ async function fetchUsers(): Promise<void> {
   isLoading.value = true;
   try {
     // Attempt real API call
-    const response = await identityApi.listAccounts({ limit: 50, offset: 0 });
+    const isSuspended =
+      selectedStatusFilter.value === "suspended"
+        ? true
+        : undefined;
+
+    const response = await identityApi.listAccounts({
+      limit: 50,
+      offset: 0,
+      search_term: searchQuery.value.trim() || undefined,
+      is_suspended: isSuspended,
+    });
     if (response?.data && response.data.length > 0) {
       // Map API items and enrich with business details
       const mappedApiUsers: AdminUserListItem[] = response.data.map((acc: AdminUserItem, idx: number) => {
@@ -374,18 +384,27 @@ const filteredUsers = computed(() => {
       if (user.business_type !== selectedBusinessType.value) return false;
     }
 
-    // 4. Search query
+    // 4. Search query (fallback for local mock items)
     const q = searchQuery.value.trim().toLowerCase();
     if (q) {
       const matchName = `${user.first_name} ${user.last_name}`.toLowerCase().includes(q);
       const matchEmail = user.email.toLowerCase().includes(q);
-      const matchRuc = user.ruc.toLowerCase().includes(q);
-      const matchBusiness = user.business_name.toLowerCase().includes(q);
-      if (!matchName && !matchEmail && !matchRuc && !matchBusiness) return false;
+      const matchPhone = (user.phone_number || "").toLowerCase().includes(q);
+      const matchId = user.id.toLowerCase().includes(q);
+      if (!matchName && !matchEmail && !matchPhone && !matchId) return false;
     }
 
     return true;
   });
+});
+
+let userSearchTimer: ReturnType<typeof setTimeout> | null = null;
+watch([searchQuery, selectedStatusFilter], () => {
+  if (userSearchTimer) clearTimeout(userSearchTimer);
+  userSearchTimer = setTimeout(() => {
+    currentPage.value = 1;
+    fetchUsers();
+  }, 350);
 });
 
 // --- Paginated Display ---
@@ -609,7 +628,7 @@ onMounted(() => {
         <input
           v-model="searchQuery"
           type="text"
-          placeholder="Buscar por nombre, RUC, correo o negocio..."
+          placeholder="Buscar por nombre, correo, teléfono o ID..."
           class="w-full rounded-xl border border-slate-200 bg-white py-2 pl-9 pr-8 text-xs sm:text-sm text-[#023859] placeholder-slate-400 transition-colors focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15 font-medium shadow-2xs"
         />
         <button

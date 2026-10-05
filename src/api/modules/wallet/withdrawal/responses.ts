@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { WithdrawalRequestStatusSchema, WithdrawalAmountSchema } from "./domain";
 import { FundingMetricsResponseSchema } from "../deposit/responses";
+import { PaginatedResponseSchema } from "@/api/modules/shared/schemas";
 
 // WithdrawalRequestResponseDto | comprehensive withdrawal details
 export const WithdrawalRequestResponseSchema = z.object({
@@ -16,8 +17,8 @@ export const WithdrawalRequestResponseSchema = z.object({
   rejection_reason: z.string().nullable().optional(),
   payout_reference_code: z.string().nullable().optional(),
   payout_voucher_blob_id: z.string().uuid().nullable().optional(),
-  processed_by: z.string().uuid().nullable().optional(),
-  processed_at: z.string().datetime().nullable().optional(),
+  reviewed_by: z.string().uuid().nullable().optional(),
+  reviewed_at: z.string().datetime().nullable().optional(),
   created_at: z.string().datetime(),
   updated_at: z.string().datetime(),
 });
@@ -26,23 +27,18 @@ export const WithdrawalRequestResponseSchema = z.object({
 export const WithdrawalRequestSummaryResponseSchema = z.object({
   id: z.string().uuid(),
   account_id: z.string().uuid(),
+  user_full_name: z.string(),
+  user_email: z.string(),
   amount: WithdrawalAmountSchema,
   target_bank_name: z.string(),
   target_account_number: z.string(),
-  target_account_holder: z.string(),
   status: WithdrawalRequestStatusSchema,
-  rejection_reason: z.string().nullable().optional(),
-  payout_reference_code: z.string().nullable().optional(),
   created_at: z.string().datetime(),
 });
 
-// PaginatedFundingResponse | paginated wrapper for withdrawal list
-export const PaginatedWithdrawalSummaryResponseSchema = z.object({
-  data: z.array(WithdrawalRequestSummaryResponseSchema),
-  total: z.number().int().nonnegative(),
-  page: z.number().int().nonnegative(),
-  per_page: z.number().int().nonnegative(),
-  total_pages: z.number().int().nonnegative(),
-});
+// PaginatedResponseDto<WithdrawalRequestSummaryResponseDto>
+export const PaginatedWithdrawalSummaryResponseSchema = PaginatedResponseSchema(
+  WithdrawalRequestSummaryResponseSchema
+);
 
 export const WithdrawalMetricsResponseSchema = FundingMetricsResponseSchema;

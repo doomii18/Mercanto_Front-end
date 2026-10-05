@@ -29,11 +29,14 @@ export const OrganizationMemberRoleSchema = z.enum([
 
 // OrganizationSortField | supported fields for sorting providers
 export const OrganizationSortFieldSchema = z.enum([
+  "created_at",
   "id",
+  "name",
   "score",
   "rating",
   "distance",
 ]);
+
 
 export { SortDirectionSchema } from "@/api/modules/shared/schemas";
 

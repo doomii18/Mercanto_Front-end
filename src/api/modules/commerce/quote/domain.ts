@@ -20,3 +20,12 @@ export const buyerNotesSchema = z
   .string()
   .trim()
   .max(1000, "Las notas no deben exceder los 1000 caracteres");
+
+// QuoteSortField | sort fields for quotations
+export const QuoteSortFieldSchema = z.enum([
+  "created_at",
+  "updated_at",
+  "status",
+  "id",
+]);
+

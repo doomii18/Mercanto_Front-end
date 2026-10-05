@@ -6,24 +6,22 @@ import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 const cartApi = useCartApi();
 const quoteApi = useQuoteApi();
 
-const cartCount = ref<number | null>(null);
+const favoritesCount = ref<number | null>(null);
 const ordersCount = ref<number | null>(null);
 
 onMounted(async () => {
   try {
-
-    const cartPromise = cartApi.getMyCartProducts()
-      .then(items => items.length)
+    const favoritesPromise = cartApi.getMyCartProducts()
+      .then(res => res.total)
       .catch(() => 0);
-
 
     const ordersPromise = quoteApi.getMyQuotes({ limit: 0 })
       .then(res => res.total)
       .catch(() => 0);
 
-    const [cart, orders] = await Promise.all([cartPromise, ordersPromise]);
+    const [favorites, orders] = await Promise.all([favoritesPromise, ordersPromise]);
 
-    cartCount.value = cart;
+    favoritesCount.value = favorites;
     ordersCount.value = orders;
   } catch (error) {
     console.error("Failed to load buyer stats:", error);
@@ -35,12 +33,12 @@ onMounted(async () => {
   <div class="stats-cards">
     <div class="stat-card">
       <div class="stat-icon-circle">
-        <i class="fa-solid fa-cart-shopping"></i>
+        <i class="fa-solid fa-heart"></i>
       </div>
       <div class="stat-text">
-        <p class="stat-title">Productos en Carrito</p>
-        <h3>{{ cartCount !== null ? cartCount : '...' }}</h3>
-        <router-link :to="{ name: 'orders' }" class="stat-link">Ver mi carrito</router-link>
+        <p class="stat-title">Productos Favoritos</p>
+        <h3>{{ favoritesCount !== null ? favoritesCount : '...' }}</h3>
+        <router-link :to="{ name: 'favorites' }" class="stat-link">Ver mis favoritos</router-link>
       </div>
     </div>
 

@@ -2,12 +2,14 @@ import type { z } from "zod";
 import type {
   QuoteStatusSchema,
   PaymentMethodSchema,
+  QuoteSortFieldSchema,
 } from "./domain";
 import type {
   QuoteItemDtoSchema,
   CreateQuoteRequestSchema,
   AccountQuoteFiltersQuerySchema,
   ProviderQuoteFiltersQuerySchema,
+  GlobalQuoteFiltersQuerySchema,
 } from "./requests";
 import type {
   QuoteResponseSchema,
@@ -21,12 +23,14 @@ import type {
 // Domain types
 export type QuoteStatus = z.infer<typeof QuoteStatusSchema>;
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>;
+export type QuoteSortField = z.infer<typeof QuoteSortFieldSchema>;
 
 // Request types
 export type QuoteItemDto = z.infer<typeof QuoteItemDtoSchema>;
 export type CreateQuoteRequest = z.infer<typeof CreateQuoteRequestSchema>;
 export type AccountQuoteFiltersQuery = z.infer<typeof AccountQuoteFiltersQuerySchema>;
 export type ProviderQuoteFiltersQuery = z.infer<typeof ProviderQuoteFiltersQuerySchema>;
+export type GlobalQuoteFiltersQuery = z.infer<typeof GlobalQuoteFiltersQuerySchema>;
 
 // Response types
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;

@@ -4,6 +4,7 @@ import {
   SubmitVerificationRequestSchema,
   ApproveVerificationRequestSchema,
   RejectVerificationRequestSchema,
+  VerificationRequestFilterQuerySchema,
 } from "./requests";
 import {
   VerificationRequestResponseSchema,
@@ -18,6 +19,7 @@ import type {
   SubmitVerificationRequest,
   ApproveVerificationRequest,
   RejectVerificationRequest,
+  VerificationRequestFilterQuery,
 } from "./types";
 
 export const useVerificationRequestApi = () => {
@@ -92,11 +94,17 @@ export const useVerificationRequestApi = () => {
   // GET /providers/{organization_id}/verification-requests
   async function getOrganizationVerificationRequests(
     organizationId: string,
-    params?: { limit?: number; offset?: number }
+    params?: VerificationRequestFilterQuery
   ): Promise<PaginatedVerificationRequestResponse> {
+    const validated = params ? VerificationRequestFilterQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
-    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
-    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.status) queryParams.append("status", validated.status);
+    if (validated?.submitted_after) queryParams.append("submitted_after", validated.submitted_after);
+    if (validated?.submitted_before) queryParams.append("submitted_before", validated.submitted_before);
+    if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
 
     const qs = queryParams.toString();
     const endpoint = `/providers/${organizationId}/verification-requests${qs ? `?${qs}` : ""}`;
@@ -110,11 +118,17 @@ export const useVerificationRequestApi = () => {
 
   // GET /verification-requests/pending
   async function getPendingVerificationRequests(
-    params?: { limit?: number; offset?: number }
+    params?: VerificationRequestFilterQuery
   ): Promise<PaginatedVerificationRequestResponse> {
+    const validated = params ? VerificationRequestFilterQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
-    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
-    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.status) queryParams.append("status", validated.status);
+    if (validated?.submitted_after) queryParams.append("submitted_after", validated.submitted_after);
+    if (validated?.submitted_before) queryParams.append("submitted_before", validated.submitted_before);
+    if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
 
     const qs = queryParams.toString();
     const endpoint = `/verification-requests/pending${qs ? `?${qs}` : ""}`;

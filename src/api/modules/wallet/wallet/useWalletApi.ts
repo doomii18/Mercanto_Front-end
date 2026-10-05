@@ -1,5 +1,5 @@
 import { useApiFetch } from "@/api/useApiFetch";
-import { WalletLedgerPaginationQuerySchema } from "./requests";
+import { WalletLedgerFilterQuerySchema } from "./requests";
 import {
   VirtualWalletResponseSchema,
   PaginatedLedgerResponseSchema,
@@ -7,7 +7,7 @@ import {
 import type {
   VirtualWalletResponse,
   PaginatedLedgerResponse,
-  WalletLedgerPaginationQuery,
+  WalletLedgerFilterQuery,
 } from "./types";
 
 export const useWalletApi = () => {
@@ -23,12 +23,22 @@ export const useWalletApi = () => {
   // GET /wallets/{id}/ledger
   async function getWalletLedger(
     walletId: string,
-    params?: WalletLedgerPaginationQuery
+    params?: WalletLedgerFilterQuery
   ): Promise<PaginatedLedgerResponse> {
-    const validated = params ? WalletLedgerPaginationQuerySchema.parse(params) : undefined;
+    const validated = params ? WalletLedgerFilterQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
     if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
     if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.kind) queryParams.append("kind", validated.kind);
+    if (validated?.quote_id) queryParams.append("quote_id", validated.quote_id);
+    if (validated?.correlation_id) queryParams.append("correlation_id", validated.correlation_id);
+    if (validated?.min_amount !== undefined) queryParams.append("min_amount", validated.min_amount.toString());
+    if (validated?.max_amount !== undefined) queryParams.append("max_amount", validated.max_amount.toString());
+    if (validated?.created_after) queryParams.append("created_after", validated.created_after);
+    if (validated?.created_before) queryParams.append("created_before", validated.created_before);
+    if (validated?.search_term) queryParams.append("search_term", validated.search_term);
+    if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
 
     const queryString = queryParams.toString();
     const endpoint = `/wallets/${walletId}/ledger${queryString ? `?${queryString}` : ""}`;
@@ -51,12 +61,22 @@ export const useWalletApi = () => {
 
   // GET /wallets/me/ledger
   async function getMyWalletLedger(
-    params?: WalletLedgerPaginationQuery
+    params?: WalletLedgerFilterQuery
   ): Promise<PaginatedLedgerResponse> {
-    const validated = params ? WalletLedgerPaginationQuerySchema.parse(params) : undefined;
+    const validated = params ? WalletLedgerFilterQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
     if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
     if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.kind) queryParams.append("kind", validated.kind);
+    if (validated?.quote_id) queryParams.append("quote_id", validated.quote_id);
+    if (validated?.correlation_id) queryParams.append("correlation_id", validated.correlation_id);
+    if (validated?.min_amount !== undefined) queryParams.append("min_amount", validated.min_amount.toString());
+    if (validated?.max_amount !== undefined) queryParams.append("max_amount", validated.max_amount.toString());
+    if (validated?.created_after) queryParams.append("created_after", validated.created_after);
+    if (validated?.created_before) queryParams.append("created_before", validated.created_before);
+    if (validated?.search_term) queryParams.append("search_term", validated.search_term);
+    if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
 
     const queryString = queryParams.toString();
     const endpoint = `/wallets/me/ledger${queryString ? `?${queryString}` : ""}`;

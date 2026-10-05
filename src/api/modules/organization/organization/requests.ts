@@ -1,6 +1,7 @@
 import { z } from "zod";
 import {
   ProviderKindSchema,
+  OrganizationStatusSchema,
   OrganizationMemberRoleSchema,
   OrganizationSortFieldSchema,
   SortDirectionSchema,
@@ -19,11 +20,14 @@ export const OrganizationFiltersRequestSchema = z.object({
   search_term: z.string().optional(),
   municipality_id: z.string().uuid().optional(),
   min_rating: z.number().optional(),
+  status: OrganizationStatusSchema.optional(),
+  kind: ProviderKindSchema.optional(),
   sort_by: OrganizationSortFieldSchema.optional(),
   sort_dir: SortDirectionSchema.optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
 });
+
 
 // UpdateMemberRoleDto | payload to update a member role
 export const UpdateMemberRoleRequestSchema = z.object({

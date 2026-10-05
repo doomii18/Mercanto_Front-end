@@ -125,27 +125,28 @@ async function fetchProducts() {
   isLoading.value = true;
   try {
     const offset = (currentPage.value - 1) * perPage;
+    const isActiveFilter =
+      statusFilter.value === "activos"
+        ? true
+        : statusFilter.value === "inactivos"
+        ? false
+        : undefined;
+
     const res = await productApi.getProducts({
       provider_id: activeOrgId.value,
       limit: perPage,
       offset,
       search_term: searchQuery.value.trim() || undefined,
       category_id: selectedCategory.value !== "todas" ? selectedCategory.value : undefined,
+      is_active: isActiveFilter,
       sort_by: "created_at",
       sort_direction: "desc",
     });
 
-    let data = res.data;
-    if (statusFilter.value === "activos") {
-      data = data.filter((p) => p.is_active);
-    } else if (statusFilter.value === "inactivos") {
-      data = data.filter((p) => !p.is_active);
-    }
-
-    products.value = data;
+    products.value = res.data;
     totalProducts.value = res.total;
 
-    fetchStockForProducts(data);
+    fetchStockForProducts(res.data);
   } catch (err: any) {
     alertStore.showError(err.message || "Error al obtener los productos.");
   } finally {
@@ -365,7 +366,7 @@ onMounted(async () => {
         <input
           v-model="searchQuery"
           class="w-full py-2 pr-3.5 pl-9 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-800 placeholder:text-slate-400 bg-slate-50 outline-none transition-colors focus:border-[#00a896] focus:bg-white"
-          placeholder="Buscar por título o descripción..."
+          placeholder="Buscar por título, descripción o ID..."
           type="text"
         />
       </div>
