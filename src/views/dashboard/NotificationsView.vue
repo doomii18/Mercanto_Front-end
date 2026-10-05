@@ -132,6 +132,48 @@ function parsePayloadToDisplay(
     };
   }
 
+  if (type === "WalletDepositStatusChanged") {
+    const isApproved = payload.new_status === "approved";
+    const amount = payload.amount ?? 0;
+    const reason = typeof payload.reason === "string" ? payload.reason : "";
+    return {
+      id,
+      title: isApproved ? "Recarga de saldo aprobada" : "Recarga de saldo rechazada",
+      message: isApproved
+        ? `Tu recarga por C$ ${amount} fue aprobada y acreditada exitosamente.`
+        : `Tu recarga por C$ ${amount} fue rechazada.${reason ? ` Motivo: ${reason}` : ""}`,
+      timestamp: createdAt,
+      isRead,
+      category: "system",
+      icon: isApproved ? "fa-solid fa-wallet" : "fa-solid fa-circle-xmark",
+      iconBg: isApproved ? "bg-emerald-50" : "bg-rose-50",
+      iconColor: isApproved ? "text-emerald-600" : "text-rose-600",
+      route: { name: "wallet" },
+      rawPayload: payload,
+    };
+  }
+
+  if (type === "WalletWithdrawalStatusChanged") {
+    const isCompleted = payload.new_status === "completed";
+    const amount = payload.amount ?? 0;
+    const reason = typeof payload.reason === "string" ? payload.reason : "";
+    return {
+      id,
+      title: isCompleted ? "Retiro de saldo completado" : "Retiro de saldo rechazado",
+      message: isCompleted
+        ? `Tu retiro por C$ ${amount} fue transferido exitosamente.`
+        : `Tu retiro por C$ ${amount} fue rechazado y reembolsado.${reason ? ` Motivo: ${reason}` : ""}`,
+      timestamp: createdAt,
+      isRead,
+      category: "system",
+      icon: isCompleted ? "fa-solid fa-money-bill-transfer" : "fa-solid fa-circle-xmark",
+      iconBg: isCompleted ? "bg-emerald-50" : "bg-rose-50",
+      iconColor: isCompleted ? "text-emerald-600" : "text-rose-600",
+      route: { name: "wallet" },
+      rawPayload: payload,
+    };
+  }
+
   // Fallback for system or custom alerts
   const title = typeof payload.title === "string" ? payload.title : "Notificación de actividad";
   const message = typeof payload.message === "string" ? payload.message : "Nueva actividad registrada en tu cuenta.";
@@ -154,7 +196,10 @@ function parsePayloadToDisplay(
 async function fetchNotificationHistory(): Promise<void> {
   isLoading.value = true;
   try {
-    const response = await notificationsApi.getNotificationHistory({ limit: 50, offset: 0 });
+    const [response] = await Promise.all([
+      notificationsApi.getNotificationHistory({ limit: 50, offset: 0 }),
+      notificationStore.fetchUnreadCount(),
+    ]);
     const fetchedItems = response.data.map((item) => {
       const createdAt = new Date(item.created_at);
       return parsePayloadToDisplay(item.id, item.payload, item.is_read, createdAt);
@@ -221,6 +266,7 @@ async function markAllAsRead(): Promise<void> {
   unreadItems.forEach((n) => {
     n.isRead = true;
   });
+  notificationStore.setUnreadCount(0);
 
   isMarkingRead.value = true;
   try {
@@ -232,6 +278,7 @@ async function markAllAsRead(): Promise<void> {
     });
   } catch (err: unknown) {
     console.error("Failed to mark notifications as read on server:", err);
+    await notificationStore.fetchUnreadCount();
   } finally {
     isMarkingRead.value = false;
   }
@@ -241,10 +288,12 @@ async function markAllAsRead(): Promise<void> {
 async function handleNotificationClick(notif: DisplayNotification): Promise<void> {
   if (!notif.isRead) {
     notif.isRead = true;
+    notificationStore.decrementUnreadCount(1);
     try {
       await notificationsApi.markNotificationsRead({ ids: [notif.id] });
     } catch (err: unknown) {
       console.warn("Could not mark notification as read on server:", err);
+      await notificationStore.fetchUnreadCount();
     }
   }
 

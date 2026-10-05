@@ -12,6 +12,8 @@ import type {
   QuoteStatusChangedEventSchema,
   ProductOutOfStockEventSchema,
   QuoteRequestReceivedEventSchema,
+  WalletDepositStatusChangedEventSchema,
+  WalletWithdrawalStatusChangedEventSchema,
   NotificationResponseSchema,
   PaginatedNotificationsResponseSchema,
   UnreadNotificationCountSchema,
@@ -28,6 +30,8 @@ export type NewChatMessageEvent = z.infer<typeof NewChatMessageEventSchema>;
 export type QuoteStatusChangedEvent = z.infer<typeof QuoteStatusChangedEventSchema>;
 export type ProductOutOfStockEvent = z.infer<typeof ProductOutOfStockEventSchema>;
 export type QuoteRequestReceivedEvent = z.infer<typeof QuoteRequestReceivedEventSchema>;
+export type WalletDepositStatusChangedEvent = z.infer<typeof WalletDepositStatusChangedEventSchema>;
+export type WalletWithdrawalStatusChangedEvent = z.infer<typeof WalletWithdrawalStatusChangedEventSchema>;
 
 export type NotificationResponse = z.infer<typeof NotificationResponseSchema>;
 export type PaginatedNotificationsResponse = z.infer<typeof PaginatedNotificationsResponseSchema>;

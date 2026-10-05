@@ -4,6 +4,7 @@ import { useWalletApi } from "@/api/modules/wallet/wallet/useWalletApi";
 import { usePlatformBankAccountApi } from "@/api/modules/wallet/platform_bank_account/usePlatformBankAccountApi";
 import { useVoucherApi } from "@/api/modules/wallet/voucher/useVoucherApi";
 import { useDepositApi } from "@/api/modules/wallet/deposit/useDepositApi";
+import { notificationBus } from "@/events/notificationEvents";
 import type {
   VirtualWalletResponse,
   LedgerEntryResponse,
@@ -258,6 +259,18 @@ export const useWalletStore = defineStore("wallet", () => {
     error.value = null;
     rechargeDraft.value = defaultRechargeDraft();
   }
+
+  // Auto-refresh wallet data when wallet notification events arrive
+  notificationBus.on((event) => {
+    if (
+      event.type === "WalletDepositStatusChanged" ||
+      event.type === "WalletWithdrawalStatusChanged"
+    ) {
+      fetchWallet();
+      fetchLedger();
+      fetchMyRecharges();
+    }
+  });
 
   return {
     wallet,

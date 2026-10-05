@@ -49,12 +49,37 @@ export const QuoteRequestReceivedEventSchema = BaseEventSchema.extend({
   item_count: z.number().int().nonnegative(),
 });
 
+// WalletDepositStatusChangedPayload | wallet deposit status changed notification event
+export const WalletDepositStatusChangedEventSchema = BaseEventSchema.extend({
+  type: z.literal("WalletDepositStatusChanged"),
+  request_id: z.uuid(),
+  wallet_id: z.uuid(),
+  amount: z.union([z.number(), z.string()]),
+  old_status: z.string(),
+  new_status: z.string(),
+  reason: z.string().nullable().optional(),
+});
+
+// WalletWithdrawalStatusChangedPayload | wallet withdrawal status changed notification event
+export const WalletWithdrawalStatusChangedEventSchema = BaseEventSchema.extend({
+  type: z.literal("WalletWithdrawalStatusChanged"),
+  request_id: z.uuid(),
+  wallet_id: z.uuid(),
+  amount: z.union([z.number(), z.string()]),
+  old_status: z.string(),
+  new_status: z.string(),
+  payout_reference_code: z.string().nullable().optional(),
+  reason: z.string().nullable().optional(),
+});
+
 // NotificationEvent | discriminated union of all incoming socket events
 export const NotificationEventSchema = z.discriminatedUnion("type", [
   NewChatMessageEventSchema,
   QuoteStatusChangedEventSchema,
   ProductOutOfStockEventSchema,
   QuoteRequestReceivedEventSchema,
+  WalletDepositStatusChangedEventSchema,
+  WalletWithdrawalStatusChangedEventSchema,
 ]);
 
 // NotificationResponseDto | persisted notification record

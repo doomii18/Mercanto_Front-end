@@ -6,4 +6,6 @@ export const NotificationEventTypeSchema = z.enum([
   "ProductOutOfStock",
   "QuoteStatusChanged",
   "QuoteRequestReceived",
+  "WalletDepositStatusChanged",
+  "WalletWithdrawalStatusChanged",
 ]);

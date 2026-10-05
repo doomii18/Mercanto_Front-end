@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, watch } from "vue";
-import { useCycleList, useIntervalFn } from "@vueuse/core";
+import { ref, computed, watch } from "vue";
+import { useCycleList, useIntervalFn, useTimeoutFn } from "@vueuse/core";
 import ProductImage from "./ProductImage.vue";
 
 export interface ProductImageCarouselProps {
@@ -9,6 +9,7 @@ export interface ProductImageCarouselProps {
   alt?: string;
   autoPlay?: boolean;
   interval?: number;
+  randomDelay?: boolean | number;
   pauseOnHover?: boolean;
   showArrows?: boolean;
   showDots?: boolean;
@@ -26,6 +27,7 @@ const props = withDefaults(defineProps<ProductImageCarouselProps>(), {
   alt: "Imagen del producto",
   autoPlay: true,
   interval: 3500,
+  randomDelay: true,
   pauseOnHover: true,
   showArrows: true,
   showDots: true,
@@ -60,25 +62,74 @@ const {
   go: goToIndex,
 } = useCycleList(imageList);
 
-// Auto-play timer using VueUse useIntervalFn
-const { pause, resume } = useIntervalFn(
+// Regular cycle interval using VueUse useIntervalFn
+const { pause: pauseInterval, resume: resumeInterval } = useIntervalFn(
   () => {
     if (hasMultipleImages.value && props.autoPlay) {
       cycleNext();
     }
   },
-  props.interval,
-  { immediate: props.autoPlay && hasMultipleImages.value }
+  () => props.interval,
+  { immediate: false }
 );
+
+// Initial random delay calculation to prevent all carousels from cycling simultaneously
+const getRandomDelay = () => {
+  if (typeof props.randomDelay === "number") {
+    return Math.max(0, props.randomDelay);
+  }
+  if (props.randomDelay) {
+    const maxOffset = Math.min(2500, Math.floor(props.interval * 0.7));
+    const minOffset = Math.min(350, maxOffset);
+    return Math.floor(minOffset + Math.random() * (maxOffset - minOffset));
+  }
+  return 0;
+};
+
+const initialDelayMs = ref(getRandomDelay());
+const hasStarted = ref(false);
+
+// VueUse useTimeoutFn for staggered initial start
+const { start: startInitialDelay, stop: stopInitialDelay } = useTimeoutFn(
+  () => {
+    hasStarted.value = true;
+    if (hasMultipleImages.value && props.autoPlay) {
+      cycleNext();
+      resumeInterval();
+    }
+  },
+  initialDelayMs,
+  { immediate: false }
+);
+
+function startAutoPlay() {
+  if (!props.autoPlay || !hasMultipleImages.value) {
+    stopAutoPlay();
+    return;
+  }
+
+  // The random delay is applied only once for the initial start time
+  if (!hasStarted.value && initialDelayMs.value > 0) {
+    stopInitialDelay();
+    startInitialDelay();
+  } else {
+    resumeInterval();
+  }
+}
+
+function stopAutoPlay() {
+  stopInitialDelay();
+  pauseInterval();
+}
 
 // Watch for prop changes to update interval or restart autoPlay
 watch(
   [() => props.autoPlay, hasMultipleImages],
   ([canAutoPlay, isMultiple]) => {
     if (canAutoPlay && isMultiple) {
-      resume();
+      startAutoPlay();
     } else {
-      pause();
+      stopAutoPlay();
     }
   },
   { immediate: true }
@@ -98,13 +149,13 @@ const resolvedImgClass = computed(() => {
 
 const handleMouseEnter = () => {
   if (props.pauseOnHover && props.autoPlay && hasMultipleImages.value) {
-    pause();
+    stopAutoPlay();
   }
 };
 
 const handleMouseLeave = () => {
   if (props.pauseOnHover && props.autoPlay && hasMultipleImages.value) {
-    resume();
+    resumeInterval();
   }
 };
 

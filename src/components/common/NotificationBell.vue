@@ -3,7 +3,12 @@ import { ref, computed, onMounted, onBeforeUnmount } from 'vue';
 import { useRouter } from 'vue-router';
 import { useNotificationStore } from "@/stores/notifications";
 import type { NotificationEvent } from '@/api';
-import { NewChatMessageEventSchema, QuoteStatusChangedEventSchema } from '@/api/modules/messaging/notifications/responses';
+import {
+  NewChatMessageEventSchema,
+  QuoteStatusChangedEventSchema,
+  QuoteRequestReceivedEventSchema,
+  ProductOutOfStockEventSchema,
+} from '@/api/modules/messaging/notifications/responses';
 
 const router = useRouter();
 const notificationStore = useNotificationStore();
@@ -11,7 +16,7 @@ const notificationStore = useNotificationStore();
 const isOpen = ref(false);
 const dropdownRef = ref<HTMLElement | null>(null);
 
-const unreadCount = computed(() => notificationStore.recentEvents.length);
+const unreadCount = computed(() => notificationStore.unreadCount);
 const recentNotifications = computed(() => notificationStore.recentEvents.slice(0, 5));
 
 const getPreview = (event: NotificationEvent) => {
@@ -23,17 +28,54 @@ const getPreview = (event: NotificationEvent) => {
     const parsed = QuoteStatusChangedEventSchema.safeParse(event);
     return parsed.success ? `Estado: ${parsed.data.new_status}` : 'Pedido actualizado';
   }
+  if (event.type === 'QuoteRequestReceived') {
+    const parsed = QuoteRequestReceivedEventSchema.safeParse(event);
+    return parsed.success
+      ? `Solicitud con ${parsed.data.item_count} producto(s)`
+      : 'Nueva cotización recibida';
+  }
+  if (event.type === 'ProductOutOfStock') {
+    const parsed = ProductOutOfStockEventSchema.safeParse(event);
+    return parsed.success
+      ? `Agotado: ${parsed.data.product_title}`
+      : 'Producto sin existencias';
+  }
+  if (event.type === 'WalletDepositStatusChanged') {
+    return event.new_status === 'approved'
+      ? `Recarga aprobada: C$ ${event.amount}`
+      : `Recarga rechazada: C$ ${event.amount}`;
+  }
+  if (event.type === 'WalletWithdrawalStatusChanged') {
+    return event.new_status === 'completed'
+      ? `Retiro completado: C$ ${event.amount}`
+      : `Retiro rechazado: C$ ${event.amount}`;
+  }
   return 'Nueva notificación';
 };
 
 const getIcon = (event: NotificationEvent) => {
   if (event.type === 'NewChatMessage') return 'fa-regular fa-comment-dots text-teal-600';
   if (event.type === 'QuoteStatusChanged') return 'fa-solid fa-box text-orange-600';
+  if (event.type === 'QuoteRequestReceived') return 'fa-solid fa-file-invoice-dollar text-blue-600';
+  if (event.type === 'ProductOutOfStock') return 'fa-solid fa-triangle-exclamation text-amber-600';
+  if (event.type === 'WalletDepositStatusChanged') {
+    return event.new_status === 'approved'
+      ? 'fa-solid fa-wallet text-emerald-600'
+      : 'fa-solid fa-wallet text-rose-600';
+  }
+  if (event.type === 'WalletWithdrawalStatusChanged') {
+    return event.new_status === 'completed'
+      ? 'fa-solid fa-money-bill-transfer text-emerald-600'
+      : 'fa-solid fa-money-bill-transfer text-rose-600';
+  }
   return 'fa-solid fa-bell text-slate-600';
 };
 
-const toggleDropdown = () => {
+const toggleDropdown = async () => {
   isOpen.value = !isOpen.value;
+  if (isOpen.value && notificationStore.recentEvents.length === 0) {
+    await notificationStore.fetchRecentNotifications(5);
+  }
 };
 
 const goToPanel = () => {
@@ -47,7 +89,13 @@ const handleClickOutside = (event: MouseEvent) => {
   }
 };
 
-onMounted(() => document.addEventListener('click', handleClickOutside));
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+  if (!notificationStore.isInitialized) {
+    notificationStore.fetchUnreadCount();
+    notificationStore.fetchRecentNotifications(5);
+  }
+});
 onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside));
 </script>
 
