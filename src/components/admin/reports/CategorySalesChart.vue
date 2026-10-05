@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  type ChartOptions,
+  type ChartData,
+} from "chart.js";
+import { Doughnut } from "vue-chartjs";
+
+ChartJS.register(ArcElement, Tooltip);
 
 export interface CategorySalesItem {
   name: string;
@@ -18,7 +28,7 @@ const props = withDefaults(
   }
 );
 
-// Self-contained mock data (ready to fetch from API)
+// Self-contained mock data (ready for future API fetching)
 const categorySales = ref<CategorySalesItem[]>([
   { name: "Automotriz", pct: 39, color: "#023859" },
   { name: "Maquillaje", pct: 22, color: "#00a896" },
@@ -27,25 +37,38 @@ const categorySales = ref<CategorySalesItem[]>([
   { name: "Calzado",    pct:  9, color: "#a855f7" },
 ]);
 
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const x1 = cx + r * Math.cos(toRad(startAngle - 90));
-  const y1 = cy + r * Math.sin(toRad(startAngle - 90));
-  const x2 = cx + r * Math.cos(toRad(endAngle - 90));
-  const y2 = cy + r * Math.sin(toRad(endAngle - 90));
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-}
+const chartData = computed<ChartData<"doughnut">>(() => ({
+  labels: categorySales.value.map((c) => c.name),
+  datasets: [
+    {
+      data: categorySales.value.map((c) => c.pct),
+      backgroundColor: categorySales.value.map((c) => c.color),
+      borderColor: "#ffffff",
+      borderWidth: 2,
+      hoverOffset: 4,
+    },
+  ],
+}));
 
-const categoryArcs = computed(() => {
-  let start = 0;
-  return categorySales.value.map((cat) => {
-    const end = start + (cat.pct / 100) * 360;
-    const arc = describeArc(70, 70, 55, start, end);
-    start = end;
-    return { ...cat, arc };
-  });
-});
+const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: "62%",
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: "#023859",
+      padding: 8,
+      titleFont: { size: 11, weight: "bold" },
+      bodyFont: { size: 11 },
+      callbacks: {
+        label: (context) => ` ${context.label}: ${context.raw}%`,
+      },
+    },
+  },
+}));
 </script>
 
 <template>
@@ -56,26 +79,17 @@ const categoryArcs = computed(() => {
     </div>
 
     <div class="flex items-center gap-4">
-      <!-- SVG Donut -->
-      <div class="shrink-0">
-        <svg width="140" height="140" viewBox="0 0 140 140">
-          <circle cx="70" cy="70" r="55" fill="white" />
-          <circle cx="70" cy="70" r="35" fill="white" />
-          <path
-            v-for="arc in categoryArcs"
-            :key="arc.name"
-            :d="arc.arc"
-            :fill="arc.color"
-            stroke="white"
-            stroke-width="1.5"
-          />
-          <circle cx="70" cy="70" r="33" fill="white" />
-          <text x="70" y="66" text-anchor="middle" class="font-bold" font-size="9" fill="#023859" font-weight="700">C$</text>
-          <text x="70" y="77" text-anchor="middle" font-size="10" fill="#023859" font-weight="800">{{ props.totalAmount }}</text>
-        </svg>
+      <!-- Real Chart.js Doughnut Container -->
+      <div class="relative w-[130px] h-[130px] flex items-center justify-center shrink-0">
+        <Doughnut :data="chartData" :options="chartOptions" />
+        <!-- Center Text Overlay -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-[9px] font-bold text-primary">C$</span>
+          <span class="text-[11px] font-extrabold text-primary leading-tight">{{ props.totalAmount }}</span>
+        </div>
       </div>
 
-      <!-- Legend -->
+      <!-- Legend matching Mockup -->
       <div class="space-y-2 text-xs flex-1">
         <div
           v-for="cat in categorySales"

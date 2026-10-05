@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  type ChartOptions,
+  type ChartData,
+} from "chart.js";
+import { Doughnut } from "vue-chartjs";
+
+ChartJS.register(ArcElement, Tooltip);
 
 export interface OrderStatusItem {
   label: string;
@@ -18,7 +28,7 @@ const props = withDefaults(
   }
 );
 
-// Self-contained mock data (ready to fetch from API)
+// Self-contained mock data (ready for future API fetching)
 const orderStatus = ref<OrderStatusItem[]>([
   { label: "Entregados", pct: 72, color: "#023859" },
   { label: "En camino",  pct: 14, color: "#00a896" },
@@ -26,25 +36,38 @@ const orderStatus = ref<OrderStatusItem[]>([
   { label: "Pendientes", pct:  5, color: "#e11d48" },
 ]);
 
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const x1 = cx + r * Math.cos(toRad(startAngle - 90));
-  const y1 = cy + r * Math.sin(toRad(startAngle - 90));
-  const x2 = cx + r * Math.cos(toRad(endAngle - 90));
-  const y2 = cy + r * Math.sin(toRad(endAngle - 90));
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-}
+const chartData = computed<ChartData<"doughnut">>(() => ({
+  labels: orderStatus.value.map((o) => o.label),
+  datasets: [
+    {
+      data: orderStatus.value.map((o) => o.pct),
+      backgroundColor: orderStatus.value.map((o) => o.color),
+      borderColor: "#ffffff",
+      borderWidth: 2,
+      hoverOffset: 4,
+    },
+  ],
+}));
 
-const orderArcs = computed(() => {
-  let start = 0;
-  return orderStatus.value.map((o) => {
-    const end = start + (o.pct / 100) * 360;
-    const arc = describeArc(75, 75, 55, start, end);
-    start = end;
-    return { ...o, arc };
-  });
-});
+const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: "64%",
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: "#023859",
+      padding: 8,
+      titleFont: { size: 11, weight: "bold" },
+      bodyFont: { size: 11 },
+      callbacks: {
+        label: (context) => ` ${context.label}: ${context.raw}%`,
+      },
+    },
+  },
+}));
 </script>
 
 <template>
@@ -55,25 +78,17 @@ const orderArcs = computed(() => {
     </div>
 
     <div class="flex items-center gap-4">
-      <!-- SVG Donut -->
-      <div class="shrink-0">
-        <svg width="150" height="150" viewBox="0 0 150 150">
-          <circle cx="75" cy="75" r="55" fill="white" />
-          <path
-            v-for="arc in orderArcs"
-            :key="arc.label"
-            :d="arc.arc"
-            :fill="arc.color"
-            stroke="white"
-            stroke-width="1.5"
-          />
-          <circle cx="75" cy="75" r="36" fill="white" />
-          <text x="75" y="71" text-anchor="middle" font-size="17" fill="#023859" font-weight="800">{{ props.totalOrders }}</text>
-          <text x="75" y="83" text-anchor="middle" font-size="9" fill="#94a3b8">pedidos</text>
-        </svg>
+      <!-- Real Chart.js Doughnut Container -->
+      <div class="relative w-[140px] h-[140px] flex items-center justify-center shrink-0">
+        <Doughnut :data="chartData" :options="chartOptions" />
+        <!-- Center Text Overlay -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-base font-extrabold text-primary leading-none">{{ props.totalOrders }}</span>
+          <span class="text-[9px] font-semibold text-slate-400 mt-0.5">pedidos</span>
+        </div>
       </div>
 
-      <!-- Legend -->
+      <!-- Legend matching Mockup -->
       <div class="space-y-2.5 flex-1 text-xs">
         <div
           v-for="ord in orderStatus"

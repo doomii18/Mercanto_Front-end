@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  type ChartOptions,
+  type ChartData,
+} from "chart.js";
+import { Doughnut } from "vue-chartjs";
+
+ChartJS.register(ArcElement, Tooltip);
 
 export interface ProviderPaymentItem {
   label: string;
@@ -18,31 +28,53 @@ const props = withDefaults(
   }
 );
 
-// Self-contained mock data (ready to fetch from API)
+// Self-contained mock data (ready for future API fetching)
 const paymentStatus = ref<ProviderPaymentItem[]>([
   { label: "Pagados",   pct: 54, color: "#023859" },
   { label: "Por Pagar", pct: 29, color: "#f97316" },
 ]);
 
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const x1 = cx + r * Math.cos(toRad(startAngle - 90));
-  const y1 = cy + r * Math.sin(toRad(startAngle - 90));
-  const x2 = cx + r * Math.cos(toRad(endAngle - 90));
-  const y2 = cy + r * Math.sin(toRad(endAngle - 90));
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-}
-
-const paymentArcs = computed(() => {
-  let start = 0;
-  return paymentStatus.value.map((p) => {
-    const end = start + (p.pct / 100) * 360;
-    const arc = describeArc(55, 55, 42, start, end);
-    start = end;
-    return { ...p, arc };
-  });
+// Include empty remainder segment (100 - 54 - 29 = 17%) to render the open arc from the mockup
+const remainderPct = computed(() => {
+  const sum = paymentStatus.value.reduce((acc, curr) => acc + curr.pct, 0);
+  return Math.max(0, 100 - sum);
 });
+
+const chartData = computed<ChartData<"doughnut">>(() => ({
+  labels: [...paymentStatus.value.map((p) => p.label), "Restante"],
+  datasets: [
+    {
+      data: [...paymentStatus.value.map((p) => p.pct), remainderPct.value],
+      backgroundColor: [...paymentStatus.value.map((p) => p.color), "transparent"],
+      borderColor: [...paymentStatus.value.map(() => "#ffffff"), "transparent"],
+      borderWidth: 2,
+      hoverOffset: 4,
+    },
+  ],
+}));
+
+const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  rotation: -90,
+  circumference: 360,
+  cutout: "66%",
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      filter: (tooltipItem) => tooltipItem.dataIndex < paymentStatus.value.length,
+      backgroundColor: "#023859",
+      padding: 8,
+      titleFont: { size: 11, weight: "bold" },
+      bodyFont: { size: 11 },
+      callbacks: {
+        label: (context) => ` ${context.label}: ${context.raw}%`,
+      },
+    },
+  },
+}));
 </script>
 
 <template>
@@ -53,25 +85,17 @@ const paymentArcs = computed(() => {
     </div>
 
     <div class="flex items-center gap-4">
-      <!-- SVG Ring small -->
-      <div class="shrink-0">
-        <svg width="110" height="110" viewBox="0 0 110 110">
-          <circle cx="55" cy="55" r="42" fill="white" />
-          <path
-            v-for="arc in paymentArcs"
-            :key="arc.label"
-            :d="arc.arc"
-            :fill="arc.color"
-            stroke="white"
-            stroke-width="1.5"
-          />
-          <circle cx="55" cy="55" r="28" fill="white" />
-          <text x="55" y="51" text-anchor="middle" font-size="16" fill="#023859" font-weight="800">{{ props.totalProviders }}</text>
-          <text x="55" y="63" text-anchor="middle" font-size="8" fill="#94a3b8">Proveedores</text>
-        </svg>
+      <!-- Real Chart.js Doughnut Container -->
+      <div class="relative w-[120px] h-[120px] flex items-center justify-center shrink-0">
+        <Doughnut :data="chartData" :options="chartOptions" />
+        <!-- Center Text Overlay -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-base font-extrabold text-primary leading-none">{{ props.totalProviders }}</span>
+          <span class="text-[8px] font-semibold text-slate-400 mt-0.5">Proveedores</span>
+        </div>
       </div>
 
-      <!-- Legend -->
+      <!-- Legend matching Mockup -->
       <div class="space-y-2.5 flex-1 text-xs">
         <div
           v-for="pay in paymentStatus"

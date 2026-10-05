@@ -1,5 +1,15 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  type ChartOptions,
+  type ChartData,
+} from "chart.js";
+import { Doughnut } from "vue-chartjs";
+
+ChartJS.register(ArcElement, Tooltip);
 
 export interface RegionActiveUserItem {
   name: string;
@@ -18,7 +28,7 @@ const props = withDefaults(
   }
 );
 
-// Self-contained mock data (ready to fetch from API)
+// Self-contained mock data (ready for future API fetching)
 const regionData = ref<RegionActiveUserItem[]>([
   { name: "Pacífico",  pct: 38, color: "#023859" },
   { name: "Norte",     pct: 32, color: "#00a896" },
@@ -26,25 +36,38 @@ const regionData = ref<RegionActiveUserItem[]>([
   { name: "Atlántico", pct: 13, color: "#a855f7" },
 ]);
 
-function describeArc(cx: number, cy: number, r: number, startAngle: number, endAngle: number): string {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const x1 = cx + r * Math.cos(toRad(startAngle - 90));
-  const y1 = cy + r * Math.sin(toRad(startAngle - 90));
-  const x2 = cx + r * Math.cos(toRad(endAngle - 90));
-  const y2 = cy + r * Math.sin(toRad(endAngle - 90));
-  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-}
+const chartData = computed<ChartData<"doughnut">>(() => ({
+  labels: regionData.value.map((r) => r.name),
+  datasets: [
+    {
+      data: regionData.value.map((r) => r.pct),
+      backgroundColor: regionData.value.map((r) => r.color),
+      borderColor: "#ffffff",
+      borderWidth: 2,
+      hoverOffset: 4,
+    },
+  ],
+}));
 
-const regionArcs = computed(() => {
-  let start = 0;
-  return regionData.value.map((r) => {
-    const end = start + (r.pct / 100) * 360;
-    const arc = describeArc(65, 65, 50, start, end);
-    start = end;
-    return { ...r, arc };
-  });
-});
+const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  cutout: "66%",
+  plugins: {
+    legend: {
+      display: false,
+    },
+    tooltip: {
+      backgroundColor: "#023859",
+      padding: 8,
+      titleFont: { size: 11, weight: "bold" },
+      bodyFont: { size: 11 },
+      callbacks: {
+        label: (context) => ` ${context.label}: ${context.raw}%`,
+      },
+    },
+  },
+}));
 </script>
 
 <template>
@@ -55,25 +78,17 @@ const regionArcs = computed(() => {
     </div>
 
     <div class="flex items-center gap-4">
-      <!-- SVG Ring -->
-      <div class="shrink-0">
-        <svg width="130" height="130" viewBox="0 0 130 130">
-          <circle cx="65" cy="65" r="50" fill="white" />
-          <path
-            v-for="arc in regionArcs"
-            :key="arc.name"
-            :d="arc.arc"
-            :fill="arc.color"
-            stroke="white"
-            stroke-width="1.5"
-          />
-          <circle cx="65" cy="65" r="33" fill="white" />
-          <text x="65" y="62" text-anchor="middle" font-size="18" fill="#023859" font-weight="800">{{ props.totalUsers }}</text>
-          <text x="65" y="76" text-anchor="middle" font-size="9" fill="#94a3b8">usuarios</text>
-        </svg>
+      <!-- Real Chart.js Doughnut Container -->
+      <div class="relative w-[130px] h-[130px] flex items-center justify-center shrink-0">
+        <Doughnut :data="chartData" :options="chartOptions" />
+        <!-- Center Text Overlay -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
+          <span class="text-base font-extrabold text-primary leading-none">{{ props.totalUsers }}</span>
+          <span class="text-[9px] font-semibold text-slate-400 mt-0.5">usuarios</span>
+        </div>
       </div>
 
-      <!-- Legend -->
+      <!-- Legend matching Mockup -->
       <div class="space-y-2 flex-1 text-xs">
         <div
           v-for="region in regionData"
