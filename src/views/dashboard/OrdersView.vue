@@ -210,25 +210,31 @@ const handleSelectQuote = (quoteId: string) => {
         :quotes="visibleQuotes"
         :counterparties-map="counterpartiesMap"
         :is-provider="isProvider"
-        :placeholder="isProvider ? 'Buscar por ID, producto o comprador...' : 'Buscar por ID, producto o proveedor...'"
+        placeholder="Buscar por ID, producto, notas o dirección..."
       />
     </div>
 
-    <div class="flex items-center gap-6 md:gap-9 w-full border-b border-neutral-200 mb-8 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden pt-1">
-      <button
-        v-for="filter in filterOptions"
-        :key="filter.value"
-        type="button"
-        :class="[
-          'bg-transparent border-b-2 pt-1 pb-3 -mb-px font-serif text-lg font-medium whitespace-nowrap cursor-pointer transition-colors leading-normal shrink-0',
-          currentFilter === filter.value
-            ? 'text-teal-700 border-teal-700'
-            : 'text-neutral-500 border-transparent hover:text-teal-700'
-        ]"
-        @click="currentFilter = filter.value"
+    <!-- Filter Tabs Container -->
+    <div class="w-full max-w-full min-w-0 border-b border-neutral-200 mb-6 sm:mb-8">
+      <nav
+        class="flex items-end gap-4 sm:gap-6 md:gap-9 overflow-x-auto touch-pan-x [scrollbar-width:none] [&::-webkit-scrollbar]:hidden -mb-px px-0.5"
+        aria-label="Filtro de pedidos"
       >
-        {{ filter.label }}
-      </button>
+        <button
+          v-for="filter in filterOptions"
+          :key="filter.value"
+          type="button"
+          :class="[
+            'bg-transparent border-b-2 py-2 sm:py-2.5 md:py-3 font-serif text-sm sm:text-base md:text-lg font-medium whitespace-nowrap cursor-pointer transition-colors leading-normal shrink-0',
+            currentFilter === filter.value
+              ? 'text-teal-700 border-teal-700 font-semibold'
+              : 'text-neutral-500 border-transparent hover:text-teal-700'
+          ]"
+          @click="currentFilter = filter.value"
+        >
+          {{ filter.label }}
+        </button>
+      </nav>
     </div>
 
     <div

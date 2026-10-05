@@ -40,13 +40,19 @@ export const useDepositApi = () => {
   }
 
   // GET /wallets/me/recharges
-  async function getMyRecharges(params?: {
-    page?: number;
-    per_page?: number;
-  }): Promise<PaginatedDepositSummaryResponse> {
+  async function getMyRecharges(
+    params?: DepositFilterQuery
+  ): Promise<PaginatedDepositSummaryResponse> {
+    const validated = params ? DepositFilterQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
-    if (params?.page !== undefined) queryParams.append("page", params.page.toString());
-    if (params?.per_page !== undefined) queryParams.append("per_page", params.per_page.toString());
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.status) queryParams.append("status", validated.status);
+    if (validated?.platform_bank_account_id)
+      queryParams.append("platform_bank_account_id", validated.platform_bank_account_id);
+    if (validated?.search_term) queryParams.append("search_term", validated.search_term);
+    if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
 
     const queryString = queryParams.toString();
     const endpoint = `/wallets/me/recharges${queryString ? `?${queryString}` : ""}`;
@@ -69,12 +75,14 @@ export const useDepositApi = () => {
   ): Promise<PaginatedDepositSummaryResponse> {
     const validated = params ? DepositFilterQuerySchema.parse(params) : undefined;
     const queryParams = new URLSearchParams();
-    if (validated?.page !== undefined) queryParams.append("page", validated.page.toString());
-    if (validated?.per_page !== undefined) queryParams.append("per_page", validated.per_page.toString());
+    if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
+    if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
     if (validated?.status) queryParams.append("status", validated.status);
     if (validated?.platform_bank_account_id)
       queryParams.append("platform_bank_account_id", validated.platform_bank_account_id);
-    if (validated?.search) queryParams.append("search", validated.search);
+    if (validated?.search_term) queryParams.append("search_term", validated.search_term);
+    if (validated?.sort_by) queryParams.append("sort_by", validated.sort_by);
+    if (validated?.sort_direction) queryParams.append("sort_direction", validated.sort_direction);
 
     const queryString = queryParams.toString();
     const endpoint = `/admin/payments/recharges${queryString ? `?${queryString}` : ""}`;

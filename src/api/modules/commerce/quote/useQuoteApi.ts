@@ -20,6 +20,7 @@ import type {
   PrintQuoteResponse,
   AccountQuoteFiltersQuery,
   ProviderQuoteFiltersQuery,
+  GlobalQuoteFiltersQuery,
 } from "./types";
 import type { BatchQuoteQuery } from "@/api/modules/shared/types";
 
@@ -218,6 +219,32 @@ export const useQuoteApi = () => {
     return QuoteResponseSchema.parse(data.value);
   }
 
+  // GET /quotes
+  async function getAllQuotes(params?: GlobalQuoteFiltersQuery): Promise<PaginatedQuoteAggregateResponse> {
+    const queryParams = new URLSearchParams();
+    if (params?.limit !== undefined) queryParams.append("limit", params.limit.toString());
+    if (params?.offset !== undefined) queryParams.append("offset", params.offset.toString());
+    if (params?.buyer_id) queryParams.append("buyer_id", params.buyer_id);
+    if (params?.provider_id) queryParams.append("provider_id", params.provider_id);
+    if (params?.quote_group_id) queryParams.append("quote_group_id", params.quote_group_id);
+    if (params?.statuses) params.statuses.forEach((status) => queryParams.append("statuses", status));
+    if (params?.payment_preference) queryParams.append("payment_preference", params.payment_preference);
+    if (params?.shipping_preference) queryParams.append("shipping_preference", params.shipping_preference);
+    if (params?.created_after) queryParams.append("created_after", params.created_after);
+    if (params?.created_before) queryParams.append("created_before", params.created_before);
+    if (params?.search_term) queryParams.append("search_term", params.search_term);
+
+    const queryString = queryParams.toString();
+    const endpoint = `/quotes${queryString ? `?${queryString}` : ""}`;
+
+    const { data, error } = await useApiFetch(endpoint).get().json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to fetch all quotes");
+    }
+    const paginated = PaginatedQuoteResponseSchema.parse(data.value);
+    return hydrateQuoteAggregates(paginated);
+  }
+
   // POST /quotes/{id}/print
   async function printQuote(id: string): Promise<PrintQuoteResponse> {
     const { data, error } = await useApiFetch(`/quotes/${id}/print`).post().json();
@@ -233,6 +260,7 @@ export const useQuoteApi = () => {
     getMyQuotes,
     getProviderQuotes,
     getAccountQuotes,
+    getAllQuotes,
     acceptQuote,
     rejectQuote,
     payQuote,

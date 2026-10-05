@@ -72,16 +72,27 @@ const {
         </div>
 
         <!-- Actions -->
-        <div class="p-1">
+        <div class="space-y-0.5 p-1">
           <router-link
-            to="/dashboard"
+            to="/dashboard/profile"
             class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
             @click="closeDropdown"
           >
             <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-50 text-slate-400">
-              <i class="fa-solid fa-gauge-high text-xs"></i>
+              <i class="fa-solid fa-user text-xs"></i>
             </div>
-            <span>Ir al Dashboard</span>
+            <span>Mi Perfil</span>
+          </router-link>
+
+          <router-link
+            to="/"
+            class="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900"
+            @click="closeDropdown"
+          >
+            <div class="flex h-6 w-6 items-center justify-center rounded bg-slate-50 text-slate-400">
+              <i class="fa-solid fa-store text-xs"></i>
+            </div>
+            <span>Ir a la Tienda</span>
           </router-link>
         </div>
 

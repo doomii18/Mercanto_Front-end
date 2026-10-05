@@ -6,14 +6,20 @@ import { useWalletStore } from "@/stores/wallet";
 const router = useRouter();
 const walletStore = useWalletStore();
 const draft = computed(() => walletStore.rechargeDraft);
+const lastRecharge = computed(() => walletStore.lastSubmittedRecharge);
 
 const formattedAmount = computed(() => {
-  const num = draft.value.amount ?? 2000;
+  const num = lastRecharge.value?.amount ?? draft.value.amount ?? 0;
   return new Intl.NumberFormat("es-NI", {
     style: "currency",
     currency: "NIO",
   }).format(num);
 });
+
+const handleReturn = () => {
+  walletStore.resetRechargeDraft();
+  router.push({ name: "wallet" });
+};
 </script>
 
 <template>
@@ -64,42 +70,47 @@ const formattedAmount = computed(() => {
           </div>
 
           <div class="flex flex-col gap-4">
+            <div v-if="lastRecharge?.id" class="flex justify-between items-center py-1">
+              <span class="text-[0.9rem] text-[#64748b]">ID de solicitud</span>
+              <span class="text-[0.85rem] font-bold text-[#083c5a] font-mono">{{ lastRecharge.id }}</span>
+            </div>
+            <div v-if="lastRecharge?.id" class="h-px w-full bg-[#f1f5f9]"></div>
+
             <div class="flex justify-between items-center py-1">
               <span class="text-[0.9rem] text-[#64748b]">Monto solicitado</span>
               <span class="text-[1.15rem] font-bold text-[#f97316]">{{ formattedAmount }}</span>
             </div>
             <div class="h-px w-full bg-[#f1f5f9]"></div>
+
             <div class="flex justify-between items-center py-1">
               <span class="text-[0.9rem] text-[#64748b]">Número de referencia</span>
-              <span class="text-[0.95rem] font-bold text-[#083c5a] font-mono">{{ draft.referenceNumber || "1234567" }}</span>
+              <span class="text-[0.95rem] font-bold text-[#083c5a] font-mono">{{ lastRecharge?.reference_code || draft.referenceNumber || "Sin referencia" }}</span>
             </div>
             <div class="h-px w-full bg-[#f1f5f9]"></div>
+
             <div class="flex justify-between items-center py-1">
               <span class="text-[0.9rem] text-[#64748b]">Fecha y hora</span>
-              <span class="text-[0.95rem] font-bold text-[#333]">{{ draft.depositDate || "17/06/2026" }} • {{ draft.depositTime || "05:25 PM" }}</span>
+              <span class="text-[0.95rem] font-bold text-[#333]">{{ draft.depositDate || "Hoy" }} • {{ draft.depositTime || "" }}</span>
             </div>
             <div class="h-px w-full bg-[#f1f5f9]"></div>
-            <div class="flex justify-between items-center py-1">
+
+            <div v-if="draft.depositorName" class="flex justify-between items-center py-1">
               <span class="text-[0.9rem] text-[#64748b]">Titular del depósito</span>
-              <span class="text-[0.95rem] font-bold text-[#333]">{{ draft.depositorName || "No especificado" }}</span>
+              <span class="text-[0.95rem] font-bold text-[#333]">{{ draft.depositorName }}</span>
             </div>
-            <div class="h-px w-full bg-[#f1f5f9]"></div>
-            <div class="flex justify-between items-center py-1">
-              <span class="text-[0.9rem] text-[#64748b]">Comprobante adjunto</span>
-              <span class="text-[0.95rem] font-bold text-[#189c94] truncate">{{ draft.voucherFileName || "comprobante.png" }}</span>
-            </div>
-            <div class="h-px w-full bg-[#f1f5f9]"></div>
+            <div v-if="draft.depositorName" class="h-px w-full bg-[#f1f5f9]"></div>
+
             <div class="flex justify-between items-center py-1">
               <span class="text-[0.9rem] text-[#64748b]">Banco destino</span>
-              <span class="text-[0.95rem] font-bold text-[#333]">{{ draft.bankName || "Banco Lafise" }} ({{ draft.accountType || "Cuenta Corriente - C$" }})</span>
+              <span class="text-[0.95rem] font-bold text-[#333]">{{ draft.bankName || "Cuenta oficial" }} ({{ draft.accountType || "" }})</span>
             </div>
           </div>
         </div>
 
         <button
           type="button"
-          class="w-full py-3.5 bg-[#f97316] text-white rounded-xl font-bold hover:bg-[#ea580c] transition-colors text-base shadow-md"
-          @click="router.push({ name: 'wallet' })"
+          class="w-full py-3.5 bg-[#f97316] text-white rounded-xl font-bold hover:bg-[#ea580c] transition-colors text-base shadow-md cursor-pointer active:scale-99"
+          @click="handleReturn"
         >
           Volver a mi billetera
         </button>

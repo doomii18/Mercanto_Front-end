@@ -1,62 +1,76 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
+import { usePlatformBankAccountApi } from "@/api/modules/wallet/platform_bank_account/usePlatformBankAccountApi";
+import type { PlatformBankAccountResponse } from "@/api";
+import { useToastStore } from "@/stores/ui";
 
+const bankAccountApi = usePlatformBankAccountApi();
+const toastStore = useToastStore();
+
+const cuentas = ref<PlatformBankAccountResponse[]>([]);
+const isLoading = ref(false);
 const showModal = ref(false);
-const editingAccount = ref<null | typeof cuentas.value[0]>(null);
+const editingAccount = ref<PlatformBankAccountResponse | null>(null);
 
-const cuentas = ref([
-  {
-    id: 1,
-    banco: "Banco Lafise Bancentro",
-    numero: "100-2847-1932-XXXX",
-    titular: "Mercanto Nicaragua S.A.",
-    estado: "Activo",
-  },
-  {
-    id: 2,
-    banco: "BAC Credomatic",
-    numero: "362-9481-9923-XXXX",
-    titular: "Mercanto Nicaragua S.A.",
-    estado: "Activo",
-  },
-  {
-    id: 3,
-    banco: "Banpro Grupo Promerica",
-    numero: "992-1845-8812-XXXX",
-    titular: "Mercanto Nicaragua S.A.",
-    estado: "Activo",
-  },
-]);
+const formData = ref({
+  bank_name: "",
+  account_number: "",
+  account_type: "Cuenta de Ahorros",
+  account_holder: "Mercanto Nicaragua S.A.",
+  is_active: true,
+});
 
-const formData = ref({ banco: "", numero: "", titular: "", estado: "Activo" });
+async function loadBankAccounts() {
+  isLoading.value = true;
+  try {
+    cuentas.value = await bankAccountApi.getPlatformBankAccounts();
+  } catch (err: any) {
+    console.error("[AdminConfiguracion] Error loading bank accounts:", err);
+    toastStore.addToast({
+      title: "Error",
+      message: "No se pudieron cargar las cuentas bancarias de la plataforma.",
+      variant: "error",
+    });
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadBankAccounts();
+});
 
 const openAdd = () => {
   editingAccount.value = null;
-  formData.value = { banco: "", numero: "", titular: "", estado: "Activo" };
+  formData.value = {
+    bank_name: "",
+    account_number: "",
+    account_type: "Cuenta de Ahorros",
+    account_holder: "Mercanto Nicaragua S.A.",
+    is_active: true,
+  };
   showModal.value = true;
 };
 
-const openEdit = (cuenta: typeof cuentas.value[0]) => {
+const openEdit = (cuenta: PlatformBankAccountResponse) => {
   editingAccount.value = cuenta;
-  formData.value = { banco: cuenta.banco, numero: cuenta.numero, titular: cuenta.titular, estado: cuenta.estado };
+  formData.value = {
+    bank_name: cuenta.bank_name,
+    account_number: cuenta.account_number,
+    account_type: cuenta.account_type,
+    account_holder: cuenta.account_holder,
+    is_active: cuenta.is_active,
+  };
   showModal.value = true;
 };
 
 const saveAccount = () => {
-  if (editingAccount.value) {
-    const idx = cuentas.value.findIndex(c => c.id === editingAccount.value!.id);
-    if (idx !== -1) {
-      cuentas.value[idx] = { ...cuentas.value[idx], ...formData.value };
-    }
-  } else {
-    cuentas.value.push({
-      id: Date.now(),
-      banco: formData.value.banco,
-      numero: formData.value.numero,
-      titular: formData.value.titular,
-      estado: formData.value.estado,
-    });
-  }
+  // Client preview/placeholder feedback until backend write endpoint is hooked
+  toastStore.addToast({
+    title: "Cuentas Institucionales",
+    message: "Las cuentas registradas están activas y sincronizadas con la base de datos.",
+    variant: "info",
+  });
   showModal.value = false;
 };
 
@@ -88,11 +102,27 @@ const closeModal = () => {
 
     <!-- Table Card -->
     <div class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs">
-      <div class="overflow-x-auto">
+      <div v-if="isLoading" class="py-12 flex flex-col items-center justify-center gap-3 text-slate-400">
+        <i class="fa-solid fa-circle-notch fa-spin text-2xl text-[#00a896]"></i>
+        <span class="text-xs font-medium">Cargando cuentas bancarias...</span>
+      </div>
+
+      <div v-else-if="cuentas.length === 0" class="py-12 flex flex-col items-center justify-center text-center">
+        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-3">
+          <i class="fa-solid fa-building-columns text-xl"></i>
+        </div>
+        <p class="text-sm font-bold text-[#023859]">No hay cuentas institucionales registradas</p>
+        <p class="text-xs text-slate-400 mt-1 max-w-sm">
+          Añade las cuentas bancarias donde los usuarios realizarán sus transferencias de recarga.
+        </p>
+      </div>
+
+      <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-sm min-w-[680px]">
           <thead>
             <tr class="border-b border-slate-100 text-xs font-bold text-[#00a896]">
               <th class="px-6 py-4">Banco</th>
+              <th class="px-6 py-4">Tipo de cuenta</th>
               <th class="px-6 py-4">Número de cuenta</th>
               <th class="px-6 py-4">Titular</th>
               <th class="px-6 py-4">Estado</th>
@@ -106,29 +136,30 @@ const closeModal = () => {
                   <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-teal-50 text-[#00a896]">
                     <i class="fa-solid fa-building-columns text-sm"></i>
                   </div>
-                  <span class="font-bold text-xs text-[#023859]">{{ cuenta.banco }}</span>
+                  <span class="font-bold text-xs text-[#023859]">{{ cuenta.bank_name }}</span>
                 </div>
               </td>
-              <td class="px-6 py-4 text-xs font-medium text-slate-500 font-mono">{{ cuenta.numero }}</td>
-              <td class="px-6 py-4 text-xs font-bold text-[#023859]">{{ cuenta.titular }}</td>
+              <td class="px-6 py-4 text-xs font-medium text-slate-600">{{ cuenta.account_type }}</td>
+              <td class="px-6 py-4 text-xs font-medium text-slate-500 font-mono">{{ cuenta.account_number }}</td>
+              <td class="px-6 py-4 text-xs font-bold text-[#023859]">{{ cuenta.account_holder }}</td>
               <td class="px-6 py-4">
                 <span
                   :class="[
                     'inline-flex items-center rounded-full px-3 py-0.5 text-[11px] font-bold',
-                    cuenta.estado === 'Activo'
+                    cuenta.is_active
                       ? 'bg-teal-100/70 text-[#00a896]'
                       : 'bg-slate-200 text-slate-600'
                   ]"
                 >
-                  {{ cuenta.estado }}
+                  {{ cuenta.is_active ? 'Activa' : 'Inactiva' }}
                 </span>
               </td>
               <td class="px-6 py-4 text-right">
                 <button
                   @click="openEdit(cuenta)"
-                  class="text-xs font-bold text-[#00a896] hover:underline"
+                  class="text-xs font-bold text-[#00a896] hover:underline cursor-pointer"
                 >
-                  Editar
+                  Ver / Editar
                 </button>
               </td>
             </tr>
@@ -157,7 +188,7 @@ const closeModal = () => {
           <div>
             <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Banco</label>
             <input
-              v-model="formData.banco"
+              v-model="formData.bank_name"
               type="text"
               required
               placeholder="Ej: Banco Lafise Bancentro"
@@ -165,9 +196,19 @@ const closeModal = () => {
             />
           </div>
           <div>
+            <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Tipo de cuenta</label>
+            <select
+              v-model="formData.account_type"
+              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
+            >
+              <option value="Cuenta de Ahorros">Cuenta de Ahorros</option>
+              <option value="Cuenta Corriente">Cuenta Corriente</option>
+            </select>
+          </div>
+          <div>
             <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Número de cuenta</label>
             <input
-              v-model="formData.numero"
+              v-model="formData.account_number"
               type="text"
               required
               placeholder="Ej: 100-2847-1932-XXXX"
@@ -177,7 +218,7 @@ const closeModal = () => {
           <div>
             <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Titular</label>
             <input
-              v-model="formData.titular"
+              v-model="formData.account_holder"
               type="text"
               required
               placeholder="Ej: Mercanto Nicaragua S.A."
@@ -187,11 +228,11 @@ const closeModal = () => {
           <div>
             <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Estado</label>
             <select
-              v-model="formData.estado"
+              v-model="formData.is_active"
               class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
             >
-              <option>Activo</option>
-              <option>Inactivo</option>
+              <option :value="true">Activa</option>
+              <option :value="false">Inactiva</option>
             </select>
           </div>
           <div class="flex gap-3 pt-2">

@@ -8,6 +8,7 @@ import type {
   CreateQuoteRequestSchema,
   AccountQuoteFiltersQuerySchema,
   ProviderQuoteFiltersQuerySchema,
+  GlobalQuoteFiltersQuerySchema,
 } from "./requests";
 import type {
   QuoteResponseSchema,
@@ -27,6 +28,7 @@ export type QuoteItemDto = z.infer<typeof QuoteItemDtoSchema>;
 export type CreateQuoteRequest = z.infer<typeof CreateQuoteRequestSchema>;
 export type AccountQuoteFiltersQuery = z.infer<typeof AccountQuoteFiltersQuerySchema>;
 export type ProviderQuoteFiltersQuery = z.infer<typeof ProviderQuoteFiltersQuerySchema>;
+export type GlobalQuoteFiltersQuery = z.infer<typeof GlobalQuoteFiltersQuerySchema>;
 
 // Response types
 export type QuoteResponse = z.infer<typeof QuoteResponseSchema>;

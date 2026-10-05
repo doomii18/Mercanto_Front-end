@@ -6,7 +6,8 @@ import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 
 import { useGeoStore } from "@/stores/geo";
 import { useQuoteBuilderStore, useFavoritesStore, useCategoryStore } from "@/stores/commerce";
-import { useToastStore } from "@/stores/ui";
+import { useAuthStore } from "@/stores/auth";
+import { useToastStore, useAuthPromptStore } from "@/stores/ui";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ProductCard from "@/components/product/ProductCard.vue";
@@ -76,7 +77,9 @@ const reviewApi = useReviewApi();
 const geoStore = useGeoStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();
+const authPromptStore = useAuthPromptStore();
 const favoritesStore = useFavoritesStore();
+const authStore = useAuthStore();
 
 const isFavorite = computed(() => (product.value.id ? favoritesStore.isFavorite(product.value.id) : false));
 
@@ -429,7 +432,25 @@ const decreaseQuantity = () => {
     }
 };
 
+const handleLoginToQuote = () => {
+    authPromptStore.promptLogin({
+        title: "¿Deseas solicitar una cotización?",
+        message: "Para agregar productos y solicitar una cotización necesitas iniciar sesión. Puedes iniciar sesión ahora o continuar explorando los productos.",
+        confirmText: "Iniciar sesión",
+        cancelText: "Seguir explorando",
+        icon: "fa-solid fa-clipboard-list",
+        iconColor: "text-orange-500",
+        iconBg: "bg-orange-50 ring-orange-50/50",
+        router,
+        redirectPath: route.fullPath,
+    });
+};
+
 const handleAddToQuote = () => {
+    if (!authStore.isAuthenticated) {
+        handleLoginToQuote();
+        return;
+    }
     if (!product.value.id || !providerId.value) return;
 
     quoteBuilderStore.addItem(providerId.value, {
@@ -448,7 +469,7 @@ const handleAddToQuote = () => {
     toastStore.addToast({
         title: "Producto agregado",
         message: `${product.value.title} agregado a tu cotización.`,
-        icon: "fa-solid fa-cart-plus",
+        icon: "fa-solid fa-clipboard-check",
         variant: "success",
     });
 };
@@ -801,9 +822,22 @@ const navigateToCategory = () => {
                                 <span class="text-lg font-bold text-neutral-900">C$ {{ formatPrice(total) }}</span>
                             </div>
                         </div>
+                        <!-- Unauthenticated: Login to Quote -->
                         <button
+                            v-if="!authStore.isAuthenticated"
                             type="button"
-                            class="w-full rounded-full bg-gradient-to-b from-orange-400 to-orange-600 py-3.5 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="flex items-center justify-center gap-2 w-full rounded-full bg-gradient-to-b from-orange-400 to-orange-600 py-3.5 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5 cursor-pointer"
+                            @click="handleLoginToQuote"
+                        >
+                            <i class="fa-solid fa-arrow-right-to-bracket text-sm"></i>
+                            <span>Inicia sesión para cotizar</span>
+                        </button>
+
+                        <!-- Authenticated: Add to Quote -->
+                        <button
+                            v-else
+                            type="button"
+                            class="w-full rounded-full bg-gradient-to-b from-orange-400 to-orange-600 py-3.5 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
                             :disabled="product.price <= 0"
                             @click="handleAddToQuote"
                         >
@@ -812,8 +846,8 @@ const navigateToCategory = () => {
                     </div>
                 </section>
 
-                <!-- Quote Draft Section -->
-                <section v-if="draftItems.length > 0" class="mt-10 rounded-3xl bg-neutral-100 p-8 lg:p-10">
+                <!-- Quote Draft Section (Authenticated Only) -->
+                <section v-if="authStore.isAuthenticated && draftItems.length > 0" class="mt-10 rounded-3xl bg-neutral-100 p-8 lg:p-10">
                     <h3 class="mb-5 font-serif text-xl font-bold text-neutral-900">
                         Tu cotización con {{ product.provider.name }}
                     </h3>

@@ -3,12 +3,13 @@ import { ref } from "vue";
 import type { Router } from "vue-router";
 import { useCartApi } from "@/api/modules/commerce/cart/useCartApi";
 import { useAuthStore } from "@/stores/auth";
-import { useToastStore } from "@/stores/ui";
+import { useToastStore, useAuthPromptStore } from "@/stores/ui";
 
 export const useFavoritesStore = defineStore("favorites", () => {
   const cartApi = useCartApi();
   const authStore = useAuthStore();
   const toastStore = useToastStore();
+  const authPromptStore = useAuthPromptStore();
 
   const favoriteProductIds = ref<Set<string>>(new Set());
   const isLoading = ref(false);
@@ -31,8 +32,8 @@ export const useFavoritesStore = defineStore("favorites", () => {
 
     isLoading.value = true;
     try {
-      const items = await cartApi.getMyCartProducts();
-      favoriteProductIds.value = new Set(items.map((item) => item.product_id));
+      const res = await cartApi.getMyCartProducts();
+      favoriteProductIds.value = new Set(res.data.map((item) => item.product_id));
       isInitialized.value = true;
     } catch (err) {
       console.warn("Error al cargar favoritos:", err);
@@ -46,19 +47,18 @@ export const useFavoritesStore = defineStore("favorites", () => {
     options?: { router?: Router; redirectPath?: string }
   ): Promise<boolean> {
     if (!authStore.isAuthenticated) {
-      toastStore.addToast({
-        title: "Inicia sesión",
-        message: "Debes iniciar sesión para agregar productos a tus favoritos.",
+      authPromptStore.promptLogin({
+        title: "¿Deseas guardar tus favoritos?",
+        message:
+          "Para guardar y hacer seguimiento de tus productos favoritos necesitas iniciar sesión. Puedes iniciar sesión ahora o seguir explorando el catálogo.",
+        confirmText: "Iniciar sesión",
+        cancelText: "Seguir explorando",
         icon: "fa-solid fa-heart",
-        variant: "info",
+        iconColor: "text-rose-500",
+        iconBg: "bg-rose-50 ring-rose-50/50",
+        router: options?.router,
+        redirectPath: options?.redirectPath,
       });
-
-      if (options?.router) {
-        options.router.push({
-          name: "login",
-          query: options.redirectPath ? { redirect: options.redirectPath } : undefined,
-        });
-      }
       return false;
     }
 

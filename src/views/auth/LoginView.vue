@@ -38,7 +38,7 @@ const handleLogin = async () => {
     const redirectPath =
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect
-        : { name: "profile" };
+        : { name: "dashboard" };
 
     router.push(redirectPath);
   } catch (error: any) {

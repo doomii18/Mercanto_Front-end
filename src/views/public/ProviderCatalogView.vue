@@ -423,7 +423,7 @@ onMounted(async () => {
                   : 'flex flex-col sm:flex-row sm:items-center sm:gap-4'
               ]"
             >
-              <!-- Favorite / Cart Toggle -->
+              <!-- Favorite Toggle -->
               <button
                 type="button"
                 :class="[

@@ -42,6 +42,7 @@ export const ProductFiltersRequestSchema = z.object({
   min_price: z.number().min(0).optional(),
   max_price: z.number().min(0).optional(),
   min_score: z.number().min(0).optional(),
+  is_active: z.boolean().optional(),
   search_term: z.string().optional(),
   sort_by: ProductSortFieldSchema.optional(),
   sort_direction: SortDirectionSchema.optional(),

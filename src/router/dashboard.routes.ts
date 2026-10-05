@@ -1,4 +1,25 @@
-import type { RouteRecordRaw } from "vue-router";
+import type { RouteLocationRaw, RouteRecordRaw } from "vue-router";
+import { useUserContextStore } from "@/stores/auth";
+
+/**
+ * Resolves the default landing dashboard depending on the user's role and context:
+ * - Admin or Auditor (`isStaff`): Admin Dashboard (`admin-home` / `/admin/home`)
+ * - Provider (`isProvider`): Provider Products / Management (`provider-products` / `/dashboard/products`)
+ * - Buyer / Regular user (`isBuyer`): User Profile (`profile` / `/dashboard/profile`)
+ */
+export function resolveDefaultDashboard(): RouteLocationRaw {
+  const contextStore = useUserContextStore();
+
+  if (contextStore.isStaff) {
+    return { name: "admin-home" };
+  }
+
+  if (contextStore.isProvider) {
+    return { name: "provider-products" };
+  }
+
+  return { name: "profile" };
+}
 
 export const dashboardRoutes: RouteRecordRaw[] = [
   {
@@ -8,7 +29,8 @@ export const dashboardRoutes: RouteRecordRaw[] = [
     children: [
       {
         path: "",
-        redirect: { name: "profile" },
+        name: "dashboard",
+        redirect: () => resolveDefaultDashboard(),
       },
       {
         path: "favorites",

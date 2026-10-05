@@ -41,6 +41,7 @@ export const useNotificationsApi = () => {
     const queryParams = new URLSearchParams();
     if (validated?.limit !== undefined) queryParams.append("limit", validated.limit.toString());
     if (validated?.offset !== undefined) queryParams.append("offset", validated.offset.toString());
+    if (validated?.is_read !== undefined) queryParams.append("is_read", validated.is_read.toString());
 
     const qs = queryParams.toString();
     const endpoint = `/notifications/history${qs ? `?${qs}` : ""}`;
