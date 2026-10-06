@@ -10,10 +10,11 @@ import { useAlertStore } from "@/stores/ui";
 import { useToastStore } from "@/stores/ui";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
+import NationalIdInput from "@/components/common/NationalIdInput.vue";
 import { PersonNameSchema, NationalIdSchema } from "@/api/modules/identity/user_profile/domain";
 import { EmailSchema } from "@/api/modules/identity/auth/domain";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
-import { formatCedula } from "@/utils/formatters";
+import { sanitizePhone } from "@/utils/formatters";
 
 const router = useRouter();
 const geoStore = useGeoStore();
@@ -77,11 +78,7 @@ const clearFieldError = (field: string) => {
     }
 };
 
-const handleNationalIdInput = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const formatted = formatCedula(target.value);
-    registerStore.nationalId = formatted;
-    target.value = formatted;
+const handleNationalIdInput = () => {
     clearFieldError('nationalId');
 };
 
@@ -168,7 +165,7 @@ const validateStep1 = (): boolean => {
     errors.value = {};
 
     registerStore.nationalId = registerStore.nationalId.trim().toUpperCase();
-    registerStore.phoneNumber = registerStore.phoneNumber.replace(/[\s-]/g, "");
+    registerStore.phoneNumber = sanitizePhone(registerStore.phoneNumber);
 
     const result = AccountStep1Schema.safeParse({
         firstName: registerStore.firstName,
@@ -248,11 +245,10 @@ const handleContinue = () => {
 
             <div class="form-group">
                 <label>Cédula de identidad <span class="required">*</span></label>
-                <input
-                    :value="registerStore.nationalId"
-                    type="text"
+                <NationalIdInput
+                    v-model="registerStore.nationalId"
+                    :has-error="!!errors.nationalId"
                     placeholder="401-241200-1006E"
-                    :class="{ 'input-error': errors.nationalId }"
                     @input="handleNationalIdInput"
                 />
                 <span v-if="errors.nationalId" class="field-error-msg">{{

@@ -14,7 +14,9 @@ import { useAlertStore } from "@/stores/ui";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
-import { formatCedula } from "@/utils/formatters";
+import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
+import TaxIdDisplay from "@/components/common/TaxIdDisplay.vue";
+import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
@@ -282,12 +284,12 @@ onMounted(async () => {
         <div class="info-item">
           <i class="fa-solid fa-phone"></i>
           <span class="label">Teléfono del Negocio</span>
-          <span class="value">{{ providerOrg?.phone_number || "—" }}</span>
+          <span class="value"><PhoneDisplay :value="providerOrg?.phone_number ?? ''" /></span>
         </div>
         <div class="info-item">
           <i class="fa-regular fa-id-card"></i>
           <span class="label">Número RUC</span>
-          <span class="value">{{ providerOrg?.tax_id || "—" }}</span>
+          <span class="value"><TaxIdDisplay :value="providerOrg?.tax_id ?? ''" /></span>
         </div>
         <div class="info-item">
           <i class="fa-solid fa-briefcase"></i>
@@ -320,7 +322,7 @@ onMounted(async () => {
         <div class="info-item">
           <i class="fa-solid fa-phone"></i>
           <span class="label">Teléfono</span>
-          <span class="value">{{ (userProfile as any)?.phone_number || "—" }}</span>
+          <span class="value"><PhoneDisplay :value="(userProfile as any)?.phone_number ?? ''" /></span>
         </div>
         <div class="info-item">
           <i class="fa-solid fa-user"></i>
@@ -330,7 +332,7 @@ onMounted(async () => {
         <div class="info-item">
           <i class="fa-regular fa-id-card"></i>
           <span class="label">Cédula</span>
-          <span class="value">{{ (userProfile as any)?.national_id ? formatCedula((userProfile as any)?.national_id) : "—" }}</span>
+          <span class="value"><NationalIdDisplay :value="(userProfile as any)?.national_id ?? ''" /></span>
         </div>
         <div class="info-item">
           <i class="fa-regular fa-envelope"></i>

@@ -8,7 +8,7 @@ import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
-import { formatCedula } from "@/utils/formatters";
+import NationalIdInput from "@/components/common/NationalIdInput.vue";
 import { NationalIdSchema } from "@/api/modules/identity/user_profile/domain";
 
 const geoStore = useGeoStore();
@@ -103,11 +103,7 @@ async function handleSave() {
   }
 }
 
-function handleNationalIdInput(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const formatted = formatCedula(target.value);
-  formStore.nationalId = formatted;
-  target.value = formatted;
+function handleNationalIdInput() {
   editErrors.value.nationalId = "";
 }
 
@@ -241,12 +237,9 @@ defineExpose({ open, close });
         <label>Cédula</label>
         <div class="input-with-icon">
           <i class="fa-regular fa-id-card"></i>
-          <input
-            :value="formStore.nationalId"
-            type="text"
-            placeholder="001-000000-0000A"
-            maxlength="20"
-            :class="{ 'input-error': editErrors.nationalId }"
+          <NationalIdInput
+            v-model="formStore.nationalId"
+            :has-error="!!editErrors.nationalId"
             @input="handleNationalIdInput"
           />
         </div>

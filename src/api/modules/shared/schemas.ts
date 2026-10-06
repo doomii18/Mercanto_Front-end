@@ -1,14 +1,13 @@
 import { z } from "zod";
+import { sanitizePhone } from "@/utils/formatters";
 
 export const phoneNumberSchema = z
   .string({ message: "El número de teléfono es obligatorio" })
   .trim()
-  .transform((val) => val.replace(/[\s-]/g, ""))
+  .transform((val) => sanitizePhone(val))
   .pipe(
     z
       .string()
-      .min(1, "El número de teléfono no puede estar vacío")
-      .max(20, "El número de teléfono no debe exceder los 20 caracteres")
       .regex(
         /^\+[1-9]\d{6,14}$/,
         "Formato de teléfono inválido. Debe incluir el código de país con '+' (ej. +50587878787)"

@@ -5,11 +5,13 @@ import AddressPickerModal, {
   type AddressPickerResult,
 } from "@/components/common/AddressPickerModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
+import TaxIdInput from "@/components/common/TaxIdInput.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import { useUserContextStore } from "@/stores/auth";
 import { useOrganizationStore } from "@/stores/organization";
 import { useAlertStore } from "@/stores/ui";
 import { phoneNumberSchema } from "@/api/modules/shared/schemas";
+import { sanitizePhone } from "@/utils/formatters";
 import type { ProviderOrganizationPatch } from "@/api";
 
 interface Props {
@@ -40,7 +42,7 @@ const latitude = ref<number | null>(null);
 const longitude = ref<number | null>(null);
 
 // Read-only fields (from store, not editable)
-const taxId = computed(() => contextStore.activeOrganization?.tax_id ?? "—");
+const taxId = computed(() => contextStore.activeOrganization?.tax_id ?? "");
 const kind = computed(() => contextStore.activeOrganization?.kind ?? "—");
 const logoBlobId = computed(
   () => contextStore.activeOrganization?.logo_blob_id ?? null
@@ -113,9 +115,7 @@ const handleSave = async () => {
     const patch: ProviderOrganizationPatch = {
       company_name: companyName.value.trim(),
       company_description: companyDescription.value.trim() || null,
-      phone_number: phoneNumber.value.trim()
-        ? phoneNumber.value.replace(/[\s-]/g, "")
-        : null,
+      phone_number: phoneNumber.value ? sanitizePhone(phoneNumber.value) : null,
     };
 
     if (latitude.value !== null && longitude.value !== null) {
@@ -200,11 +200,10 @@ const handleSave = async () => {
           <label class="edit-field-label">Número RUC</label>
           <div class="edit-input-wrap locked">
             <i class="fa-regular fa-id-card edit-input-icon"></i>
-            <input
-              :value="taxId"
-              type="text"
-              class="edit-input locked-input"
+            <TaxIdInput
+              :model-value="taxId"
               disabled
+              class="edit-input locked-input"
             />
           </div>
         </div>

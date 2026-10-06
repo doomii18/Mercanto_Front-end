@@ -8,7 +8,9 @@ import { useAuthStore } from "@/stores/auth";
 import { useTokenStore } from "@/stores/auth";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
-import { formatCedula } from "@/utils/formatters";
+import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
+import TaxIdDisplay from "@/components/common/TaxIdDisplay.vue";
+import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
 const router = useRouter();
 const accountStore = useAccountRegisterStore();
@@ -73,7 +75,7 @@ const finishRegistration = () => {
         <div class="review-data-list">
           <div class="review-row">
             <span class="label">Número RUC</span>
-            <span class="value">{{ providerStore.taxId || "-" }}</span>
+            <span class="value"><TaxIdDisplay :value="providerStore.taxId" /></span>
           </div>
           <div class="review-row">
             <span class="label">Nombre del Negocio</span>
@@ -85,7 +87,7 @@ const finishRegistration = () => {
           </div>
           <div class="review-row">
             <span class="label">Teléfono del Negocio</span>
-            <span class="value">{{ providerStore.companyPhone || "-" }}</span>
+            <span class="value"><PhoneDisplay :value="providerStore.companyPhone" /></span>
           </div>
           <div class="review-row">
             <span class="label">Dirección</span>
@@ -104,7 +106,7 @@ const finishRegistration = () => {
         <div class="review-data-list">
           <div class="review-row">
             <span class="label">Cédula de Identidad</span>
-            <span class="value">{{ accountStore.nationalId ? formatCedula(accountStore.nationalId) : "-" }}</span>
+            <span class="value"><NationalIdDisplay :value="accountStore.nationalId" /></span>
           </div>
           <div class="review-row">
             <span class="label">Nombre del Propietario</span>
@@ -116,7 +118,7 @@ const finishRegistration = () => {
           </div>
           <div class="review-row">
             <span class="label">Teléfono</span>
-            <span class="value">{{ accountStore.phoneNumber || "-" }}</span>
+            <span class="value"><PhoneDisplay :value="accountStore.phoneNumber" /></span>
           </div>
         </div>
       </div>

@@ -1,24 +1,3 @@
-<script lang="ts">
-export interface CountryOption {
-  code: string;
-  name: string;
-  dialCode: string;
-  flag: string;
-  placeholder: string;
-}
-
-export const CENTRAL_AMERICA_COUNTRIES: CountryOption[] = [
-  { code: "NI", name: "Nicaragua", dialCode: "+505", flag: "🇳🇮", placeholder: "8787 8787" },
-  { code: "CR", name: "Costa Rica", dialCode: "+506", flag: "🇨🇷", placeholder: "8787 8787" },
-  { code: "HN", name: "Honduras", dialCode: "+504", flag: "🇭🇳", placeholder: "9787 8787" },
-  { code: "SV", name: "El Salvador", dialCode: "+503", flag: "🇸🇻", placeholder: "7787 8787" },
-  { code: "GT", name: "Guatemala", dialCode: "+502", flag: "🇬🇹", placeholder: "5787 8787" },
-  { code: "PA", name: "Panamá", dialCode: "+507", flag: "🇵🇦", placeholder: "6787 8787" },
-  { code: "BZ", name: "Belice", dialCode: "+501", flag: "🇧🇿", placeholder: "678 7878" },
-  { code: "US", name: "Estados Unidos", dialCode: "+1", flag: "🇺🇸", placeholder: "202 555 0123" },
-];
-</script>
-
 <script setup lang="ts">
 import { ref, computed, watch, onMounted } from "vue";
 import { useVModel } from "@vueuse/core";
@@ -33,6 +12,8 @@ import {
   SelectItemText,
   SelectItemIndicator,
 } from "reka-ui";
+import { CENTRAL_AMERICA_COUNTRIES } from "@/constants/phoneCountries";
+import { parsePhone, sanitizePhone } from "@/utils/formatters";
 
 const props = withDefaults(
   defineProps<{
@@ -80,44 +61,34 @@ const currentPlaceholder = computed(() => {
   return props.placeholder || activeCountry.value.placeholder;
 });
 
+// Tracks a value whose dial code is not in the known list, so we never corrupt it.
+const unknownNumber = ref<string | null>(null);
+
 // Parse incoming full phone string into country and subscriber digits
 function parseIncomingPhone(fullNumber: string | null | undefined) {
+  unknownNumber.value = null;
+
   if (!fullNumber || !fullNumber.trim()) {
     subscriberNumber.value = "";
     return;
   }
 
-  const clean = fullNumber.trim().replace(/[\s-]/g, "");
+  const clean = sanitizePhone(fullNumber);
+  const parsed = parsePhone(clean);
 
-  // Match the longest dialCode first
-  const sorted = [...CENTRAL_AMERICA_COUNTRIES].sort(
-    (a, b) => b.dialCode.length - a.dialCode.length
-  );
-
-  const matched = sorted.find((c) => clean.startsWith(c.dialCode));
-  if (matched) {
-    selectedCountryCode.value = matched.code;
-    subscriberNumber.value = clean.slice(matched.dialCode.length);
+  if (parsed.country) {
+    selectedCountryCode.value = parsed.country.code;
+    subscriberNumber.value = parsed.subscriber;
   } else if (clean.startsWith("+")) {
-    // Unknown country code with +, keep digits in subscriber or default to NI
-    subscriberNumber.value = clean.replace(/^\+\d{1,4}/, "");
+    // Unknown country code: preserve the whole value untouched until edited.
+    unknownNumber.value = clean;
+    subscriberNumber.value = clean.slice(1);
   } else {
-    // Raw subscriber digits without country prefix
-    subscriberNumber.value = clean;
+    subscriberNumber.value = parsed.subscriber;
   }
 }
 
-// Sync changes to modelValue
-function emitCombinedPhone() {
-  const cleanDigits = subscriberNumber.value.replace(/\D/g, "");
-  if (!cleanDigits) {
-    model.value = "";
-    emit("input", "");
-    emit("change", "");
-    return;
-  }
-
-  const full = `${activeCountry.value.dialCode}${cleanDigits}`;
+function setModel(full: string) {
   if (model.value !== full) {
     model.value = full;
     emit("input", full);
@@ -125,8 +96,31 @@ function emitCombinedPhone() {
   }
 }
 
+// Sync changes to modelValue
+function emitCombinedPhone() {
+  const cleanDigits = subscriberNumber.value.replace(/\D/g, "");
+
+  // Keep an unknown, untouched number as-is.
+  if (
+    unknownNumber.value !== null &&
+    unknownNumber.value.slice(1) === cleanDigits
+  ) {
+    setModel(unknownNumber.value);
+    return;
+  }
+  unknownNumber.value = null;
+
+  if (!cleanDigits) {
+    setModel("");
+    return;
+  }
+
+  setModel(`${activeCountry.value.dialCode}${cleanDigits}`);
+}
+
 function handleCountryChange(newCode: string) {
   selectedCountryCode.value = newCode;
+  unknownNumber.value = null;
   emitCombinedPhone();
 }
 

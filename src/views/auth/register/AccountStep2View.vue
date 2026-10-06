@@ -5,11 +5,12 @@ import { useAccountRegisterStore } from "@/stores/auth";
 import { useAlertStore } from "@/stores/ui";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
+import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
+import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
 import { useAuthStore } from "@/stores/auth";
 import { useTokenStore } from "@/stores/auth";
 import { useToastStore } from "@/stores/ui";
-import { formatCedula } from "@/utils/formatters";
 
 const router = useRouter();
 const registerStore = useAccountRegisterStore();
@@ -88,15 +89,15 @@ const finishRegistration = () => {
                 </div>
                 <div class="review-item">
                     <span class="label">Cédula de Identidad</span>
-                    <span class="value">{{
-                        registerStore.nationalId ? formatCedula(registerStore.nationalId) : "-"
-                    }}</span>
+                    <span class="value">
+                        <NationalIdDisplay :value="registerStore.nationalId" />
+                    </span>
                 </div>
                 <div class="review-item">
                     <span class="label">Teléfono</span>
-                    <span class="value">{{
-                        registerStore.phoneNumber || "-"
-                    }}</span>
+                    <span class="value">
+                        <PhoneDisplay :value="registerStore.phoneNumber" />
+                    </span>
                 </div>
                 <div class="review-item">
                     <span class="label">Correo electrónico</span>
