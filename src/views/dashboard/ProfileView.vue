@@ -17,6 +17,7 @@ import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrgan
 import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
 import TaxIdDisplay from "@/components/common/TaxIdDisplay.vue";
 import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
+import OrganizationVerificationBadge from "@/components/organization/OrganizationVerificationBadge.vue";
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
@@ -53,7 +54,21 @@ const displayBadge = computed(() => (isProvider.value ? "Proveedor" : "Comprador
 const displayBadgeIcon = computed(() => (isProvider.value ? "fa-solid fa-store" : "fa-solid fa-bag-shopping"));
 
 const displayDescription = computed(() => {
-  if (isProvider.value && providerOrg.value) return providerOrg.value.company_description || "Proveedor verificado en Mercanto.";
+  if (isProvider.value && providerOrg.value) {
+    if (providerOrg.value.company_description) {
+      return providerOrg.value.company_description;
+    }
+    if (contextStore.isVerifiedProvider) {
+      return "Proveedor verificado en Mercanto.";
+    }
+    if (contextStore.isPendingVerification) {
+      return "Proveedor en proceso de verificación por administración.";
+    }
+    if (contextStore.isRevokedVerification) {
+      return "Verificación de proveedor suspendida por administración.";
+    }
+    return "Proveedor registrado en Mercanto.";
+  }
   return "Emprendedor en busca de los mejores productos para mi negocio.";
 });
 
@@ -66,8 +81,8 @@ const memberSinceDate = computed(() => {
 
 // Reads the correct avatar blob depending on the user state
 const avatarBlobId = computed<string | null>(() => {
-  if (isProvider.value && providerPublic.value) {
-    return providerPublic.value.logo_blob_id ?? null;
+  if (isProvider.value) {
+    return providerOrg.value?.logo_blob_id ?? providerPublic.value?.logo_blob_id ?? null;
   }
   // Buyer state: reads directly from the global context store
   return contextStore.userProfile?.avatar_blob_id ?? null;
@@ -81,8 +96,9 @@ const municipalityName = computed(() => {
 });
 
 const providerLocationText = computed(() => {
-  if (providerPublic.value?.municipality_id) {
-    const hierarchy = geoStore.resolveLocationHierarchy(providerPublic.value.municipality_id);
+  const munId = providerPublic.value?.municipality_id;
+  if (munId) {
+    const hierarchy = geoStore.resolveLocationHierarchy(munId);
     if (hierarchy?.municipality && hierarchy?.department) {
       return `${hierarchy.municipality.name}, ${hierarchy.department.name}`;
     }
@@ -106,8 +122,17 @@ const loadProfileData = async () => {
     // Fetch provider-specific details if applicable
     if (isProvider.value && contextStore.activeOrganizationId) {
       try {
-        providerOrg.value = await organizationApi.getOrganizationDetails(contextStore.activeOrganizationId);
-        providerPublic.value = await organizationApi.getPublicProvider(contextStore.activeOrganizationId);
+        const details = await organizationApi.getOrganizationDetails(contextStore.activeOrganizationId);
+        providerOrg.value = details;
+
+        // Public provider endpoint (/providers/{id}) returns 404 if status is not 'approved'
+        if (details.status === "approved") {
+          try {
+            providerPublic.value = await organizationApi.getPublicProvider(contextStore.activeOrganizationId);
+          } catch (e) {
+            console.debug("Provider public profile not accessible:", e);
+          }
+        }
       } catch (e) {
         console.warn("Failed to load provider details", e);
       }
@@ -123,12 +148,20 @@ const loadProfileData = async () => {
 const handleProviderSaved = async () => {
   if (contextStore.activeOrganizationId) {
     try {
-      providerOrg.value = await organizationApi.getOrganizationDetails(
+      const details = await organizationApi.getOrganizationDetails(
         contextStore.activeOrganizationId
       );
-      providerPublic.value = await organizationApi.getPublicProvider(
-        contextStore.activeOrganizationId
-      );
+      providerOrg.value = details;
+
+      if (details.status === "approved") {
+        try {
+          providerPublic.value = await organizationApi.getPublicProvider(
+            contextStore.activeOrganizationId
+          );
+        } catch (e) {
+          console.debug("Provider public profile not accessible:", e);
+        }
+      }
     } catch (e) {
       console.warn("Failed to reload provider details", e);
     }
@@ -152,10 +185,15 @@ const handleAvatarSave = async (file: File) => {
       await orgLogoApi.uploadOrganizationLogo(orgId, file);
       // Invalidate cache and reload provider info
       await orgStore.invalidateOrganization(orgId);
-      const [updatedDetails, updatedPublic] = await Promise.all([
-        organizationApi.getOrganizationDetails(orgId),
-        organizationApi.getPublicProvider(orgId),
-      ]);
+      const updatedDetails = await organizationApi.getOrganizationDetails(orgId);
+      let updatedPublic: PublicProviderDto | null = null;
+      if (updatedDetails.status === "approved") {
+        try {
+          updatedPublic = await organizationApi.getPublicProvider(orgId);
+        } catch (e) {
+          console.debug("Provider public profile not accessible:", e);
+        }
+      }
       providerOrg.value = updatedDetails;
       providerPublic.value = updatedPublic;
       contextStore.updateActiveOrganization(updatedDetails);
@@ -197,10 +235,15 @@ const handleAvatarDelete = async () => {
       }
       await orgLogoApi.deleteOrganizationLogo(orgId);
       await orgStore.invalidateOrganization(orgId);
-      const [updatedDetails, updatedPublic] = await Promise.all([
-        organizationApi.getOrganizationDetails(orgId),
-        organizationApi.getPublicProvider(orgId),
-      ]);
+      const updatedDetails = await organizationApi.getOrganizationDetails(orgId);
+      let updatedPublic: PublicProviderDto | null = null;
+      if (updatedDetails.status === "approved") {
+        try {
+          updatedPublic = await organizationApi.getPublicProvider(orgId);
+        } catch (e) {
+          console.debug("Provider public profile not accessible:", e);
+        }
+      }
       providerOrg.value = updatedDetails;
       providerPublic.value = updatedPublic;
       contextStore.updateActiveOrganization(updatedDetails);
@@ -251,9 +294,15 @@ onMounted(async () => {
       <div class="profile-info">
         <div class="profile-header">
           <h2>{{ displayName }}</h2>
-          <span class="badge">
-            <i :class="displayBadgeIcon"></i> {{ displayBadge }}
-          </span>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge">
+              <i :class="displayBadgeIcon"></i> {{ displayBadge }}
+            </span>
+            <OrganizationVerificationBadge
+              v-if="isProvider"
+              :status="contextStore.organizationStatus"
+            />
+          </div>
         </div>
         <p class="description">{{ displayDescription }}</p>
         <div class="contact-meta">
@@ -280,6 +329,13 @@ onMounted(async () => {
           <i class="fa-solid fa-building"></i>
           <span class="label">Nombre del Negocio</span>
           <span class="value">{{ providerOrg?.company_name || "—" }}</span>
+        </div>
+        <div class="info-item">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span class="label">Estado de Verificación</span>
+          <span class="value">
+            <OrganizationVerificationBadge :status="contextStore.organizationStatus" size="sm" />
+          </span>
         </div>
         <div class="info-item">
           <i class="fa-solid fa-phone"></i>

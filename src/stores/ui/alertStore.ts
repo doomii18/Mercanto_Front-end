@@ -55,6 +55,15 @@ export const useAlertStore = defineStore("alert", () => {
     });
   }
 
+  function showWarning(message: string, title = "Advertencia"): string {
+    return spawnAlert({
+      title,
+      message,
+      iconVariant: "orange",
+      icon: "fa-solid fa-triangle-exclamation",
+    });
+  }
+
   function dismiss(id?: string) {
     if (queue.value.length === 0) return;
     if (id) {
@@ -81,6 +90,7 @@ export const useAlertStore = defineStore("alert", () => {
     isOpen,
     spawnAlert,
     showError,
+    showWarning,
     dismiss,
     clearAll,
   };

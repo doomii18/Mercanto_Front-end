@@ -67,7 +67,12 @@ export const dashboardRoutes: RouteRecordRaw[] = [
         path: "products/new",
         name: "provider-add-product",
         component: () => import("@/views/dashboard/ProviderAddProductView.vue"),
-        meta: { requiresAuth: true, requiresProvider: true, userGroup: "provider" },
+        meta: {
+          requiresAuth: true,
+          requiresProvider: true,
+          requiresVerifiedProvider: true,
+          userGroup: "provider"
+        },
       },
       {
         path: "messages",
