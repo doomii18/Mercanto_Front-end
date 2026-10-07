@@ -14,14 +14,17 @@ import { useAlertStore } from "@/stores/ui";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
+import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
 import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
 import TaxIdDisplay from "@/components/common/TaxIdDisplay.vue";
 import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 import OrganizationVerificationBadge from "@/components/organization/OrganizationVerificationBadge.vue";
+import LocationStaticMap from "@/components/common/LocationStaticMap.vue";
 
 const userProfileApi = useUserProfileApi();
 const organizationApi = useOrganizationApi();
 const orgLogoApi = useOrganizationLogoApi();
+const geographyApi = useGeographyApi();
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
@@ -37,6 +40,7 @@ const userProfile = computed(() => contextStore.userProfile);
 
 const providerOrg = ref<OrganizationDetailsDto | null>(null);
 const providerPublic = ref<PublicProviderDto | null>(null);
+const providerMunicipalityId = ref<string | null>(null);
 const isLoading = ref(true);
 
 // UI State
@@ -96,7 +100,7 @@ const municipalityName = computed(() => {
 });
 
 const providerLocationText = computed(() => {
-  const munId = providerPublic.value?.municipality_id;
+  const munId = providerMunicipalityId.value || providerPublic.value?.municipality_id;
   if (munId) {
     const hierarchy = geoStore.resolveLocationHierarchy(munId);
     if (hierarchy?.municipality && hierarchy?.department) {
@@ -106,10 +110,7 @@ const providerLocationText = computed(() => {
       return hierarchy.municipality.name;
     }
   }
-  if (providerOrg.value?.location) {
-    return `${providerOrg.value.location.latitude.toFixed(4)}, ${providerOrg.value.location.longitude.toFixed(4)}`;
-  }
-  return "—";
+  return "Ubicación en el mapa";
 });
 
 // --- Data Loading ---
@@ -131,6 +132,21 @@ const loadProfileData = async () => {
             providerPublic.value = await organizationApi.getPublicProvider(contextStore.activeOrganizationId);
           } catch (e) {
             console.debug("Provider public profile not accessible:", e);
+          }
+        }
+
+        // If providerPublic didn't provide municipality_id, resolve from coordinates
+        if (providerPublic.value?.municipality_id) {
+          providerMunicipalityId.value = providerPublic.value.municipality_id;
+        } else if (details.location?.latitude != null && details.location?.longitude != null) {
+          try {
+            const geoRes = await geographyApi.getMunicipalityByCoordinates({
+              lat: details.location.latitude,
+              lng: details.location.longitude,
+            });
+            providerMunicipalityId.value = geoRes.id;
+          } catch (e) {
+            console.debug("Failed to resolve municipality from coordinates:", e);
           }
         }
       } catch (e) {
@@ -160,6 +176,20 @@ const handleProviderSaved = async () => {
           );
         } catch (e) {
           console.debug("Provider public profile not accessible:", e);
+        }
+      }
+
+      if (providerPublic.value?.municipality_id) {
+        providerMunicipalityId.value = providerPublic.value.municipality_id;
+      } else if (details.location?.latitude != null && details.location?.longitude != null) {
+        try {
+          const geoRes = await geographyApi.getMunicipalityByCoordinates({
+            lat: details.location.latitude,
+            lng: details.location.longitude,
+          });
+          providerMunicipalityId.value = geoRes.id;
+        } catch (e) {
+          console.debug("Failed to resolve municipality from coordinates:", e);
         }
       }
     } catch (e) {
@@ -352,11 +382,20 @@ onMounted(async () => {
           <span class="label">Tipo de Negocio</span>
           <span class="value capitalize">{{ providerOrg?.kind || "—" }}</span>
         </div>
-        <div class="info-item full-width">
+        <div class="info-item">
           <i class="fa-solid fa-location-dot"></i>
           <span class="label">Ubicación</span>
           <span class="value">{{ providerLocationText }}</span>
         </div>
+      </div>
+
+      <!-- Full-Width Interactive Static Map -->
+      <div v-if="providerOrg?.location" class="mt-5 w-full">
+        <LocationStaticMap
+          :coordinates="providerOrg.location"
+          height-class="h-48 sm:h-64"
+          rounded-class="rounded-xl"
+        />
       </div>
     </div>
 
