@@ -13,6 +13,7 @@ import {
   PaginatedProductReviewResponseSchema,
   ProductMetricsDtoSchema,
   ProviderMetricsDtoSchema,
+  ReviewEligibilityDtoSchema,
 } from "./responses";
 import type {
   CreateProviderReview,
@@ -23,6 +24,7 @@ import type {
   PaginatedProductReviewResponse,
   ProductMetricsDto,
   ProviderMetricsDto,
+  ReviewEligibilityDto,
 } from "./types";
 import type { BatchProductQuery, BatchProviderQuery } from "@/api/modules/shared/types";
 
@@ -147,16 +149,66 @@ export const useReviewApi = () => {
     return z.record(z.string().uuid(), ProductMetricsDtoSchema).parse(data.value);
   }
 
+  // GET /reviews/products/{review_id}
+  async function getProductReview(reviewId: string): Promise<ProductReviewResponse> {
+    const { data, error } = await useApiFetch(`/reviews/products/${reviewId}`).get().json();
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Failed to fetch product review ${reviewId}`);
+    }
+    return ProductReviewResponseSchema.parse(data.value);
+  }
+
+  // GET /reviews/providers/{review_id}
+  async function getProviderReview(reviewId: string): Promise<ProviderReviewResponse> {
+    const { data, error } = await useApiFetch(`/reviews/providers/${reviewId}`).get().json();
+    if (error.value || !data.value) {
+      throw error.value || new Error(`Failed to fetch provider review ${reviewId}`);
+    }
+    return ProviderReviewResponseSchema.parse(data.value);
+  }
+
+  // POST /reviews/products/eligibility/batch
+  async function checkProductReviewEligibility(
+    payload: BatchProductQuery
+  ): Promise<Record<string, ReviewEligibilityDto>> {
+    const validated = BatchProductQuerySchema.parse(payload);
+    const { data, error } = await useApiFetch("/reviews/products/eligibility/batch")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to batch check product review eligibility");
+    }
+    return z.record(z.string().uuid(), ReviewEligibilityDtoSchema).parse(data.value);
+  }
+
+  // POST /reviews/providers/eligibility/batch
+  async function checkProviderReviewEligibility(
+    payload: BatchProviderQuery
+  ): Promise<Record<string, ReviewEligibilityDto>> {
+    const validated = BatchProviderQuerySchema.parse(payload);
+    const { data, error } = await useApiFetch("/reviews/providers/eligibility/batch")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to batch check provider review eligibility");
+    }
+    return z.record(z.string().uuid(), ReviewEligibilityDtoSchema).parse(data.value);
+  }
+
   return {
     createProviderReview,
     getProviderReviews,
+    getProviderReview,
     deleteProviderReview,
     getProviderMetrics,
     getProviderMetricsBatch,
+    checkProviderReviewEligibility,
     createProductReview,
     getProductReviews,
+    getProductReview,
     deleteProductReview,
     getProductMetrics,
     getProductMetricsBatch,
+    checkProductReviewEligibility,
   };
 };

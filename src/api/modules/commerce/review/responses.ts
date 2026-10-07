@@ -45,3 +45,11 @@ export const ProviderMetricsDtoSchema = z.object({
   rating_score: z.number(),
   review_count: z.number().int(),
 });
+
+// ReviewEligibilityDto | whether the authenticated buyer may review an item
+export const ReviewEligibilityDtoSchema = z.object({
+  id: z.string().uuid(),
+  review_id: z.string().uuid().nullable(),
+  can_review: z.boolean(),
+  has_open_quote: z.boolean(),
+});

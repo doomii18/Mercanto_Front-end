@@ -16,6 +16,7 @@ export const OrganizationStatusSchema = z.enum([
   "pending",
   "approved",
   "rejected",
+  "revoked",
 ]);
 
 // OrganizationMemberRole | member role within an organization

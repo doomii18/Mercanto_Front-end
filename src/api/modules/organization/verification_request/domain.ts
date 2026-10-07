@@ -10,6 +10,7 @@ export const OrganizationVerificationStatusSchema = z.enum([
   "pending",
   "approved",
   "rejected",
+  "revoked",
 ]);
 
 // VerificationRequestSortField | sort fields for verification requests

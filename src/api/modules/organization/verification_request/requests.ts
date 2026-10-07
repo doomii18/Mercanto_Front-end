@@ -26,6 +26,11 @@ export const RejectVerificationRequestSchema = z.object({
   reviewer_notes: reviewerNotesSchema.nullable().optional(),
 });
 
+// RevokeOrganizationVerificationDto | payload for admin revocation of an approved organization
+export const RevokeOrganizationVerificationSchema = z.object({
+  reviewer_notes: reviewerNotesSchema.nullable().optional(),
+});
+
 // VerificationRequestFilterQueryDto | query params for listing verification requests
 export const VerificationRequestFilterQuerySchema = z.object({
   limit: z.number().int().min(1).max(100).optional(),

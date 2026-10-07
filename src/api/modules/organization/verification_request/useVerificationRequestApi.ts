@@ -4,6 +4,7 @@ import {
   SubmitVerificationRequestSchema,
   ApproveVerificationRequestSchema,
   RejectVerificationRequestSchema,
+  RevokeOrganizationVerificationSchema,
   VerificationRequestFilterQuerySchema,
 } from "./requests";
 import {
@@ -19,6 +20,7 @@ import type {
   SubmitVerificationRequest,
   ApproveVerificationRequest,
   RejectVerificationRequest,
+  RevokeOrganizationVerification,
   VerificationRequestFilterQuery,
 } from "./types";
 
@@ -140,11 +142,27 @@ export const useVerificationRequestApi = () => {
     return PaginatedVerificationRequestResponseSchema.parse(data.value);
   }
 
+  // POST /providers/{organization_id}/verification/revoke
+  // Admin-only: revokes an approved organization's verification and deactivates its products.
+  async function revokeOrganizationVerification(
+    organizationId: string,
+    payload: RevokeOrganizationVerification
+  ): Promise<void> {
+    const validated = RevokeOrganizationVerificationSchema.parse(payload);
+    const { error } = await useApiFetch(
+      `/providers/${organizationId}/verification/revoke`
+    ).post(validated);
+    if (error.value) {
+      throw error.value;
+    }
+  }
+
   return {
     createVerificationRequest,
     submitVerificationRequest,
     approveVerificationRequest,
     rejectVerificationRequest,
+    revokeOrganizationVerification,
     getVerificationRequest,
     getOrganizationVerificationRequests,
     getPendingVerificationRequests,

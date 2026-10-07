@@ -10,6 +10,7 @@ import type {
   PaginatedProductReviewResponseSchema,
   ProductMetricsDtoSchema,
   ProviderMetricsDtoSchema,
+  ReviewEligibilityDtoSchema,
 } from "./responses";
 
 // Request types
@@ -23,3 +24,4 @@ export type PaginatedProviderReviewResponse = z.infer<typeof PaginatedProviderRe
 export type PaginatedProductReviewResponse = z.infer<typeof PaginatedProductReviewResponseSchema>;
 export type ProductMetricsDto = z.infer<typeof ProductMetricsDtoSchema>;
 export type ProviderMetricsDto = z.infer<typeof ProviderMetricsDtoSchema>;
+export type ReviewEligibilityDto = z.infer<typeof ReviewEligibilityDtoSchema>;

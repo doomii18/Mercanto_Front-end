@@ -15,6 +15,7 @@ import type {
   PublicProviderDtoSchema,
   OrganizationDetailsDtoSchema,
   PaginatedOrganizationsResponseSchema,
+  PaginatedOrganizationDetailsResponseSchema,
 } from "./responses";
 
 // Domain types
@@ -33,6 +34,9 @@ export type ProviderOrganizationPatch = z.infer<typeof ProviderOrganizationPatch
 export type PublicProviderDto = z.infer<typeof PublicProviderDtoSchema>;
 export type OrganizationDetailsDto = z.infer<typeof OrganizationDetailsDtoSchema>;
 export type PaginatedOrganizationsResponse = z.infer<typeof PaginatedOrganizationsResponseSchema>;
+export type PaginatedOrganizationDetailsResponse = z.infer<
+  typeof PaginatedOrganizationDetailsResponseSchema
+>;
 
 // Backward-compatible aliases
 export type CreateOrganizationRequest = RegisterProviderRequest;
