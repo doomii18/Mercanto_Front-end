@@ -8,29 +8,16 @@ import { useGeoStore } from "@/stores/geo";
 import { useQuoteBuilderStore, useFavoritesStore, useCategoryStore } from "@/stores/commerce";
 import { useAuthStore } from "@/stores/auth";
 import { useToastStore, useAuthPromptStore } from "@/stores/ui";
-import ProductImage from "@/components/product/ProductImage.vue";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
-import ProductCard from "@/components/product/ProductCard.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
-import ConfirmModal from "@/components/common/ConfirmModal.vue";
-import AddressPickerModal, { type AddressPickerResult } from "@/components/common/AddressPickerModal.vue";
-import type { PaymentMethod, ProductOfferResponse } from "@/api";
-import type { ProductResponse } from "@/api/modules/catalog/product/types";
+import QuoteDraftSection from "@/components/quote/QuoteDraftSection.vue";
+import MockProductColorPicker from "@/components/mock/MockProductColorPicker.vue";
+import MockShippingMethodSelector, { type ShippingMethodOption } from "@/components/mock/MockShippingMethodSelector.vue";
+import RelatedProductsSection from "@/components/product/RelatedProductsSection.vue";
+import type { ProductOfferResponse } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
-
-interface ShippingMethodOption {
-    id: string;
-    name: string;
-    icon: string;
-    cost: number;
-}
-
-interface ProductColor {
-    name: string;
-    hex: string;
-}
 
 interface ProductDetailData {
     id: string;
@@ -53,19 +40,8 @@ interface ProductDetailData {
     imageBlobId?: string | null;
     imageBlobIds?: string[];
     description: string;
-    shippingMethods: ShippingMethodOption[];
+    shippingMethods: string[];
 }
-
-const COLOR_PRESETS: ProductColor[] = [
-    { name: "Café Rústico", hex: "#4a2c11" },
-    { name: "Negro Mate", hex: "#1e293b" },
-    { name: "Miel / Tan", hex: "#c88a4b" },
-    { name: "Azul Marino", hex: "#0f3460" },
-    { name: "Gris Asfalto", hex: "#64748b" },
-    { name: "Verde Oliva", hex: "#4d5b3d" },
-    { name: "Vino", hex: "#6b212f" },
-    { name: "Blanco Hueso", hex: "#f1f5f9" },
-];
 
 const route = useRoute();
 const router = useRouter();
@@ -96,22 +72,6 @@ const selectedShippingMethod = ref("bus");
 const selectedColor = ref<string>("");
 const quantity = ref(1);
 const currentOffer = ref<ProductOfferResponse | null>(null);
-const relatedProducts = ref<ProductResponse[]>([]);
-const isLoadingRelated = ref(false);
-
-function resolveMinOrder(spec: any): number {
-    if (spec && "Physical" in spec && spec.Physical?.min_order_quantity) {
-        return spec.Physical.min_order_quantity;
-    }
-    return 1;
-}
-
-function resolveUnitOfMeasure(spec: any): string | null {
-    if (spec && "Physical" in spec && spec.Physical?.unit_of_measure) {
-        return spec.Physical.unit_of_measure;
-    }
-    return null;
-}
 
 const product = ref<ProductDetailData>({
     id: "",
@@ -135,83 +95,22 @@ const product = ref<ProductDetailData>({
 });
 
 const providerId = computed(() => product.value.provider.id ?? "");
-const currentDraft = computed(() => providerId.value ? quoteBuilderStore.getDraft(providerId.value) : null);
-const draftItems = computed(() => currentDraft.value?.items ?? []);
-const draftSubtotal = computed(() => providerId.value ? quoteBuilderStore.getSubtotal(providerId.value) : 0);
-const draftDiscountedSubtotal = computed(() =>
-    providerId.value ? quoteBuilderStore.getDiscountedSubtotal(providerId.value) : 0
-);
-const draftHasDiscount = computed(() => draftDiscountedSubtotal.value < draftSubtotal.value);
-
-const showConfirmQuoteModal = ref(false);
-const showAddressPicker = ref(false);
-const shippingAddress = ref("");
-const shippingMunicipalityId = ref<string | null>(null);
-const shippingCoordinates = ref<{ lat: number; lng: number } | null>(null);
-const paymentPreference = ref<PaymentMethod>("virtual_wallet");
-
-function hashString(str: string): number {
-    let hash = 5381;
-    for (let i = 0; i < str.length; i++) {
-        hash = (hash * 33) ^ str.charCodeAt(i);
-    }
-    return Math.abs(hash);
-}
-
-const availableColors = computed<ProductColor[]>(() => {
-    if (!product.value.id) return [];
-    const seed = hashString(product.value.id);
-    const hasColorVariants = (seed % 10) < 6;
-    if (!hasColorVariants) return [];
-    const count = 2 + (Math.floor(seed / 10) % 4);
-    const colors: ProductColor[] = [];
-    for (let i = 0; i < count; i++) {
-        const index = (seed + i * 2) % COLOR_PRESETS.length;
-        const candidate = COLOR_PRESETS[index];
-        if (!colors.some((c) => c.name === candidate.name)) {
-            colors.push(candidate);
-        }
-    }
-    return colors;
-});
-
-watch(
-    availableColors,
-    (colors) => {
-        if (colors.length > 0) {
-            if (!selectedColor.value || !colors.some((c) => c.name === selectedColor.value)) {
-                selectedColor.value = colors[0].name;
-            }
-        } else {
-            selectedColor.value = "";
-        }
-    },
-    { immediate: true },
-);
 
 function resolveLocationText(municipalityId?: string): string {
-    if (!municipalityId) return "Managua, Nicaragua";
+    if (!municipalityId) return "";
     const hierarchy = geoStore.resolveLocationHierarchy(municipalityId);
-    if (!hierarchy) return "Managua, Nicaragua";
+    if (!hierarchy) return "";
     return hierarchy.department
         ? `${hierarchy.municipality.name}, ${hierarchy.department.name}`
         : hierarchy.municipality.name;
 }
 
-function resolveShippingMethods(methods?: string[]): ShippingMethodOption[] {
-    const result: ShippingMethodOption[] = [];
-    const hasBus = methods?.includes("bus") ?? true;
-    const hasOwn = methods?.includes("own_delivery") ?? false;
-
-    if (hasBus) {
-        result.push({ id: "bus", name: "Bus Interlocal", icon: "fa-solid fa-bus", cost: 150 });
-    }
-    if (hasOwn) {
-        result.push({ id: "own_delivery", name: "Entrega Propia", icon: "fa-solid fa-truck", cost: 180 });
-    }
-    result.push({ id: "courier", name: "Empresas de paquetería", icon: "fa-solid fa-truck-fast", cost: 200 });
-    return result;
-}
+const selectedShipping = ref<ShippingMethodOption>({
+    id: "bus",
+    name: "Bus Interlocal",
+    icon: "fa-solid fa-bus",
+    cost: 150,
+});
 
 async function loadProduct(id: string) {
     isLoading.value = true;
@@ -224,8 +123,7 @@ async function loadProduct(id: string) {
         if (prodRes) {
             let providerName = "Proveedor aliado";
             let providerInitial = "P";
-            let providerLocation = "Managua, Nicaragua";
-            let providerVerified = false;
+            let providerLocation = "";
             let providerRating = 0;
             let logoBlobId: string | null = null;
 
@@ -238,10 +136,8 @@ async function loadProduct(id: string) {
                 try {
                     const provMetric = await reviewApi.getProviderMetrics(prodRes.provider_id);
                     providerRating = provMetric.rating_score;
-                    providerVerified = (org as any).is_verified ?? provMetric.review_count > 0;
                 } catch {
                     providerRating = org.rating?.average_score || 0;
-                    providerVerified = (org as any).is_verified ?? (org.rating?.review_count ?? 0) > 0;
                 }
             } catch (orgErr) {
                 console.warn("Could not fetch provider metadata:", orgErr);
@@ -257,7 +153,6 @@ async function loadProduct(id: string) {
                 console.warn("Could not fetch product metrics:", metricErr);
             }
 
-            const mappedShipping = resolveShippingMethods(prodRes.shipping_methods);
             let minOrder = 1;
             if ("Physical" in prodRes.spec && prodRes.spec.Physical?.min_order_quantity) {
                 minOrder = prodRes.spec.Physical.min_order_quantity;
@@ -280,20 +175,20 @@ async function loadProduct(id: string) {
                 minOrder,
                 rating: productRating,
                 reviewCount: productReviewCount,
-              providerRating,
+                providerRating,
 
                 provider: {
                     id: prodRes.provider_id,
                     name: providerName,
                     initial: providerInitial,
                     location: providerLocation,
-                    verified: providerVerified,
+                    verified: true,
                     logoBlobId,
                 },
                 imageBlobId: prodRes.image_blob_ids?.[0] ?? null,
                 imageBlobIds: prodRes.image_blob_ids ?? [],
-                description: prodRes.description || "Producto de alta calidad disponible para compra al por mayor.",
-                shippingMethods: mappedShipping,
+                description: prodRes.description || "",
+                shippingMethods: prodRes.shipping_methods ?? [],
             };
 
             try {
@@ -301,51 +196,10 @@ async function loadProduct(id: string) {
             } catch {
                 currentOffer.value = null;
             }
-
-            try {
-                isLoadingRelated.value = true;
-                const promises: Promise<any>[] = [];
-                if (prodRes.category_id) {
-                    promises.push(productApi.getProducts({ category_id: prodRes.category_id, limit: 8 }));
-                }
-                if (prodRes.provider_id) {
-                    promises.push(productApi.getProducts({ provider_id: prodRes.provider_id, limit: 8 }));
-                }
-                const results = await Promise.allSettled(promises);
-                const pool: ProductResponse[] = [];
-                for (const res of results) {
-                    if (res.status === "fulfilled" && res.value?.data) {
-                        for (const item of res.value.data) {
-                            if (item.id !== prodRes.id && !pool.some((p) => p.id === item.id)) {
-                                pool.push(item);
-                            }
-                        }
-                    }
-                }
-                if (pool.length < 4) {
-                    try {
-                        const fallbackRes = await productApi.getProducts({ limit: 8 });
-                        if (fallbackRes?.data) {
-                            for (const item of fallbackRes.data) {
-                                if (item.id !== prodRes.id && !pool.some((p) => p.id === item.id)) {
-                                    pool.push(item);
-                                }
-                            }
-                        }
-                    } catch {}
-                }
-                relatedProducts.value = pool.slice(0, 4);
-            } catch (relatedErr) {
-                console.warn("Could not fetch related products:", relatedErr);
-                relatedProducts.value = [];
-            } finally {
-                isLoadingRelated.value = false;
-            }
         } else {
             currentOffer.value = null;
-            relatedProducts.value = [];
             product.value = {
-              id,
+                id,
                 category_id: "",
                 title: "Producto no encontrado",
                 category: "General",
@@ -354,7 +208,7 @@ async function loadProduct(id: string) {
                 rating: 0,
                 reviewCount: 0,
                 providerRating: 0,
-                provider: { name: "Desconocido", initial: "D", location: "N/A", verified: false },
+                provider: { name: "Desconocido", initial: "D", location: "", verified: false },
                 imageBlobId: null,
                 description: "No se pudo cargar la información del producto.",
                 shippingMethods: [],
@@ -364,9 +218,6 @@ async function loadProduct(id: string) {
         console.error("Critical failure during product loading:", err);
     } finally {
         quantity.value = product.value.minOrder > 0 ? product.value.minOrder : 1;
-        if (product.value.shippingMethods.length > 0) {
-            selectedShippingMethod.value = product.value.shippingMethods[0].id;
-        }
         isLoading.value = false;
     }
 }
@@ -388,16 +239,6 @@ onMounted(() => {
     }
 });
 
-const selectedShipping = computed(() => {
-    if (!product.value.shippingMethods || product.value.shippingMethods.length === 0) {
-        return { id: "bus", name: "Bus Interlocal", icon: "fa-solid fa-bus", cost: 0 };
-    }
-    return (
-        product.value.shippingMethods.find((m) => m.id === selectedShippingMethod.value) ||
-        product.value.shippingMethods[0]
-    );
-});
-
 const hasOffer = computed(() => currentOffer.value !== null);
 const discountPercentage = computed(() => currentOffer.value?.discount_percentage ?? null);
 const discountedUnitPrice = computed(() =>
@@ -415,11 +256,6 @@ const formatPrice = (val: number | null | undefined) => {
     if (val === null || val === undefined || isNaN(val)) return "0";
     return val.toLocaleString("es-NI");
 };
-
-const itemEffectiveUnitPrice = (unitPrice: number, discountPercentage: number | null) =>
-    discountPercentage !== null
-        ? Math.round(unitPrice * (100 - discountPercentage)) / 100
-        : unitPrice;
 
 const increaseQuantity = () => {
     quantity.value += 1;
@@ -474,60 +310,22 @@ const handleAddToQuote = () => {
     });
 };
 
-const openConfirmModal = () => {
-    if (currentDraft.value) {
-        shippingAddress.value = currentDraft.value.shippingAddress || "";
-        paymentPreference.value = currentDraft.value.paymentPreference || "virtual_wallet";
-    }
-    showConfirmQuoteModal.value = true;
-};
-
-const handleAddressConfirm = (result: AddressPickerResult) => {
-    shippingAddress.value = result.address;
-    shippingMunicipalityId.value = result.municipalityId;
-    shippingCoordinates.value = { lat: result.latitude, lng: result.longitude };
-};
-
-const confirmQuote = async () => {
-    if (!providerId.value) return;
-    if (!shippingAddress.value.trim()) {
-        toastStore.addToast({
-            title: "Dirección requerida",
-            message: "Por favor ingresa una dirección de envío.",
-            icon: "fa-solid fa-circle-exclamation",
-            variant: "error",
-        });
-        return;
-    }
-
-    quoteBuilderStore.setShippingAddress(providerId.value, shippingAddress.value.trim());
-    quoteBuilderStore.setPaymentPreference(providerId.value, paymentPreference.value);
-
-    try {
-        await quoteBuilderStore.createQuoteForProvider(providerId.value);
-        toastStore.addToast({
-            title: "¡Pedido creado!",
-            message: "Tu cotización ha sido enviada al proveedor.",
-            icon: "fa-solid fa-circle-check",
-            variant: "success",
-        });
-        showConfirmQuoteModal.value = false;
-        router.push({ name: "orders" });
-    } catch (err: any) {
-        toastStore.addToast({
-            title: "Error al crear pedido",
-            message: err.message || "No se pudo crear el pedido.",
-            icon: "fa-solid fa-circle-exclamation",
-            variant: "error",
-        });
-    }
-};
-
 const navigateToCategory = () => {
     router.push({
         name: "products",
         query: product.value.category_id ? { categoryId: product.value.category_id } : {},
     });
+};
+
+const handleReviewChanged = async () => {
+    if (!product.value.id) return;
+    try {
+        const prodMetric = await reviewApi.getProductMetrics(product.value.id);
+        product.value.rating = prodMetric.rating_score;
+        product.value.reviewCount = prodMetric.review_count;
+    } catch (metricErr) {
+        console.warn("Could not refresh product metrics after review update:", metricErr);
+    }
 };
 </script>
 
@@ -640,35 +438,11 @@ const navigateToCategory = () => {
                             </template>
                         </div>
 
-                        <div v-if="availableColors.length > 0" class="mb-5">
-                            <div class="mb-2 flex items-center gap-2 text-sm">
-                                <span class="font-semibold text-neutral-900">Color:</span>
-                                <span class="text-neutral-500">{{ selectedColor }}</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <button
-                                    v-for="color in availableColors"
-                                    :key="color.name"
-                                    type="button"
-                                    :title="color.name"
-                                    :aria-label="color.name"
-                                    :class="[
-                                        'group relative flex h-7 w-7 items-center justify-center rounded-full transition-all focus:outline-none',
-                                        selectedColor === color.name
-                                            ? 'ring-2 ring-neutral-900 ring-offset-2 scale-110'
-                                            : 'border border-neutral-300 hover:scale-105'
-                                    ]"
-                                    :style="{ backgroundColor: color.hex }"
-                                    @click="selectedColor = color.name"
-                                >
-                                    <i
-                                        v-if="selectedColor === color.name"
-                                        class="fa-solid fa-check text-[10px]"
-                                        :class="color.name.includes('Blanco') ? 'text-neutral-900' : 'text-white'"
-                                    ></i>
-                                </button>
-                            </div>
-                        </div>
+                        <MockProductColorPicker
+                            :seed="product.id"
+                            v-model="selectedColor"
+                            class="mb-5"
+                        />
 
                         <div class="mb-5 flex flex-col gap-2">
                             <p class="text-sm leading-relaxed text-neutral-900">
@@ -677,26 +451,12 @@ const navigateToCategory = () => {
                             </p>
                         </div>
 
-                        <div>
-                            <p class="mb-2 text-sm font-semibold text-neutral-900">Tipo de envío disponible:</p>
-                            <div class="flex flex-wrap gap-3">
-                                <div
-                                    v-for="method in product.shippingMethods"
-                                    :key="method.id"
-                                    :class="[
-                                        'flex cursor-pointer items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors duration-150',
-                                        selectedShippingMethod === method.id
-                                            ? 'bg-teal-500/15 text-teal-600'
-                                            : 'text-neutral-900 hover:bg-neutral-200'
-                                    ]"
-                                    @click="selectedShippingMethod = method.id"
-                                >
-                                    <i :class="method.icon"></i>
-                                    <span>{{ method.name }}</span>
-                                </div>
-                            </div>
-                            <p class="mt-2 text-xs italic text-neutral-500">*Costos de envío estimados, calculados al finalizar la compra.</p>
-                        </div>
+                        <MockShippingMethodSelector
+                            :methods="product.shippingMethods"
+                            :seed="product.id"
+                            v-model="selectedShippingMethod"
+                            @update:selected-method="(m) => selectedShipping = m"
+                        />
                     </div>
                 </section>
 
@@ -846,161 +606,27 @@ const navigateToCategory = () => {
                     </div>
                 </section>
 
-                <!-- Quote Draft Section (Authenticated Only) -->
-                <section v-if="authStore.isAuthenticated && draftItems.length > 0" class="mt-10 rounded-3xl bg-neutral-100 p-8 lg:p-10">
-                    <h3 class="mb-5 font-serif text-xl font-bold text-neutral-900">
-                        Tu cotización con {{ product.provider.name }}
-                    </h3>
-                    <div class="flex flex-col gap-4">
-                        <div v-for="item in draftItems" :key="item.productId" class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm">
-                            <div class="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-neutral-50 flex items-center justify-center border border-neutral-200">
-                                <ProductImage :blob-id="item.imageBlobId" :alt="item.productTitle" />
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <h4 class="font-semibold text-neutral-900 truncate">{{ item.productTitle }}</h4>
-                                <p class="text-sm text-neutral-500">
-                                    {{ item.quantity }} und x
-                                    <span v-if="item.discountPercentage" class="text-neutral-400 line-through">C$ {{ formatPrice(item.unitPrice) }}</span>
-                                    <span :class="item.discountPercentage ? 'font-semibold text-orange-500' : ''">
-                                        C$ {{ formatPrice(itemEffectiveUnitPrice(item.unitPrice, item.discountPercentage)) }}
-                                    </span>
-                                    <span v-if="item.discountPercentage" class="ml-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600">
-                                        -{{ item.discountPercentage }}%
-                                    </span>
-                                </p>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-                                    <button @click="quoteBuilderStore.updateItemQuantity(providerId, item.productId, item.quantity - 1)" class="h-6 w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400">
-                                        <i class="fa-solid fa-minus"></i>
-                                    </button>
-                                    <span class="text-sm font-bold text-teal-600 min-w-[20px] text-center">{{ item.quantity }}</span>
-                                    <button @click="quoteBuilderStore.updateItemQuantity(providerId, item.productId, item.quantity + 1)" class="h-6 w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                </div>
-                                <button @click="quoteBuilderStore.removeItem(providerId, item.productId)" class="text-red-500 hover:text-red-700 p-1" title="Eliminar">
-                                    <i class="fa-solid fa-trash text-sm"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pt-4 border-t border-neutral-300">
-                            <span class="text-lg font-bold text-neutral-900">
-                                Subtotal:
-                                <span v-if="draftHasDiscount" class="text-neutral-400 line-through">C$ {{ formatPrice(draftSubtotal) }}</span>
-                                <span class="text-orange-500">C$ {{ formatPrice(draftHasDiscount ? draftDiscountedSubtotal : draftSubtotal) }}</span>
-                            </span>
-                            <button @click="openConfirmModal" class="w-full sm:w-auto rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-8 py-3 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5">
-                                Hacer oficial el pedido
-                            </button>
-                        </div>
-                    </div>
-                </section>
+                <!-- Quote Draft Section (Self-contained) -->
+                <QuoteDraftSection
+                    v-if="providerId"
+                    :provider-id="providerId"
+                    :provider-name="product.provider.name"
+                />
 
                 <!-- Productos Relacionados -->
-                <section v-if="relatedProducts.length > 0" class="mt-14 mb-8">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
-                        <div>
-                            <div class="flex items-center gap-2">
-                                <span class="h-5 w-1.5 rounded-full bg-orange-500"></span>
-                                <h2 class="text-xl sm:text-2xl font-black text-[#083c5a] tracking-tight">
-                                    Productos Relacionados
-                                </h2>
-                            </div>
-                            <p class="text-xs sm:text-sm text-neutral-500 mt-1">
-                                Artículos similares que también podrían interesarte
-                            </p>
-                        </div>
-                        <router-link
-                            v-if="product.category_id"
-                            :to="{ path: '/products', query: { category_id: product.category_id } }"
-                            class="text-xs sm:text-sm font-bold text-teal-600 hover:text-teal-700 flex items-center gap-1.5 transition-colors group self-start sm:self-auto"
-                        >
-                            Ver más en {{ product.category }}
-                            <i class="fa-solid fa-arrow-right text-[10px] transition-transform duration-200 group-hover:translate-x-1"></i>
-                        </router-link>
-                    </div>
+                <RelatedProductsSection
+                    :category-id="product.category_id"
+                    :category-name="product.category"
+                    :current-product-id="product.id"
+                    :provider-id="product.provider.id"
+                />
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <ProductCard
-                            v-for="relProd in relatedProducts"
-                            :key="relProd.id"
-                            :id="relProd.id"
-                            :title="relProd.title"
-                            :price="Number(relProd.base_price)"
-                            :provider-id="relProd.provider_id"
-                            :category-id="relProd.category_id"
-                            :image-blob-id="relProd.image_blob_ids?.[0] ?? null"
-                            :image-blob-ids="relProd.image_blob_ids ?? []"
-                            :min-order="resolveMinOrder(relProd.spec)"
-                            :unit-of-measure="resolveUnitOfMeasure(relProd.spec)"
-                            :rating="relProd.rating?.average_score ?? 0"
-                            :review-count="relProd.rating?.review_count ?? 0"
-                            :is-active="relProd.is_active"
-                        />
-                    </div>
-                </section>
-
-                <ProductReviewsSection :product-id="product.id" />
+                <ProductReviewsSection
+                    v-if="product.id"
+                    :product-id="product.id"
+                    @review-changed="handleReviewChanged"
+                />
             </template>
         </main>
-
-        <ConfirmModal
-            v-model="showConfirmQuoteModal"
-            title="Confirmar Pedido"
-            description="Revisa los detalles y confirma la dirección de envío para enviar tu cotización al proveedor."
-            confirm-text="Enviar Cotización"
-            cancel-text="Cancelar"
-            icon="fa-solid fa-file-invoice"
-            icon-variant="teal"
-            @confirm="confirmQuote"
-        >
-            <div class="text-left space-y-4 mt-4 text-neutral-900">
-                <div>
-                    <label class="block text-sm font-semibold text-neutral-900 mb-1">
-                        Dirección de envío *
-                    </label>
-                    <div class="flex gap-2">
-                        <input
-                            v-model="shippingAddress"
-                            type="text"
-                            class="w-full p-2.5 bg-white text-neutral-900 placeholder:text-neutral-400 border border-neutral-300 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
-                            placeholder="Escribe tu dirección o usa el mapa"
-                        />
-                        <button
-                            type="button"
-                            class="flex items-center justify-center rounded-lg bg-teal-600 px-4 py-2.5 text-white transition-colors hover:bg-teal-700"
-                            title="Seleccionar en el mapa"
-                            aria-label="Abrir mapa"
-                            @click="showAddressPicker = true"
-                        >
-                            <i class="fa-solid fa-map-location-dot"></i>
-                        </button>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-semibold text-neutral-900 mb-1">
-                        Método de pago preferido
-                    </label>
-                    <select
-                        v-model="paymentPreference"
-                        class="w-full p-2.5 bg-white text-neutral-900 border border-neutral-300 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
-                    >
-                        <option value="virtual_wallet" class="bg-white text-neutral-900">Billetera virtual</option>
-                        <option value="transfer" class="bg-white text-neutral-900">Transferencia bancaria</option>
-                        <option value="card" class="bg-white text-neutral-900">Tarjeta de crédito / débito</option>
-                    </select>
-                </div>
-            </div>
-        </ConfirmModal>
-
-        <AddressPickerModal
-            v-model="showAddressPicker"
-            :initial-address="shippingAddress"
-            :initial-lat="shippingCoordinates?.lat"
-            :initial-lng="shippingCoordinates?.lng"
-            @confirm="handleAddressConfirm"
-        />
     </div>
 </template>
