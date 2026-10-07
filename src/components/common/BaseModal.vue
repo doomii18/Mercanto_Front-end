@@ -85,7 +85,10 @@ onBeforeUnmount(() => {
       >
         <div
           v-bind="$attrs"
-          class="bg-white rounded-2xl p-8 w-full max-w-lg relative shadow-2xl max-h-full overflow-y-auto"
+          :class="[
+            'bg-white rounded-2xl p-5 sm:p-7 md:p-8 w-full relative shadow-2xl max-h-[92vh] overflow-y-auto overflow-x-hidden',
+            typeof $attrs.class === 'string' && $attrs.class.includes('max-w-') ? '' : 'max-w-lg'
+          ]"
         >
           <button
             v-if="showCloseButton"

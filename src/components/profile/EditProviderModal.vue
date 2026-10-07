@@ -41,6 +41,9 @@ const address = ref("");
 const latitude = ref<number | null>(null);
 const longitude = ref<number | null>(null);
 
+const companyNameError = ref("");
+const phoneError = ref("");
+
 // Read-only fields (from store, not editable)
 const taxId = computed(() => contextStore.activeOrganization?.tax_id ?? "");
 const kind = computed(() => contextStore.activeOrganization?.kind ?? "—");
@@ -67,6 +70,8 @@ function hydrateForm() {
   latitude.value = org.location?.latitude ?? null;
   longitude.value = org.location?.longitude ?? null;
   address.value = "";
+  companyNameError.value = "";
+  phoneError.value = "";
 }
 
 watch(
@@ -77,6 +82,8 @@ watch(
 );
 
 const handleClose = () => {
+  companyNameError.value = "";
+  phoneError.value = "";
   emit("update:modelValue", false);
 };
 
@@ -93,7 +100,11 @@ const handleSave = async () => {
     return;
   }
 
+  companyNameError.value = "";
+  phoneError.value = "";
+
   if (!companyName.value.trim()) {
+    companyNameError.value = "El nombre del negocio es requerido.";
     alertStore.showError("El nombre del negocio es requerido.");
     return;
   }
@@ -101,11 +112,10 @@ const handleSave = async () => {
   if (phoneNumber.value.trim()) {
     const parseRes = phoneNumberSchema.safeParse(phoneNumber.value);
     if (!parseRes.success) {
-      alertStore.showError(
+      phoneError.value =
         parseRes.error.issues[0]?.message ||
-          "Formato de teléfono inválido (ej. +50587878787).",
-        "Teléfono inválido"
-      );
+        "Formato de teléfono inválido (ej. +50587878787).";
+      alertStore.showError(phoneError.value, "Teléfono inválido");
       return;
     }
   }
@@ -195,6 +205,24 @@ const handleSave = async () => {
       <div class="modal-divider thin"></div>
 
       <div class="edit-fields-grid">
+        <!-- Company Name -->
+        <div class="edit-field-group">
+          <label class="edit-field-label">Negocio <span class="required">*</span></label>
+          <div :class="['edit-input-wrap', { error: !!companyNameError }]">
+            <i class="fa-solid fa-building edit-input-icon"></i>
+            <input
+              v-model="companyName"
+              type="text"
+              class="edit-input"
+              placeholder="Nombre del negocio"
+              maxlength="100"
+              @input="companyNameError = ''"
+            />
+          </div>
+          <span v-if="companyNameError" class="field-error">{{ companyNameError }}</span>
+          <span v-else class="edit-field-hint">Nombre comercial de tu empresa</span>
+        </div>
+
         <!-- RUC (Disabled) -->
         <div class="edit-field-group">
           <label class="edit-field-label">Número RUC</label>
@@ -206,20 +234,7 @@ const handleSave = async () => {
               class="edit-input locked-input"
             />
           </div>
-        </div>
-
-        <!-- Company Name -->
-        <div class="edit-field-group">
-          <label class="edit-field-label">Negocio <span class="required">*</span></label>
-          <div class="edit-input-wrap">
-            <i class="fa-solid fa-building edit-input-icon"></i>
-            <input
-              v-model="companyName"
-              type="text"
-              class="edit-input"
-              placeholder="Nombre del negocio"
-            />
-          </div>
+          <span class="edit-field-hint">Identificación fiscal registrada</span>
         </div>
 
         <!-- Kind (Disabled) -->
@@ -234,6 +249,7 @@ const handleSave = async () => {
               disabled
             />
           </div>
+          <span class="edit-field-hint">Categoría de actividad comercial</span>
         </div>
 
         <!-- Phone -->
@@ -241,11 +257,14 @@ const handleSave = async () => {
           <label class="edit-field-label">Teléfono</label>
           <PhoneInput
             v-model="phoneNumber"
+            :has-error="!!phoneError"
+            @input="phoneError = ''"
           />
-          <span class="edit-field-hint">Selecciona tu país e ingresa el número local</span>
+          <span v-if="phoneError" class="field-error">{{ phoneError }}</span>
+          <span v-else class="edit-field-hint">Selecciona tu país e ingresa el número local</span>
         </div>
 
-        <!-- Description (NEW) -->
+        <!-- Description -->
         <div class="edit-field-group full-col">
           <label class="edit-field-label">Descripción del Negocio</label>
           <div class="edit-textarea-wrap">
@@ -261,7 +280,7 @@ const handleSave = async () => {
           <span class="char-count">{{ companyDescription.length }}/2000</span>
         </div>
 
-        <!-- Location via Map Picker (NEW) -->
+        <!-- Location via Map Picker -->
         <div class="edit-field-group full-col">
           <label class="edit-field-label">Ubicación</label>
           <div class="edit-input-wrap location-wrap">
@@ -274,9 +293,10 @@ const handleSave = async () => {
                   : '')
               "
               type="text"
-              class="edit-input"
+              class="edit-input cursor-pointer"
               placeholder="Selecciona la ubicación en el mapa..."
               readonly
+              @click="showMapModal = true"
             />
             <button
               type="button"
@@ -287,7 +307,7 @@ const handleSave = async () => {
               @click="showMapModal = true"
             >
               <i class="fa-solid fa-map-location-dot"></i>
-              {{ latitude !== null ? "Cambiar" : "Mapa" }}
+              <span>{{ latitude !== null ? "Cambiar" : "Mapa" }}</span>
             </button>
           </div>
         </div>
@@ -440,14 +460,16 @@ const handleSave = async () => {
 
 .edit-fields-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem 2rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  width: 100%;
 }
 
 .edit-field-group {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
 }
 
 .edit-field-group.full-col {
@@ -455,126 +477,187 @@ const handleSave = async () => {
 }
 
 .edit-field-label {
-  font-size: 0.9rem;
+  display: block;
+  font-size: 0.88rem;
   font-weight: 600;
+  margin-bottom: 0.4rem;
   color: #083c5a;
 }
 
 .required {
-  color: var(--primary-orange);
+  color: var(--primary-orange, #ff6a00);
 }
 
 .edit-input-wrap {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
-  border: 1.5px solid #d0d0d0;
-  border-radius: 10px;
-  padding: 0.65rem 1rem;
+  gap: 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  height: 44px;
+  padding: 0 0.85rem;
   background: #ffffff;
-  transition: border-color 0.2s;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.edit-input-wrap:focus-within {
+.edit-input-wrap:hover:not(.locked) {
+  border-color: #94a3b8;
+}
+
+.edit-input-wrap:focus-within:not(.locked) {
   border-color: #00a896;
+  box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
+}
+
+.edit-input-wrap.error {
+  border-color: #ef4444 !important;
+  background-color: #fffafb;
 }
 
 .edit-input-wrap.locked {
-  background: #eff0f2;
-  border-color: #e0e0e0;
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  cursor: not-allowed;
+}
+
+.edit-input-wrap.locked .edit-input-icon {
+  color: #94a3b8;
 }
 
 .edit-input-wrap.location-wrap {
-  padding-right: 0;
+  padding-right: 4px;
   overflow: hidden;
 }
 
+.location-wrap .edit-input {
+  flex: 1;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+}
+
 .edit-input-icon {
-  color: #083c5a;
-  font-size: 1rem;
-  opacity: 0.8;
+  color: #64748b;
+  font-size: 0.95rem;
   flex-shrink: 0;
+  width: 18px;
+  text-align: center;
 }
 
 .edit-input-icon.textarea-icon {
   align-self: flex-start;
-  margin-top: 0.85rem;
+  margin-top: 0.2rem;
 }
 
-.edit-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  font-size: 0.95rem;
-  color: #083c5a;
+.edit-input,
+.edit-input-wrap :deep(input),
+.edit-input-wrap :deep(.nicaragua-id-input) {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   width: 100%;
+  min-width: 0;
+  height: 100%;
+  font-size: 0.92rem;
+  background: transparent !important;
+  color: #1e293b;
   font-family: inherit;
+  padding: 0;
 }
 
-.edit-input.locked-input {
-  color: #666;
+.edit-input.locked-input,
+.edit-input-wrap.locked :deep(input) {
+  color: #64748b !important;
   cursor: not-allowed;
+}
+
+.field-error {
+  color: #ef4444;
+  font-size: 0.76rem;
+  margin-top: 0.25rem;
+  font-weight: 500;
+  line-height: 1.25;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .edit-field-hint {
   font-size: 0.75rem;
   color: #64748b;
   margin-top: 0.25rem;
+  line-height: 1.25;
   display: block;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .edit-textarea-wrap {
   display: flex;
-  gap: 0.8rem;
-  border: 1.5px solid #d0d0d0;
-  border-radius: 10px;
-  padding: 0.65rem 1rem;
+  gap: 0.6rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
   background: #ffffff;
-  transition: border-color 0.2s;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.edit-textarea-wrap:hover {
+  border-color: #94a3b8;
 }
 
 .edit-textarea-wrap:focus-within {
   border-color: #00a896;
+  box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
 }
 
 .edit-textarea {
   border: none;
   outline: none;
   background: transparent;
-  font-size: 0.95rem;
-  color: #083c5a;
+  font-size: 0.92rem;
+  color: #1e293b;
   width: 100%;
   font-family: inherit;
   resize: vertical;
-  min-height: 70px;
+  min-height: 72px;
+  padding: 0;
 }
 
 .char-count {
   font-size: 0.75rem;
-  color: #aaa;
+  color: #94a3b8;
   text-align: right;
+  margin-top: 0.25rem;
 }
 
 .btn-mapa {
-  background-color: var(--primary-blue);
+  background-color: var(--primary-blue, #023859);
   color: #ffffff;
   border: none;
-  padding: 0.65rem 1.2rem;
+  height: 36px;
+  padding: 0 0.95rem;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  font-size: 0.88rem;
-  transition: background-color 0.2s ease;
+  gap: 0.45rem;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
   white-space: nowrap;
-  border-radius: 0 8px 8px 0;
-  margin: -0.65rem -1rem -0.65rem 0;
-  height: calc(100% + 1.3rem);
 }
 
 .btn-mapa.used {
-  background-color: var(--primary-orange);
+  background-color: var(--primary-orange, #ff6a00);
 }
 
 .btn-mapa:hover {
@@ -586,20 +669,24 @@ const handleSave = async () => {
   justify-content: flex-end;
   align-items: center;
   gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1.5px solid #e6e6e6;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .btn-cancel {
   background: #ff6a00;
   color: #ffffff;
   border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
+  padding: 0.65rem 1.8rem;
+  border-radius: 25px;
   font-weight: 600;
   cursor: pointer;
+  font-size: 0.9rem;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-cancel:hover:not(:disabled) {
@@ -610,13 +697,15 @@ const handleSave = async () => {
   background: #00a896;
   color: #ffffff;
   border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 8px;
+  padding: 0.65rem 1.8rem;
+  border-radius: 25px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.45rem;
+  font-size: 0.9rem;
   transition: opacity 0.2s;
 }
 
@@ -630,9 +719,33 @@ const handleSave = async () => {
   cursor: not-allowed;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .edit-fields-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .edit-photo-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .edit-photo-meta {
+    align-items: center;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+  }
+
+  .btn-cancel,
+  .btn-save {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
   }
 }
 </style>

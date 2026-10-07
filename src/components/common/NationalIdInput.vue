@@ -85,6 +85,11 @@ function handleBlur(event: FocusEvent) {
 </template>
 
 <style scoped>
+.nicaragua-id-input {
+  width: 100%;
+  min-width: 0;
+}
+
 .nicaragua-id-input.is-disabled {
   cursor: not-allowed;
   opacity: 0.75;

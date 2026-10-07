@@ -238,13 +238,14 @@ onMounted(() => {
   display: flex;
   align-items: center;
   width: 100%;
+  min-width: 0;
   height: 44px;
   background-color: #ffffff;
   border: 1px solid var(--border-gray, #cbd5e1);
   border-radius: 8px;
   box-sizing: border-box;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .phone-input-root:hover:not(.is-disabled) {
