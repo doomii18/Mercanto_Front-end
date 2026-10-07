@@ -32,7 +32,7 @@ const { url, isLoading } = useBlobUrl(
 
     <div
       v-else
-      class="flex h-full w-full items-center justify-center text-2xl text-slate-300"
+      class="flex h-full w-full items-center justify-center text-3xl sm:text-4xl text-slate-300"
       aria-hidden="true"
     >
       <i class="fa-solid fa-image"></i>

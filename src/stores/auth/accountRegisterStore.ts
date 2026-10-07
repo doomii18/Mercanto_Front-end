@@ -5,6 +5,7 @@ import { useAuthStore } from "./authStore";
 import { useTokenStore } from "./tokenStore";
 import type { RegisterRequest } from "@/api";
 import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
+import { sanitizeNationalId, sanitizePhone } from "@/utils/formatters";
 
 export const useAccountRegisterStore = defineStore("accountRegister", () => {
   const identityApi = useIdentityApi();
@@ -55,10 +56,8 @@ export const useAccountRegisterStore = defineStore("accountRegister", () => {
         password: rawPassword,
         first_name: firstName.value.trim(),
         last_name: lastName.value.trim(),
-        national_id: nationalId.value.trim() || null,
-        phone_number: phoneNumber.value.trim()
-          ? phoneNumber.value.replace(/[\s-]/g, "")
-          : null,
+        national_id: nationalId.value ? sanitizeNationalId(nationalId.value) : null,
+        phone_number: phoneNumber.value ? sanitizePhone(phoneNumber.value) : null,
         municipality_id: municipalityId.value!,
         interests: interests.value,
       };

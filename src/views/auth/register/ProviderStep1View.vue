@@ -11,6 +11,7 @@ import AddressPickerModal, {
 } from "@/components/common/AddressPickerModal.vue";
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
+import TaxIdInput from "@/components/common/TaxIdInput.vue";
 import {
   companyNameSchema,
   taxIdSchema,
@@ -19,6 +20,7 @@ import {
   addressSchema,
   companyDescriptionSchema,
 } from "@/api/modules/organization/organization/domain";
+import { sanitizePhone } from "@/utils/formatters";
 
 const router = useRouter();
 const providerStore = useProviderRegisterStore();
@@ -91,7 +93,7 @@ const validateStep1 = (): boolean => {
   errors.value = {};
 
   providerStore.taxId = providerStore.taxId.trim().toUpperCase();
-  providerStore.companyPhone = providerStore.companyPhone.replace(/[\s-]/g, "");
+  providerStore.companyPhone = sanitizePhone(providerStore.companyPhone);
 
   const result = ProviderStep1Schema.safeParse({
     taxId: providerStore.taxId,
@@ -137,11 +139,9 @@ const handleContinue = () => {
       <!-- Número RUC -->
       <div class="form-group">
         <label>Número RUC <span class="required">*</span></label>
-        <input
+        <TaxIdInput
           v-model="providerStore.taxId"
-          type="text"
-          placeholder="J0000000000000"
-          :class="{ 'input-error': errors.taxId }"
+          :has-error="!!errors.taxId"
           @input="clearFieldError('taxId')"
         />
         <span v-if="errors.taxId" class="field-error-msg">{{ errors.taxId }}</span>

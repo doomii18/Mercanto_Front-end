@@ -6,7 +6,9 @@ import type { AdminUserItem } from "@/api";
 import { useAuthStore } from "@/stores/auth";
 import { useToastStore } from "@/stores/ui";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
-import { formatCedula } from "@/utils/formatters";
+import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
+import TaxIdDisplay from "@/components/common/TaxIdDisplay.vue";
+import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
 const router = useRouter();
 const identityApi = useIdentityApi();
@@ -44,7 +46,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "María",
     last_name: "López",
     email: "maria@dilopez.com",
-    phone_number: "+505 8899-1122",
+    phone_number: "+50588991122",
     national_id: "001-120590-0023K",
     role: "member",
     business_name: "Distribuidora López S.A.",
@@ -64,7 +66,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "José",
     last_name: "Castillo",
     email: "jose@castillo.com",
-    phone_number: "+505 8744-5566",
+    phone_number: "+50587445566",
     national_id: "001-200388-0014B",
     role: "member",
     business_name: "Comercial Castillo",
@@ -84,7 +86,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Dora",
     last_name: "Cruz",
     email: "dora@delsur.com",
-    phone_number: "+505 8433-2211",
+    phone_number: "+50584332211",
     national_id: "001-150992-0044P",
     role: "member",
     business_name: "Importaciones del Sur",
@@ -104,7 +106,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Fernanda",
     last_name: "Martínez",
     email: "fmartinez@roble.com",
-    phone_number: "+505 8211-9988",
+    phone_number: "+50582119988",
     national_id: "001-300195-0011L",
     role: "member",
     business_name: "Mercantil El Roble S.A.",
@@ -124,7 +126,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Ana",
     last_name: "Ramírez",
     email: "ana@variedades.com",
-    phone_number: "+505 8922-3344",
+    phone_number: "+50589223344",
     national_id: "001-050493-0055T",
     role: "member",
     business_name: "Variedades Ana",
@@ -144,7 +146,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Suministros Miranda",
     last_name: "",
     email: "ventas@miranda.com",
-    phone_number: "+505 8566-7788",
+    phone_number: "+50585667788",
     national_id: "001-180885-0033M",
     role: "member",
     business_name: "Suministros Miranda S.A.",
@@ -164,7 +166,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Tienda Central",
     last_name: "",
     email: "contacto@central.com",
-    phone_number: "+505 8344-9900",
+    phone_number: "+50583449900",
     national_id: "001-220791-0088Z",
     role: "member",
     business_name: "Tienda Central",
@@ -184,7 +186,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Carlos",
     last_name: "Gutiérrez",
     email: "cgutierrez@tecnosol.com",
-    phone_number: "+505 8812-3456",
+    phone_number: "+50588123456",
     national_id: "001-140289-0012A",
     role: "member",
     business_name: "TecnoSoluciones de Nicaragua",
@@ -204,7 +206,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Elena",
     last_name: "Mendoza",
     email: "elena@modasnic.com",
-    phone_number: "+505 8734-1122",
+    phone_number: "+50587341122",
     national_id: "001-090694-0076W",
     role: "member",
     business_name: "Textiles & Confecciones Mendoza",
@@ -224,7 +226,7 @@ const MOCK_USERS: AdminUserListItem[] = [
     first_name: "Roberto",
     last_name: "Alonso",
     email: "roberto@agroimport.com",
-    phone_number: "+505 8955-4433",
+    phone_number: "+50589554433",
     national_id: "001-281186-0045Y",
     role: "member",
     business_name: "Agro Insumos del Pacífico",
@@ -324,7 +326,7 @@ async function fetchUsers(): Promise<void> {
           first_name: acc.first_name || fullName,
           last_name: acc.last_name || "",
           email: acc.email,
-          phone_number: acc.phone_number || "+505 8800-0000",
+          phone_number: acc.phone_number || "+50588000000",
           national_id: acc.national_id || "001-000000-0000A",
           avatar_blob_id: acc.avatar_blob_id,
           role: acc.role,
@@ -830,7 +832,7 @@ onMounted(() => {
 
               <!-- RUC -->
               <td class="px-4 py-4 font-mono font-medium text-slate-600">
-                {{ user.ruc }}
+                <TaxIdDisplay :value="user.ruc" />
               </td>
 
               <!-- Tipo de negocio -->
@@ -1041,7 +1043,7 @@ onMounted(() => {
           <!-- RUC -->
           <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 space-y-1">
             <span class="text-slate-400 block font-medium">RUC</span>
-            <span class="font-mono font-bold text-slate-800">{{ viewedUser.ruc }}</span>
+            <span class="font-mono font-bold text-slate-800"><TaxIdDisplay :value="viewedUser.ruc" /></span>
           </div>
 
           <!-- Tipo de negocio -->
@@ -1053,13 +1055,13 @@ onMounted(() => {
           <!-- Cédula -->
           <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 space-y-1">
             <span class="text-slate-400 block font-medium">Cédula del Representante</span>
-            <span class="font-mono font-semibold text-slate-800">{{ viewedUser.national_id ? formatCedula(viewedUser.national_id) : "—" }}</span>
+            <span class="font-mono font-semibold text-slate-800"><NationalIdDisplay :value="viewedUser.national_id" /></span>
           </div>
 
           <!-- Teléfono -->
           <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-3 space-y-1">
             <span class="text-slate-400 block font-medium">Teléfono de Contacto</span>
-            <span class="font-semibold text-slate-800">{{ viewedUser.phone_number }}</span>
+            <span class="font-semibold text-slate-800"><PhoneDisplay :value="viewedUser.phone_number" /></span>
           </div>
 
           <!-- Estado Verificación -->

@@ -47,14 +47,18 @@ async function fetchStats(): Promise<void> {
     return;
   }
 
-  isLoading.value = true;
-
-  const [productsRes, quotesRes, orgRes, metricsRes] = await Promise.allSettled([
+  const fetches: Promise<any>[] = [
     productApi.getProducts({ provider_id: activeId, limit: 0, offset: 0 }),
     quoteApi.getProviderQuotes(activeId, { limit: 0, offset: 0 }),
-    orgStore.getPublicProvider(activeId),
     reviewApi.getProviderMetrics(activeId),
-  ]);
+  ];
+
+  if (contextStore.isVerifiedProvider) {
+    fetches.push(orgStore.getPublicProvider(activeId));
+  }
+
+  const results = await Promise.allSettled(fetches);
+  const [productsRes, quotesRes, metricsRes] = results;
 
   if (productsRes.status === "fulfilled") {
     productsCount.value = productsRes.value.total ?? 0;
@@ -64,15 +68,17 @@ async function fetchStats(): Promise<void> {
     ordersCount.value = quotesRes.value.total ?? 0;
   }
 
-  if (orgRes.status === "fulfilled") {
-    const prov = orgRes.value;
-    if (metricsRes.status === "fulfilled") {
-      prov.rating = {
+  if (metricsRes.status === "fulfilled") {
+    providerData.value = {
+      id: activeId,
+      company_name: contextStore.activeOrganization?.company_name ?? "",
+      rating: {
         average_score: metricsRes.value.rating_score,
         review_count: metricsRes.value.review_count,
-      };
-    }
-    providerData.value = prov;
+      },
+    } as any;
+  } else if (results[3] && results[3].status === "fulfilled") {
+    providerData.value = results[3].value;
   }
 
   isLoading.value = false;

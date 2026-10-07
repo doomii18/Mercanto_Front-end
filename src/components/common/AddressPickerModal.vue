@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, watch, onMounted } from "vue";
-import { LMap, LTileLayer, LMarker } from "@vue-leaflet/vue-leaflet";
-import "leaflet/dist/leaflet.css";
 import BaseModal from "./BaseModal.vue";
+import LocationMapPicker from "./LocationMapPicker.vue";
 import { GeocodingService, useGeoStore } from "@/stores/geo";
 import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
+import type { GeoPoint } from "@/api/modules/shared/types";
 
 export interface AddressPickerResult {
   latitude: number;
@@ -34,18 +34,11 @@ const emit = defineEmits<{
 
 const geoStore = useGeoStore();
 const geographyApi = useGeographyApi();
+const mapPickerRef = ref<InstanceType<typeof LocationMapPicker> | null>(null);
 
-const DEFAULT_CENTER = [12.1328, -86.2504] as [number, number];
-
-const zoom = ref(13);
-const center = ref<[number, number]>(
+const coordinates = ref<GeoPoint | null>(
   props.initialLat && props.initialLng
-    ? [props.initialLat, props.initialLng]
-    : DEFAULT_CENTER
-);
-const markerPosition = ref<[number, number] | null>(
-  props.initialLat && props.initialLng
-    ? [props.initialLat, props.initialLng]
+    ? { latitude: props.initialLat, longitude: props.initialLng }
     : null
 );
 
@@ -54,8 +47,7 @@ const mapAddressText = ref(props.initialAddress || "Ninguna ubicación seleccion
 const tempAddress = ref(props.initialAddress || "");
 const tempMunicipalityId = ref<string | null>(null);
 
-const updateMarker = async (lat: number, lng: number) => {
-  markerPosition.value = [lat, lng];
+const resolveAddress = async (lat: number, lng: number) => {
   mapAddressText.value = "Obteniendo dirección y municipio...";
 
   try {
@@ -77,36 +69,18 @@ const updateMarker = async (lat: number, lng: number) => {
   }
 };
 
-const handleMapClick = (e: any) => {
-  const { lat, lng } = e.latlng;
-  updateMarker(lat, lng);
+const handleCoordinatesChange = (point: GeoPoint) => {
+  resolveAddress(point.latitude, point.longitude);
 };
 
-const handleMarkerMove = (e: any) => {
-  const { lat, lng } = e.target.getLatLng();
-  updateMarker(lat, lng);
-};
-
-const useCurrentLocation = () => {
-  if (!navigator.geolocation) {
-    alert("Geolocalización no soportada.");
-    return;
-  }
+const useCurrentLocation = async () => {
+  if (!mapPickerRef.value) return;
   isLocating.value = true;
-  navigator.geolocation.getCurrentPosition(
-    (pos) => {
-      const { latitude, longitude } = pos.coords;
-      center.value = [latitude, longitude];
-      zoom.value = 16;
-      updateMarker(latitude, longitude);
-      isLocating.value = false;
-    },
-    () => {
-      alert("Permiso denegado o error al obtener ubicación.");
-      isLocating.value = false;
-    },
-    { enableHighAccuracy: true, timeout: 10000 }
-  );
+  const success = await mapPickerRef.value.requestBrowserLocation();
+  isLocating.value = false;
+  if (!success) {
+    alert("Permiso denegado o error al obtener ubicación.");
+  }
 };
 
 const handleCancel = () => {
@@ -115,10 +89,10 @@ const handleCancel = () => {
 };
 
 const handleConfirm = () => {
-  if (!markerPosition.value || !tempMunicipalityId.value) return;
+  if (!coordinates.value || !tempMunicipalityId.value) return;
   emit("confirm", {
-    latitude: markerPosition.value[0],
-    longitude: markerPosition.value[1],
+    latitude: coordinates.value.latitude,
+    longitude: coordinates.value.longitude,
     address: tempAddress.value,
     municipalityId: tempMunicipalityId.value,
   });
@@ -135,17 +109,18 @@ watch(
   () => props.modelValue,
   (isOpen) => {
     if (isOpen) {
-      const lat = props.initialLat ?? DEFAULT_CENTER[0];
-      const lng = props.initialLng ?? DEFAULT_CENTER[1];
-      center.value = [lat, lng];
-      zoom.value = props.initialLat && props.initialLng ? 15 : 13;
-      markerPosition.value = props.initialLat && props.initialLng ? [lat, lng] : null;
+      if (props.initialLat && props.initialLng) {
+        coordinates.value = {
+          latitude: props.initialLat,
+          longitude: props.initialLng,
+        };
+        resolveAddress(props.initialLat, props.initialLng);
+      } else {
+        coordinates.value = null;
+        tempMunicipalityId.value = null;
+      }
       tempAddress.value = props.initialAddress || "";
       mapAddressText.value = props.initialAddress || "Ninguna ubicación seleccionada";
-      tempMunicipalityId.value = null;
-      if (props.initialLat && props.initialLng) {
-        updateMarker(lat, lng);
-      }
     }
   }
 );
@@ -164,7 +139,7 @@ watch(
 
     <button
       type="button"
-      class="w-full mb-4 rounded-lg p-3 flex items-center justify-center gap-2 bg-teal-500 text-white font-semibold transition-opacity duration-200 disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed"
+      class="w-full mb-4 rounded-lg p-3 flex items-center justify-center gap-2 bg-teal-500 text-white font-semibold transition-opacity duration-200 disabled:bg-neutral-300 disabled:text-neutral-500 disabled:cursor-not-allowed cursor-pointer hover:bg-teal-600"
       :disabled="isLocating"
       @click="useCurrentLocation"
     >
@@ -172,26 +147,15 @@ watch(
       <span>{{ isLocating ? "Obteniendo..." : "Usar mi ubicación actual" }}</span>
     </button>
 
-    <div class="h-80 w-full rounded-lg overflow-hidden border border-neutral-200 mb-4">
-      <l-map
-        v-model:zoom="zoom"
-        :center="center"
-        :use-global-leaflet="false"
-        @click="handleMapClick"
-      >
-        <l-tile-layer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution="&copy; OpenStreetMap"
-          layer-type="base"
-          name="OpenStreetMap"
-        />
-        <l-marker
-          v-if="markerPosition"
-          :lat-lng="markerPosition"
-          draggable
-          @moveend="handleMarkerMove"
-        />
-      </l-map>
+    <div class="mb-4">
+      <LocationMapPicker
+        ref="mapPickerRef"
+        v-model="coordinates"
+        :initial-lat="initialLat"
+        :initial-lng="initialLng"
+        height-class="h-80"
+        @change="handleCoordinatesChange"
+      />
     </div>
 
     <label class="block text-left text-sm font-semibold text-blue-500 mt-2">Dirección detectada:</label>
@@ -220,3 +184,4 @@ watch(
     </template>
   </BaseModal>
 </template>
+

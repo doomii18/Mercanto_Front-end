@@ -4,7 +4,7 @@ import { useUserContextStore } from "./userContextStore";
 import type { UserProfileResponse } from "@/api";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useAvatarApi } from "@/api/modules/identity/avatar/useAvatarApi";
-import { formatCedula } from "@/utils/formatters";
+import { sanitizeNationalId, sanitizePhone } from "@/utils/formatters";
 
 export const useProfileUpdateStore = defineStore("profileUpdate", () => {
   const userProfileApi = useUserProfileApi();
@@ -28,7 +28,7 @@ export const useProfileUpdateStore = defineStore("profileUpdate", () => {
     firstName.value = profile.first_name || "";
     lastName.value = profile.last_name || "";
     phoneNumber.value = internal.phone_number || "";
-    nationalId.value = internal.national_id ? formatCedula(internal.national_id) : "";
+    nationalId.value = internal.national_id || "";
     municipalityId.value = internal.municipality_id || null;
   }
 
@@ -70,10 +70,8 @@ export const useProfileUpdateStore = defineStore("profileUpdate", () => {
       const updatedProfile = await userProfileApi.updateMyProfile({
         first_name: firstName.value.trim(),
         last_name: lastName.value.trim(),
-        phone_number: phoneNumber.value.trim()
-          ? phoneNumber.value.replace(/[\s-]/g, "")
-          : null,
-        national_id: nationalId.value.trim() || null,
+        phone_number: phoneNumber.value ? sanitizePhone(phoneNumber.value) : null,
+        national_id: nationalId.value ? sanitizeNationalId(nationalId.value) : null,
         municipality_id: municipalityId.value || undefined,
       });
 

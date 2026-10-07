@@ -1,6 +1,7 @@
 import type { NavigationGuardWithThis } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useUserContextStore } from "@/stores/auth";
+import { useAlertStore } from "@/stores/ui";
 
 export const guestGuard: NavigationGuardWithThis<undefined> = async () => {
   const authStore = useAuthStore();
@@ -66,6 +67,19 @@ export const authGuard: NavigationGuardWithThis<undefined> = async (to) => {
   // 4. Common user guards: Provider authorization check (prevents buyers from accessing provider panels)
   if (requiresProvider && !contextStore.isProvider) {
     return { name: "dashboard" };
+  }
+
+  // 4b. Verified provider check: Prevents unverified providers from accessing sensitive publish routes
+  const requiresVerifiedProvider = to.matched.some(
+    (record) => record.meta.requiresVerifiedProvider
+  );
+  if (requiresVerifiedProvider && !contextStore.isVerifiedProvider) {
+    const alertStore = useAlertStore();
+    alertStore.showWarning(
+      "Tu empresa debe estar verificada por un administrador para poder publicar productos.",
+      "Acceso Restringido"
+    );
+    return { name: "provider-products" };
   }
 
   // 5. Common user guards: Buyer authorization check (prevents providers/staff from accessing buyer-only sections)

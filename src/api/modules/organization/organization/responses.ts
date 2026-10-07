@@ -44,5 +44,10 @@ export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(
   PublicProviderDtoSchema,
 );
 
+// PaginatedResponseDto<OrganizationDetailsDto> | paginated admin/auditor list of all organizations
+export const PaginatedOrganizationDetailsResponseSchema = PaginatedResponseSchema(
+  OrganizationDetailsDtoSchema,
+);
+
 // Backward-compatible alias
 export const PaginatedOrganizationResponseSchema = PaginatedOrganizationsResponseSchema;

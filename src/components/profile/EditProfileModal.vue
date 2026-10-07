@@ -8,7 +8,7 @@ import { phoneNumberSchema } from "@/api/modules/shared/schemas";
 import BaseModal from "@/components/common/BaseModal.vue";
 import PhoneInput from "@/components/common/PhoneInput.vue";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
-import { formatCedula } from "@/utils/formatters";
+import NationalIdInput from "@/components/common/NationalIdInput.vue";
 import { NationalIdSchema } from "@/api/modules/identity/user_profile/domain";
 
 const geoStore = useGeoStore();
@@ -103,11 +103,7 @@ async function handleSave() {
   }
 }
 
-function handleNationalIdInput(e: Event) {
-  const target = e.target as HTMLInputElement;
-  const formatted = formatCedula(target.value);
-  formStore.nationalId = formatted;
-  target.value = formatted;
+function handleNationalIdInput() {
   editErrors.value.nationalId = "";
 }
 
@@ -225,6 +221,22 @@ defineExpose({ open, close });
       </div>
 
       <div class="edit-form-group">
+        <label>Cédula</label>
+        <div :class="['input-with-icon', { error: !!editErrors.nationalId }]">
+          <i class="fa-regular fa-id-card"></i>
+          <NationalIdInput
+            v-model="formStore.nationalId"
+            :has-error="!!editErrors.nationalId"
+            @input="handleNationalIdInput"
+          />
+        </div>
+        <span v-if="editErrors.nationalId" class="field-error">{{
+          editErrors.nationalId
+        }}</span>
+        <span v-else class="field-hint">Ejemplo: 001-000000-0000A</span>
+      </div>
+
+      <div class="edit-form-group">
         <label>Teléfono</label>
         <PhoneInput
           v-model="formStore.phoneNumber"
@@ -235,24 +247,6 @@ defineExpose({ open, close });
           editErrors.phoneNumber
         }}</span>
         <span v-else class="field-hint">Selecciona tu país e ingresa tu número local</span>
-      </div>
-
-      <div class="edit-form-group">
-        <label>Cédula</label>
-        <div class="input-with-icon">
-          <i class="fa-regular fa-id-card"></i>
-          <input
-            :value="formStore.nationalId"
-            type="text"
-            placeholder="001-000000-0000A"
-            maxlength="20"
-            :class="{ 'input-error': editErrors.nationalId }"
-            @input="handleNationalIdInput"
-          />
-        </div>
-        <span v-if="editErrors.nationalId" class="field-error">{{
-          editErrors.nationalId
-        }}</span>
       </div>
 
       <div class="edit-form-group full-width">
@@ -386,16 +380,20 @@ defineExpose({ open, close });
 /* ── Form Grid ── */
 .edit-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1.25rem;
+  width: 100%;
 }
 
 .edit-form-group {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  width: 100%;
 }
 
-.edit-form-group.full-width {
+.edit-form-group.full-width,
+.full-width {
   grid-column: 1 / -1;
 }
 
@@ -411,31 +409,54 @@ defineExpose({ open, close });
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 0.65rem 0.9rem;
+  height: 44px;
+  padding: 0 0.85rem;
   background: #ffffff;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.input-with-icon:hover {
+  border-color: #94a3b8;
+}
+
+.input-with-icon:focus-within {
+  border-color: #00a896;
+  box-shadow: 0 0 0 3px rgba(0, 168, 150, 0.15);
 }
 
 .input-with-icon.error {
-  border-color: #ef4444;
+  border-color: #ef4444 !important;
+  background-color: #fffafb;
 }
 
 .input-with-icon i {
   color: #64748b; /* Explicit: slate gray for icons */
   font-size: 0.95rem;
   flex-shrink: 0;
+  width: 18px;
+  text-align: center;
 }
 
 .input-with-icon input,
-.input-with-icon select {
-  border: none;
-  outline: none;
+.input-with-icon select,
+.input-with-icon :deep(input),
+.input-with-icon :deep(.nicaragua-id-input) {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
   width: 100%;
+  min-width: 0;
+  height: 100%;
   font-size: 0.92rem;
-  background: transparent;
+  background: transparent !important;
   color: #1e293b; /* Explicit: dark text for inputs */
   font-family: inherit;
+  padding: 0;
 }
 
 .input-with-icon input::placeholder,
@@ -469,23 +490,35 @@ defineExpose({ open, close });
 
 .field-error {
   color: #ef4444; /* Explicit: red for errors */
-  font-size: 0.78rem;
-  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  margin-top: 0.25rem;
   font-weight: 500;
+  line-height: 1.25;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .field-hint {
   color: #64748b;
   font-size: 0.75rem;
-  margin-top: 0.2rem;
+  margin-top: 0.25rem;
+  line-height: 1.25;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 /* ── Actions ── */
 .edit-form-actions {
+  grid-column: 1 / -1;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 1rem;
   margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid #e2e8f0;
 }
 
 .btn-cancel-edit {
@@ -498,6 +531,9 @@ defineExpose({ open, close });
   cursor: pointer;
   font-size: 0.9rem;
   transition: opacity 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-cancel-edit:hover:not(:disabled) {
@@ -512,8 +548,9 @@ defineExpose({ open, close });
   border-radius: 25px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   font-size: 0.9rem;
   transition: opacity 0.2s;
@@ -530,9 +567,34 @@ defineExpose({ open, close });
 }
 
 /* ── Responsive ── */
-@media (max-width: 768px) {
+@media (max-width: 640px) {
   .edit-form-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .edit-photo-section {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .edit-photo-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .edit-form-actions {
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .btn-cancel-edit,
+  .btn-save-edit {
+    width: 100%;
+    padding: 0.75rem 1.5rem;
   }
 }
 </style>

@@ -100,7 +100,7 @@ const handleSave = async () => {
 <template>
   <BaseModal
     :model-value="modelValue"
-    class="max-w-3xl"
+    class="!max-w-4xl w-full !p-4 sm:!p-6 md:!p-8"
     :close-on-backdrop="!isMandatory"
     :close-on-esc="!isMandatory"
     :show-close-button="!isMandatory"
@@ -119,6 +119,18 @@ const handleSave = async () => {
               : "Selecciona las categorías que te interesan para personalizar tus recomendaciones."
           }}
         </p>
+
+        <!-- Selected items counter pill -->
+        <div
+          v-if="selectedInterests.size > 0"
+          class="selected-counter-badge"
+        >
+          <i class="fa-solid fa-check-circle"></i>
+          <span>
+            {{ selectedInterests.size }}
+            {{ selectedInterests.size === 1 ? 'categoría seleccionada' : 'categorías seleccionadas' }}
+          </span>
+        </div>
       </div>
 
       <div v-if="errorMessage" class="error-banner">
@@ -127,11 +139,14 @@ const handleSave = async () => {
       </div>
 
       <div v-if="isLoadingCategories" class="loading-state">
-        <i class="fa-solid fa-spinner fa-spin"></i>
+        <i class="fa-solid fa-spinner fa-spin text-2xl text-[#00a896]"></i>
         <span>Cargando categorías...</span>
       </div>
 
-      <div v-else class="grid max-h-[60vh] grid-cols-2 gap-3.5 overflow-y-auto p-1 sm:grid-cols-3 md:grid-cols-4 sm:gap-4">
+      <div
+        v-else
+        class="grid max-h-[55vh] sm:max-h-[60vh] grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 sm:gap-4 md:gap-4.5 overflow-y-auto p-1 sm:p-2 pr-1.5 sm:pr-2.5 custom-scrollbar"
+      >
         <CategorySelectCard
           v-for="cat in categories"
           :key="cat.id"
@@ -164,6 +179,12 @@ const handleSave = async () => {
         >
           <i v-if="isSaving" class="fa-solid fa-spinner fa-spin"></i>
           <span>{{ isSaving ? "Guardando..." : "Guardar Preferencias" }}</span>
+          <span
+            v-if="!isSaving && selectedInterests.size > 0"
+            class="count-chip"
+          >
+            ({{ selectedInterests.size }})
+          </span>
         </button>
       </div>
     </template>
@@ -172,36 +193,72 @@ const handleSave = async () => {
 
 <style scoped>
 .preferences-modal {
-  padding: 0.5rem;
+  padding: 0.25rem;
 }
 
 .modal-header-content {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 1.25rem;
 }
 
 .icon-badge {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background: #e6f7f5;
   color: var(--light-teal);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem;
-  margin-bottom: 0.75rem;
+  font-size: 1.4rem;
+  margin-bottom: 0.65rem;
+}
+
+@media (min-width: 640px) {
+  .icon-badge {
+    width: 60px;
+    height: 60px;
+    font-size: 1.6rem;
+  }
 }
 
 .modal-header-content h2 {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   color: var(--primary-blue);
   margin-bottom: 0.35rem;
+  font-weight: 700;
+}
+
+@media (min-width: 640px) {
+  .modal-header-content h2 {
+    font-size: 1.65rem;
+  }
 }
 
 .modal-header-content p {
   color: #64748b;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+@media (min-width: 640px) {
+  .modal-header-content p {
+    font-size: 0.95rem;
+  }
+}
+
+.selected-counter-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  background-color: rgba(255, 106, 0, 0.1);
+  color: var(--primary-orange);
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .error-banner {
@@ -228,26 +285,57 @@ const handleSave = async () => {
   font-size: 0.95rem;
 }
 
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
 .modal-actions {
   display: flex;
+  flex-direction: column-reverse;
   justify-content: flex-end;
-  gap: 1rem;
+  gap: 0.75rem;
   width: 100%;
 }
 
+@media (min-width: 640px) {
+  .modal-actions {
+    flex-direction: row;
+    gap: 1rem;
+  }
+}
+
 .btn-cancel {
-  padding: 0.7rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
   border: 1px solid var(--border-gray);
   background-color: #ffffff;
   color: var(--primary-blue);
   font-weight: 600;
   cursor: pointer;
+  transition: all 0.15s ease;
+  min-height: 44px;
+}
+
+.btn-cancel:hover:not(:disabled) {
+  background-color: var(--bg-gray);
 }
 
 .btn-save {
-  padding: 0.7rem 1.5rem;
-  border-radius: 8px;
+  padding: 0.75rem 1.75rem;
+  border-radius: 10px;
   border: none;
   background-color: var(--primary-orange);
   color: #ffffff;
@@ -257,15 +345,28 @@ const handleSave = async () => {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  transition: all 0.15s ease;
+  min-height: 44px;
+}
+
+.btn-save:hover:not(:disabled) {
+  background-color: var(--primary-orange-hover);
+  transform: translateY(-1px);
 }
 
 .btn-save.full-width {
   width: 100%;
 }
 
+.count-chip {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
 .btn-save:disabled,
 .btn-cancel:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 </style>

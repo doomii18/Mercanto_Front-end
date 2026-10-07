@@ -15,6 +15,7 @@ import type {
 } from "@/api";
 
 import BaseFileDropZone from "@/components/common/BaseFileDropZone.vue";
+import OrganizationVerificationBanner from "@/components/organization/OrganizationVerificationBanner.vue";
 
 const router = useRouter();
 const userContext = useUserContextStore();
@@ -107,6 +108,14 @@ function clearFieldError(field: string) {
 async function handlePublishProduct() {
   formErrors.value = {};
 
+  if (!userContext.canPublishProducts) {
+    alertStore.showWarning(
+      "Tu empresa requiere estar verificada por un administrador para poder publicar productos.",
+      "Acceso Restringido"
+    );
+    return;
+  }
+
   if (!activeOrgId.value) {
     alertStore.showError("No se encontró una organización activa para publicar el producto.");
     return;
@@ -194,7 +203,29 @@ onMounted(async () => {
 
       <h1 class="page-title">Agregar nuevo producto</h1>
 
-      <form @submit.prevent="handlePublishProduct" class="form-container">
+      <!-- Roadblock State when unverified -->
+      <div v-if="!userContext.canPublishProducts" class="flex flex-col gap-4 max-w-4xl mx-auto">
+        <OrganizationVerificationBanner />
+        <div class="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center flex flex-col items-center justify-center gap-4 shadow-xs">
+          <div class="h-16 w-16 rounded-full bg-slate-100 flex items-center justify-center text-2xl text-slate-400">
+            <i class="fa-solid fa-lock"></i>
+          </div>
+          <div class="flex flex-col gap-1.5 max-w-md">
+            <h2 class="text-base sm:text-lg font-bold text-[#023859]">Creación de productos restringida</h2>
+            <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+              Para garantizar la seguridad del catálogo mayorista en Mercanto, únicamente las empresas con verificación aprobada por administración pueden publicar nuevos productos.
+            </p>
+          </div>
+          <router-link
+            :to="{ name: 'provider-products' }"
+            class="px-5 py-2.5 bg-[#023859] hover:bg-[#022e49] text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors no-underline shadow-2xs mt-2"
+          >
+            Volver a Mis Productos
+          </router-link>
+        </div>
+      </div>
+
+      <form v-else @submit.prevent="handlePublishProduct" class="form-container">
       <!-- Section 1: General Info -->
       <div class="form-section">
         <div class="grid-row-3">

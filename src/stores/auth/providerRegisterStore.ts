@@ -7,6 +7,7 @@ import { useAccountRegisterStore } from "./accountRegisterStore";
 import { useAuthStore } from "./authStore";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
+import { sanitizePhone, sanitizeTaxId } from "@/utils/formatters";
 
 export const useProviderRegisterStore = defineStore("providerRegister", () => {
   const accountStore = useAccountRegisterStore();
@@ -90,7 +91,7 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
       // Create Organization
       const org = await organizationApi.registerOrganization({
         company_name: companyName.value.trim(),
-        tax_id: taxId.value.trim().toUpperCase(),
+        tax_id: sanitizeTaxId(taxId.value),
         kind: kind.value,
         municipality_id: accountStore.municipalityId,
         address: address.value.trim(),
@@ -98,9 +99,7 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
           latitude: latitude.value,
           longitude: longitude.value,
         },
-        phone_number: companyPhone.value.trim()
-          ? companyPhone.value.replace(/[\s-]/g, "")
-          : undefined,
+        phone_number: companyPhone.value ? sanitizePhone(companyPhone.value) : undefined,
         company_description: companyDescription.value.trim() || undefined,
       });
 

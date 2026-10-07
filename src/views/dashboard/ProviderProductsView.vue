@@ -10,6 +10,7 @@ import type { ProductResponse, ProductCategoryResponse, InventoryResponse } from
 import ProductImage from "@/components/product/ProductImage.vue";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
+import OrganizationVerificationBanner from "@/components/organization/OrganizationVerificationBanner.vue";
 
 const userContext = useUserContextStore();
 const alertStore = useAlertStore();
@@ -272,6 +273,30 @@ watch(activeOrgId, (newId) => {
   }
 });
 
+function handleBlockedAddProduct() {
+  if (userContext.isRevokedVerification) {
+    alertStore.showError(
+      "La verificación de tu organización ha sido suspendida por un administrador. No puedes publicar productos.",
+      "Cuenta Suspendida"
+    );
+  } else if (userContext.isPendingVerification) {
+    alertStore.showWarning(
+      "Tu cuenta está en proceso de revisión por nuestro equipo administrativo. Podrás publicar productos tan pronto sea aprobada.",
+      "Verificación Pendiente"
+    );
+  } else if (userContext.isRejectedVerification) {
+    alertStore.showWarning(
+      "Tu solicitud de verificación fue rechazada. Por favor actualiza la información y documentos de tu negocio.",
+      "Verificación Rechazada"
+    );
+  } else {
+    alertStore.showWarning(
+      "Tu organización debe completar el proceso de verificación para poder publicar productos en el catálogo.",
+      "Verificación Requerida"
+    );
+  }
+}
+
 onMounted(async () => {
   if (!userContext.isInitialized) {
     await userContext.initialize().catch(console.warn);
@@ -283,34 +308,48 @@ onMounted(async () => {
 <template>
   <div class="flex flex-col flex-1 min-h-0 overflow-y-auto w-full p-4 sm:p-6 lg:p-10">
     <div class="flex flex-col gap-4 w-full max-w-7xl mx-auto">
+      <!-- Organization Verification Notice (Shown when not approved) -->
+      <OrganizationVerificationBanner v-if="!userContext.canPublishProducts" />
+
       <!-- Header -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
-      <div>
-        <h1 class="text-xl sm:text-2xl font-bold text-[#023859] tracking-tight">Mis Productos</h1>
-        <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
-          Gestiona los productos disponibles para cotización y venta mayorista en
-          <span class="text-[#00a896] font-semibold">Mercanto</span>.
-        </p>
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-xs">
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold text-[#023859] tracking-tight">Mis Productos</h1>
+          <p class="text-xs sm:text-sm text-slate-600 mt-0.5">
+            Gestiona los productos disponibles para cotización y venta mayorista en
+            <span class="text-[#00a896] font-semibold">Mercanto</span>.
+          </p>
+        </div>
+        <div class="flex items-center gap-2.5 w-full sm:w-auto">
+          <button
+            type="button"
+            :disabled="isExporting"
+            class="flex-1 sm:flex-none justify-center px-3.5 py-2 border border-slate-300 bg-white rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
+            @click="exportCatalogCsv"
+          >
+            <i :class="isExporting ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-download'" class="text-slate-500"></i>
+            <span>{{ isExporting ? "Exportando..." : "Exportar catálogo" }}</span>
+          </button>
+          <router-link
+            v-if="userContext.canPublishProducts"
+            :to="{ name: 'provider-add-product' }"
+            class="flex-1 sm:flex-none justify-center px-4 py-2 bg-[#ff6a00] hover:bg-[#e05e00] rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:-translate-y-0.5 flex items-center gap-2 no-underline shadow-xs cursor-pointer"
+          >
+            <i class="fa-solid fa-plus text-xs"></i>
+            <span>Agregar nuevo producto</span>
+          </router-link>
+          <button
+            v-else
+            type="button"
+            class="flex-1 sm:flex-none justify-center px-4 py-2 bg-slate-100 border border-slate-200 text-slate-500 hover:bg-slate-200 hover:text-slate-700 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 shadow-2xs cursor-pointer"
+            title="Requiere verificación de empresa para publicar productos"
+            @click="handleBlockedAddProduct"
+          >
+            <i class="fa-solid fa-lock text-xs text-slate-400"></i>
+            <span>Agregar nuevo producto</span>
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-2.5 w-full sm:w-auto">
-        <button
-          type="button"
-          :disabled="isExporting"
-          class="flex-1 sm:flex-none justify-center px-3.5 py-2 border border-slate-300 bg-white rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
-          @click="exportCatalogCsv"
-        >
-          <i :class="isExporting ? 'fa-solid fa-spinner fa-spin' : 'fa-solid fa-download'" class="text-slate-500"></i>
-          <span>{{ isExporting ? "Exportando..." : "Exportar catálogo" }}</span>
-        </button>
-        <router-link
-          :to="{ name: 'provider-add-product' }"
-          class="flex-1 sm:flex-none justify-center px-4 py-2 bg-[#ff6a00] hover:bg-[#e05e00] rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:-translate-y-0.5 flex items-center gap-2 no-underline shadow-xs cursor-pointer"
-        >
-          <i class="fa-solid fa-plus text-xs"></i>
-          <span>Agregar nuevo producto</span>
-        </router-link>
-      </div>
-    </div>
 
     <!-- Summary Metric Counters -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -505,8 +544,27 @@ onMounted(async () => {
               </td>
             </tr>
             <tr v-if="products.length === 0">
-              <td colspan="7" class="py-8 text-center text-slate-500 text-sm font-medium">
-                No se encontraron productos registrados en este proveedor.
+              <td colspan="7" class="py-12 px-4 text-center">
+                <div class="flex flex-col items-center justify-center gap-2 max-w-md mx-auto">
+                  <div
+                    class="h-12 w-12 rounded-full flex items-center justify-center"
+                    :class="userContext.canPublishProducts ? 'bg-slate-100 text-slate-400' : 'bg-amber-100 text-amber-600'"
+                  >
+                    <i :class="userContext.canPublishProducts ? 'fa-solid fa-box-open text-xl' : 'fa-solid fa-clock text-xl'"></i>
+                  </div>
+                  <p class="text-sm font-bold text-slate-800">
+                    {{ userContext.canPublishProducts
+                        ? 'No se encontraron productos registrados en este proveedor.'
+                        : 'Catálogo a la espera de verificación'
+                    }}
+                  </p>
+                  <p class="text-xs text-slate-500">
+                    {{ userContext.canPublishProducts
+                        ? 'Comienza agregando tu primer producto para empezar a vender.'
+                        : 'Tu empresa debe ser aprobada por el administrador para poder publicar productos en el catálogo mayorista.'
+                    }}
+                  </p>
+                </div>
               </td>
             </tr>
           </tbody>
@@ -515,7 +573,7 @@ onMounted(async () => {
     </div>
 
     <!-- Grid Mode -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
+    <div v-else-if="products.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3.5">
       <div
         v-for="product in products"
         :key="product.id"
@@ -590,6 +648,26 @@ onMounted(async () => {
           <span class="text-sm font-bold text-[#ff6a00]">{{ formatPrice(product.base_price) }}</span>
         </div>
       </div>
+    </div>
+    <div v-else class="bg-white rounded-2xl border border-slate-200 p-12 text-center flex flex-col items-center justify-center gap-2 shadow-xs">
+      <div
+        class="h-12 w-12 rounded-full flex items-center justify-center"
+        :class="userContext.canPublishProducts ? 'bg-slate-100 text-slate-400' : 'bg-amber-100 text-amber-600'"
+      >
+        <i :class="userContext.canPublishProducts ? 'fa-solid fa-box-open text-xl' : 'fa-solid fa-clock text-xl'"></i>
+      </div>
+      <p class="text-sm font-bold text-slate-800">
+        {{ userContext.canPublishProducts
+            ? 'No se encontraron productos registrados en este proveedor.'
+            : 'Catálogo a la espera de verificación'
+        }}
+      </p>
+      <p class="text-xs text-slate-500 max-w-sm">
+        {{ userContext.canPublishProducts
+            ? 'Comienza agregando tu primer producto para empezar a vender.'
+            : 'Tu empresa debe ser aprobada por el administrador para poder publicar productos en el catálogo mayorista.'
+        }}
+      </p>
     </div>
 
     <!-- Pagination Controls -->

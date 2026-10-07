@@ -1,9 +1,8 @@
 import { z } from "zod";
 export { phoneNumberSchema, addressSchema, GeoPointSchema } from "@/api/modules/shared/schemas";
 
-// RUC validation regexes for Nicaragua
-export const rucRegexStrict = /^([JNE]\d{13}|\d{13}[A-Z])$/;
-export const rucRegexFormatted = /^([JNE]-?\d{13}|\d{3}-?\d{6}-?\d{4}[A-Z])$/i;
+// RUC validation regex for Nicaragua (canonical, no separators)
+export const rucRegexStrict = /^([JNER]\d{13}|\d{13}[A-Z])$/;
 
 // ProviderKind | provider business category
 export const ProviderKindSchema = z.enum(
@@ -17,6 +16,7 @@ export const OrganizationStatusSchema = z.enum([
   "pending",
   "approved",
   "rejected",
+  "revoked",
 ]);
 
 // OrganizationMemberRole | member role within an organization

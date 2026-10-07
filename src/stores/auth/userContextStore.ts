@@ -6,6 +6,12 @@ import { useOrganizationApi } from "@/api/modules/organization/organization/useO
 import { useAuthStore } from "./authStore";
 
 export type UserGroup = "buyer" | "provider";
+export type OrganizationVerificationStatus =
+  | "draft"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "revoked";
 
 export const useUserContextStore = defineStore("userContext", () => {
   const authStore = useAuthStore();
@@ -35,6 +41,19 @@ export const useUserContextStore = defineStore("userContext", () => {
 
   const isProvider = computed(() => userGroup.value === "provider");
   const isBuyer = computed(() => userGroup.value === "buyer");
+
+  // Organization verification statuses
+  const organizationStatus = computed<OrganizationVerificationStatus | null>(() => {
+    if (!isProvider.value || !activeOrganization.value) return null;
+    return (activeOrganization.value.status as OrganizationVerificationStatus) ?? "draft";
+  });
+
+  const isVerifiedProvider = computed(() => organizationStatus.value === "approved");
+  const isPendingVerification = computed(() => organizationStatus.value === "pending");
+  const isRevokedVerification = computed(() => organizationStatus.value === "revoked");
+  const isRejectedVerification = computed(() => organizationStatus.value === "rejected");
+  const isDraftVerification = computed(() => organizationStatus.value === "draft");
+  const canPublishProducts = computed(() => isVerifiedProvider.value);
 
   // Global staff roles (admin/auditor) belong to the account, not the profile
   const accountRole = computed(() => authStore.accountRole);
@@ -128,6 +147,13 @@ export const useUserContextStore = defineStore("userContext", () => {
     userGroup,
     isProvider,
     isBuyer,
+    organizationStatus,
+    isVerifiedProvider,
+    isPendingVerification,
+    isRevokedVerification,
+    isRejectedVerification,
+    isDraftVerification,
+    canPublishProducts,
     accountRole,
     isAdmin,
     isAuditor,

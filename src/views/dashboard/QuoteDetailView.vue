@@ -16,6 +16,7 @@ import QuoteIdBadge from "@/components/quote/QuoteIdBadge.vue";
 import QuoteStatusBadge from "@/components/quote/QuoteStatusBadge.vue";
 import QuoteActionBar from "@/components/quote/QuoteActionBar.vue";
 import DownloadPdfButton from "@/components/invoice/DownloadPdfButton.vue";
+import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
@@ -385,7 +386,7 @@ onMounted(() => {
               {{ quoteAggregate.quote.shipping_address || "Dirección no especificada" }}
             </p>
             <p v-if="buyerPhone" class="text-neutral-500 text-xs font-normal">
-              Tel. {{ buyerPhone }}
+              Tel. <PhoneDisplay :value="buyerPhone" />
             </p>
           </div>
         </div>

@@ -9,11 +9,13 @@ import {
   PublicProviderDtoSchema,
   OrganizationDetailsDtoSchema,
   PaginatedOrganizationsResponseSchema,
+  PaginatedOrganizationDetailsResponseSchema,
 } from "./responses";
 import type {
   PublicProviderDto,
   OrganizationDetailsDto,
   PaginatedOrganizationsResponse,
+  PaginatedOrganizationDetailsResponse,
   RegisterProviderRequest,
   ProviderOrganizationPatch,
   UpdateMemberRoleRequest,
@@ -62,6 +64,49 @@ export const useOrganizationApi = () => {
     }
 
     return PaginatedOrganizationsResponseSchema.parse(data.value);
+  }
+
+  // GET /admin/organizations
+  // Admin/Auditor view: returns organizations in every verification state
+  // (draft, pending, approved, rejected, revoked) unless filtered by status.
+  async function getAllOrganizations(
+    params?: OrganizationFiltersRequest
+  ): Promise<PaginatedOrganizationDetailsResponse> {
+    const queryParams = new URLSearchParams();
+
+    if (params?.limit !== undefined)
+      queryParams.append("limit", params.limit.toString());
+    if (params?.offset !== undefined)
+      queryParams.append("offset", params.offset.toString());
+    if (params?.search_term)
+      queryParams.append("search_term", params.search_term);
+    if (params?.municipality_id)
+      queryParams.append("municipality_id", params.municipality_id);
+    if (params?.min_rating !== undefined)
+      queryParams.append("min_rating", params.min_rating.toString());
+    if (params?.status)
+      queryParams.append("status", params.status);
+    if (params?.kind)
+      queryParams.append("kind", params.kind);
+    if (params?.sort_by)
+      queryParams.append("sort_by", params.sort_by);
+    if (params?.sort_dir)
+      queryParams.append("sort_dir", params.sort_dir);
+    if (params?.lat !== undefined)
+      queryParams.append("lat", params.lat.toString());
+    if (params?.lng !== undefined)
+      queryParams.append("lng", params.lng.toString());
+
+    const queryString = queryParams.toString();
+    const endpoint = `/admin/organizations${queryString ? `?${queryString}` : ""}`;
+
+    const { data, error } = await useApiFetch(endpoint).get().json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to fetch all organizations");
+    }
+
+    return PaginatedOrganizationDetailsResponseSchema.parse(data.value);
   }
 
   // GET /providers/{id}
@@ -173,6 +218,7 @@ export const useOrganizationApi = () => {
 
   return {
     getOrganizations,
+    getAllOrganizations,
     getPublicProvider,
     getOrganizationDetails,
     getMyOrganizations,

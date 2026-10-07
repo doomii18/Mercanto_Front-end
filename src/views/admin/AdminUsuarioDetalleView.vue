@@ -21,7 +21,9 @@ import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
 import { useToastStore } from "@/stores/ui";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
-import { formatCedula } from "@/utils/formatters";
+import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
+import TaxIdDisplay from "@/components/common/TaxIdDisplay.vue";
+import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -40,7 +42,7 @@ const user = ref({
   first_name: "María",
   last_name: "López Velázquez",
   email: "maria@dilopez.com",
-  phone: "+505 8378 5757",
+  phone: "+50583785757",
   national_id: "001-180990-0004A",
   avatar_blob_id: null as string | null,
   role: "Importador",
@@ -54,7 +56,7 @@ const user = ref({
   ruc: "J0310000123456",
   business_type: "Comercio al por mayor",
   business_email: "ventas@dilopez.com",
-  business_phone: "+505 8378 5757",
+  business_phone: "+50583785757",
   description: "Distribución de productos de consumo masivo, bebidas y alimentos.",
   address: "Managua, Nicaragua",
   logo_filename: "logo_negocio.jpg",
@@ -138,7 +140,7 @@ async function loadUserData() {
       user.value.last_name = account.last_name || "López Velázquez";
       user.value.email = account.email;
       user.value.national_id = account.national_id || "001-180990-0004A";
-      user.value.phone = account.phone_number || "+505 8378 5757";
+      user.value.phone = account.phone_number || "+50583785757";
       user.value.avatar_blob_id = account.avatar_blob_id || null;
       user.value.initials = `${user.value.first_name[0] || "U"}${user.value.last_name[0] || "S"}`.toUpperCase();
     }
@@ -312,7 +314,7 @@ onMounted(() => {
         </div>
         <div class="flex items-center gap-2 font-mono">
           <i class="fa-regular fa-id-card text-slate-400 text-xs w-4"></i>
-          <span>{{ user.ruc }}</span>
+          <span><TaxIdDisplay :value="user.ruc" /></span>
         </div>
       </div>
     </div>
@@ -377,7 +379,7 @@ onMounted(() => {
 
                 <div>
                   <span class="text-slate-400 block font-medium">RUC</span>
-                  <p class="font-mono font-bold text-slate-800 text-sm mt-0.5">{{ user.ruc }}</p>
+                  <p class="font-mono font-bold text-slate-800 text-sm mt-0.5"><TaxIdDisplay :value="user.ruc" /></p>
                 </div>
 
                 <div>
@@ -392,7 +394,7 @@ onMounted(() => {
 
                 <div>
                   <span class="text-slate-400 block font-medium">Teléfono del negocio</span>
-                  <p class="font-semibold text-slate-700 mt-0.5">{{ user.business_phone }}</p>
+                  <p class="font-semibold text-slate-700 mt-0.5"><PhoneDisplay :value="user.business_phone" /></p>
                 </div>
 
                 <div>
@@ -457,13 +459,13 @@ onMounted(() => {
                 <div>
                   <span class="text-slate-400 block font-medium">Cédula</span>
                   <p class="font-mono font-bold text-slate-800 text-sm mt-0.5">
-                    {{ formatCedula(user.national_id) }}
+                    <NationalIdDisplay :value="user.national_id" />
                   </p>
                 </div>
 
                 <div>
                   <span class="text-slate-400 block font-medium">Teléfono</span>
-                  <p class="font-semibold text-slate-700 mt-0.5">{{ user.phone }}</p>
+                  <p class="font-semibold text-slate-700 mt-0.5"><PhoneDisplay :value="user.phone" /></p>
                 </div>
               </div>
             </div>
@@ -732,7 +734,7 @@ onMounted(() => {
                 {{ user.business_name }}
               </p>
               <p class="text-[11px] text-slate-400 font-mono">
-                RUC {{ user.ruc }} · Importador
+                RUC <TaxIdDisplay :value="user.ruc" /> · Importador
               </p>
             </div>
           </div>

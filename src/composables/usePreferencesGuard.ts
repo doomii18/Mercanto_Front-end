@@ -1,20 +1,30 @@
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import { useTimeoutFn } from "@vueuse/core";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore, useUserContextStore } from "@/stores/auth";
 import type { UserInterest } from "@/api";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 
 export function usePreferencesGuard(delayMs = 1200) {
   const authStore = useAuthStore();
+  const contextStore = useUserContextStore();
   const showPrompt = ref(false);
   const isChecking = ref(false);
   const currentPreferences = ref<string[]>([]);
   const userProfileApi = useUserProfileApi();
 
+  const isApplicableBuyer = () => {
+    return (
+      authStore.isAuthenticated &&
+      contextStore.isBuyer &&
+      !contextStore.isProvider &&
+      !contextStore.isStaff
+    );
+  };
+
   const { start: triggerDelayedPrompt, stop: cancelDelayedPrompt } = useTimeoutFn(
     () => {
-      // Only show if user is still authenticated and needs preferences
-      if (authStore.isAuthenticated && currentPreferences.value.length === 0) {
+      // Only show if user is authenticated, has buyer context, and needs preferences
+      if (isApplicableBuyer() && currentPreferences.value.length === 0) {
         showPrompt.value = true;
       }
     },
@@ -22,11 +32,33 @@ export function usePreferencesGuard(delayMs = 1200) {
     { immediate: false }
   );
 
+  // Automatically dismiss or cancel prompt if the user changes context or logs out
+  watch(
+    [() => authStore.isAuthenticated, () => contextStore.isBuyer, () => contextStore.isStaff],
+    () => {
+      if (!isApplicableBuyer()) {
+        cancelDelayedPrompt();
+        showPrompt.value = false;
+      }
+    }
+  );
+
   const checkPreferences = async () => {
-    if (!authStore.account || isChecking.value) return;
+    if (!authStore.account || !authStore.isAuthenticated || isChecking.value) return;
 
     isChecking.value = true;
     try {
+      if (!contextStore.isInitialized) {
+        await contextStore.initialize();
+      }
+
+      // Interests prompt should ONLY be shown to users in the buyer context (never providers, admins, or auditors)
+      if (!isApplicableBuyer()) {
+        cancelDelayedPrompt();
+        showPrompt.value = false;
+        return;
+      }
+
       // Call dedicated interests endpoint instead of getMyProfile
       const interests: UserInterest[] = await userProfileApi.getMyInterests();
 

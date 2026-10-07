@@ -8,6 +8,7 @@ import type {
   SubmitVerificationRequestSchema,
   ApproveVerificationRequestSchema,
   RejectVerificationRequestSchema,
+  RevokeOrganizationVerificationSchema,
   VerificationRequestFilterQuerySchema,
 } from "./requests";
 import type {
@@ -26,6 +27,7 @@ export type CreateVerificationRequest = z.infer<typeof CreateVerificationRequest
 export type SubmitVerificationRequest = z.infer<typeof SubmitVerificationRequestSchema>;
 export type ApproveVerificationRequest = z.infer<typeof ApproveVerificationRequestSchema>;
 export type RejectVerificationRequest = z.infer<typeof RejectVerificationRequestSchema>;
+export type RevokeOrganizationVerification = z.infer<typeof RevokeOrganizationVerificationSchema>;
 export type VerificationRequestFilterQuery = z.infer<typeof VerificationRequestFilterQuerySchema>;
 export type VerificationRequestFilterQueryDto = VerificationRequestFilterQuery;
 
