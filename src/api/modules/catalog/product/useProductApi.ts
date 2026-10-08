@@ -53,6 +53,13 @@ export const useProductApi = () => {
     if (params?.search_term) queryParams.append("search_term", params.search_term);
     if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params?.sort_direction) queryParams.append("sort_direction", params.sort_direction);
+    if (params?.spec_filters) {
+      const serialized =
+        typeof params.spec_filters === "string"
+          ? params.spec_filters
+          : JSON.stringify(params.spec_filters);
+      queryParams.append("spec_filters", serialized);
+    }
 
     const queryString = queryParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ""}`;

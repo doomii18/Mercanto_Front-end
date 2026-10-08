@@ -4,17 +4,20 @@ Cliente web Single Page Application (SPA) para la plataforma Mercanto, desarroll
 
 ---
 
-## ⚡ Tecnologías Principales
+## 🛠️ Stack de Tecnologías
 
-* **Framework:** [Vue 3](https://vuejs.org/) (Composition API con `<script setup>`)
-* **Empaquetador & Dev Server:** [Vite](https://vitejs.dev/)
-* **Tipado:** [TypeScript](https://www.typescriptlang.org/) con verificación estricta (`vue-tsc`)
-* **Gestión de Estado:** [Pinia](https://pinia.vuejs.org/)
-* **Enrutamiento:** [Vue Router](https://router.vuejs.org/)
-* **Estilos:** [Tailwind CSS](https://tailwindcss.com/) y componentes de interfaz
-* **Mapas & Geolocalización:** [Leaflet](https://leafletjs.com/) y `@vue-leaflet/vue-leaflet`
-* **Validación de Datos:** [Zod](https://zod.dev/)
-* **Utilidades Reactivas:** [@vueuse/core](https://vueuse.org/)
+| Categoría | Tecnologías | Descripción y Rol |
+| :--- | :--- | :--- |
+| **Framework Base** | **Vue 3** | Composition API reactiva utilizando la sintaxis `<script setup>` |
+| **Herramienta de Compilación** | **Vite** | Dev server ultrarrápido con Hot Module Replacement (HMR) y bundler |
+| **Sistema de Tipos** | **TypeScript** & **vue-tsc** | Tipado estático robusto y verificación en tiempo de desarrollo |
+| **Gestión de Estado** | **Pinia** | Store central reactivo para autenticación, carrito y contexto de usuario |
+| **Enrutamiento** | **Vue Router** | Navegación SPA con guardias de autenticación y roles de usuario |
+| **Estilos & Diseño** | **Tailwind CSS** | Clases de utilidad y sistema de diseño responsive |
+| **Mapas & Geoespacial** | **Leaflet** & `@vue-leaflet` | Visualización interactiva de proveedores y radios de cobertura departamental |
+| **Validación de Esquemas** | **Zod** | Validación y parseo seguro de entradas y respuestas HTTP |
+| **Utilidades Reactivas** | **@vueuse/core** | Colección de utilidades y composables reactivos de Vue |
+| **Runtime & Servidor Web** | **Nginx Alpine** / **Node.js** | Servidor web estático optimizado para producción en contenedor OCI |
 
 ---
 
