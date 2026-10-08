@@ -39,6 +39,8 @@ const emit = defineEmits<{
   (e: "blur", ev: FocusEvent): void;
   (e: "input", value: string): void;
   (e: "change", value: string): void;
+  (e: "invalid-character", message: string): void;
+  (e: "warning", message: string): void;
 }>();
 
 const model = useVModel(props, "modelValue", emit, {
@@ -124,10 +126,96 @@ function handleCountryChange(newCode: string) {
   emitCombinedPhone();
 }
 
+const showWarning = ref(false);
+let warningTimeout: ReturnType<typeof setTimeout> | null = null;
+
+function triggerNonNumericWarning() {
+  showWarning.value = true;
+  emit("invalid-character", "Este campo es solo para números.");
+  emit("warning", "Este campo es solo para números.");
+
+  if (warningTimeout) clearTimeout(warningTimeout);
+  warningTimeout = setTimeout(() => {
+    showWarning.value = false;
+  }, 3000);
+}
+
+function clearNonNumericWarning() {
+  if (showWarning.value) {
+    showWarning.value = false;
+    if (warningTimeout) clearTimeout(warningTimeout);
+  }
+}
+
+function handleKeyDown(e: KeyboardEvent) {
+  // Allow control / navigation keys
+  if (
+    e.key === "Backspace" ||
+    e.key === "Delete" ||
+    e.key === "Tab" ||
+    e.key === "Escape" ||
+    e.key === "Enter" ||
+    e.key === "ArrowLeft" ||
+    e.key === "ArrowRight" ||
+    e.key === "ArrowUp" ||
+    e.key === "ArrowDown" ||
+    e.key === "Home" ||
+    e.key === "End" ||
+    e.ctrlKey ||
+    e.metaKey ||
+    e.altKey
+  ) {
+    return;
+  }
+
+  // Any single printable character (letters, spaces, symbols)
+  if (e.key.length === 1) {
+    if (!/^\d$/.test(e.key)) {
+      e.preventDefault();
+      triggerNonNumericWarning();
+    } else {
+      clearNonNumericWarning();
+    }
+  }
+}
+
+function handleBeforeInput(e: InputEvent) {
+  if (e.data && /\D/.test(e.data)) {
+    e.preventDefault();
+    triggerNonNumericWarning();
+  }
+}
+
+function handlePaste(e: ClipboardEvent) {
+  const pasteData = e.clipboardData?.getData("text") || "";
+  if (/\D/.test(pasteData)) {
+    e.preventDefault();
+    const digitsOnly = pasteData.replace(/\D/g, "");
+    triggerNonNumericWarning();
+    if (!digitsOnly) return;
+
+    const target = e.target as HTMLInputElement;
+    const start = target.selectionStart ?? target.value.length;
+    const end = target.selectionEnd ?? target.value.length;
+    const nextVal = (target.value.slice(0, start) + digitsOnly + target.value.slice(end)).slice(0, 15);
+    target.value = nextVal;
+    subscriberNumber.value = nextVal;
+    emitCombinedPhone();
+  }
+}
+
 function handleSubscriberInput(ev: Event) {
   const target = ev.target as HTMLInputElement;
-  // Allow user to type numbers, dashes, spaces
-  subscriberNumber.value = target.value;
+  const raw = target.value;
+  const cleanDigits = raw.replace(/\D/g, "");
+  if (raw !== cleanDigits) {
+    target.value = cleanDigits;
+    subscriberNumber.value = cleanDigits;
+    triggerNonNumericWarning();
+  } else {
+    subscriberNumber.value = cleanDigits;
+    clearNonNumericWarning();
+  }
   emitCombinedPhone();
 }
 
@@ -157,83 +245,103 @@ onMounted(() => {
 </script>
 
 <template>
-  <div
-    class="phone-input-root"
-    :class="{
-      'is-focused': isFocused,
-      'has-error': hasError,
-      'is-disabled': disabled,
-    }"
-  >
-    <!-- Country Selector (Reka UI Select) -->
-    <SelectRoot
-      :model-value="selectedCountryCode"
-      :disabled="disabled"
-      @update:model-value="handleCountryChange"
+  <div class="phone-input-container">
+    <div
+      class="phone-input-root"
+      :class="{
+        'is-focused': isFocused,
+        'has-error': hasError || showWarning,
+        'has-warning': showWarning,
+        'is-disabled': disabled,
+      }"
     >
-      <SelectTrigger
-        class="country-select-trigger"
-        aria-label="Seleccionar código de país"
+      <!-- Country Selector (Reka UI Select) -->
+      <SelectRoot
+        :model-value="selectedCountryCode"
+        :disabled="disabled"
+        @update:model-value="handleCountryChange"
       >
-        <span class="country-flag">{{ activeCountry.flag }}</span>
-        <span class="country-dial-code">{{ activeCountry.dialCode }}</span>
-        <SelectIcon class="country-select-icon">
-          <i class="fa-solid fa-chevron-down"></i>
-        </SelectIcon>
-      </SelectTrigger>
-
-      <SelectPortal>
-        <SelectContent
-          position="popper"
-          :side-offset="6"
-          align="start"
-          class="country-dropdown-content z-[99999] min-w-[240px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-2xl opacity-100"
-          style="background-color: #ffffff !important; opacity: 1 !important;"
+        <SelectTrigger
+          class="country-select-trigger"
+          aria-label="Seleccionar código de país"
         >
-          <SelectViewport class="country-dropdown-viewport max-h-[280px] p-1 space-y-0.5 bg-white">
-            <SelectItem
-              v-for="country in CENTRAL_AMERICA_COUNTRIES"
-              :key="country.code"
-              :value="country.code"
-              class="country-select-item relative flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-slate-700 outline-none hover:bg-slate-100 data-[highlighted]:bg-[#00a896]/10 data-[highlighted]:text-[#023859] data-[state=checked]:bg-[#00a896]/10 data-[state=checked]:text-[#00a896]"
-            >
-              <div class="country-item-left flex items-center gap-2">
-                <span class="item-flag text-base leading-none">{{ country.flag }}</span>
-                <SelectItemText class="item-name text-xs font-medium text-slate-800">{{ country.name }}</SelectItemText>
-              </div>
-              <div class="country-item-right flex items-center gap-2 ml-4">
-                <span class="item-dial text-xs font-semibold text-slate-500">{{ country.dialCode }}</span>
-                <SelectItemIndicator class="item-indicator text-[#00a896]">
-                  <i class="fa-solid fa-check text-xs"></i>
-                </SelectItemIndicator>
-              </div>
-            </SelectItem>
-          </SelectViewport>
-        </SelectContent>
-      </SelectPortal>
-    </SelectRoot>
+          <span class="country-flag">{{ activeCountry.flag }}</span>
+          <span class="country-dial-code">{{ activeCountry.dialCode }}</span>
+          <SelectIcon class="country-select-icon">
+            <i class="fa-solid fa-chevron-down"></i>
+          </SelectIcon>
+        </SelectTrigger>
 
-    <div class="phone-divider"></div>
+        <SelectPortal>
+          <SelectContent
+            position="popper"
+            :side-offset="6"
+            align="start"
+            class="country-dropdown-content z-[99999] min-w-[240px] overflow-hidden rounded-xl border border-slate-200 bg-white p-1 text-sm shadow-2xl opacity-100"
+            style="background-color: #ffffff !important; opacity: 1 !important;"
+          >
+            <SelectViewport class="country-dropdown-viewport max-h-[280px] p-1 space-y-0.5 bg-white">
+              <SelectItem
+                v-for="country in CENTRAL_AMERICA_COUNTRIES"
+                :key="country.code"
+                :value="country.code"
+                class="country-select-item relative flex cursor-pointer select-none items-center justify-between rounded-lg px-3 py-2 text-xs font-medium text-slate-700 outline-none hover:bg-slate-100 data-[highlighted]:bg-[#00a896]/10 data-[highlighted]:text-[#023859] data-[state=checked]:bg-[#00a896]/10 data-[state=checked]:text-[#00a896]"
+              >
+                <div class="country-item-left flex items-center gap-2">
+                  <span class="item-flag text-base leading-none">{{ country.flag }}</span>
+                  <SelectItemText class="item-name text-xs font-medium text-slate-800">{{ country.name }}</SelectItemText>
+                </div>
+                <div class="country-item-right flex items-center gap-2 ml-4">
+                  <span class="item-dial text-xs font-semibold text-slate-500">{{ country.dialCode }}</span>
+                  <SelectItemIndicator class="item-indicator text-[#00a896]">
+                    <i class="fa-solid fa-check text-xs"></i>
+                  </SelectItemIndicator>
+                </div>
+              </SelectItem>
+            </SelectViewport>
+          </SelectContent>
+        </SelectPortal>
+      </SelectRoot>
 
-    <!-- Subscriber Number Input -->
-    <input
-      :id="id"
-      :name="name"
-      type="tel"
-      inputmode="numeric"
-      maxlength="15"
-      class="subscriber-input"
-      :placeholder="currentPlaceholder"
-      :disabled="disabled"
-      :value="subscriberNumber"
-      @input="handleSubscriberInput"
-      @focus="handleFocus"
-      @blur="handleBlur"
-    />
+      <div class="phone-divider"></div>
+
+      <!-- Subscriber Number Input -->
+      <input
+        :id="id"
+        :name="name"
+        type="tel"
+        inputmode="numeric"
+        maxlength="15"
+        class="subscriber-input"
+        :placeholder="currentPlaceholder"
+        :disabled="disabled"
+        :value="subscriberNumber"
+        @keydown="handleKeyDown"
+        @beforeinput="handleBeforeInput"
+        @paste="handlePaste"
+        @input="handleSubscriberInput"
+        @focus="handleFocus"
+        @blur="handleBlur"
+      />
+    </div>
+
+    <!-- Fallback warning message if not handled by parent field-error -->
+    <transition name="phone-warning-fade">
+      <p v-if="showWarning && !hasError" class="phone-warning-text">
+        <i class="fa-solid fa-circle-exclamation mr-1"></i>
+        Este campo es solo para números.
+      </p>
+    </transition>
   </div>
 </template>
 
 <style scoped>
+.phone-input-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .phone-input-root {
   display: flex;
   align-items: center;
@@ -260,6 +368,39 @@ onMounted(() => {
 .phone-input-root.has-error {
   border-color: #ef4444 !important;
   background-color: #fffafb;
+}
+
+.phone-input-root.has-warning {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+  animation: phone-shake 0.35s ease;
+}
+
+@keyframes phone-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+
+.phone-warning-text {
+  color: #ef4444;
+  font-size: 0.76rem;
+  margin-top: 0.3rem;
+  font-weight: 500;
+  line-height: 1.25;
+  display: flex;
+  align-items: center;
+}
+
+.phone-warning-fade-enter-active,
+.phone-warning-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.phone-warning-fade-enter-from,
+.phone-warning-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 .phone-input-root.is-disabled {

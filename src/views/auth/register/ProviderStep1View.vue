@@ -187,6 +187,7 @@ const handleContinue = () => {
           v-model="providerStore.companyPhone"
           :has-error="!!errors.companyPhone"
           @input="clearFieldError('companyPhone')"
+          @invalid-character="errors.companyPhone = $event"
         />
         <span v-if="errors.companyPhone" class="field-error-msg">{{ errors.companyPhone }}</span>
         <span v-else class="field-hint">Selecciona tu país e ingresa el número local</span>
