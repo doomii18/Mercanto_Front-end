@@ -146,7 +146,7 @@ const confirmQuote = async () => {
       <div class="flex flex-col gap-4">
         <div
           v-for="item in draftItems"
-          :key="item.productId"
+          :key="`${item.productId}-${item.shippingPreference}`"
           class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm"
         >
           <div
@@ -161,7 +161,18 @@ const confirmQuote = async () => {
             <h4 class="font-semibold text-neutral-900 truncate">
               {{ item.productTitle }}
             </h4>
-            <p class="text-sm text-neutral-500">
+            <div class="flex items-center gap-2 mt-0.5">
+              <span
+                class="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700"
+              >
+                <i
+                  :class="item.shippingPreference === 'own_delivery' ? 'fa-solid fa-truck' : 'fa-solid fa-bus'"
+                  class="text-[0.65rem] text-teal-600"
+                ></i>
+                {{ item.shippingPreference === 'own_delivery' ? 'Entrega Propia' : 'Bus Interlocal' }}
+              </span>
+            </div>
+            <p class="text-sm text-neutral-500 mt-0.5">
               {{ item.quantity }} und x
               <span
                 v-if="item.discountPercentage"
@@ -201,7 +212,8 @@ const confirmQuote = async () => {
                   quoteBuilderStore.updateItemQuantity(
                     providerId,
                     item.productId,
-                    item.quantity - 1
+                    item.quantity - 1,
+                    item.shippingPreference
                   )
                 "
               >
@@ -219,7 +231,8 @@ const confirmQuote = async () => {
                   quoteBuilderStore.updateItemQuantity(
                     providerId,
                     item.productId,
-                    item.quantity + 1
+                    item.quantity + 1,
+                    item.shippingPreference
                   )
                 "
               >
@@ -230,7 +243,7 @@ const confirmQuote = async () => {
               type="button"
               class="text-red-500 hover:text-red-700 p-1 cursor-pointer"
               title="Eliminar"
-              @click="quoteBuilderStore.removeItem(providerId, item.productId)"
+              @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference)"
             >
               <i class="fa-solid fa-trash text-sm"></i>
             </button>

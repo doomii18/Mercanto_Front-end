@@ -53,6 +53,13 @@ export const useProductApi = () => {
     if (params?.search_term) queryParams.append("search_term", params.search_term);
     if (params?.sort_by) queryParams.append("sort_by", params.sort_by);
     if (params?.sort_direction) queryParams.append("sort_direction", params.sort_direction);
+    if (params?.spec_filters) {
+      const serialized =
+        typeof params.spec_filters === "string"
+          ? params.spec_filters
+          : JSON.stringify(params.spec_filters);
+      queryParams.append("spec_filters", serialized);
+    }
 
     const queryString = queryParams.toString();
     const endpoint = `/products${queryString ? `?${queryString}` : ""}`;
@@ -83,15 +90,17 @@ export const useProductApi = () => {
 
   // GET /products/{id}
   async function getProduct(id: string): Promise<ProductResponse> {
-    const [prodResult, imageBlobIds] = await Promise.all([
+    const [prodResult, imageBlobIds, shippingMethods] = await Promise.all([
       useApiFetch(`/products/${id}`).get().json(),
       productImageApi.getProductImages(id).catch(() => []),
+      getProductShipping(id).catch(() => [] as ShippingMethod[]),
     ]);
     if (prodResult.error.value || !prodResult.data.value) {
       throw prodResult.error.value || new Error(`Failed to fetch product ${id}`);
     }
     const product = ProductResponseSchema.parse(prodResult.data.value);
     product.image_blob_ids = imageBlobIds;
+    product.shipping_methods = shippingMethods;
     return product;
   }
 

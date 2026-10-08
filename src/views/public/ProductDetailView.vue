@@ -15,7 +15,7 @@ import QuoteDraftSection from "@/components/quote/QuoteDraftSection.vue";
 import MockProductColorPicker from "@/components/mock/MockProductColorPicker.vue";
 import MockShippingMethodSelector, { type ShippingMethodOption } from "@/components/mock/MockShippingMethodSelector.vue";
 import RelatedProductsSection from "@/components/product/RelatedProductsSection.vue";
-import type { ProductOfferResponse } from "@/api";
+import type { ProductOfferResponse, ShippingMethod } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -115,8 +115,9 @@ const selectedShipping = ref<ShippingMethodOption>({
 async function loadProduct(id: string) {
     isLoading.value = true;
     try {
-        const [prodRes] = await Promise.all([
+        const [prodRes, shippingRes] = await Promise.all([
             productApi.getProduct(id).catch(() => null),
+            productApi.getProductShipping(id).catch(() => [] as ShippingMethod[]),
             geoStore.initialize().catch(() => {}),
         ]);
 
@@ -166,6 +167,12 @@ async function loadProduct(id: string) {
                 categoryName = categoryStore.getCategoryName(categoryId, categoryName);
             }
 
+            const availableShipping = (shippingRes && shippingRes.length > 0)
+                ? shippingRes
+                : (prodRes.shipping_methods && prodRes.shipping_methods.length > 0)
+                    ? prodRes.shipping_methods
+                    : [];
+
             product.value = {
                 id: prodRes.id,
                 title: prodRes.title,
@@ -188,8 +195,14 @@ async function loadProduct(id: string) {
                 imageBlobId: prodRes.image_blob_ids?.[0] ?? null,
                 imageBlobIds: prodRes.image_blob_ids ?? [],
                 description: prodRes.description || "",
-                shippingMethods: prodRes.shipping_methods ?? [],
+                shippingMethods: availableShipping,
             };
+
+            if (availableShipping.length > 0) {
+                if (!availableShipping.includes(selectedShippingMethod.value as ShippingMethod)) {
+                    selectedShippingMethod.value = availableShipping[0];
+                }
+            }
 
             try {
                 currentOffer.value = await offerApi.getOfferByProduct(prodRes.id);
@@ -289,12 +302,17 @@ const handleAddToQuote = () => {
     }
     if (!product.value.id || !providerId.value) return;
 
+    const chosenShipping = (selectedShippingMethod.value as ShippingMethod) ||
+        (product.value.shippingMethods[0] as ShippingMethod) ||
+        "bus";
+
     quoteBuilderStore.addItem(providerId.value, {
         productId: product.value.id,
         productTitle: product.value.title,
         unitPrice: product.value.price,
         imageBlobId: product.value.imageBlobId,
         quantity: quantity.value,
+        shippingPreference: chosenShipping,
         offerId: currentOffer.value?.id ?? null,
         discountPercentage: discountPercentage.value,
     }, {
@@ -561,7 +579,7 @@ const handleReviewChanged = async () => {
                             <hr class="my-1 border-t border-neutral-300" />
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Tipo de envío:</span>
-                                <span class="font-medium text-neutral-900">{{ selectedShipping.name }}</span>
+                                <span class="font-medium text-neutral-900">{{ selectedShipping?.name || 'Por definir' }}</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Subtotal:</span>

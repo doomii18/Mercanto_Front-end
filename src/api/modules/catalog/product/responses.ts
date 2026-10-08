@@ -3,6 +3,7 @@ import {
   UnitOfMeasureSchema,
   ShippingMethodSchema,
   ProductSpecSchema,
+  ProductSpecOptionsSchema,
   CategorySummarySchema,
   RatingSummarySchema,
 } from "./domain";
@@ -18,6 +19,7 @@ export const ProductResponseSchema = z.object({
   base_price: z.coerce.number(),
   unit_of_measure: UnitOfMeasureSchema,
   spec: ProductSpecSchema,
+  spec_options: ProductSpecOptionsSchema.default({}),
   is_active: z.boolean(),
   updated_at: z.iso.datetime(),
   // Optional enriched fields for frontend UI convenience

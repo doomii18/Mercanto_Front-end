@@ -97,3 +97,15 @@ export const ProductSpecUpdateSchema = z.union([
   z.object({ Physical: PhysicalSpecUpdateSchema }),
   z.object({ Service: ServiceSpecUpdateSchema }),
 ]);
+
+// ProductSpecOptions | Record<string, string[]>: semi-structured specification options
+export const ProductSpecOptionsSchema = z.record(
+  z.string(),
+  z.array(z.string())
+);
+
+// ProductSpecFilters | Record<string, string[]>: specification query filter criteria
+export const ProductSpecFiltersSchema = z.record(
+  z.string(),
+  z.array(z.string())
+);
