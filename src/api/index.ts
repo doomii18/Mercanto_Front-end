@@ -38,3 +38,7 @@ export * from "./modules/wallet/deposit/types.d";
 export * from "./modules/wallet/withdrawal/types.d";
 export * from "./modules/wallet/platform_bank_account/types.d";
 export * from "./modules/wallet/voucher/types.d";
+
+// Analytics
+export * from "./modules/analytics/types.d";
+export * from "./modules/analytics/useAnalyticsApi";

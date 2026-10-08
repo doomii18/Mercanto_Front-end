@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   Chart as ChartJS,
   BarElement,
@@ -10,10 +10,11 @@ import {
   type ChartData,
 } from "chart.js";
 import { Bar } from "vue-chartjs";
+import { useAnalyticsApi } from "@/api/modules/analytics/useAnalyticsApi";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip);
 
-export interface BankRechargeItem {
+export interface BankRechargeItemUI {
   bank: string;
   amount: string;
   value: number;
@@ -23,36 +24,60 @@ export interface BankRechargeItem {
 const props = withDefaults(
   defineProps<{
     period?: string;
+    startDate?: string;
+    endDate?: string;
   }>(),
   {
     period: "Este mes",
   }
 );
 
-// Self-contained mock data (ready for future API fetching)
-const bankData = ref<BankRechargeItem[]>([
-  { bank: "BDF",     amount: "C$2.3M", value: 100, color: "#023859" },
-  { bank: "BAC",     amount: "C$1.8M", value:  78, color: "#00a896" },
-  { bank: "Bangro",  amount: "C$900K", value:  39, color: "#f97316" },
-  { bank: "LAFISE",  amount: "C$720K", value:  31, color: "#3b82f6" },
-  { bank: "Ficohsa", amount: "C$540K", value:  23, color: "#a855f7" },
-]);
+const analyticsApi = useAnalyticsApi();
+const isLoading = ref(false);
+const hasError = ref(false);
+const bankData = ref<BankRechargeItemUI[]>([]);
 
-const chartData = computed<ChartData<"bar">>(() => ({
-  labels: bankData.value.map((b) => b.bank),
-  datasets: [
-    {
-      data: bankData.value.map((b) => b.value),
-      backgroundColor: bankData.value.map((b) => b.color),
-      borderRadius: {
-        topLeft: 6,
-        topRight: 6,
+const PALETTE = ["#023859", "#00a896", "#f97316", "#3b82f6", "#a855f7", "#64748b"];
+
+function formatCompactCurrency(val: number): string {
+  if (val >= 1_000_000) {
+    return `C$${(val / 1_000_000).toFixed(1)}M`;
+  }
+  if (val >= 1_000) {
+    return `C$${(val / 1_000).toFixed(0)}K`;
+  }
+  return `C$${val.toFixed(0)}`;
+}
+
+const chartData = computed<ChartData<"bar">>(() => {
+  if (bankData.value.length === 0) {
+    return {
+      labels: ["Sin datos"],
+      datasets: [
+        {
+          data: [0],
+          backgroundColor: ["#e2e8f0"],
+        },
+      ],
+    };
+  }
+
+  return {
+    labels: bankData.value.map((b) => b.bank),
+    datasets: [
+      {
+        data: bankData.value.map((b) => b.value),
+        backgroundColor: bankData.value.map((b) => b.color),
+        borderRadius: {
+          topLeft: 6,
+          topRight: 6,
+        },
+        borderSkipped: false,
+        maxBarThickness: 42,
       },
-      borderSkipped: false,
-      maxBarThickness: 42,
-    },
-  ],
-}));
+    ],
+  };
+});
 
 const chartOptions = computed<ChartOptions<"bar">>(() => ({
   responsive: true,
@@ -62,6 +87,7 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
       display: false,
     },
     tooltip: {
+      enabled: bankData.value.length > 0,
       backgroundColor: "#023859",
       padding: 8,
       titleFont: { size: 11, weight: "bold" },
@@ -69,7 +95,7 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
       callbacks: {
         label: (context) => {
           const item = bankData.value[context.dataIndex];
-          return ` Monto: ${item.amount}`;
+          return item ? ` Monto: ${item.amount}` : "";
         },
       },
     },
@@ -93,10 +119,37 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
     y: {
       display: false,
       beginAtZero: true,
-      suggestedMax: 110,
     },
   },
 }));
+
+async function loadBankRecharges() {
+  isLoading.value = true;
+  hasError.value = false;
+  try {
+    const data = await analyticsApi.getBankRecharges({
+      start_time: props.startDate,
+      end_time: props.endDate,
+    });
+
+    bankData.value = data.banks.map((b, idx) => ({
+      bank: b.bank_name || "N/A",
+      amount: formatCompactCurrency(b.total_amount),
+      value: b.total_amount,
+      color: PALETTE[idx % PALETTE.length],
+    }));
+  } catch (err) {
+    console.error("Failed to load bank recharges:", err);
+    hasError.value = true;
+    bankData.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadBankRecharges();
+});
 </script>
 
 <template>
@@ -106,20 +159,35 @@ const chartOptions = computed<ChartOptions<"bar">>(() => ({
       <span class="text-[11px] font-semibold text-slate-400">{{ props.period }}</span>
     </div>
 
-    <!-- Amount Badges on Top of Columns -->
-    <div class="grid grid-cols-5 gap-2 text-center pt-2">
-      <span
-        v-for="b in bankData"
-        :key="b.bank"
-        class="text-[10px] font-bold text-slate-600 truncate"
-      >
-        {{ b.amount }}
-      </span>
+    <!-- Loading Skeleton -->
+    <div v-if="isLoading" class="h-40 flex items-end gap-2 p-2 animate-pulse">
+      <div v-for="i in 5" :key="i" class="flex-1 bg-slate-100 rounded-t-md" :style="{ height: `${20 + i * 15}%` }"></div>
     </div>
 
-    <!-- Real Chart.js Bar Chart -->
-    <div class="h-32 w-full">
-      <Bar :data="chartData" :options="chartOptions" />
-    </div>
+    <!-- Real Content -->
+    <template v-else>
+      <template v-if="bankData.length > 0">
+        <!-- Amount Badges on Top of Columns -->
+        <div class="grid gap-2 text-center pt-2" :style="{ gridTemplateColumns: `repeat(${bankData.length}, minmax(0, 1fr))` }">
+          <span
+            v-for="b in bankData"
+            :key="b.bank"
+            class="text-[10px] font-bold text-slate-600 truncate"
+          >
+            {{ b.amount }}
+          </span>
+        </div>
+
+        <!-- Real Chart.js Bar Chart -->
+        <div class="h-32 w-full">
+          <Bar :data="chartData" :options="chartOptions" />
+        </div>
+      </template>
+
+      <!-- Empty State -->
+      <div v-else class="h-36 flex items-center justify-center text-xs text-slate-400 italic">
+        No hay recargas bancarias registradas en este período
+      </div>
+    </template>
   </div>
 </template>

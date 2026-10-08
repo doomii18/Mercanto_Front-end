@@ -9,8 +9,18 @@ import OrderStatusChart from "@/components/admin/reports/OrderStatusChart.vue";
 import ProviderPaymentStatusChart from "@/components/admin/reports/ProviderPaymentStatusChart.vue";
 import ReportExportSection from "@/components/admin/reports/ReportExportSection.vue";
 
-const dateFrom = ref("01/09/2024");
-const dateTo = ref("30/09/2024");
+const now = new Date();
+const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+const formatDateDisplay = (d: Date) =>
+  d.toLocaleDateString("es-NI", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+const dateFrom = ref(formatDateDisplay(thirtyDaysAgo));
+const dateTo = ref(formatDateDisplay(now));
 </script>
 
 <template>

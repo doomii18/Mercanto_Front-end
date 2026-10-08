@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, onMounted } from "vue";
 import {
   Chart as ChartJS,
   ArcElement,
@@ -8,10 +8,11 @@ import {
   type ChartData,
 } from "chart.js";
 import { Doughnut } from "vue-chartjs";
+import { useAnalyticsApi } from "@/api/modules/analytics/useAnalyticsApi";
 
 ChartJS.register(ArcElement, Tooltip);
 
-export interface CategorySalesItem {
+export interface CategorySalesItemUI {
   name: string;
   pct: number;
   color: string;
@@ -20,35 +21,59 @@ export interface CategorySalesItem {
 const props = withDefaults(
   defineProps<{
     period?: string;
-    totalAmount?: string;
+    startDate?: string;
+    endDate?: string;
   }>(),
   {
     period: "Este mes",
-    totalAmount: "412,850",
   }
 );
 
-// Self-contained mock data (ready for future API fetching)
-const categorySales = ref<CategorySalesItem[]>([
-  { name: "Automotriz", pct: 39, color: "#023859" },
-  { name: "Maquillaje", pct: 22, color: "#00a896" },
-  { name: "Ropa",       pct: 18, color: "#f97316" },
-  { name: "Mobiliario", pct: 12, color: "#3b82f6" },
-  { name: "Calzado",    pct:  9, color: "#a855f7" },
-]);
+const analyticsApi = useAnalyticsApi();
+const isLoading = ref(false);
+const hasError = ref(false);
+const totalAmountFormatted = ref("N/A");
+const categorySales = ref<CategorySalesItemUI[]>([]);
 
-const chartData = computed<ChartData<"doughnut">>(() => ({
-  labels: categorySales.value.map((c) => c.name),
-  datasets: [
-    {
-      data: categorySales.value.map((c) => c.pct),
-      backgroundColor: categorySales.value.map((c) => c.color),
-      borderColor: "#ffffff",
-      borderWidth: 2,
-      hoverOffset: 4,
-    },
-  ],
-}));
+const PALETTE = [
+  "#023859",
+  "#00a896",
+  "#f97316",
+  "#3b82f6",
+  "#a855f7",
+  "#eab308",
+  "#ec4899",
+  "#14b8a6",
+];
+
+const chartData = computed<ChartData<"doughnut">>(() => {
+  if (categorySales.value.length === 0) {
+    return {
+      labels: ["Sin datos"],
+      datasets: [
+        {
+          data: [100],
+          backgroundColor: ["#e2e8f0"],
+          borderColor: ["#ffffff"],
+          borderWidth: 2,
+        },
+      ],
+    };
+  }
+
+  return {
+    labels: categorySales.value.map((c) => c.name),
+    datasets: [
+      {
+        data: categorySales.value.map((c) => c.pct),
+        backgroundColor: categorySales.value.map((c) => c.color),
+        borderColor: "#ffffff",
+        borderWidth: 2,
+        hoverOffset: 4,
+      },
+    ],
+  };
+});
 
 const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
   responsive: true,
@@ -59,6 +84,7 @@ const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
       display: false,
     },
     tooltip: {
+      enabled: categorySales.value.length > 0,
       backgroundColor: "#023859",
       padding: 8,
       titleFont: { size: 11, weight: "bold" },
@@ -69,6 +95,39 @@ const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
     },
   },
 }));
+
+async function loadCategorySales() {
+  isLoading.value = true;
+  hasError.value = false;
+  try {
+    const data = await analyticsApi.getCategorySales({
+      start_time: props.startDate,
+      end_time: props.endDate,
+    });
+
+    totalAmountFormatted.value = data.period_total_amount.toLocaleString("es-NI", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    });
+
+    categorySales.value = data.categories.map((cat, idx) => ({
+      name: cat.category_name || "N/A",
+      pct: Math.round(cat.percentage),
+      color: PALETTE[idx % PALETTE.length],
+    }));
+  } catch (err) {
+    console.error("Failed to load category sales:", err);
+    hasError.value = true;
+    totalAmountFormatted.value = "N/A";
+    categorySales.value = [];
+  } finally {
+    isLoading.value = false;
+  }
+}
+
+onMounted(() => {
+  loadCategorySales();
+});
 </script>
 
 <template>
@@ -78,30 +137,42 @@ const chartOptions = computed<ChartOptions<"doughnut">>(() => ({
       <span class="text-[11px] font-semibold text-slate-400">{{ props.period }}</span>
     </div>
 
-    <div class="flex items-center gap-4">
-      <!-- Real Chart.js Doughnut Container -->
+    <!-- Loading Skeleton -->
+    <div v-if="isLoading" class="flex items-center gap-4 animate-pulse">
+      <div class="w-[130px] h-[130px] rounded-full bg-slate-100 shrink-0"></div>
+      <div class="space-y-2 flex-1">
+        <div v-for="i in 4" :key="i" class="h-3 bg-slate-100 rounded w-full"></div>
+      </div>
+    </div>
+
+    <!-- Chart & Legend -->
+    <div v-else class="flex items-center gap-4">
       <div class="relative w-[130px] h-[130px] flex items-center justify-center shrink-0">
         <Doughnut :data="chartData" :options="chartOptions" />
-        <!-- Center Text Overlay -->
         <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none text-center">
           <span class="text-[9px] font-bold text-primary">C$</span>
-          <span class="text-[11px] font-extrabold text-primary leading-tight">{{ props.totalAmount }}</span>
+          <span class="text-[11px] font-extrabold text-primary leading-tight">{{ totalAmountFormatted }}</span>
         </div>
       </div>
 
-      <!-- Legend matching Mockup -->
+      <!-- Legend -->
       <div class="space-y-2 text-xs flex-1">
-        <div
-          v-for="cat in categorySales"
-          :key="cat.name"
-          class="flex items-center justify-between gap-2"
-        >
-          <div class="flex items-center gap-2 min-w-0">
-            <span class="h-2.5 w-2.5 shrink-0 rounded-sm" :style="{ background: cat.color }"></span>
-            <span class="text-slate-600 truncate text-[11px]">{{ cat.name }}</span>
+        <template v-if="categorySales.length > 0">
+          <div
+            v-for="cat in categorySales"
+            :key="cat.name"
+            class="flex items-center justify-between gap-2"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <span class="h-2.5 w-2.5 shrink-0 rounded-sm" :style="{ background: cat.color }"></span>
+              <span class="text-slate-600 truncate text-[11px]">{{ cat.name }}</span>
+            </div>
+            <span class="font-bold text-slate-700 text-[11px] shrink-0">{{ cat.pct }}%</span>
           </div>
-          <span class="font-bold text-slate-700 text-[11px] shrink-0">{{ cat.pct }}%</span>
-        </div>
+        </template>
+        <template v-else>
+          <p class="text-[11px] text-slate-400 italic">No hay ventas registradas</p>
+        </template>
       </div>
     </div>
   </div>
