@@ -22,25 +22,25 @@ function openTutorial(track: TutorialTrack = "compradores", stepIdx = 0) {
       <!-- 1. HERO BANNER: Centro de Capacitación / ¿Cómo Funciona Mercanto?  -->
       <!-- ================================================================= -->
       <section
-        class="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-[#a7ece3] via-[#bdf1eb] to-[#daf7f3] p-6 sm:p-10 lg:p-14 shadow-xs"
+        class="relative overflow-hidden rounded-[36px] bg-gradient-to-br from-[#8ce9e4] via-[#fff] to-[#8ce9e4] p-6 sm:p-10 lg:p-14 shadow-xs"
       >
         <!-- Decorative background shapes matching mockup -->
-        <div class="absolute -right-20 -bottom-24 w-96 h-96 rounded-full bg-secondary opacity-95 pointer-events-none"></div>
-        <div class="absolute right-32 -bottom-20 w-80 h-80 rounded-full bg-accent opacity-90 pointer-events-none"></div>
+        <div class="absolute -right-20 -bottom-24 w-96 h-96 rounded-full bg-[#ff6a00] opacity-95 pointer-events-none"></div>
+        <div class="absolute right-32 -bottom-20 w-80 h-80 rounded-full bg-[#00a896] opacity-90 pointer-events-none"></div>
 
         <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           <!-- Left Column: Text & CTA -->
           <div class="lg:col-span-7 space-y-5 text-left">
             <!-- Badge -->
-            <div class="inline-flex items-center gap-2 rounded-lg bg-accent/20 border border-accent/30 px-3.5 py-1.5 text-xs font-bold text-primary">
-              <i class="fa-solid fa-book-open text-accent"></i>
+            <div class="inline-flex items-center gap-2 rounded-lg bg-[#8ce9e4]/30 border border-[#8ce9e4]/70 px-3.5 py-1.5 text-xs font-bold text-[#023859]">
+              <i class="fa-solid fa-book-open text-[#00a99c]"></i>
               <span>Centro de Capacitación</span>
             </div>
 
             <!-- Title -->
-            <h1 class="font-serif text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-primary leading-[1.15]">
+            <h1 class="font-serif text-3xl sm:text-4xl lg:text-[2.75rem] font-bold tracking-tight text-[#023859] leading-[1.15]">
               ¿Cómo Funciona<br />
-              <span class="text-secondary">Mer</span>canto?
+              <span class="text-[#ff6a00]">Mer</span>canto?
             </h1>
 
             <!-- Description -->
@@ -53,9 +53,9 @@ function openTutorial(track: TutorialTrack = "compradores", stepIdx = 0) {
               <button
                 type="button"
                 @click="openTutorial('compradores', 0)"
-                class="inline-flex items-center gap-2.5 rounded-full bg-secondary hover:bg-(--primary-orange-hover) px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
+                class="inline-flex items-center gap-2.5 rounded-full bg-[#ff6a00] hover:bg-[#e65f00] px-6 py-3 text-xs sm:text-sm font-bold text-white shadow-md hover:shadow-lg active:scale-95 transition-all cursor-pointer"
               >
-                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-secondary text-[10px]">
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white text-[#ff6a00] text-[10px]">
                   <i class="fa-solid fa-play ml-0.5"></i>
                 </span>
                 <span>Ver video introductorio</span>
@@ -77,7 +77,7 @@ function openTutorial(track: TutorialTrack = "compradores", stepIdx = 0) {
               />
               <!-- Play Button Overlay on Laptop Screen -->
               <div class="absolute inset-0 flex items-center justify-center -translate-y-3 sm:-translate-y-4 md:-translate-y-5">
-                <div class="flex h-11 w-11 sm:h-13 sm:w-13 md:h-14 md:w-14 items-center justify-center rounded-full bg-secondary text-white shadow-2xl group-hover:scale-110 active:scale-95 transition-all">
+                <div class="flex h-11 w-11 sm:h-13 sm:w-13 md:h-14 md:w-14 items-center justify-center rounded-full bg-[#ff6a00] text-white shadow-2xl group-hover:scale-110 active:scale-95 transition-all">
                   <i class="fa-solid fa-play text-xs sm:text-base ml-0.5"></i>
                 </div>
               </div>
