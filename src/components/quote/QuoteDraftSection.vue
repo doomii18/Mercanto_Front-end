@@ -73,8 +73,7 @@ const itemEffectiveUnitPrice = (
 const openConfirmModal = () => {
   if (currentDraft.value) {
     shippingAddress.value = currentDraft.value.shippingAddress || "";
-    paymentPreference.value =
-      currentDraft.value.paymentPreference || "virtual_wallet";
+    paymentPreference.value = "virtual_wallet";
   }
   showConfirmQuoteModal.value = true;
 };
@@ -311,11 +310,10 @@ const confirmQuote = async () => {
           </label>
           <select
             v-model="paymentPreference"
-            class="w-full p-2.5 bg-white text-neutral-900 border border-neutral-300 rounded-lg focus:border-teal-500 focus:ring-1 focus:ring-teal-500 focus:outline-none"
+            disabled
+            class="w-full p-2.5 bg-neutral-100 text-neutral-600 border border-neutral-300 rounded-lg cursor-not-allowed focus:outline-none"
           >
             <option value="virtual_wallet" class="bg-white text-neutral-900">Billetera virtual</option>
-            <option value="transfer" class="bg-white text-neutral-900">Transferencia bancaria</option>
-            <option value="card" class="bg-white text-neutral-900">Tarjeta de crédito / débito</option>
           </select>
         </div>
       </div>

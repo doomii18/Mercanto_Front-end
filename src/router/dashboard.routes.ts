@@ -75,10 +75,36 @@ export const dashboardRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "products/:id/edit",
+        name: "provider-edit-product",
+        props: true,
+        component: () => import("@/views/dashboard/ProviderEditProductView.vue"),
+        meta: {
+          requiresAuth: true,
+          requiresProvider: true,
+          requiresVerifiedProvider: true,
+          userGroup: "provider",
+        },
+      },
+      {
         path: "messages",
         name: "messages",
         component: () => import("@/views/dashboard/MessagesView.vue"),
         meta: { requiresAuth: true },
+      },
+      {
+        path: "messages/receipts",
+        name: "messages-receipts",
+        component: () => import("@/views/dashboard/MessagesView.vue"),
+        meta: { requiresAuth: true },
+        props: { isReceiptMock: true },
+      },
+      {
+        path: "messages/:thread_id",
+        name: "messages-thread",
+        component: () => import("@/views/dashboard/MessagesView.vue"),
+        meta: { requiresAuth: true },
+        props: true,
       },
       {
         path: "wallet",

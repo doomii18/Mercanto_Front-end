@@ -61,6 +61,7 @@ function parsePayloadToDisplay(
 
   if (type === "NewChatMessage") {
     const preview = typeof payload.content_preview === "string" ? payload.content_preview : "Has recibido un nuevo mensaje.";
+    const threadId = typeof payload.thread_id === "string" ? payload.thread_id : null;
     return {
       id,
       title: "Nuevo mensaje de chat",
@@ -71,7 +72,7 @@ function parsePayloadToDisplay(
       icon: "fa-regular fa-comment-dots",
       iconBg: "bg-teal-50",
       iconColor: "text-[#00a896]",
-      route: { name: "messages" },
+      route: threadId ? { name: "messages-thread", params: { thread_id: threadId } } : { name: "messages" },
       rawPayload: payload,
     };
   }
@@ -536,6 +537,21 @@ function formatRelativeTime(date: Date): string {
           <p class="text-xs text-slate-500 leading-relaxed line-clamp-2">
             {{ notif.message }}
           </p>
+
+          <!-- Direct action button if notification has a route (e.g. Chat Thread) -->
+          <div v-if="notif.route" class="mt-2.5 flex items-center gap-2">
+            <router-link
+              :to="notif.route"
+              class="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-lg bg-[#00a896]/10 text-[#00a896] hover:bg-[#00a896] hover:text-white transition-colors"
+              @click.stop="handleNotificationClick(notif)"
+            >
+              <i v-if="notif.category === 'message'" class="fa-regular fa-comment-dots text-[11px]"></i>
+              <i v-else-if="notif.category === 'order'" class="fa-solid fa-box text-[11px]"></i>
+              <i v-else-if="notif.category === 'system'" class="fa-solid fa-wallet text-[11px]"></i>
+              <i v-else class="fa-solid fa-arrow-right text-[11px]"></i>
+              <span>{{ notif.category === 'message' ? 'Ir al chat' : 'Ver detalle' }}</span>
+            </router-link>
+          </div>
         </div>
 
         <!-- Unread Indicator & Chevron -->

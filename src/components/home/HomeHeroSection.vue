@@ -1,9 +1,16 @@
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick, inject } from 'vue';
 import { useProductApi } from '@/api/modules/catalog/product/useProductApi';
 import { useCategoryStore } from '@/stores/commerce';
 import type { ProductResponse } from '@/api';
 import ProductImage from '@/components/product/ProductImage.vue';
+
+const carouselControl = inject<{
+  pause: () => void;
+  resume: () => void;
+  setSuspended: (suspended: boolean) => void;
+  handleUserActivity: () => void;
+} | null>('homeCarousel', null);
 
 const searchQuery = ref('');
 const productApi = useProductApi();
@@ -12,6 +19,17 @@ const searchResults = ref<ProductResponse[]>([]);
 const isDropdownOpen = ref(false);
 const isSearching = ref(false);
 const searchContainerRef = ref<HTMLElement | null>(null);
+
+// Suspend carousel auto-rotation when user is actively searching or dropdown is open
+watch([isDropdownOpen, searchQuery], ([open, query]) => {
+  if (carouselControl) {
+    if (open || query.trim().length > 0) {
+      carouselControl.setSuspended(true);
+    } else {
+      carouselControl.setSuspended(false);
+    }
+  }
+});
 
 // Dynamic positioning for the teleported dropdown
 const dropdownStyle = ref<Record<string, string>>({
@@ -62,6 +80,7 @@ const executeSearch = async () => {
 };
 
 const handleInput = () => {
+  carouselControl?.setSuspended(true);
   if (debounceTimer) clearTimeout(debounceTimer);
   debounceTimer = setTimeout(() => {
     executeSearch();
@@ -69,6 +88,7 @@ const handleInput = () => {
 };
 
 const handleFocus = () => {
+  carouselControl?.setSuspended(true);
   if (searchQuery.value.trim()) {
     isDropdownOpen.value = true;
   }
@@ -93,6 +113,9 @@ onMounted(() => {
 });
 
 onBeforeUnmount(() => {
+  if (carouselControl) {
+    carouselControl.setSuspended(false);
+  }
   document.removeEventListener('click', handleClickOutside);
   window.removeEventListener('scroll', updateDropdownPosition, true);
   window.removeEventListener('resize', updateDropdownPosition);
@@ -148,6 +171,8 @@ onBeforeUnmount(() => {
             v-if="isDropdownOpen && (searchResults.length > 0 || isSearching || searchQuery.trim())"
             class="hero-search-dropdown fixed z-[9999] bg-white rounded-2xl shadow-xl border border-slate-200 max-h-80 overflow-y-auto"
             :style="dropdownStyle"
+            @mouseenter="carouselControl?.pause()"
+            @mouseleave="carouselControl?.resume()"
           >
             <!-- Loading State -->
             <div v-if="isSearching" class="p-4 text-center text-slate-500 text-sm">
