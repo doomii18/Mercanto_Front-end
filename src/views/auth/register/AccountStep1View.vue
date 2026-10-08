@@ -262,6 +262,7 @@ const handleContinue = () => {
                     v-model="registerStore.phoneNumber"
                     :has-error="!!errors.phoneNumber"
                     @input="clearFieldError('phoneNumber')"
+                    @invalid-character="errors.phoneNumber = $event"
                 />
                 <span v-if="errors.phoneNumber" class="field-error-msg">{{
                     errors.phoneNumber

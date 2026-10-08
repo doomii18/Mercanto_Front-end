@@ -107,6 +107,17 @@ function handleNationalIdInput() {
   editErrors.value.nationalId = "";
 }
 
+let phoneErrorTimeout: ReturnType<typeof setTimeout> | null = null;
+function handlePhoneInvalidCharacter(msg?: string) {
+  editErrors.value.phoneNumber = msg || "Este campo es solo para números.";
+  if (phoneErrorTimeout) clearTimeout(phoneErrorTimeout);
+  phoneErrorTimeout = setTimeout(() => {
+    if (editErrors.value.phoneNumber.includes("números")) {
+      editErrors.value.phoneNumber = "";
+    }
+  }, 3000);
+}
+
 function handleFileChange(e: Event) {
   const target = e.target as HTMLInputElement;
   if (target.files && target.files[0]) {
@@ -242,6 +253,7 @@ defineExpose({ open, close });
           v-model="formStore.phoneNumber"
           :has-error="!!editErrors.phoneNumber"
           @input="editErrors.phoneNumber = ''"
+          @invalid-character="handlePhoneInvalidCharacter"
         />
         <span v-if="editErrors.phoneNumber" class="field-error">{{
           editErrors.phoneNumber

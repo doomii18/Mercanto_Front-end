@@ -81,6 +81,17 @@ watch(
   }
 );
 
+let phoneErrorTimeout: ReturnType<typeof setTimeout> | null = null;
+function handlePhoneInvalidCharacter(msg?: string) {
+  phoneError.value = msg || "Este campo es solo para números.";
+  if (phoneErrorTimeout) clearTimeout(phoneErrorTimeout);
+  phoneErrorTimeout = setTimeout(() => {
+    if (phoneError.value.includes("números")) {
+      phoneError.value = "";
+    }
+  }, 3000);
+}
+
 const handleClose = () => {
   companyNameError.value = "";
   phoneError.value = "";
@@ -259,6 +270,7 @@ const handleSave = async () => {
             v-model="phoneNumber"
             :has-error="!!phoneError"
             @input="phoneError = ''"
+            @invalid-character="handlePhoneInvalidCharacter"
           />
           <span v-if="phoneError" class="field-error">{{ phoneError }}</span>
           <span v-else class="edit-field-hint">Selecciona tu país e ingresa el número local</span>

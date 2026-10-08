@@ -174,6 +174,7 @@ const handleContinue = () => {
           v-model="accountStore.phoneNumber"
           :has-error="!!errors.phoneNumber"
           @input="clearFieldError('phoneNumber')"
+          @invalid-character="errors.phoneNumber = $event"
         />
         <span v-if="errors.phoneNumber" class="field-error-msg">{{ errors.phoneNumber }}</span>
         <span v-else class="field-hint">Selecciona tu país e ingresa tu número local</span>

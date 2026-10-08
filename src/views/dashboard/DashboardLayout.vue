@@ -20,31 +20,34 @@ const closeSidebar = () => {
 <template>
   <div class="h-screen w-full flex flex-col overflow-hidden bg-white text-[#083c5a]">
     <!-- Header: Fixed height 64px (h-16), sits at the top of the column -->
-    <header class="relative z-50 flex h-16 shrink-0 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
-      <button
-        type="button"
-        class="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg border-none bg-transparent p-1 transition-colors duration-200 hover:bg-[#fde8e4] focus:outline-none"
-        :aria-expanded="sidebarOpen"
-        aria-label="Alternar navegación"
-        @click="toggleSidebar"
-      >
-        <span
-          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
-          :class="{ 'translate-y-[7.5px] rotate-45': sidebarOpen }"
-        ></span>
-        <span
-          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
-          :class="{ 'scale-x-0 opacity-0': sidebarOpen }"
-        ></span>
-        <span
-          class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
-          :class="{ '-translate-y-[7.5px] -rotate-45': sidebarOpen }"
-        ></span>
-      </button>
+    <header class="relative z-50 flex h-16 shrink-0 w-full items-center justify-between border-b border-slate-200 bg-[#fff1f0] px-6">
+      <div class="flex items-center gap-4">
+        <button
+          type="button"
+          class="flex h-9 w-9 flex-col items-center justify-center gap-1.25 rounded-lg border-none bg-transparent p-1 transition-colors duration-200 hover:bg-[#fde8e4] focus:outline-none"
+          :aria-expanded="sidebarOpen"
+          aria-label="Alternar navegación"
+          @click="toggleSidebar"
+        >
+          <span
+            class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+            :class="{ 'translate-y-[7.5px] rotate-45': sidebarOpen }"
+          ></span>
+          <span
+            class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+            :class="{ 'scale-x-0 opacity-0': sidebarOpen }"
+          ></span>
+          <span
+            class="h-[2.5px] w-[22px] origin-center rounded-sm bg-[#083c5a] transition-all duration-300"
+            :class="{ '-translate-y-[7.5px] -rotate-45': sidebarOpen }"
+          ></span>
+        </button>
+
+        <AppLogo variant="logo" class="h-9" />
+      </div>
 
       <div class="flex items-center gap-3">
         <NotificationBell />
-        <AppLogo variant="logo" class="h-9" />
       </div>
     </header>
 
@@ -60,7 +63,7 @@ const closeSidebar = () => {
       <!-- Sidebar -->
       <aside
         :class="[
-          'fixed z-40 bg-white transition-[width,transform,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'fixed z-40 bg-[#fff1f0] transition-[width,transform,box-shadow] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           'top-16 bottom-0 left-0 flex flex-col justify-between border-r border-slate-200 py-5',
           // Mobile: hidden by default, slide in when open
           sidebarOpen
@@ -322,7 +325,7 @@ const closeSidebar = () => {
       <!-- Main Content Area: delegates scrolling and viewport handling to each view container -->
       <main
         :class="[
-          'relative flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-[#fdf3f0] transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
+          'relative flex-1 flex flex-col min-h-0 min-w-0 overflow-hidden bg-white transition-[margin] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)]',
           'max-md:ml-0',
           sidebarOpen ? 'lg:ml-60 md:ml-18' : 'md:ml-[72px]'
         ]"

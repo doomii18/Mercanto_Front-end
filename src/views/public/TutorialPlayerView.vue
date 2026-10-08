@@ -93,6 +93,11 @@ function closePlayer() {
   router.push({ name: "how-it-works" });
 }
 
+function handleFinish() {
+  isVideoPlaying.value = false;
+  router.push({ name: "home" });
+}
+
 function handleNext() {
   markAsWatched(currentStepIndex.value);
   if (currentStepIndex.value < activeSteps.value.length - 1) {
@@ -100,7 +105,7 @@ function handleNext() {
     isVideoPlaying.value = false;
     updateRoute();
   } else {
-    closePlayer();
+    handleFinish();
   }
 }
 
