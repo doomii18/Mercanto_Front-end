@@ -75,6 +75,18 @@ export const dashboardRoutes: RouteRecordRaw[] = [
         },
       },
       {
+        path: "products/:id/edit",
+        name: "provider-edit-product",
+        props: true,
+        component: () => import("@/views/dashboard/ProviderEditProductView.vue"),
+        meta: {
+          requiresAuth: true,
+          requiresProvider: true,
+          requiresVerifiedProvider: true,
+          userGroup: "provider",
+        },
+      },
+      {
         path: "messages",
         name: "messages",
         component: () => import("@/views/dashboard/MessagesView.vue"),

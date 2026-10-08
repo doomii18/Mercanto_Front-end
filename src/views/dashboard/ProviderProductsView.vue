@@ -533,6 +533,13 @@ onMounted(async () => {
                 >
                   <i class="fa-regular fa-eye text-xs"></i>
                 </router-link>
+                <router-link
+                  :to="{ name: 'provider-edit-product', params: { id: product.id } }"
+                  class="p-1.5 rounded-lg text-slate-500 hover:text-[#023859] hover:bg-slate-100 transition-colors inline-block mr-1"
+                  title="Editar producto"
+                >
+                  <i class="fa-solid fa-pen-to-square text-xs"></i>
+                </router-link>
                 <button
                   type="button"
                   class="p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors cursor-pointer"
@@ -608,13 +615,22 @@ onMounted(async () => {
             <router-link
               :to="{ name: 'product-detail', params: { id: product.id } }"
               class="p-1 rounded text-slate-500 hover:text-[#00a896]"
+              title="Ver detalle"
             >
               <i class="fa-regular fa-eye text-xs"></i>
+            </router-link>
+            <router-link
+              :to="{ name: 'provider-edit-product', params: { id: product.id } }"
+              class="p-1 rounded text-slate-500 hover:text-[#023859]"
+              title="Editar producto"
+            >
+              <i class="fa-solid fa-pen-to-square text-xs"></i>
             </router-link>
             <button
               type="button"
               class="p-1 rounded text-red-500 hover:text-red-700 cursor-pointer"
               @click="promptDelete(product)"
+              title="Eliminar"
             >
               <i class="fa-solid fa-trash text-xs"></i>
             </button>
