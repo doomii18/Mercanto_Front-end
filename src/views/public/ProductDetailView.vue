@@ -13,7 +13,7 @@ import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import QuoteDraftSection from "@/components/quote/QuoteDraftSection.vue";
 import MockProductColorPicker from "@/components/mock/MockProductColorPicker.vue";
-import MockShippingMethodSelector, { type ShippingMethodOption } from "@/components/mock/MockShippingMethodSelector.vue";
+import ShippingMethodSelector from "@/components/product/ShippingMethodSelector.vue";
 import RelatedProductsSection from "@/components/product/RelatedProductsSection.vue";
 import type { ProductOfferResponse, ShippingMethod } from "@/api";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
@@ -68,7 +68,6 @@ function handleFavoriteClick() {
 }
 
 const isLoading = ref(true);
-const selectedShippingMethod = ref("bus");
 const selectedColor = ref<string>("");
 const quantity = ref(1);
 const currentOffer = ref<ProductOfferResponse | null>(null);
@@ -105,11 +104,11 @@ function resolveLocationText(municipalityId?: string): string {
         : hierarchy.municipality.name;
 }
 
-const selectedShipping = ref<ShippingMethodOption>({
-    id: "bus",
-    name: "Bus Interlocal",
-    icon: "fa-solid fa-bus",
-    cost: 150,
+const selectedShippingMethod = ref<ShippingMethod>("bus");
+const selectedShippingMethodName = computed(() => {
+    if (selectedShippingMethod.value === "own_delivery") return "Entrega Propia / Paquetería";
+    if (selectedShippingMethod.value === "bus") return "Bus Interlocal";
+    return "Por definir";
 });
 
 async function loadProduct(id: string) {
@@ -262,8 +261,7 @@ const discountedUnitPrice = computed(() =>
 
 const subtotal = computed(() => product.value.price * quantity.value);
 const discountedSubtotal = computed(() => discountedUnitPrice.value * quantity.value);
-const shippingCost = computed(() => selectedShipping.value?.cost || 0);
-const total = computed(() => discountedSubtotal.value + shippingCost.value);
+const total = computed(() => discountedSubtotal.value);
 
 const formatPrice = (val: number | null | undefined) => {
     if (val === null || val === undefined || isNaN(val)) return "0";
@@ -469,11 +467,9 @@ const handleReviewChanged = async () => {
                             </p>
                         </div>
 
-                        <MockShippingMethodSelector
+                        <ShippingMethodSelector
                             :methods="product.shippingMethods"
-                            :seed="product.id"
                             v-model="selectedShippingMethod"
-                            @update:selected-method="(m) => selectedShipping = m"
                         />
                     </div>
                 </section>
@@ -578,8 +574,8 @@ const handleReviewChanged = async () => {
                             </div>
                             <hr class="my-1 border-t border-neutral-300" />
                             <div class="flex items-center justify-between">
-                                <span class="text-neutral-500">Tipo de envío:</span>
-                                <span class="font-medium text-neutral-900">{{ selectedShipping?.name || 'Por definir' }}</span>
+                                <span class="text-neutral-500">Método de envío:</span>
+                                <span class="font-medium text-neutral-900">{{ selectedShippingMethodName }}</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Subtotal:</span>
@@ -589,14 +585,14 @@ const handleReviewChanged = async () => {
                                 </span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-neutral-500">Envío estimado:</span>
-                                <span class="font-medium text-neutral-900">
-                                    {{ shippingCost > 0 ? `C$ ${formatPrice(shippingCost)}` : "C$ 0" }}
+                                <span class="text-neutral-500">Costo de flete:</span>
+                                <span class="font-medium text-teal-700 text-xs bg-teal-50 px-2 py-0.5 rounded">
+                                    Calculado al cotizar
                                 </span>
                             </div>
                             <hr class="my-1 border-t-2 border-neutral-500" />
                             <div class="flex items-center justify-between text-base font-bold text-neutral-900">
-                                <span>Total estimado:</span>
+                                <span>Subtotal productos:</span>
                                 <span class="text-lg font-bold text-neutral-900">C$ {{ formatPrice(total) }}</span>
                             </div>
                         </div>
