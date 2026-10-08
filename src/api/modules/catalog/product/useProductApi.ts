@@ -90,15 +90,17 @@ export const useProductApi = () => {
 
   // GET /products/{id}
   async function getProduct(id: string): Promise<ProductResponse> {
-    const [prodResult, imageBlobIds] = await Promise.all([
+    const [prodResult, imageBlobIds, shippingMethods] = await Promise.all([
       useApiFetch(`/products/${id}`).get().json(),
       productImageApi.getProductImages(id).catch(() => []),
+      getProductShipping(id).catch(() => [] as ShippingMethod[]),
     ]);
     if (prodResult.error.value || !prodResult.data.value) {
       throw prodResult.error.value || new Error(`Failed to fetch product ${id}`);
     }
     const product = ProductResponseSchema.parse(prodResult.data.value);
     product.image_blob_ids = imageBlobIds;
+    product.shipping_methods = shippingMethods;
     return product;
   }
 

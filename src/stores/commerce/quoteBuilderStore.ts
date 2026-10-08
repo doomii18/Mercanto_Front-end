@@ -88,7 +88,11 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
       providerMeta?.logoBlobId ?? null,
     );
 
-    const existing = draft.items.find((i) => i.productId === input.productId);
+    const shippingPreference = input.shippingPreference ?? DEFAULT_SHIPPING;
+
+    const existing = draft.items.find(
+      (i) => i.productId === input.productId && i.shippingPreference === shippingPreference,
+    );
     if (existing) {
       existing.quantity += input.quantity ?? 1;
       if (input.offerId !== undefined) existing.offerId = input.offerId;
@@ -103,16 +107,26 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
       quantity: input.quantity ?? 1,
       unitPrice: input.unitPrice,
       imageBlobId: input.imageBlobId ?? null,
-      shippingPreference: input.shippingPreference ?? DEFAULT_SHIPPING,
+      shippingPreference,
       offerId: input.offerId ?? null,
       discountPercentage: input.discountPercentage ?? null,
     });
   }
 
-  function removeItem(providerId: string, productId: string): void {
+  function removeItem(
+    providerId: string,
+    productId: string,
+    shippingPreference?: ShippingMethod,
+  ): void {
     const draft = drafts.value[providerId];
     if (!draft) return;
-    draft.items = draft.items.filter((i) => i.productId !== productId);
+    if (shippingPreference) {
+      draft.items = draft.items.filter(
+        (i) => !(i.productId === productId && i.shippingPreference === shippingPreference),
+      );
+    } else {
+      draft.items = draft.items.filter((i) => i.productId !== productId);
+    }
     if (draft.items.length === 0) delete drafts.value[providerId];
   }
 
@@ -120,13 +134,18 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     providerId: string,
     productId: string,
     quantity: number,
+    shippingPreference?: ShippingMethod,
   ): void {
     const draft = drafts.value[providerId];
     if (!draft) return;
-    const item = draft.items.find((i) => i.productId === productId);
+    const item = shippingPreference
+      ? draft.items.find(
+          (i) => i.productId === productId && i.shippingPreference === shippingPreference,
+        )
+      : draft.items.find((i) => i.productId === productId);
     if (!item) return;
     if (quantity <= 0) {
-      removeItem(providerId, productId);
+      removeItem(providerId, productId, shippingPreference);
       return;
     }
     item.quantity = quantity;
@@ -136,11 +155,24 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     providerId: string,
     productId: string,
     method: ShippingMethod,
+    oldMethod?: ShippingMethod,
   ): void {
     const draft = drafts.value[providerId];
     if (!draft) return;
-    const item = draft.items.find((i) => i.productId === productId);
-    if (item) item.shippingPreference = method;
+    const item = oldMethod
+      ? draft.items.find((i) => i.productId === productId && i.shippingPreference === oldMethod)
+      : draft.items.find((i) => i.productId === productId);
+    if (!item) return;
+
+    const target = draft.items.find(
+      (i) => i.productId === productId && i.shippingPreference === method && i !== item,
+    );
+    if (target) {
+      target.quantity += item.quantity;
+      draft.items = draft.items.filter((i) => i !== item);
+    } else {
+      item.shippingPreference = method;
+    }
   }
 
   // draft setters

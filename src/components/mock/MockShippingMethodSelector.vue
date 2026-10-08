@@ -25,39 +25,33 @@ const emit = defineEmits<{
   (e: "update:selectedMethod", method: ShippingMethodOption): void;
 }>();
 
+const ALL_METHODS: Record<string, ShippingMethodOption> = {
+  bus: {
+    id: "bus",
+    name: "Bus Interlocal",
+    icon: "fa-solid fa-bus",
+    cost: 150,
+  },
+  own_delivery: {
+    id: "own_delivery",
+    name: "Entrega Propia",
+    icon: "fa-solid fa-truck",
+    cost: 180,
+  },
+};
+
 const availableOptions = computed<ShippingMethodOption[]>(() => {
-  const result: ShippingMethodOption[] = [];
   const rawMethods = props.methods || [];
-  const hasBus = rawMethods.length === 0 || rawMethods.includes("bus");
-  const hasOwn = rawMethods.includes("own_delivery");
-
-  if (hasBus) {
-    result.push({
-      id: "bus",
-      name: "Bus Interlocal",
-      icon: "fa-solid fa-bus",
-      cost: 150,
-    });
+  if (rawMethods.length === 0) {
+    return [ALL_METHODS.bus, ALL_METHODS.own_delivery];
   }
-  if (hasOwn) {
-    result.push({
-      id: "own_delivery",
-      name: "Entrega Propia",
-      icon: "fa-solid fa-truck",
-      cost: 180,
-    });
-  }
-  result.push({
-    id: "courier",
-    name: "Empresas de paquetería",
-    icon: "fa-solid fa-truck-fast",
-    cost: 200,
-  });
-
-  return result;
+  return rawMethods
+    .map((m) => ALL_METHODS[m])
+    .filter((opt): opt is ShippingMethodOption => Boolean(opt));
 });
 
-const currentSelected = computed<ShippingMethodOption>(() => {
+const currentSelected = computed<ShippingMethodOption | undefined>(() => {
+  if (availableOptions.value.length === 0) return undefined;
   return (
     availableOptions.value.find((m) => m.id === props.modelValue) ||
     availableOptions.value[0]
