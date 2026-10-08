@@ -93,6 +93,20 @@ export const dashboardRoutes: RouteRecordRaw[] = [
         meta: { requiresAuth: true },
       },
       {
+        path: "messages/receipts",
+        name: "messages-receipts",
+        component: () => import("@/views/dashboard/MessagesView.vue"),
+        meta: { requiresAuth: true },
+        props: { isReceiptMock: true },
+      },
+      {
+        path: "messages/:thread_id",
+        name: "messages-thread",
+        component: () => import("@/views/dashboard/MessagesView.vue"),
+        meta: { requiresAuth: true },
+        props: true,
+      },
+      {
         path: "wallet",
         name: "wallet",
         component: () => import("@/views/dashboard/wallet/WalletView.vue"),

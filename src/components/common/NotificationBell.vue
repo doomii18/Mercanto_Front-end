@@ -78,6 +78,36 @@ const toggleDropdown = async () => {
   }
 };
 
+const getNotificationRoute = (event: NotificationEvent) => {
+  if (event.type === 'NewChatMessage') {
+    const parsed = NewChatMessageEventSchema.safeParse(event);
+    if (parsed.success && parsed.data.thread_id) {
+      return { name: 'messages-thread', params: { thread_id: parsed.data.thread_id } };
+    }
+    return { name: 'messages' };
+  }
+  if (event.type === 'QuoteStatusChanged') {
+    const parsed = QuoteStatusChangedEventSchema.safeParse(event);
+    if (parsed.success && parsed.data.quote_id) {
+      return { name: 'quote-detail', params: { id: parsed.data.quote_id } };
+    }
+    return { name: 'orders' };
+  }
+  if (event.type === 'QuoteRequestReceived') {
+    return { name: 'orders' };
+  }
+  if (event.type === 'WalletDepositStatusChanged' || event.type === 'WalletWithdrawalStatusChanged') {
+    return { name: 'wallet' };
+  }
+  return { name: 'notifications' };
+};
+
+const handleItemClick = (event: NotificationEvent) => {
+  isOpen.value = false;
+  const targetRoute = getNotificationRoute(event);
+  router.push(targetRoute);
+};
+
 const goToPanel = () => {
   isOpen.value = false;
   router.push({ name: 'notifications' });
@@ -134,7 +164,7 @@ onBeforeUnmount(() => document.removeEventListener('click', handleClickOutside))
             v-for="event in recentNotifications"
             :key="event.notification_id"
             class="p-3 flex items-start gap-3 hover:bg-slate-50 cursor-pointer transition-colors border-b border-slate-50 last:border-0"
-            @click="goToPanel"
+            @click="handleItemClick(event)"
           >
             <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
               <i :class="getIcon(event)"></i>

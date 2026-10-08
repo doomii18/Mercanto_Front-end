@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onScopeDispose, nextTick } from "vue";
+import { ref, computed, onMounted, onScopeDispose, nextTick, watch } from "vue";
+import { useRoute, useRouter } from "vue-router";
 import { useChatApi } from "@/api/modules/messaging/chat/useChatApi";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import { useUserContextStore } from "@/stores/auth";
@@ -9,10 +10,19 @@ import { formatUuidv7ToLocalTime } from "@/utils/formatters";
 import type { ChatThreadResponse, ChatMessageResponse } from "@/api";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
+import MockReceiptChat from "@/components/chat/MockReceiptChat.vue";
 import { useUserProfileApi } from "@/api/modules/identity/user_profile/useUserProfileApi";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 
 import topSellersHero from "@/assets/top-sellers-hero.png";
+
+const props = defineProps<{
+  thread_id?: string;
+  isReceiptMock?: boolean;
+}>();
+
+const route = useRoute();
+const router = useRouter();
 
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
@@ -69,6 +79,10 @@ const activeThread = computed(() => {
   return threads.value.find((t) => t.id === activeThreadId.value) ?? null;
 });
 
+const isReceiptsMockActive = computed(() => {
+  return props.isReceiptMock || activeThreadId.value === "receipts" || activeThreadId.value === "sys-receipts";
+});
+
 const filteredThreads = computed(() => {
   const query = searchQuery.value.trim().toLowerCase();
   return threads.value.filter((t) => {
@@ -84,9 +98,29 @@ const filteredThreads = computed(() => {
   });
 });
 
-async function selectThread(threadId: string) {
-  if (activeThreadId.value === threadId) return;
+async function selectThread(threadId: string, pushRoute = true) {
+  if (activeThreadId.value === threadId && !pushRoute) return;
   activeThreadId.value = threadId;
+
+  if (pushRoute) {
+    if (threadId === "receipts" || threadId === "sys-receipts") {
+      if (route.name !== "messages-receipts") {
+        router.push({ name: "messages-receipts" });
+      }
+    } else {
+      if (route.params.thread_id !== threadId) {
+        router.push({ name: "messages-thread", params: { thread_id: threadId } });
+      }
+    }
+  }
+
+  if (threadId === "receipts" || threadId === "sys-receipts") {
+    if (threadPreviews.value[threadId]) {
+      threadPreviews.value[threadId].hasUnread = false;
+    }
+    return;
+  }
+
   isLoadingMessages.value = true;
   currentMessages.value = [];
 
@@ -118,9 +152,14 @@ async function selectThread(threadId: string) {
   }
 }
 
+function handleBackToList() {
+  activeThreadId.value = null;
+  router.push({ name: "messages" });
+}
+
 async function sendMessage() {
   const text = newMessage.value.trim();
-  if (!text || !activeThreadId.value) return;
+  if (!text || !activeThreadId.value || activeThreadId.value.startsWith("sys-") || activeThreadId.value === "receipts") return;
 
   const targetThreadId = activeThreadId.value;
   newMessage.value = "";
@@ -256,6 +295,25 @@ onScopeDispose(() => {
   unsubscribeChat();
 });
 
+// Sync route changes with active thread
+function syncActiveThreadFromRoute() {
+  if (props.isReceiptMock || route.name === "messages-receipts") {
+    selectThread("receipts", false);
+  } else if (props.thread_id || route.params.thread_id) {
+    const tid = (props.thread_id || route.params.thread_id) as string;
+    selectThread(tid, false);
+  } else {
+    activeThreadId.value = null;
+  }
+}
+
+watch(
+  () => [route.name, route.params.thread_id, props.thread_id, props.isReceiptMock],
+  () => {
+    syncActiveThreadFromRoute();
+  }
+);
+
 // 2. Lifecycle Initialization
 onMounted(async () => {
   try {
@@ -266,44 +324,26 @@ onMounted(async () => {
 
     const res = await chatApi.getUserChatThreads({ limit: 50, offset: 0 });
     
-    // Inject Mock Threads for Demo UI
-    const mockThreads: ChatThreadResponse[] = [
-      {
-        id: "sys-approved",
-        quote_group_id: "SYS-001",
-        updated_at: new Date().toISOString(),
-        is_archived: false,
-      },
-      {
-        id: "sys-rejected",
-        quote_group_id: "SYS-002",
-        updated_at: new Date(Date.now() - 3600000).toISOString(),
-        is_archived: false,
-      }
-    ];
+    // Inject Mock Receipt Thread for Demo UI (single thread for comprobantes de pagos)
+    const mockReceiptThread: ChatThreadResponse = {
+      id: "receipts",
+      quote_group_id: "SYS-REC",
+      updated_at: new Date().toISOString(),
+      is_archived: false,
+    };
 
-    threads.value = [...mockThreads, ...res.data];
+    threads.value = [mockReceiptThread, ...res.data];
 
     threads.value.forEach((t) => {
-      if (t.id === 'sys-approved') {
+      if (t.id === "receipts") {
         threadPreviews.value[t.id] = {
-          preview: "Tu recarga ha sido aprobada exitosamente...",
+          preview: "Comprobantes de pago y recargas de billetera...",
           time: "12:40 p.m",
-          hasUnread: true,
-          name: "Mercanto S.A",
-          avatarBlobId: null,
-          imgSrc: topSellersHero,
-          quoteGroupId: t.quote_group_id
-        };
-      } else if (t.id === 'sys-rejected') {
-        threadPreviews.value[t.id] = {
-          preview: "Tu recarga no pudo ser verificada.",
-          time: "10:15 a.m",
           hasUnread: false,
-          name: "Mercanto S.A",
+          name: "Comprobantes de Pagos (Mercanto S.A)",
           avatarBlobId: null,
           imgSrc: topSellersHero,
-          quoteGroupId: t.quote_group_id
+          quoteGroupId: t.quote_group_id,
         };
       } else {
         threadPreviews.value[t.id] = {
@@ -317,10 +357,8 @@ onMounted(async () => {
       }
     });
 
-    if (threads.value.length > 0) {
-      // Don't auto-select a thread immediately so empty state is shown (Image 1)
-      // activeThreadId.value is null by default.
-    }
+    // Check if initial route specifies a thread or mock receipt
+    syncActiveThreadFromRoute();
 
     // Only resolve real threads
     resolveThreadMetadata(res.data);
@@ -417,7 +455,7 @@ onMounted(async () => {
       class="flex-1 min-w-0 min-h-0 flex-col overflow-hidden w-full md:w-auto"
       :class="[
         activeThreadId ? 'flex' : 'hidden md:flex',
-        activeThread?.id.startsWith('sys-') ? 'bg-[#f8fafc]' : 'bg-white'
+        isReceiptsMockActive ? 'bg-[#f8fafc]' : 'bg-white'
       ]"
     >
       <template v-if="activeThread">
@@ -426,9 +464,9 @@ onMounted(async () => {
           <div class="flex items-center gap-3">
             <button
               type="button"
-              class="md:hidden text-lg text-[#083c5a] p-1.5 rounded-lg hover:bg-slate-100 transition-colors shrink-0"
+              class="md:hidden text-lg text-[#083c5a] p-1.5 rounded-lg hover:bg-slate-100 transition-colors shrink-0 cursor-pointer"
               title="Volver a conversaciones"
-              @click="activeThreadId = null"
+              @click="handleBackToList"
             >
               <i class="fa-solid fa-arrow-left"></i>
             </button>
@@ -452,8 +490,8 @@ onMounted(async () => {
               <span class="font-bold text-sm sm:text-base text-[#1a1a1a] overflow-hidden text-ellipsis whitespace-nowrap">
                 {{ threadPreviews[activeThread.id]?.name || 'Cargando...' }}
               </span>
-              <span v-if="activeThread.id.startsWith('sys-')" class="text-xs text-[#888] mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
-                Canal Oficial de Notificaciones
+              <span v-if="isReceiptsMockActive" class="text-xs text-[#888] mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
+                Canal Oficial de Comprobantes de Pagos
               </span>
               <span v-else class="text-xs text-[#888] flex items-center gap-1 mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis">
                 #{{ threadPreviews[activeThread.id]?.quoteGroupId?.substring(0, 8) || activeThread.quote_group_id.substring(0, 8) }}
@@ -469,65 +507,13 @@ onMounted(async () => {
               </span>
             </div>
           </div>
-          <div v-if="activeThread.id.startsWith('sys-')" class="px-2.5 py-1 text-[11px] sm:text-xs text-[#64748b] bg-white border border-[#cbd5e1] rounded-full shrink-0">
+          <div v-if="isReceiptsMockActive" class="px-2.5 py-1 text-[11px] sm:text-xs text-[#64748b] bg-white border border-[#cbd5e1] rounded-full shrink-0">
             Sólo lectura
           </div>
         </div>
         
-        <!-- SYSTEM NOTIFICATION CONTENT (RECARGA APROBADA) -->
-        <div v-if="activeThread.id === 'sys-approved'" class="flex-1 min-h-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sm:p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
-            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#e6f7f5] flex items-center justify-center mb-4 sm:mb-6">
-              <i class="fa-solid fa-check text-xl sm:text-2xl text-[#189c94]"></i>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">¡Recarga aprobada!</h2>
-            <p class="text-[#64748b] text-xs sm:text-[0.95rem] mb-6">Tu billetera ha sido recargada exitosamente.</p>
-            <div class="text-2xl sm:text-[2.2rem] font-bold text-[#189c94] mb-6 sm:mb-8 tracking-tight">
-              + C$ 2,000.00
-            </div>
-            <div class="w-full bg-[#f8fafc] border border-[#f1f5f9] rounded-xl py-3.5 flex flex-col items-center mb-6 sm:mb-8">
-              <span class="text-[0.7rem] text-[#64748b] mb-0.5 uppercase tracking-wide font-semibold">Saldo actual</span>
-              <span class="text-base sm:text-lg font-bold text-[#083c5a]">C$ 8,500.00</span>
-            </div>
-            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-colors mb-3 text-sm">
-              Ver billetera
-            </button>
-            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3 sm:py-3.5 rounded-xl transition-colors text-sm">
-              Volver al inicio
-            </button>
-          </div>
-        </div>
-        
-        <!-- SYSTEM NOTIFICATION CONTENT (RECARGA NO APROBADA) -->
-        <div v-else-if="activeThread.id === 'sys-rejected'" class="flex-1 min-h-0 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          <div class="bg-white rounded-[1.25rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 sm:p-10 max-w-[460px] w-full text-center flex flex-col items-center border border-[#eee]">
-            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#fef2f2] flex items-center justify-center mb-4 sm:mb-6">
-              <i class="fa-solid fa-xmark text-xl sm:text-2xl text-[#ef4444]"></i>
-            </div>
-            <h2 class="text-xl sm:text-2xl font-bold text-[#083c5a] mb-2 font-serif tracking-tight">Recarga no aprobada</h2>
-            <div class="text-2xl sm:text-[2.2rem] font-bold text-[#ef4444] mb-2 tracking-tight">
-              C$ 2,000.00
-            </div>
-            <p class="text-[#64748b] text-xs sm:text-[0.95rem] mb-6">Tu solicitud <strong>REC-000245</strong> no pudo ser verificada.</p>
-            <div class="w-full bg-[#fef2f2] border border-[#fecaca] rounded-xl p-3.5 sm:p-4 flex gap-3 text-left mb-6">
-              <i class="fa-solid fa-triangle-exclamation text-[#ef4444] mt-0.5"></i>
-              <div class="flex flex-col">
-                <span class="text-[#b91c1c] text-[0.75rem] font-bold mb-0.5">Motivo de rechazo</span>
-                <span class="text-[#ef4444] text-xs sm:text-[0.85rem] leading-relaxed">La referencia ingresada no coincide con el comprobante de depósito.</span>
-              </div>
-            </div>
-            <div class="w-full text-left mb-6 sm:mb-8">
-              <h4 class="text-[#083c5a] font-bold text-xs sm:text-[0.95rem] mb-1">¿Qué podés hacer?</h4>
-              <p class="text-[#64748b] text-xs sm:text-[0.85rem] leading-relaxed">Podés registrar nuevamente una recarga con los datos correctos del comprobante original.</p>
-            </div>
-            <button class="w-full bg-[#f97316] hover:bg-[#ea580c] text-white font-semibold py-3 sm:py-3.5 rounded-xl transition-colors mb-3 text-sm">
-              Confirmar nueva recarga
-            </button>
-            <button class="w-full bg-white border border-[#e2e8f0] text-[#083c5a] hover:bg-[#f8fafc] font-semibold py-3 sm:py-3.5 rounded-xl transition-colors text-sm">
-              Volver a mi billetera
-            </button>
-          </div>
-        </div>
+        <!-- MOCK RECEIPTS CHAT (COMPROBANTES DE PAGO CON APROBADO Y RECHAZADO) -->
+        <MockReceiptChat v-if="isReceiptsMockActive" />
 
         <!-- NORMAL CHAT -->
         <div v-else class="flex-1 flex flex-col min-h-0 bg-white">
