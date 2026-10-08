@@ -9,9 +9,11 @@ import {
   SelectContent,
   SelectViewport,
   SelectItem,
-  SelectItemText,
   SelectItemIndicator,
 } from "reka-ui";
+import { useAlertStore } from "@/stores/ui";
+
+const alertStore = useAlertStore();
 
 const dateFrom = ref("01/09/2024");
 const dateTo = ref("30/09/2024");
@@ -32,7 +34,12 @@ function handleGenerateReport() {
     reportType: reportType.value,
     exportFormat: exportFormat.value,
   });
-  alert(`Generando reporte de "${reportType.value}" en formato ${exportFormat.value}...`);
+  alertStore.spawnAlert({
+    title: "Generando reporte",
+    message: `Generando reporte de "${reportType.value}" en formato ${exportFormat.value}...`,
+    iconVariant: "teal",
+    icon: "fa-solid fa-file-arrow-down",
+  });
 }
 </script>
 

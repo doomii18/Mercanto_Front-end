@@ -681,7 +681,7 @@ onUnmounted(() => {
   min-height: 0;
   overflow-y: auto;
   padding: 1.5rem;
-  background-color: #f8fafc;
+  background-color: #ffffff;
 }
 
 .breadcrumb {

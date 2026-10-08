@@ -46,10 +46,6 @@ const closeSidebar = () => {
 
         <AppLogo variant="logo" class="h-9" />
       </div>
-
-      <div class="flex items-center gap-3">
-        <AppLogo variant="logo" class="h-9" />
-      </div>
     </header>
 
     <!-- Wrapper: Flex-1 remaining space, zero window-level overflow -->
@@ -85,9 +81,9 @@ const closeSidebar = () => {
           <!-- Mi Perfil -->
           <router-link
             :to="{ name: 'profile' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -115,9 +111,9 @@ const closeSidebar = () => {
           <router-link
             v-if="contextStore.isProvider"
             :to="{ name: 'provider-products' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -145,9 +141,9 @@ const closeSidebar = () => {
           <router-link
             v-if="!contextStore.isProvider"
             :to="{ name: 'favorites' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -174,9 +170,9 @@ const closeSidebar = () => {
           <!-- Billetera -->
           <router-link
             :to="{ name: 'wallet' }"
-            active-class="!bg-[#e2e8f0] !text-[#083c5a] font-semibold"
+            active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -203,9 +199,9 @@ const closeSidebar = () => {
           <!-- Pedidos -->
           <router-link
             :to="{ name: 'orders' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -232,9 +228,9 @@ const closeSidebar = () => {
           <!-- Mensajes -->
           <router-link
             :to="{ name: 'messages' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -262,9 +258,9 @@ const closeSidebar = () => {
           <router-link
             v-if="!contextStore.isProvider"
             :to="{ name: 'smart-search' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'
@@ -291,9 +287,9 @@ const closeSidebar = () => {
           <!-- Notificaciones (Sidebar link) -->
           <router-link
             :to="{ name: 'notifications' }"
-            exact-active-class="!bg-[#fde8e4] !text-[#ff6a00] font-semibold"
+            exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[
-              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#ff6a00]',
+              'group relative flex items-center rounded-2xl text-slate-400 transition-all duration-200 hover:bg-[#fde8e4] hover:text-[#00a896]',
               sidebarOpen
                 ? 'h-11 w-full justify-start gap-3.5 px-3.5'
                 : 'max-md:h-11 max-md:w-full max-md:justify-start max-md:gap-3.5 max-md:px-3.5 md:mx-auto md:h-11.5 md:w-11.5 md:justify-center'

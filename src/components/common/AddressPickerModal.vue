@@ -4,6 +4,7 @@ import BaseModal from "./BaseModal.vue";
 import LocationMapPicker from "./LocationMapPicker.vue";
 import { GeocodingService, useGeoStore } from "@/stores/geo";
 import { useGeographyApi } from "@/api/modules/geography/useGeographyApi";
+import { useAlertStore } from "@/stores/ui";
 import type { GeoPoint } from "@/api/modules/shared/types";
 
 export interface AddressPickerResult {
@@ -34,6 +35,7 @@ const emit = defineEmits<{
 
 const geoStore = useGeoStore();
 const geographyApi = useGeographyApi();
+const alertStore = useAlertStore();
 const mapPickerRef = ref<InstanceType<typeof LocationMapPicker> | null>(null);
 
 const coordinates = ref<GeoPoint | null>(
@@ -79,7 +81,7 @@ const useCurrentLocation = async () => {
   const success = await mapPickerRef.value.requestBrowserLocation();
   isLocating.value = false;
   if (!success) {
-    alert("Permiso denegado o error al obtener ubicación.");
+    alertStore.showError("Permiso denegado o error al obtener ubicación.", "Ubicación no disponible");
   }
 };
 
