@@ -22,7 +22,7 @@ export const buyerSteps: TutorialStep[] = [
     cardDescription: "Aprende a crear una cuenta en la plataforma.",
     subtitle: "Vídeo",
     duration: "2:15 min",
-    videoUrl: "https://www.youtube.com/embed/UpVDqRZyx5I?si=vKS-aONJ6gzDS-JA",
+    videoUrl: "https://www.youtube.com/embed/BZtZd0SOIJk?si=rlGlGLCXkIQIPksK",
     learningPoints: [
       "Cómo crear una cuenta de comprador.",
       "Cómo llenar tu información.",
