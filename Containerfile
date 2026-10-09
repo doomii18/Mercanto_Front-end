@@ -11,8 +11,12 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy application source code
+# Copy application source code (including .env if present)
 COPY . .
+
+# Build argument for VITE_API_BASE_URL (defaults to prod azure URL if not provided)
+ARG VITE_API_BASE_URL="https://mercanto-bytes.northcentralus.cloudapp.azure.com/api"
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
 
 # Build application for production
 RUN npm run build

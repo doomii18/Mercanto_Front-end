@@ -3,10 +3,7 @@ import { useTokenStore } from "@/stores/auth";
 import { useAuthStore } from "@/stores/auth";
 import { ErrorPayloadSchema } from "@/api/modules/shared/schemas";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-if (!API_BASE_URL) {
-  throw new Error("FATAL CONFIGURATION ERROR: VITE_API_BASE_URL is missing.");
-}
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api";
 
 let isRefreshing = false;
 let refreshQueue: Array<(token: string) => void> = [];

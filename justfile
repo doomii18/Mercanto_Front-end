@@ -25,8 +25,14 @@ logs-dev:
     podman compose -f debug.compose.yml logs -f
 
 # Build production OCI container image using Podman (multi-stage Node build + Nginx runtime)
-build-image:
-    podman build -t mercanto-frontend:prod -f Containerfile .
+build-image api_base_url="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{api_base_url}}" ]; then
+        podman build --build-arg VITE_API_BASE_URL="{{api_base_url}}" -t mercanto-frontend:prod -f Containerfile .
+    else
+        podman build -t mercanto-frontend:prod -f Containerfile .
+    fi
 
 # Tag production container image for Docker Hub registry
 tag-image tag="prod":
