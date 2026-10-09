@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useAccountRegisterStore } from "@/stores/auth";
-import { useProviderRegisterStore } from "@/stores/auth";
+import { useAccountRegisterStore, useProviderRegisterStore } from "@/stores/auth";
 import { useAlertStore } from "@/stores/ui";
-import { useAuthStore } from "@/stores/auth";
-import { useTokenStore } from "@/stores/auth";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
 import CreatePasswordModal from "@/components/CreatePasswordModal.vue";
 import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
@@ -16,8 +13,6 @@ const router = useRouter();
 const accountStore = useAccountRegisterStore();
 const providerStore = useProviderRegisterStore();
 const alertStore = useAlertStore();
-const authStore = useAuthStore();
-const tokenStore = useTokenStore();
 
 const showConfirmModal = ref(false);
 const showPasswordModal = ref(false);
@@ -50,10 +45,7 @@ const handleRegistration = async (credentials: {
 const finishRegistration = () => {
   providerStore.resetForm();
   accountStore.resetForm();
-  tokenStore.clearTokens();
-  authStore.account = null;
-  authStore.isInitialized = false;
-  router.push({ name: "login" });
+  router.push({ name: "dashboard" });
 };
 </script>
 

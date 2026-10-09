@@ -12,10 +12,11 @@ import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue"
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import QuoteDraftSection from "@/components/quote/QuoteDraftSection.vue";
-import MockProductColorPicker from "@/components/mock/MockProductColorPicker.vue";
+import ProductSpecOptionsSelector from "@/components/product/ProductSpecOptionsSelector.vue";
 import ShippingMethodSelector from "@/components/product/ShippingMethodSelector.vue";
 import RelatedProductsSection from "@/components/product/RelatedProductsSection.vue";
 import type { ProductOfferResponse, ShippingMethod } from "@/api";
+import type { ProductSpecOptions } from "@/api/modules/catalog/product/types";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -41,6 +42,7 @@ interface ProductDetailData {
     imageBlobIds?: string[];
     description: string;
     shippingMethods: string[];
+    specOptions: ProductSpecOptions;
 }
 
 const route = useRoute();
@@ -68,7 +70,7 @@ function handleFavoriteClick() {
 }
 
 const isLoading = ref(true);
-const selectedColor = ref<string>("");
+const selectedOptions = ref<Record<string, string>>({});
 const quantity = ref(1);
 const currentOffer = ref<ProductOfferResponse | null>(null);
 
@@ -91,6 +93,7 @@ const product = ref<ProductDetailData>({
     imageBlobId: null,
     description: "",
     shippingMethods: [],
+    specOptions: {},
 });
 
 const providerId = computed(() => product.value.provider.id ?? "");
@@ -195,7 +198,19 @@ async function loadProduct(id: string) {
                 imageBlobIds: prodRes.image_blob_ids ?? [],
                 description: prodRes.description || "",
                 shippingMethods: availableShipping,
+                specOptions: prodRes.spec_options || {},
             };
+
+            // Pre-select first value for each available spec option
+            const initialSelectedOpts: Record<string, string> = {};
+            if (prodRes.spec_options) {
+                for (const [k, v] of Object.entries(prodRes.spec_options)) {
+                    if (Array.isArray(v) && v.length > 0) {
+                        initialSelectedOpts[k] = v[0];
+                    }
+                }
+            }
+            selectedOptions.value = initialSelectedOpts;
 
             if (availableShipping.length > 0) {
                 if (!availableShipping.includes(selectedShippingMethod.value as ShippingMethod)) {
@@ -210,6 +225,7 @@ async function loadProduct(id: string) {
             }
         } else {
             currentOffer.value = null;
+            selectedOptions.value = {};
             product.value = {
                 id,
                 category_id: "",
@@ -224,6 +240,7 @@ async function loadProduct(id: string) {
                 imageBlobId: null,
                 description: "No se pudo cargar la información del producto.",
                 shippingMethods: [],
+                specOptions: {},
             };
         }
     } catch (err) {
@@ -454,10 +471,9 @@ const handleReviewChanged = async () => {
                             </template>
                         </div>
 
-                        <MockProductColorPicker
-                            :seed="product.id"
-                            v-model="selectedColor"
-                            class="mb-5"
+                        <ProductSpecOptionsSelector
+                            :spec-options="product.specOptions"
+                            v-model="selectedOptions"
                         />
 
                         <div class="mb-5 flex flex-col gap-2">

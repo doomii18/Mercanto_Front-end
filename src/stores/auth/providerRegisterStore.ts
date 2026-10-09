@@ -3,8 +3,11 @@ import { ref } from "vue";
 import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
 import { useVerificationDocumentApi } from "@/api/modules/organization/verification_request_document/useVerificationDocumentApi";
 import type { ProviderKind } from "@/api";
+import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import { useAccountRegisterStore } from "./accountRegisterStore";
 import { useAuthStore } from "./authStore";
+import { useTokenStore } from "./tokenStore";
+import { useUserContextStore } from "./userContextStore";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useOrganizationLogoApi } from "@/api/modules/organization/logo/useOrganizationLogoApi";
 import { sanitizePhone, sanitizeTaxId } from "@/utils/formatters";
@@ -77,18 +80,19 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
     errorMessage.value = null;
 
     try {
-      // Create base Account & User Profile (authenticates and stores tokens)
+      // 1. Create base Account & User Profile in identity service
       await accountStore.submitRegistration(password);
 
-      const authStore = useAuthStore();
-      if (!authStore.isAuthenticated) {
-        await authStore.login({
-          email: accountStore.email.trim(),
-          password,
-        });
-      }
+      // 2. Obtain tokens for authenticated requests without prematurely triggering buyer preference guards
+      const identityApi = useIdentityApi();
+      const tokenStore = useTokenStore();
+      const tokens = await identityApi.login({
+        email: accountStore.email.trim(),
+        password,
+      });
+      tokenStore.setTokens(tokens.access_token, tokens.refresh_token);
 
-      // Create Organization
+      // 3. Register Organization in backend
       const org = await organizationApi.registerOrganization({
         company_name: companyName.value.trim(),
         tax_id: sanitizeTaxId(taxId.value),
@@ -103,12 +107,12 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
         company_description: companyDescription.value.trim() || undefined,
       });
 
-      // Upload Organization Logo
+      // 4. Upload Organization Logo if provided
       if (logoFile.value) {
         await organizationLogoApi.uploadOrganizationLogo(org.id, logoFile.value);
       }
 
-      // Submit Verification Request
+      // 5. Submit Verification Request if document provided
       if (verificationDocumentFile.value) {
         const verifReq = await verificationRequestApi.createVerificationRequest({
           organization_id: org.id,
@@ -124,6 +128,36 @@ export const useProviderRegisterStore = defineStore("providerRegister", () => {
           request_id: verifReq.id,
         });
       }
+
+      // 6. Populate Provider Context & wait if necessary to guarantee provider type before exposing auth
+      const userContext = useUserContextStore();
+      userContext.updateActiveOrganization(org);
+      userContext.setActiveOrganization(org.id);
+
+      let retries = 5;
+      while (retries > 0) {
+        try {
+          await userContext.initialize(true);
+          if (userContext.organizations.length > 0 && userContext.isProvider) {
+            break;
+          }
+        } catch (e) {
+          console.warn("[ProviderRegister] Waiting for organization context...", e);
+        }
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        retries--;
+      }
+
+      if (userContext.organizations.length === 0) {
+        userContext.updateActiveOrganization(org);
+        userContext.setActiveOrganization(org.id);
+      }
+
+      // 7. Finally, expose authenticated account now that provider context is fully established
+      const authStore = useAuthStore();
+      const profile = await identityApi.getMyAccount();
+      authStore.account = profile;
+      authStore.isInitialized = true;
     } catch (err: any) {
       errorMessage.value =
         err.message || "Error al completar el registro del proveedor";
