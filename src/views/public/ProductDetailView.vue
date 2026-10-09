@@ -365,7 +365,7 @@ const handleReviewChanged = async () => {
 
 <template>
     <div class="min-h-screen bg-white text-neutral-900 flex flex-col font-sans">
-        <main class="mx-auto w-full max-w-[1200px] px-6 pt-6 pb-16 flex-1">
+        <main class="mx-auto w-full max-w-[1200px] px-4 sm:px-6 pt-4 sm:pt-6 pb-16 flex-1">
             <section v-if="isLoading" class="mb-10 grid min-h-[450px] grid-cols-1 gap-10 lg:grid-cols-[1fr_1.35fr]">
                 <div class="animate-pulse rounded-3xl bg-neutral-200"></div>
                 <div class="animate-pulse rounded-3xl bg-neutral-200"></div>
