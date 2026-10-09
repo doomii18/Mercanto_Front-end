@@ -2,6 +2,9 @@ import { useApiFetch } from "@/api/useApiFetch";
 import {
   DateRangeQuerySchema,
   TopProvidersQuerySchema,
+  PopularProductsReportRequestSchema,
+  RechargesReportRequestSchema,
+  SalesReportRequestSchema,
 } from "./requests";
 import {
   KpiReportMetricsResponseSchema,
@@ -11,10 +14,14 @@ import {
   TopProvidersSummaryResponseSchema,
   OrderStatusSummaryResponseSchema,
   ProviderPayoutsSummaryResponseSchema,
+  GenerateReportResponseSchema,
 } from "./responses";
 import type {
   DateRangeQuery,
   TopProvidersQuery,
+  PopularProductsReportRequest,
+  RechargesReportRequest,
+  SalesReportRequest,
   KpiReportMetricsResponse,
   CategorySalesSummaryResponse,
   BankRechargesSummaryResponse,
@@ -22,6 +29,7 @@ import type {
   TopProvidersSummaryResponse,
   OrderStatusSummaryResponse,
   ProviderPayoutsSummaryResponse,
+  GenerateReportResponse,
 } from "./types";
 
 export const useAnalyticsApi = () => {
@@ -111,6 +119,59 @@ export const useAnalyticsApi = () => {
     return ProviderPayoutsSummaryResponseSchema.parse(data.value);
   }
 
+  // POST /admin/analytics/reports/popular-products
+  async function generatePopularProductsReport(
+    payload: PopularProductsReportRequest
+  ): Promise<GenerateReportResponse> {
+    const validated = PopularProductsReportRequestSchema.parse(payload);
+    const { data, error } = await useApiFetch("/admin/analytics/reports/popular-products")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to generate popular products report");
+    }
+    return GenerateReportResponseSchema.parse(data.value);
+  }
+
+  // POST /admin/analytics/reports/recharges
+  async function generateRechargesReport(
+    payload: RechargesReportRequest
+  ): Promise<GenerateReportResponse> {
+    const validated = RechargesReportRequestSchema.parse(payload);
+    const { data, error } = await useApiFetch("/admin/analytics/reports/recharges")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to generate recharges report");
+    }
+    return GenerateReportResponseSchema.parse(data.value);
+  }
+
+  // POST /admin/analytics/reports/sales
+  async function generateSalesReport(
+    payload: SalesReportRequest
+  ): Promise<GenerateReportResponse> {
+    const validated = SalesReportRequestSchema.parse(payload);
+    const { data, error } = await useApiFetch("/admin/analytics/reports/sales")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to generate sales report");
+    }
+    return GenerateReportResponseSchema.parse(data.value);
+  }
+
+  function triggerReportDownload(url: string, filename?: string): void {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename || "reporte";
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
   return {
     getKpiMetrics,
     getCategorySales,
@@ -119,5 +180,9 @@ export const useAnalyticsApi = () => {
     getTopProviders,
     getOrderStatusDistribution,
     getProviderPayouts,
+    generatePopularProductsReport,
+    generateRechargesReport,
+    generateSalesReport,
+    triggerReportDownload,
   };
 };

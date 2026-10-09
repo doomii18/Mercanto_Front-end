@@ -14,10 +14,14 @@ import type {
   OrderStatusSummarySchema,
   ProviderPayoutItemSchema,
   ProviderPayoutsSummarySchema,
+  ReportExportFormatSchema,
 } from "./domain";
 import type {
   DateRangeQuerySchema,
   TopProvidersQuerySchema,
+  PopularProductsReportRequestSchema,
+  RechargesReportRequestSchema,
+  SalesReportRequestSchema,
 } from "./requests";
 import type {
   KpiReportMetricsResponseSchema,
@@ -27,6 +31,7 @@ import type {
   TopProvidersSummaryResponseSchema,
   OrderStatusSummaryResponseSchema,
   ProviderPayoutsSummaryResponseSchema,
+  GenerateReportResponseSchema,
 } from "./responses";
 
 export type MetricComparison = z.infer<typeof MetricComparisonSchema>;
@@ -43,9 +48,13 @@ export type OrderStatusItem = z.infer<typeof OrderStatusItemSchema>;
 export type OrderStatusSummary = z.infer<typeof OrderStatusSummarySchema>;
 export type ProviderPayoutItem = z.infer<typeof ProviderPayoutItemSchema>;
 export type ProviderPayoutsSummary = z.infer<typeof ProviderPayoutsSummarySchema>;
+export type ReportExportFormat = z.infer<typeof ReportExportFormatSchema>;
 
 export type DateRangeQuery = z.infer<typeof DateRangeQuerySchema>;
 export type TopProvidersQuery = z.infer<typeof TopProvidersQuerySchema>;
+export type PopularProductsReportRequest = z.infer<typeof PopularProductsReportRequestSchema>;
+export type RechargesReportRequest = z.infer<typeof RechargesReportRequestSchema>;
+export type SalesReportRequest = z.infer<typeof SalesReportRequestSchema>;
 
 export type KpiReportMetricsResponse = z.infer<typeof KpiReportMetricsResponseSchema>;
 export type CategorySalesSummaryResponse = z.infer<typeof CategorySalesSummaryResponseSchema>;
@@ -54,3 +63,4 @@ export type RegionUsersSummaryResponse = z.infer<typeof RegionUsersSummaryRespon
 export type TopProvidersSummaryResponse = z.infer<typeof TopProvidersSummaryResponseSchema>;
 export type OrderStatusSummaryResponse = z.infer<typeof OrderStatusSummaryResponseSchema>;
 export type ProviderPayoutsSummaryResponse = z.infer<typeof ProviderPayoutsSummaryResponseSchema>;
+export type GenerateReportResponse = z.infer<typeof GenerateReportResponseSchema>;

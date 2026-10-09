@@ -115,3 +115,9 @@ export const ProviderPayoutsSummarySchema = z.object({
   total_amount: z.coerce.number(),
   items: z.array(ProviderPayoutItemSchema),
 });
+
+// ----------------------------------------------------
+// 7. Report Export Formats
+// ----------------------------------------------------
+
+export const ReportExportFormatSchema = z.enum(["csv", "xlsx", "pdf"]);
