@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, watch } from "vue";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore, useUserContextStore } from "@/stores/auth";
 import { usePreferencesGuard } from "./composables/usePreferencesGuard";
 import UserPreferencesModal from "./components/profile/UserPreferencesModal.vue";
 import GlobalAlerts from "./components/common/GlobalAlerts.vue";
@@ -8,6 +8,7 @@ import GlobalToasts from "./components/common/GlobalToasts.vue";
 import AuthPromptDialog from "./components/common/AuthPromptDialog.vue";
 
 const authStore = useAuthStore();
+const contextStore = useUserContextStore();
 const { showPrompt, currentPreferences, checkPreferences, savePreferences } =
   usePreferencesGuard();
 
@@ -33,6 +34,7 @@ watch(
 <template>
   <router-view />
   <UserPreferencesModal
+    v-if="!contextStore.isProvider && !contextStore.isStaff"
     v-model="showPrompt"
     :initial-preferences="currentPreferences"
     :is-mandatory="true"

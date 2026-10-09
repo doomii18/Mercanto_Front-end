@@ -8,6 +8,8 @@ import type {
   ProductSortFieldSchema,
   ProductSpecSchema,
   ProductSpecUpdateSchema,
+  ProductSpecOptionsSchema,
+  ProductSpecFiltersSchema,
   PhysicalSpecSchema,
   ServiceSpecSchema,
 } from "./domain";
@@ -40,6 +42,8 @@ export type UnitOfMeasure = z.infer<typeof UnitOfMeasureSchema>;
 export type ProductSortField = z.infer<typeof ProductSortFieldSchema>;
 export type ProductSpec = z.infer<typeof ProductSpecSchema>;
 export type ProductSpecUpdate = z.infer<typeof ProductSpecUpdateSchema>;
+export type ProductSpecOptions = z.infer<typeof ProductSpecOptionsSchema>;
+export type ProductSpecFilters = z.infer<typeof ProductSpecFiltersSchema>;
 export type PhysicalSpec = z.infer<typeof PhysicalSpecSchema>;
 export type ServiceSpec = z.infer<typeof ServiceSpecSchema>;
 

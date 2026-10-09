@@ -7,6 +7,8 @@ import {
   ShippingMethodSchema,
   ProductSpecSchema,
   ProductSpecUpdateSchema,
+  ProductSpecOptionsSchema,
+  ProductSpecFiltersSchema,
   ProductSortFieldSchema,
   SortDirectionSchema,
 } from "./domain";
@@ -21,6 +23,7 @@ export const CreateProductRequestSchema = z.object({
   shipping_methods: z.array(ShippingMethodSchema).min(1, "Debe seleccionar al menos un método de envío"),
   unit_of_measure: UnitOfMeasureSchema.default("piece"),
   spec: ProductSpecSchema,
+  spec_options: ProductSpecOptionsSchema.optional(),
 });
 
 // PatchProductDto | partial product update payload
@@ -31,6 +34,7 @@ export const PatchProductRequestSchema = z.object({
   base_price: ProductPriceSchema.optional().nullable(),
   shipping_methods: z.array(ShippingMethodSchema).optional().nullable(),
   spec: ProductSpecUpdateSchema.optional().nullable(),
+  spec_options: ProductSpecOptionsSchema.optional().nullable(),
 });
 
 // ProductFiltersQuery | query filters for listing products
@@ -44,6 +48,7 @@ export const ProductFiltersRequestSchema = z.object({
   min_score: z.number().min(0).optional(),
   is_active: z.boolean().optional(),
   search_term: z.string().optional(),
+  spec_filters: z.union([z.string(), ProductSpecFiltersSchema]).optional(),
   sort_by: ProductSortFieldSchema.optional(),
   sort_direction: SortDirectionSchema.optional(),
 });

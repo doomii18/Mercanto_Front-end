@@ -53,11 +53,12 @@ export const useAuthStore = defineStore("auth", () => {
       tokenStore.setTokens(tokens.access_token, tokens.refresh_token);
 
       const profile = await identityApi.getMyAccount();
-      account.value = profile;
 
+      // Initialize user context FIRST so provider/buyer role is fully established before account is exposed
       const userContext = useUserContextStore();
       await userContext.initialize(true);
 
+      account.value = profile;
       emitAuthEvent({ type: "login", accountId: profile.id });
 
       return profile;
@@ -80,6 +81,11 @@ export const useAuthStore = defineStore("auth", () => {
       try {
         await refreshAccessToken();
         const profile = await identityApi.getMyAccount();
+
+        // Ensure user context is initialized on session recovery
+        const userContext = useUserContextStore();
+        await userContext.initialize(true);
+
         account.value = profile;
       } catch (err) {
         console.warn("[Auth] Initialization failed or token expired:", err);
@@ -102,6 +108,9 @@ export const useAuthStore = defineStore("auth", () => {
     refreshPromise = null;
     isInitialized.value = true;
 
+    const userContext = useUserContextStore();
+    userContext.reset();
+
     emitAuthEvent({ type: "logout" });
 
     if (currentRefreshToken) {
@@ -121,6 +130,9 @@ export const useAuthStore = defineStore("auth", () => {
     initPromise = null;
     refreshPromise = null;
     isInitialized.value = true;
+
+    const userContext = useUserContextStore();
+    userContext.reset();
 
     emitAuthEvent({ type: "session_expired" });
   }

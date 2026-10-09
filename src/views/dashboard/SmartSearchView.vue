@@ -7,6 +7,7 @@ import { useAuthStore } from "@/stores/auth";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 import { useCategoryStore } from "@/stores/commerce";
+import { useAlertStore } from "@/stores/ui";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
 import type {
   SmartProductSearchHit,
@@ -55,6 +56,7 @@ const authStore = useAuthStore();
 const productApi = useProductApi();
 const categoryApi = useCategoryApi();
 const categoryStore = useCategoryStore();
+const alertStore = useAlertStore();
 const quoteApi = useQuoteApi();
 
 interface CatalogProductItem {
@@ -580,7 +582,7 @@ const confirmAndOrder = async () => {
   const ownedIds = ownedSeedIdsForProvider(selectedOptionDetail.value.providerId);
   if (ownedIds.length === 0) {
     showDetailModal.value = false;
-    window.alert(
+    alertStore.showWarning(
       "Este proveedor no ofrece los productos de tu lista. No se generó ninguna cotización."
     );
     return;
@@ -610,11 +612,16 @@ const confirmAndOrder = async () => {
     });
 
     showDetailModal.value = false;
-    window.alert("¡Cotización generada exitosamente con el comercio seleccionado!");
+    alertStore.spawnAlert({
+      title: "¡Cotización generada!",
+      message: "¡Cotización generada exitosamente con el comercio seleccionado!",
+      iconVariant: "teal",
+      icon: "fa-solid fa-circle-check",
+    });
     router.push({ name: "orders" });
   } catch (err: any) {
     console.error("Error creating quote:", err);
-    window.alert(err?.message || "Ocurrió un error al registrar la cotización.");
+    alertStore.showError(err?.message || "Ocurrió un error al registrar la cotización.");
   } finally {
     isCreatingQuote.value = false;
   }
@@ -623,7 +630,7 @@ const confirmAndOrder = async () => {
 // Creates a quote for a single provider covering its exact owned subset.
 const confirmCoverageOrder = async (group: CoverageGroupView) => {
   if (group.items.length === 0) {
-    window.alert("Este proveedor no ofrece los productos de tu lista.");
+    alertStore.showWarning("Este proveedor no ofrece los productos de tu lista.");
     return;
   }
 
@@ -650,11 +657,16 @@ const confirmCoverageOrder = async (group: CoverageGroupView) => {
       })),
     });
 
-    window.alert(`¡Cotización generada exitosamente con ${group.providerName}!`);
+    alertStore.spawnAlert({
+      title: "¡Cotización generada!",
+      message: `¡Cotización generada exitosamente con ${group.providerName}!`,
+      iconVariant: "teal",
+      icon: "fa-solid fa-circle-check",
+    });
     router.push({ name: "orders" });
   } catch (err: any) {
     console.error("Error creating quote:", err);
-    window.alert(err?.message || "Ocurrió un error al registrar la cotización.");
+    alertStore.showError(err?.message || "Ocurrió un error al registrar la cotización.");
   } finally {
     isCreatingQuote.value = false;
   }

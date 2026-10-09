@@ -372,7 +372,7 @@ onMounted(async () => {
 
 <template>
   <!-- Shell -->
-  <div class="flex flex-1 min-h-0 w-full h-full overflow-hidden relative bg-[#fde8e4]">
+  <div class="flex flex-1 min-h-0 w-full h-full overflow-hidden relative bg-white">
     <!-- Conversations panel -->
     <aside
       class="w-full md:w-[370px] md:min-w-[260px] min-h-0 bg-white border-r border-[#eee] flex-col pt-6 px-4 sm:px-5 pb-4 gap-4 overflow-hidden"

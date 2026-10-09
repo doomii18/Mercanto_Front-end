@@ -459,6 +459,7 @@ onMounted(async () => {
   min-height: 0;
   overflow-y: auto;
   padding: 1rem 1rem 2.5rem 1rem;
+  background-color: #ffffff;
   color: #333;
 }
 

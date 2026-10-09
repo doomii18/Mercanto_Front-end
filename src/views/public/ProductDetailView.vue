@@ -12,10 +12,11 @@ import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue"
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
 import ProductReviewsSection from "@/components/product/ProductReviewsSection.vue";
 import QuoteDraftSection from "@/components/quote/QuoteDraftSection.vue";
-import MockProductColorPicker from "@/components/mock/MockProductColorPicker.vue";
-import MockShippingMethodSelector, { type ShippingMethodOption } from "@/components/mock/MockShippingMethodSelector.vue";
+import ProductSpecOptionsSelector from "@/components/product/ProductSpecOptionsSelector.vue";
+import ShippingMethodSelector from "@/components/product/ShippingMethodSelector.vue";
 import RelatedProductsSection from "@/components/product/RelatedProductsSection.vue";
-import type { ProductOfferResponse } from "@/api";
+import type { ProductOfferResponse, ShippingMethod } from "@/api";
+import type { ProductSpecOptions } from "@/api/modules/catalog/product/types";
 import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useReviewApi } from "@/api/modules/commerce/review/useReviewApi";
 
@@ -41,6 +42,7 @@ interface ProductDetailData {
     imageBlobIds?: string[];
     description: string;
     shippingMethods: string[];
+    specOptions: ProductSpecOptions;
 }
 
 const route = useRoute();
@@ -68,8 +70,7 @@ function handleFavoriteClick() {
 }
 
 const isLoading = ref(true);
-const selectedShippingMethod = ref("bus");
-const selectedColor = ref<string>("");
+const selectedOptions = ref<Record<string, string>>({});
 const quantity = ref(1);
 const currentOffer = ref<ProductOfferResponse | null>(null);
 
@@ -92,6 +93,7 @@ const product = ref<ProductDetailData>({
     imageBlobId: null,
     description: "",
     shippingMethods: [],
+    specOptions: {},
 });
 
 const providerId = computed(() => product.value.provider.id ?? "");
@@ -105,18 +107,19 @@ function resolveLocationText(municipalityId?: string): string {
         : hierarchy.municipality.name;
 }
 
-const selectedShipping = ref<ShippingMethodOption>({
-    id: "bus",
-    name: "Bus Interlocal",
-    icon: "fa-solid fa-bus",
-    cost: 150,
+const selectedShippingMethod = ref<ShippingMethod>("bus");
+const selectedShippingMethodName = computed(() => {
+    if (selectedShippingMethod.value === "own_delivery") return "Entrega Propia / Paquetería";
+    if (selectedShippingMethod.value === "bus") return "Bus Interlocal";
+    return "Por definir";
 });
 
 async function loadProduct(id: string) {
     isLoading.value = true;
     try {
-        const [prodRes] = await Promise.all([
+        const [prodRes, shippingRes] = await Promise.all([
             productApi.getProduct(id).catch(() => null),
+            productApi.getProductShipping(id).catch(() => [] as ShippingMethod[]),
             geoStore.initialize().catch(() => {}),
         ]);
 
@@ -166,6 +169,12 @@ async function loadProduct(id: string) {
                 categoryName = categoryStore.getCategoryName(categoryId, categoryName);
             }
 
+            const availableShipping = (shippingRes && shippingRes.length > 0)
+                ? shippingRes
+                : (prodRes.shipping_methods && prodRes.shipping_methods.length > 0)
+                    ? prodRes.shipping_methods
+                    : [];
+
             product.value = {
                 id: prodRes.id,
                 title: prodRes.title,
@@ -188,8 +197,26 @@ async function loadProduct(id: string) {
                 imageBlobId: prodRes.image_blob_ids?.[0] ?? null,
                 imageBlobIds: prodRes.image_blob_ids ?? [],
                 description: prodRes.description || "",
-                shippingMethods: prodRes.shipping_methods ?? [],
+                shippingMethods: availableShipping,
+                specOptions: prodRes.spec_options || {},
             };
+
+            // Pre-select first value for each available spec option
+            const initialSelectedOpts: Record<string, string> = {};
+            if (prodRes.spec_options) {
+                for (const [k, v] of Object.entries(prodRes.spec_options)) {
+                    if (Array.isArray(v) && v.length > 0) {
+                        initialSelectedOpts[k] = v[0];
+                    }
+                }
+            }
+            selectedOptions.value = initialSelectedOpts;
+
+            if (availableShipping.length > 0) {
+                if (!availableShipping.includes(selectedShippingMethod.value as ShippingMethod)) {
+                    selectedShippingMethod.value = availableShipping[0];
+                }
+            }
 
             try {
                 currentOffer.value = await offerApi.getOfferByProduct(prodRes.id);
@@ -198,6 +225,7 @@ async function loadProduct(id: string) {
             }
         } else {
             currentOffer.value = null;
+            selectedOptions.value = {};
             product.value = {
                 id,
                 category_id: "",
@@ -212,6 +240,7 @@ async function loadProduct(id: string) {
                 imageBlobId: null,
                 description: "No se pudo cargar la información del producto.",
                 shippingMethods: [],
+                specOptions: {},
             };
         }
     } catch (err) {
@@ -249,8 +278,7 @@ const discountedUnitPrice = computed(() =>
 
 const subtotal = computed(() => product.value.price * quantity.value);
 const discountedSubtotal = computed(() => discountedUnitPrice.value * quantity.value);
-const shippingCost = computed(() => selectedShipping.value?.cost || 0);
-const total = computed(() => discountedSubtotal.value + shippingCost.value);
+const total = computed(() => discountedSubtotal.value);
 
 const formatPrice = (val: number | null | undefined) => {
     if (val === null || val === undefined || isNaN(val)) return "0";
@@ -289,12 +317,17 @@ const handleAddToQuote = () => {
     }
     if (!product.value.id || !providerId.value) return;
 
+    const chosenShipping = (selectedShippingMethod.value as ShippingMethod) ||
+        (product.value.shippingMethods[0] as ShippingMethod) ||
+        "bus";
+
     quoteBuilderStore.addItem(providerId.value, {
         productId: product.value.id,
         productTitle: product.value.title,
         unitPrice: product.value.price,
         imageBlobId: product.value.imageBlobId,
         quantity: quantity.value,
+        shippingPreference: chosenShipping,
         offerId: currentOffer.value?.id ?? null,
         discountPercentage: discountPercentage.value,
     }, {
@@ -438,10 +471,9 @@ const handleReviewChanged = async () => {
                             </template>
                         </div>
 
-                        <MockProductColorPicker
-                            :seed="product.id"
-                            v-model="selectedColor"
-                            class="mb-5"
+                        <ProductSpecOptionsSelector
+                            :spec-options="product.specOptions"
+                            v-model="selectedOptions"
                         />
 
                         <div class="mb-5 flex flex-col gap-2">
@@ -451,11 +483,9 @@ const handleReviewChanged = async () => {
                             </p>
                         </div>
 
-                        <MockShippingMethodSelector
+                        <ShippingMethodSelector
                             :methods="product.shippingMethods"
-                            :seed="product.id"
                             v-model="selectedShippingMethod"
-                            @update:selected-method="(m) => selectedShipping = m"
                         />
                     </div>
                 </section>
@@ -560,8 +590,8 @@ const handleReviewChanged = async () => {
                             </div>
                             <hr class="my-1 border-t border-neutral-300" />
                             <div class="flex items-center justify-between">
-                                <span class="text-neutral-500">Tipo de envío:</span>
-                                <span class="font-medium text-neutral-900">{{ selectedShipping.name }}</span>
+                                <span class="text-neutral-500">Método de envío:</span>
+                                <span class="font-medium text-neutral-900">{{ selectedShippingMethodName }}</span>
                             </div>
                             <div class="flex items-center justify-between">
                                 <span class="text-neutral-500">Subtotal:</span>
@@ -571,14 +601,14 @@ const handleReviewChanged = async () => {
                                 </span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-neutral-500">Envío estimado:</span>
-                                <span class="font-medium text-neutral-900">
-                                    {{ shippingCost > 0 ? `C$ ${formatPrice(shippingCost)}` : "C$ 0" }}
+                                <span class="text-neutral-500">Costo de flete:</span>
+                                <span class="font-medium text-teal-700 text-xs bg-teal-50 px-2 py-0.5 rounded">
+                                    Calculado al cotizar
                                 </span>
                             </div>
                             <hr class="my-1 border-t-2 border-neutral-500" />
                             <div class="flex items-center justify-between text-base font-bold text-neutral-900">
-                                <span>Total estimado:</span>
+                                <span>Subtotal productos:</span>
                                 <span class="text-lg font-bold text-neutral-900">C$ {{ formatPrice(total) }}</span>
                             </div>
                         </div>

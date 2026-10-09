@@ -119,6 +119,9 @@ export const useUserContextStore = defineStore("userContext", () => {
     } else {
       organizations.value.push(org);
     }
+    if (!activeOrganizationId.value) {
+      activeOrganizationId.value = org.id;
+    }
   }
 
   function setActiveOrganization(orgId: string): void {

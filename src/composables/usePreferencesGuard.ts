@@ -15,6 +15,8 @@ export function usePreferencesGuard(delayMs = 1200) {
   const isApplicableBuyer = () => {
     return (
       authStore.isAuthenticated &&
+      contextStore.isInitialized &&
+      !contextStore.isLoading &&
       contextStore.isBuyer &&
       !contextStore.isProvider &&
       !contextStore.isStaff
@@ -34,7 +36,14 @@ export function usePreferencesGuard(delayMs = 1200) {
 
   // Automatically dismiss or cancel prompt if the user changes context or logs out
   watch(
-    [() => authStore.isAuthenticated, () => contextStore.isBuyer, () => contextStore.isStaff],
+    [
+      () => authStore.isAuthenticated,
+      () => contextStore.isInitialized,
+      () => contextStore.isLoading,
+      () => contextStore.isBuyer,
+      () => contextStore.isProvider,
+      () => contextStore.isStaff,
+    ],
     () => {
       if (!isApplicableBuyer()) {
         cancelDelayedPrompt();
@@ -48,7 +57,7 @@ export function usePreferencesGuard(delayMs = 1200) {
 
     isChecking.value = true;
     try {
-      if (!contextStore.isInitialized) {
+      if (!contextStore.isInitialized || contextStore.isLoading) {
         await contextStore.initialize();
       }
 
