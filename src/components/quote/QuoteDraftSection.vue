@@ -139,140 +139,173 @@ const confirmQuote = async () => {
 
 <template>
   <div v-if="authStore.isAuthenticated && draftItems.length > 0">
-    <section class="mt-10 rounded-3xl bg-neutral-100 p-8 lg:p-10">
-      <h3 class="mb-5 font-serif text-xl font-bold text-neutral-900">
+    <section class="mt-8 sm:mt-10 rounded-2xl sm:rounded-3xl bg-neutral-100 p-4 sm:p-6 lg:p-8">
+      <h3 class="mb-4 sm:mb-5 font-serif text-lg sm:text-xl font-bold text-neutral-900 leading-snug">
         Tu cotización con {{ providerName }}
       </h3>
-      <div class="flex flex-col gap-4">
+      <div class="flex flex-col gap-3 sm:gap-4">
         <div
           v-for="item in draftItems"
           :key="`${item.productId}-${item.shippingPreference}`"
-          class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm"
+          class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 bg-white p-3.5 sm:p-4 rounded-xl sm:rounded-2xl shadow-xs border border-neutral-200/70"
         >
-          <div
-            class="h-16 w-16 shrink-0 rounded-lg overflow-hidden bg-neutral-50 flex items-center justify-center border border-neutral-200"
-          >
-            <ProductImage
-              :blob-id="item.imageBlobId"
-              :alt="item.productTitle"
-            />
-          </div>
-          <div class="flex-1 min-w-0">
-            <h4 class="font-semibold text-neutral-900 truncate">
-              {{ item.productTitle }}
-            </h4>
-            <div class="flex items-center gap-2 mt-0.5">
-              <span
-                class="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700"
-              >
-                <i
-                  :class="item.shippingPreference === 'own_delivery' ? 'fa-solid fa-truck' : 'fa-solid fa-bus'"
-                  class="text-[0.65rem] text-teal-600"
-                ></i>
-                {{ item.shippingPreference === 'own_delivery' ? 'Entrega Propia' : 'Bus Interlocal' }}
-              </span>
-            </div>
-            <p class="text-sm text-neutral-500 mt-0.5">
-              {{ item.quantity }} und x
-              <span
-                v-if="item.discountPercentage"
-                class="text-neutral-400 line-through"
-              >
-                C$ {{ formatPrice(item.unitPrice) }}
-              </span>
-              <span
-                :class="
-                  item.discountPercentage ? 'font-semibold text-orange-500' : ''
-                "
-              >
-                C$
-                {{
-                  formatPrice(
-                    itemEffectiveUnitPrice(
-                      item.unitPrice,
-                      item.discountPercentage
-                    )
-                  )
-                }}
-              </span>
-              <span
-                v-if="item.discountPercentage"
-                class="ml-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600"
-              >
-                -{{ item.discountPercentage }}%
-              </span>
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-              <button
-                type="button"
-                class="h-6 w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400 cursor-pointer"
-                @click="
-                  quoteBuilderStore.updateItemQuantity(
-                    providerId,
-                    item.productId,
-                    item.quantity - 1,
-                    item.shippingPreference
-                  )
-                "
-              >
-                <i class="fa-solid fa-minus"></i>
-              </button>
-              <span
-                class="text-sm font-bold text-teal-600 min-w-[20px] text-center"
-              >
-                {{ item.quantity }}
-              </span>
-              <button
-                type="button"
-                class="h-6 w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400 cursor-pointer"
-                @click="
-                  quoteBuilderStore.updateItemQuantity(
-                    providerId,
-                    item.productId,
-                    item.quantity + 1,
-                    item.shippingPreference
-                  )
-                "
-              >
-                <i class="fa-solid fa-plus"></i>
-              </button>
-            </div>
-            <button
-              type="button"
-              class="text-red-500 hover:text-red-700 p-1 cursor-pointer"
-              title="Eliminar"
-              @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference)"
+          <!-- Main content: Image + Details -->
+          <div class="flex items-start sm:items-center gap-3 sm:gap-4 min-w-0 flex-1">
+            <!-- Product image -->
+            <div
+              class="h-16 w-16 sm:h-18 sm:w-18 shrink-0 rounded-xl overflow-hidden bg-neutral-50 flex items-center justify-center border border-neutral-200"
             >
-              <i class="fa-solid fa-trash text-sm"></i>
-            </button>
+              <ProductImage
+                :blob-id="item.imageBlobId"
+                :alt="item.productTitle"
+              />
+            </div>
+
+            <!-- Details -->
+            <div class="flex-1 min-w-0">
+              <h4
+                class="font-semibold text-neutral-900 text-sm sm:text-base leading-snug line-clamp-2 sm:line-clamp-1 sm:truncate"
+                :title="item.productTitle"
+              >
+                {{ item.productTitle }}
+              </h4>
+
+              <div class="flex items-center gap-2 mt-1">
+                <span
+                  class="inline-flex items-center gap-1.5 rounded-md bg-neutral-100 px-2 py-0.5 text-[11px] sm:text-xs font-medium text-neutral-700"
+                >
+                  <i
+                    :class="item.shippingPreference === 'own_delivery' ? 'fa-solid fa-truck' : 'fa-solid fa-bus'"
+                    class="text-[0.65rem] text-teal-600"
+                  ></i>
+                  {{ item.shippingPreference === 'own_delivery' ? 'Entrega Propia' : 'Bus Interlocal' }}
+                </span>
+              </div>
+
+              <!-- Price breakdown -->
+              <div class="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-xs sm:text-sm text-neutral-500 mt-1">
+                <span class="font-medium text-neutral-700 whitespace-nowrap">{{ item.quantity }} und x</span>
+                <span
+                  v-if="item.discountPercentage"
+                  class="text-neutral-400 line-through whitespace-nowrap"
+                >
+                  C$ {{ formatPrice(item.unitPrice) }}
+                </span>
+                <span
+                  :class="
+                    item.discountPercentage ? 'font-semibold text-orange-500' : 'text-neutral-900 font-medium'
+                  "
+                  class="whitespace-nowrap"
+                >
+                  C$
+                  {{
+                    formatPrice(
+                      itemEffectiveUnitPrice(
+                        item.unitPrice,
+                        item.discountPercentage
+                      )
+                    )
+                  }}
+                </span>
+                <span
+                  v-if="item.discountPercentage"
+                  class="rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600 whitespace-nowrap"
+                >
+                  -{{ item.discountPercentage }}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions: Quantity selector + Trash button (+ subtotal on mobile) -->
+          <div
+            class="flex items-center justify-between sm:justify-end gap-3 pt-2.5 sm:pt-0 border-t border-neutral-100 sm:border-t-0 shrink-0"
+          >
+            <!-- Subtotal preview on mobile -->
+            <div class="flex items-baseline gap-1 sm:hidden text-xs text-neutral-500">
+              <span>Subtotal:</span>
+              <span class="font-bold text-neutral-900 text-sm">
+                C$ {{ formatPrice(item.quantity * itemEffectiveUnitPrice(item.unitPrice, item.discountPercentage)) }}
+              </span>
+            </div>
+
+            <!-- Controls and Delete -->
+            <div class="flex items-center gap-2.5 sm:gap-3 ml-auto sm:ml-0">
+              <div class="flex items-center gap-1.5 sm:gap-2 bg-neutral-100 rounded-lg p-1">
+                <button
+                  type="button"
+                  class="h-7 w-7 sm:h-6 sm:w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400 active:bg-neutral-500 transition-colors cursor-pointer"
+                  aria-label="Disminuir cantidad"
+                  @click="
+                    quoteBuilderStore.updateItemQuantity(
+                      providerId,
+                      item.productId,
+                      item.quantity - 1,
+                      item.shippingPreference
+                    )
+                  "
+                >
+                  <i class="fa-solid fa-minus"></i>
+                </button>
+                <span
+                  class="text-sm font-bold text-teal-600 min-w-[22px] sm:min-w-[20px] text-center"
+                >
+                  {{ item.quantity }}
+                </span>
+                <button
+                  type="button"
+                  class="h-7 w-7 sm:h-6 sm:w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400 active:bg-neutral-500 transition-colors cursor-pointer"
+                  aria-label="Aumentar cantidad"
+                  @click="
+                    quoteBuilderStore.updateItemQuantity(
+                      providerId,
+                      item.productId,
+                      item.quantity + 1,
+                      item.shippingPreference
+                    )
+                  "
+                >
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+              <button
+                type="button"
+                class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 active:scale-95 transition-all cursor-pointer"
+                title="Eliminar"
+                aria-label="Eliminar producto"
+                @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference)"
+              >
+                <i class="fa-solid fa-trash text-sm sm:text-base"></i>
+              </button>
+            </div>
           </div>
         </div>
 
         <div
-          class="flex flex-col sm:flex-row justify-between items-center gap-4 mt-4 pt-4 border-t border-neutral-300"
+          class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 sm:gap-4 mt-3 sm:mt-4 pt-4 border-t border-neutral-300"
         >
-          <span class="text-lg font-bold text-neutral-900">
-            Subtotal:
-            <span
-              v-if="draftHasDiscount"
-              class="text-neutral-400 line-through"
-            >
-              C$ {{ formatPrice(draftSubtotal) }}
-            </span>
-            <span class="text-orange-500">
-              C$
-              {{
-                formatPrice(
-                  draftHasDiscount ? draftDiscountedSubtotal : draftSubtotal
-                )
-              }}
-            </span>
-          </span>
+          <div class="flex items-baseline justify-between sm:justify-start gap-2">
+            <span class="text-sm sm:text-base font-semibold text-neutral-700">Subtotal:</span>
+            <div class="flex items-baseline gap-1.5">
+              <span
+                v-if="draftHasDiscount"
+                class="text-neutral-400 line-through text-sm sm:text-base"
+              >
+                C$ {{ formatPrice(draftSubtotal) }}
+              </span>
+              <span class="text-lg sm:text-xl font-bold text-orange-500">
+                C$
+                {{
+                  formatPrice(
+                    draftHasDiscount ? draftDiscountedSubtotal : draftSubtotal
+                  )
+                }}
+              </span>
+            </div>
+          </div>
           <button
             type="button"
-            class="w-full sm:w-auto rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-8 py-3 text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5 cursor-pointer"
+            class="w-full sm:w-auto rounded-full bg-gradient-to-b from-orange-400 to-orange-600 px-6 sm:px-8 py-3 text-sm sm:text-base font-bold text-white shadow-sm transition-transform duration-200 hover:-translate-y-0.5 active:translate-y-0 text-center cursor-pointer"
             @click="openConfirmModal"
           >
             Hacer oficial el pedido
