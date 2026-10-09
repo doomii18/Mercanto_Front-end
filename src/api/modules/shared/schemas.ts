@@ -100,6 +100,14 @@ export const BatchQuoteQuerySchema = z.object({
     .max(MAX_BATCH_SIZE, "El lote no debe exceder las 100 cotizaciones"),
 });
 
+// BatchAccountQueryDto | batch query for account ids (1 to 100 items)
+export const BatchAccountQuerySchema = z.object({
+  account_ids: z
+    .array(z.uuid("ID de cuenta inválido"))
+    .min(MIN_BATCH_SIZE, "El lote debe contener al menos 1 cuenta")
+    .max(MAX_BATCH_SIZE, "El lote no debe exceder las 100 cuentas"),
+});
+
 // GeoPoint | geographic coordinates point
 export const GeoPointSchema = z.object({
   latitude: z.coerce.number(),

@@ -11,6 +11,7 @@ import {
   BatchCategoryQuerySchema,
   BatchProviderQuerySchema,
   BatchQuoteQuerySchema,
+  BatchAccountQuerySchema,
   GeoPointSchema,
 } from "./schemas";
 
@@ -28,4 +29,5 @@ export type BatchProductQuery = z.infer<typeof BatchProductQuerySchema>;
 export type BatchCategoryQuery = z.infer<typeof BatchCategoryQuerySchema>;
 export type BatchProviderQuery = z.infer<typeof BatchProviderQuerySchema>;
 export type BatchQuoteQuery = z.infer<typeof BatchQuoteQuerySchema>;
+export type BatchAccountQuery = z.infer<typeof BatchAccountQuerySchema>;
 export type GeoPoint = z.infer<typeof GeoPointSchema>;

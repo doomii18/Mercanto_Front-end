@@ -2,6 +2,7 @@ import { z } from "zod";
 import {
   ProviderKindSchema,
   OrganizationStatusSchema,
+  OrganizationMemberRoleSchema,
   companyNameSchema,
   taxIdSchema,
   companyDescriptionSchema,
@@ -47,6 +48,18 @@ export const PaginatedOrganizationsResponseSchema = PaginatedResponseSchema(
 // PaginatedResponseDto<OrganizationDetailsDto> | paginated admin/auditor list of all organizations
 export const PaginatedOrganizationDetailsResponseSchema = PaginatedResponseSchema(
   OrganizationDetailsDtoSchema,
+);
+
+// ProviderMembershipDto | a provider organization an account belongs to, with its role
+export const ProviderMembershipDtoSchema = z.object({
+  provider_id: z.uuid(),
+  role: OrganizationMemberRoleSchema,
+});
+
+// HashMap<Uuid, Vec<ProviderMembershipDto>> | provider memberships keyed by account id
+export const ProviderMembershipsByAccountSchema = z.record(
+  z.uuid(),
+  z.array(ProviderMembershipDtoSchema),
 );
 
 // Backward-compatible alias

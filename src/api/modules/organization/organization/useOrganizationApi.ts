@@ -1,5 +1,6 @@
 import { useApiFetch } from "@/api/useApiFetch";
 import { z } from "zod";
+import { BatchAccountQuerySchema } from "@/api/modules/shared/schemas";
 import {
   RegisterProviderRequestSchema,
   ProviderOrganizationPatchSchema,
@@ -10,17 +11,20 @@ import {
   OrganizationDetailsDtoSchema,
   PaginatedOrganizationsResponseSchema,
   PaginatedOrganizationDetailsResponseSchema,
+  ProviderMembershipsByAccountSchema,
 } from "./responses";
 import type {
   PublicProviderDto,
   OrganizationDetailsDto,
   PaginatedOrganizationsResponse,
   PaginatedOrganizationDetailsResponse,
+  ProviderMembershipsByAccount,
   RegisterProviderRequest,
   ProviderOrganizationPatch,
   UpdateMemberRoleRequest,
   OrganizationFiltersRequest,
 } from "./types";
+import type { BatchAccountQuery } from "@/api/modules/shared/types";
 
 export const useOrganizationApi = () => {
   // GET /providers
@@ -107,6 +111,28 @@ export const useOrganizationApi = () => {
     }
 
     return PaginatedOrganizationDetailsResponseSchema.parse(data.value);
+  }
+
+  // POST /admin/organizations/memberships/batch
+  // Admin/Auditor view: resolves the active provider memberships for a set of
+  // account IDs. Every requested account id is a key; accounts without any
+  // active provider membership map to an empty list.
+  async function getProviderMembershipsBatch(
+    payload: BatchAccountQuery
+  ): Promise<ProviderMembershipsByAccount> {
+    const validated = BatchAccountQuerySchema.parse(payload);
+
+    const { data, error } = await useApiFetch(
+      "/admin/organizations/memberships/batch"
+    )
+      .post(validated)
+      .json();
+
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to batch fetch provider memberships");
+    }
+
+    return ProviderMembershipsByAccountSchema.parse(data.value);
   }
 
   // GET /providers/{id}
@@ -219,6 +245,7 @@ export const useOrganizationApi = () => {
   return {
     getOrganizations,
     getAllOrganizations,
+    getProviderMembershipsBatch,
     getPublicProvider,
     getOrganizationDetails,
     getMyOrganizations,
