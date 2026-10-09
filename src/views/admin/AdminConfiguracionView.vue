@@ -24,56 +24,20 @@ const formData = ref({
   is_active: true,
 });
 
-const STORAGE_KEY = "mercanto_admin_platform_bank_accounts_override";
-
-function getLocalOverrides(): PlatformBankAccountResponse[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveLocalOverrides(list: PlatformBankAccountResponse[]) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-  } catch (e) {
-    console.warn("Failed to persist bank account overrides:", e);
-  }
-}
+const isSaving = ref(false);
 
 async function loadBankAccounts() {
   isLoading.value = true;
   try {
-    const backendAccounts = await bankAccountApi.getPlatformBankAccounts();
-    const localOverrides = getLocalOverrides();
-
-    // Merge: local overrides take precedence or append new ones
-    if (localOverrides.length > 0) {
-      const mergedMap = new Map<string, PlatformBankAccountResponse>();
-      for (const a of backendAccounts) {
-        mergedMap.set(a.id, a);
-      }
-      for (const o of localOverrides) {
-        mergedMap.set(o.id, o);
-      }
-      cuentas.value = Array.from(mergedMap.values());
-    } else {
-      cuentas.value = backendAccounts;
-    }
+    const backendAccounts = await bankAccountApi.getPlatformBankAccounts(true);
+    cuentas.value = backendAccounts;
   } catch (err: any) {
     console.error("[AdminConfiguracion] Error loading bank accounts:", err);
-    const localOverrides = getLocalOverrides();
-    if (localOverrides.length > 0) {
-      cuentas.value = localOverrides;
-    } else {
-      toastStore.addToast({
-        title: "Error",
-        message: "No se pudieron cargar las cuentas bancarias de la plataforma.",
-        variant: "error",
-      });
-    }
+    toastStore.addToast({
+      title: "Error",
+      message: "No se pudieron cargar las cuentas bancarias de la plataforma.",
+      variant: "error",
+    });
   } finally {
     isLoading.value = false;
   }
@@ -107,73 +71,74 @@ const openEdit = (cuenta: PlatformBankAccountResponse) => {
   showModal.value = true;
 };
 
-const saveAccount = () => {
-  const localOverrides = getLocalOverrides();
-
-  if (editingAccount.value) {
-    // Update existing
-    const updated: PlatformBankAccountResponse = {
-      ...editingAccount.value,
-      bank_name: formData.value.bank_name,
-      account_number: formData.value.account_number,
-      account_type: formData.value.account_type,
-      account_holder: formData.value.account_holder,
-      is_active: formData.value.is_active,
-    };
-    const idx = cuentas.value.findIndex((c) => c.id === updated.id);
-    if (idx !== -1) {
-      cuentas.value[idx] = updated;
-    }
-    const oIdx = localOverrides.findIndex((c) => c.id === updated.id);
-    if (oIdx !== -1) {
-      localOverrides[oIdx] = updated;
+const saveAccount = async () => {
+  isSaving.value = true;
+  try {
+    if (editingAccount.value) {
+      const updated = await bankAccountApi.updatePlatformBankAccount(editingAccount.value.id, {
+        bank_name: formData.value.bank_name,
+        account_number: formData.value.account_number,
+        account_type: formData.value.account_type,
+        account_holder: formData.value.account_holder,
+        is_active: formData.value.is_active,
+      });
+      const idx = cuentas.value.findIndex((c) => c.id === updated.id);
+      if (idx !== -1) {
+        cuentas.value[idx] = updated;
+      }
+      toastStore.addToast({
+        title: "Cuenta actualizada",
+        message: `La cuenta de ${updated.bank_name} se ha actualizado correctamente.`,
+        variant: "success",
+      });
     } else {
-      localOverrides.push(updated);
+      const created = await bankAccountApi.createPlatformBankAccount({
+        bank_name: formData.value.bank_name,
+        account_number: formData.value.account_number,
+        account_type: formData.value.account_type,
+        account_holder: formData.value.account_holder,
+        is_active: formData.value.is_active,
+      });
+      cuentas.value.unshift(created);
+      toastStore.addToast({
+        title: "Cuenta agregada",
+        message: `Se ha registrado la cuenta de ${created.bank_name} correctamente.`,
+        variant: "success",
+      });
     }
-    saveLocalOverrides(localOverrides);
-
+    showModal.value = false;
+  } catch (err: any) {
+    console.error("[AdminConfiguracion] Error saving bank account:", err);
     toastStore.addToast({
-      title: "Cuenta actualizada",
-      message: `La cuenta de ${updated.bank_name} se ha actualizado correctamente.`,
-      variant: "success",
+      title: "Error al guardar",
+      message: err?.message || "No se pudo guardar la cuenta bancaria.",
+      variant: "error",
     });
-  } else {
-    // Create new
-    const newAccount: PlatformBankAccountResponse = {
-      id: `local-${Date.now()}`,
-      bank_name: formData.value.bank_name,
-      account_number: formData.value.account_number,
-      account_type: formData.value.account_type,
-      account_holder: formData.value.account_holder,
-      is_active: formData.value.is_active,
-    };
-    cuentas.value.unshift(newAccount);
-    localOverrides.push(newAccount);
-    saveLocalOverrides(localOverrides);
-
-    toastStore.addToast({
-      title: "Cuenta agregada",
-      message: `Se ha registrado la cuenta de ${newAccount.bank_name} correctamente.`,
-      variant: "success",
-    });
+  } finally {
+    isSaving.value = false;
   }
-
-  showModal.value = false;
 };
 
-const deleteAccount = (cuenta: PlatformBankAccountResponse) => {
-  if (!confirm(`¿Estás seguro de que deseas eliminar la cuenta de ${cuenta.bank_name}?`)) {
+const deleteAccount = async (cuenta: PlatformBankAccountResponse) => {
+  if (!confirm(`¿Estás seguro de que deseas desactivar la cuenta de ${cuenta.bank_name}?`)) {
     return;
   }
-  cuentas.value = cuentas.value.filter((c) => c.id !== cuenta.id);
-  const localOverrides = getLocalOverrides().filter((c) => c.id !== cuenta.id);
-  saveLocalOverrides(localOverrides);
-
-  toastStore.addToast({
-    title: "Cuenta eliminada",
-    message: `Se ha eliminado la cuenta de ${cuenta.bank_name}.`,
-    variant: "info",
-  });
+  try {
+    await bankAccountApi.deletePlatformBankAccount(cuenta.id);
+    cuenta.is_active = false;
+    toastStore.addToast({
+      title: "Cuenta desactivada",
+      message: `Se ha desactivado la cuenta de ${cuenta.bank_name}.`,
+      variant: "info",
+    });
+  } catch (err: any) {
+    console.error("[AdminConfiguracion] Error deactivating bank account:", err);
+    toastStore.addToast({
+      title: "Error al desactivar",
+      message: err?.message || "No se pudo desactivar la cuenta bancaria.",
+      variant: "error",
+    });
+  }
 };
 
 const closeModal = () => {
