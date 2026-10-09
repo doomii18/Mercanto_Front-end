@@ -269,8 +269,28 @@ watch(
             </div>
           </div>
 
-          <!-- Video Player Card Container with User-Uploaded Portada -->
+          <!-- Video Player Card: Video real de YouTube (si el paso tiene videoUrl) -->
           <div
+            v-if="currentStep.videoUrl"
+            :key="currentStep.id"
+            class="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden bg-slate-950 shadow-md border border-slate-200"
+          >
+            <div class="relative w-full aspect-video bg-black">
+              <iframe
+                class="absolute inset-0 h-full w-full"
+                :src="currentStep.videoUrl"
+                :title="currentStep.title"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                referrerpolicy="strict-origin-when-cross-origin"
+                allowfullscreen
+              ></iframe>
+            </div>
+          </div>
+
+          <!-- Video Player Card Container with User-Uploaded Portada (placeholder para pasos sin video) -->
+          <div
+            v-else
             @click="handleVideoTouch"
             class="relative w-full rounded-2xl sm:rounded-[24px] overflow-hidden bg-slate-950 shadow-md border border-slate-200 cursor-pointer group select-none"
           >
