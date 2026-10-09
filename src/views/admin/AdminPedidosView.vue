@@ -249,7 +249,36 @@ const DEFAULT_MOCK_PROVIDERS: ProviderPayoutItem[] = [
   },
 ];
 
-const providerPayouts = ref<ProviderPayoutItem[]>([...DEFAULT_MOCK_PROVIDERS]);
+const PAYOUTS_STORAGE_KEY = "mercanto_admin_provider_payouts_override";
+
+function getLocalPayouts(): Record<string, "pending" | "paid"> {
+  try {
+    const raw = localStorage.getItem(PAYOUTS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function saveLocalPayoutStatus(payoutId: string, status: "pending" | "paid") {
+  try {
+    const data = getLocalPayouts();
+    data[payoutId] = status;
+    localStorage.setItem(PAYOUTS_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.warn("Failed to persist payout status:", e);
+  }
+}
+
+const localStatusMap = getLocalPayouts();
+const initialPayouts = DEFAULT_MOCK_PROVIDERS.map((p) => {
+  if (localStatusMap[p.id]) {
+    return { ...p, status: localStatusMap[p.id] };
+  }
+  return p;
+});
+
+const providerPayouts = ref<ProviderPayoutItem[]>(initialPayouts);
 
 // Helper for initials
 function getInitials(name: string): string {
@@ -539,6 +568,7 @@ function handlePaymentConfirmed(payload: {
   if (target) {
     target.status = "paid";
   }
+  saveLocalPayoutStatus(payload.payoutId, "paid");
 
   toastStore.addToast({
     title: "Pago registrado y marcado como pagado",

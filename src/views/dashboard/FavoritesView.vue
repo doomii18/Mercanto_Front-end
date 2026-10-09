@@ -29,6 +29,8 @@ const isLoading = ref(true);
 const searchQuery = ref("");
 const viewMode = ref<"grid" | "list">("grid");
 
+const providerCache = new Map<string, { name: string; logoBlobId: string | null }>();
+
 const fetchFavoriteProducts = async () => {
   categoryStore.fetchCategories().catch(console.warn);
   isLoading.value = true;
@@ -52,12 +54,22 @@ const fetchFavoriteProducts = async () => {
         let providerName = "Proveedor";
         let providerLogoBlobId: string | null = null;
 
-        try {
-          const org = await organizationApi.getPublicProvider(product.provider_id);
-          providerName = org.company_name;
-          providerLogoBlobId = org.logo_blob_id ?? null;
-        } catch (e) {
-          console.warn("Failed to fetch provider for product", product.id);
+        if (providerCache.has(product.provider_id)) {
+          const cached = providerCache.get(product.provider_id)!;
+          providerName = cached.name;
+          providerLogoBlobId = cached.logoBlobId;
+        } else {
+          try {
+            const org = await organizationApi.getPublicProvider(product.provider_id);
+            providerName = org.company_name;
+            providerLogoBlobId = org.logo_blob_id ?? null;
+            providerCache.set(product.provider_id, {
+              name: providerName,
+              logoBlobId: providerLogoBlobId,
+            });
+          } catch (e) {
+            console.warn("Failed to fetch provider for product", product.id);
+          }
         }
 
         return {

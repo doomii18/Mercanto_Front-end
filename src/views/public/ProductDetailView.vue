@@ -6,7 +6,7 @@ import { useOfferApi } from "@/api/modules/catalog/offer/useOfferApi";
 
 import { useGeoStore } from "@/stores/geo";
 import { useQuoteBuilderStore, useFavoritesStore, useCategoryStore } from "@/stores/commerce";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore, useUserContextStore } from "@/stores/auth";
 import { useToastStore, useAuthPromptStore } from "@/stores/ui";
 import ProductImageCarousel from "@/components/product/ProductImageCarousel.vue";
 import ProviderLogo from "@/components/organization/ProviderLogo.vue";
@@ -58,6 +58,7 @@ const toastStore = useToastStore();
 const authPromptStore = useAuthPromptStore();
 const favoritesStore = useFavoritesStore();
 const authStore = useAuthStore();
+const userContext = useUserContextStore();
 
 const isFavorite = computed(() => (product.value.id ? favoritesStore.isFavorite(product.value.id) : false));
 
@@ -313,6 +314,15 @@ const handleLoginToQuote = () => {
 const handleAddToQuote = () => {
     if (!authStore.isAuthenticated) {
         handleLoginToQuote();
+        return;
+    }
+    if (!userContext.canCreateQuotes) {
+        toastStore.addToast({
+            title: "Acción no permitida",
+            message: "Las cuentas en contexto de proveedor no pueden solicitar ni crear cotizaciones.",
+            icon: "fa-solid fa-store-slash",
+            variant: "error",
+        });
         return;
     }
     if (!product.value.id || !providerId.value) return;
@@ -624,7 +634,25 @@ const handleReviewChanged = async () => {
                             <span>Inicia sesión para cotizar</span>
                         </button>
 
-                        <!-- Authenticated: Add to Quote -->
+                        <!-- Authenticated Provider: Cannot create quotes -->
+                        <div
+                            v-else-if="!userContext.canCreateQuotes"
+                            class="flex flex-col gap-2 rounded-2xl border border-amber-200 bg-amber-50/90 p-3.5 text-center"
+                        >
+                            <button
+                                type="button"
+                                disabled
+                                class="flex w-full items-center justify-center gap-2 rounded-full bg-slate-200 py-3.5 text-sm sm:text-base font-bold text-slate-400 cursor-not-allowed"
+                            >
+                                <i class="fa-solid fa-ban text-sm"></i>
+                                <span>Cotizaciones no permitidas a proveedores</span>
+                            </button>
+                            <p class="text-xs text-amber-800 leading-tight">
+                                Tu cuenta está en contexto de proveedor. Puedes explorar productos del catálogo, pero no generar cotizaciones.
+                            </p>
+                        </div>
+
+                        <!-- Authenticated Buyer: Add to Quote -->
                         <button
                             v-else
                             type="button"
@@ -637,9 +665,9 @@ const handleReviewChanged = async () => {
                     </div>
                 </section>
 
-                <!-- Quote Draft Section (Self-contained) -->
+                <!-- Quote Draft Section (Self-contained, buyers only) -->
                 <QuoteDraftSection
-                    v-if="providerId"
+                    v-if="providerId && userContext.canCreateQuotes"
                     :provider-id="providerId"
                     :provider-name="product.provider.name"
                 />

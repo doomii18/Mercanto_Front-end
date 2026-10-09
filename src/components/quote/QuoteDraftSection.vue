@@ -2,7 +2,7 @@
 import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useQuoteBuilderStore } from "@/stores/commerce";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore, useUserContextStore } from "@/stores/auth";
 import { useToastStore } from "@/stores/ui";
 import ProductImage from "@/components/product/ProductImage.vue";
 import ConfirmModal from "@/components/common/ConfirmModal.vue";
@@ -26,6 +26,7 @@ const emit = defineEmits<{
 
 const router = useRouter();
 const authStore = useAuthStore();
+const userContext = useUserContextStore();
 const quoteBuilderStore = useQuoteBuilderStore();
 const toastStore = useToastStore();
 
@@ -93,6 +94,15 @@ const handleAddressConfirm = (result: AddressPickerResult) => {
 
 const confirmQuote = async () => {
   if (!props.providerId) return;
+  if (!userContext.canCreateQuotes) {
+    toastStore.addToast({
+      title: "Acción no permitida",
+      message: "Las cuentas en contexto de proveedor no pueden enviar cotizaciones.",
+      icon: "fa-solid fa-circle-exclamation",
+      variant: "error",
+    });
+    return;
+  }
   if (!shippingAddress.value.trim()) {
     toastStore.addToast({
       title: "Dirección requerida",
@@ -138,7 +148,7 @@ const confirmQuote = async () => {
 </script>
 
 <template>
-  <div v-if="authStore.isAuthenticated && draftItems.length > 0">
+  <div v-if="authStore.isAuthenticated && userContext.canCreateQuotes && draftItems.length > 0">
     <section class="mt-8 sm:mt-10 rounded-2xl sm:rounded-3xl bg-neutral-100 p-4 sm:p-6 lg:p-8">
       <h3 class="mb-4 sm:mb-5 font-serif text-lg sm:text-xl font-bold text-neutral-900 leading-snug">
         Tu cotización con {{ providerName }}
@@ -160,108 +170,6 @@ const confirmQuote = async () => {
                 :alt="item.productTitle"
               />
             </div>
-            <div class="flex-1 min-w-0">
-              <h4 class="font-semibold text-neutral-900 truncate">
-                {{ item.productTitle }}
-              </h4>
-              <!-- TODO: Redesign quote draft item interface to display and customize selected specifications -->
-              <p
-                v-if="item.selectedSpec && Object.keys(item.selectedSpec).length > 0"
-                class="text-xs text-neutral-500 mt-0.5 truncate"
-              >
-                {{ Object.entries(item.selectedSpec).map(([k, v]) => `${k}: ${v}`).join(', ') }}
-              </p>
-              <div class="flex items-center gap-2 mt-0.5">
-                <span
-                  class="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700"
-                >
-                  <i
-                    :class="item.shippingPreference === 'own_delivery' ? 'fa-solid fa-truck' : 'fa-solid fa-bus'"
-                    class="text-[0.65rem] text-teal-600"
-                  ></i>
-                  {{ item.shippingPreference === 'own_delivery' ? 'Entrega Propia' : 'Bus Interlocal' }}
-                </span>
-              </div>
-              <p class="text-sm text-neutral-500 mt-0.5">
-                {{ item.quantity }} und x
-                <span
-                  v-if="item.discountPercentage"
-                  class="text-neutral-400 line-through"
-                >
-                  C$ {{ formatPrice(item.unitPrice) }}
-                </span>
-                <span
-                  :class="
-                    item.discountPercentage ? 'font-semibold text-orange-500' : ''
-                  "
-                >
-                  C$
-                  {{
-                    formatPrice(
-                      itemEffectiveUnitPrice(
-                        item.unitPrice,
-                        item.discountPercentage
-                      )
-                    )
-                  }}
-                </span>
-                <span
-                  v-if="item.discountPercentage"
-                  class="ml-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[0.625rem] font-bold text-orange-600"
-                >
-                  -{{ item.discountPercentage }}%
-                </span>
-              </p>
-            </div>
-            <div class="flex items-center gap-3">
-              <div class="flex items-center gap-2 bg-neutral-100 rounded-lg p-1">
-                <button
-                  type="button"
-                  class="h-6 w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400 cursor-pointer"
-                  @click="
-                    quoteBuilderStore.updateItemQuantity(
-                      providerId,
-                      item.productId,
-                      item.quantity - 1,
-                      item.shippingPreference,
-                      item.selectedSpec
-                    )
-                  "
-                >
-                  <i class="fa-solid fa-minus"></i>
-                </button>
-                <span
-                  class="text-sm font-bold text-teal-600 min-w-[20px] text-center"
-                >
-                  {{ item.quantity }}
-                </span>
-                <button
-                  type="button"
-                  class="h-6 w-6 flex items-center justify-center rounded bg-neutral-300 text-xs text-neutral-700 hover:bg-neutral-400 cursor-pointer"
-                  @click="
-                    quoteBuilderStore.updateItemQuantity(
-                      providerId,
-                      item.productId,
-                      item.quantity + 1,
-                      item.shippingPreference,
-                      item.selectedSpec
-                    )
-                  "
-                >
-                  <i class="fa-solid fa-plus"></i>
-                </button>
-              </div>
-              <button
-                type="button"
-                class="text-red-500 hover:text-red-700 p-1 cursor-pointer"
-                title="Eliminar"
-                @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference, item.selectedSpec)"
-            >
-              <ProductImage
-                :blob-id="item.imageBlobId"
-                :alt="item.productTitle"
-              />
-            </div>
 
             <!-- Details -->
             <div class="flex-1 min-w-0">
@@ -271,6 +179,14 @@ const confirmQuote = async () => {
               >
                 {{ item.productTitle }}
               </h4>
+
+              <!-- Selected specifications -->
+              <p
+                v-if="item.selectedSpec && Object.keys(item.selectedSpec).length > 0"
+                class="text-xs text-neutral-500 mt-0.5 truncate"
+              >
+                {{ Object.entries(item.selectedSpec).map(([k, v]) => `${k}: ${v}`).join(', ') }}
+              </p>
 
               <div class="flex items-center gap-2 mt-1">
                 <span
@@ -343,7 +259,8 @@ const confirmQuote = async () => {
                       providerId,
                       item.productId,
                       item.quantity - 1,
-                      item.shippingPreference
+                      item.shippingPreference,
+                      item.selectedSpec
                     )
                   "
                 >
@@ -363,7 +280,8 @@ const confirmQuote = async () => {
                       providerId,
                       item.productId,
                       item.quantity + 1,
-                      item.shippingPreference
+                      item.shippingPreference,
+                      item.selectedSpec
                     )
                   "
                 >
@@ -375,7 +293,7 @@ const confirmQuote = async () => {
                 class="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 active:scale-95 transition-all cursor-pointer"
                 title="Eliminar"
                 aria-label="Eliminar producto"
-                @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference)"
+                @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference, item.selectedSpec)"
               >
                 <i class="fa-solid fa-trash text-sm sm:text-base"></i>
               </button>

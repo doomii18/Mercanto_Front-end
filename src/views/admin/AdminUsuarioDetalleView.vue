@@ -19,6 +19,8 @@ import {
 } from "reka-ui";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
+import { useVerificationDocumentApi } from "@/api/modules/organization/verification_request_document/useVerificationDocumentApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import { useUserContextStore } from "@/stores/auth/userContextStore";
 import { useToastStore } from "@/stores/ui";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
@@ -30,95 +32,71 @@ const route = useRoute();
 const router = useRouter();
 const identityApi = useIdentityApi();
 const verificationApi = useVerificationRequestApi();
+const verificationDocumentApi = useVerificationDocumentApi();
+const organizationApi = useOrganizationApi();
 const contextStore = useUserContextStore();
 const toastStore = useToastStore();
 
 const isAdmin = computed(() => contextStore.isAdmin);
 
 // --- User & State Data ---
-const userId = computed(() => (route.params.id as string) || "usr-001");
+const userId = computed(() => (route.params.id as string) || "");
 const activeTab = ref<"info" | "docs" | "history">("info");
 const isLoading = ref(false);
+const currentVerificationRequestId = ref<string | null>(null);
+
+// Document preview state
+const docBlobUrl = ref<string | null>(null);
+const isLoadingDoc = ref(false);
+
+interface DocumentItem {
+  id: string;
+  name: string;
+  filename: string;
+  filesize: string;
+  type: "pdf" | "image";
+  status: string;
+  blobId?: string;
+}
 
 // Main user detail model
 const user = ref({
-  id: "usr-001",
-  first_name: "María",
-  last_name: "López Velázquez",
-  email: "maria@dilopez.com",
-  phone: "+50583785757",
-  national_id: "001-180990-0004A",
+  id: "",
+  first_name: "",
+  last_name: "",
+  email: "",
+  phone: "",
+  national_id: "",
   avatar_blob_id: null as string | null,
-  role: "Importador",
+  role: "Proveedor",
   status: "Pendiente" as "Pendiente" | "Aprobado" | "Rechazado",
-  registered_at: "17 sep 2026, 02:25 PM",
-  initials: "ML",
+  registered_at: "",
+  initials: "PR",
   avatar_bg: "bg-[#023859]",
 
   // Business info
-  business_name: "Distribuidora López S.A.",
-  ruc: "J0310000123456",
+  business_name: "",
+  ruc: "",
   business_type: "Comercio al por mayor",
-  business_email: "ventas@dilopez.com",
-  business_phone: "+50583785757",
-  description: "Distribución de productos de consumo masivo, bebidas y alimentos.",
-  address: "Managua, Nicaragua",
-  logo_filename: "logo_negocio.jpg",
-  logo_filesize: "312 KB",
+  business_email: "",
+  business_phone: "",
+  description: "",
+  address: "",
+  logo_filename: "",
+  logo_filesize: "",
 
   // Verification documents
-  documents: [
-    {
-      id: "doc-1",
-      name: "Cédula del propietario",
-      filename: "cedula_maria_lopez.pdf",
-      filesize: "2.4 MB",
-      type: "pdf",
-      status: "Válido",
-    },
-    {
-      id: "doc-2",
-      name: "Logo del negocio",
-      filename: "logo_negocio.jpg",
-      filesize: "312 KB",
-      type: "image",
-      status: "Válido",
-    },
-    {
-      id: "doc-3",
-      name: "Registro Mercantil / RUC",
-      filename: "constancia_ruc_2026.pdf",
-      filesize: "1.8 MB",
-      type: "pdf",
-      status: "Válido",
-    },
-  ],
+  documents: [] as DocumentItem[],
 
   // History timeline
-  history: [
-    {
-      date: "17 sep 2026, 02:25 PM",
-      title: "Registro de cuenta completado",
-      description: "El usuario completó el formulario de registro de proveedor.",
-    },
-    {
-      date: "17 sep 2026, 02:30 PM",
-      title: "Documentos de verificación subidos",
-      description: "Se adjuntaron la cédula del propietario y el logo del negocio.",
-    },
-    {
-      date: "17 sep 2026, 02:35 PM",
-      title: "Solicitud enviada a revisión",
-      description: "La cuenta entró en estado Pendiente de validación administrativa.",
-    },
-  ],
+  history: [] as Array<{ date: string; title: string; description: string }>,
 });
 
 // --- Modal States ---
 const isApproveModalOpen = ref(false);
 const isRejectModalOpen = ref(false);
 const isDocPreviewOpen = ref(false);
-const previewDoc = ref<{ name: string; filename: string } | null>(null);
+const previewDoc = ref<{ name: string; filename: string; blobId?: string; type?: "pdf" | "image" } | null>(null);
 
 // Rejection Form
 const rejectionReason = ref("Documentación inválida o incompleta");
@@ -133,23 +111,152 @@ const REJECTION_OPTIONS = [
   "Otro motivo",
 ];
 
-// --- Load Data (API + Mock Fallback) ---
+function formatDateDisplay(dateStr?: string | null): string {
+  if (!dateStr) return "-";
+  try {
+    const d = new Date(dateStr);
+    return new Intl.DateTimeFormat("es-NI", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(d);
+  } catch {
+    return dateStr;
+  }
+}
+
+// --- Load Data (Real API Integration) ---
 async function loadUserData() {
+  const targetId = userId.value;
+  if (!targetId) return;
+
   isLoading.value = true;
   try {
-    const account = await identityApi.getAccount(userId.value) as any;
+    let verifAggregate: any = null;
+    try {
+      verifAggregate = await verificationApi.getVerificationRequest(targetId);
+    } catch {
+      // targetId may be an account ID or organization ID
+    }
+
+    if (verifAggregate && verifAggregate.request) {
+      const req = verifAggregate.request;
+      currentVerificationRequestId.value = req.id;
+      user.value.id = req.id;
+      user.value.status = req.status === "approved" ? "Aprobado" : req.status === "rejected" ? "Rechazado" : "Pendiente";
+      user.value.registered_at = formatDateDisplay(req.submitted_at);
+
+      // 1. Load Organization Details
+      try {
+        const org = await organizationApi.getOrganizationDetails(req.organization_id);
+        if (org) {
+          user.value.business_name = org.company_name;
+          user.value.ruc = org.tax_id;
+          user.value.business_type = org.kind === "wholesaler" ? "Comercio al por mayor" : org.kind === "manufacturer" ? "Fabricante / Productor" : "Distribuidor";
+          user.value.role = org.kind === "wholesaler" ? "Mayorista" : "Proveedor";
+          user.value.business_phone = org.phone_number || "";
+          user.value.description = org.company_description || "";
+          user.value.address = org.location ? `Coords: ${org.location.latitude.toFixed(4)}, ${org.location.longitude.toFixed(4)}` : "Nicaragua";
+          user.value.logo_filename = org.logo_blob_id ? "logo_organizacion.jpg" : "Sin logo";
+        }
+      } catch (orgErr) {
+        console.warn("Could not fetch organization details:", orgErr);
+      }
+
+      // 2. Load Submitter Account if available
+      if (req.submitted_by) {
+        try {
+          const account = await identityApi.getAccount(req.submitted_by) as any;
+          if (account) {
+            user.value.first_name = account.first_name || "";
+            user.value.last_name = account.last_name || "";
+            user.value.email = account.email;
+            user.value.business_email = account.email;
+            user.value.national_id = account.national_id || "";
+            user.value.phone = account.phone_number || user.value.business_phone;
+            user.value.avatar_blob_id = account.avatar_blob_id || null;
+            user.value.initials = `${(user.value.first_name[0] || user.value.business_name[0] || "P")}${(user.value.last_name[0] || "R")}`.toUpperCase();
+          }
+        } catch (accErr) {
+          console.warn("Could not fetch submitter account:", accErr);
+        }
+      } else {
+        user.value.initials = `${(user.value.business_name[0] || "P")}${(user.value.business_name[1] || "R")}`.toUpperCase();
+      }
+
+      // 3. Map Real Verification Documents
+      if (verifAggregate.documents && verifAggregate.documents.length > 0) {
+        user.value.documents = verifAggregate.documents.map((d: any, idx: number) => {
+          const label = d.document_label || `Documento Legal ${idx + 1}`;
+          const isPdf = !label.toLowerCase().includes("logo") && !label.toLowerCase().includes("foto") && !label.toLowerCase().includes("imagen");
+          return {
+            id: d.blob_id,
+            name: label,
+            filename: `${label.toLowerCase().replace(/[^a-z0-9_-]/g, "_")}${isPdf ? ".pdf" : ".jpg"}`,
+            filesize: "Adjunto",
+            type: isPdf ? ("pdf" as const) : ("image" as const),
+            status: "Válido",
+            blobId: d.blob_id,
+          };
+        });
+      } else {
+        user.value.documents = [];
+      }
+
+      // 4. Build Real History Timeline
+      const hist: Array<{ date: string; title: string; description: string }> = [];
+      if (req.reviewed_at) {
+        hist.push({
+          date: formatDateDisplay(req.reviewed_at),
+          title: req.status === "approved" ? "Cuenta verificada y aprobada" : "Cuenta rechazada",
+          description: req.reviewer_notes || "Revisión completada por el administrador.",
+        });
+      }
+      hist.push({
+        date: formatDateDisplay(req.submitted_at),
+        title: "Solicitud enviada a revisión",
+        description: "El comercio adjuntó sus documentos legales y solicitó validación administrativa.",
+      });
+      user.value.history = hist;
+      return;
+    }
+
+    // Fallback: If targetId was an account ID directly
+    const account = await identityApi.getAccount(targetId) as any;
     if (account) {
       user.value.id = account.id;
-      user.value.first_name = account.first_name || "María";
-      user.value.last_name = account.last_name || "López Velázquez";
+      user.value.first_name = account.first_name || "Usuario";
+      user.value.last_name = account.last_name || "";
       user.value.email = account.email;
-      user.value.national_id = account.national_id || "001-180990-0004A";
-      user.value.phone = account.phone_number || "+50583785757";
+      user.value.business_email = account.email;
+      user.value.national_id = account.national_id || "";
+      user.value.phone = account.phone_number || "";
       user.value.avatar_blob_id = account.avatar_blob_id || null;
-      user.value.initials = `${user.value.first_name[0] || "U"}${user.value.last_name[0] || "S"}`.toUpperCase();
+      user.value.initials = `${(user.value.first_name[0] || "U")}${(user.value.last_name[0] || "S")}`.toUpperCase();
+
+      // Check if user has an associated organization with pending verification
+      try {
+        const orgs = await organizationApi.getAllOrganizations();
+        for (const org of orgs.data) {
+          const verifs = await verificationApi.getOrganizationVerificationRequests(org.id);
+          if (verifs.data.length > 0) {
+            const req = verifs.data[0];
+            currentVerificationRequestId.value = req.id;
+            user.value.business_name = org.company_name;
+            user.value.ruc = org.tax_id;
+            user.value.address = org.location ? `Coords: ${org.location.latitude.toFixed(4)}, ${org.location.longitude.toFixed(4)}` : "Nicaragua";
+            user.value.status = req.status === "approved" ? "Aprobado" : req.status === "rejected" ? "Rechazado" : "Pendiente";
+            break;
+          }
+        }
+      } catch (e) {
+        console.warn("Could not find linked organization verifications:", e);
+      }
     }
-  } catch {
-    // Keep mock data for smooth preview
+  } catch (err) {
+    console.warn("Could not load user data:", err);
   } finally {
     isLoading.value = false;
   }
@@ -157,15 +264,20 @@ async function loadUserData() {
 
 // --- Action Handlers ---
 async function handleConfirmApprove() {
+  if (!currentVerificationRequestId.value) {
+    toastStore.addToast({
+      title: "No se puede aprobar",
+      message: "No se encontró una solicitud de verificación activa asociada.",
+      variant: "error",
+    });
+    return;
+  }
+
   isSubmitting.value = true;
   try {
-    try {
-      await verificationApi.approveVerificationRequest(user.value.id, {
-        reviewer_notes: "Aprobado por el administrador",
-      });
-    } catch {
-      // Mock fallback
-    }
+    await verificationApi.approveVerificationRequest(currentVerificationRequestId.value, {
+      reviewer_notes: "Aprobado por el administrador",
+    });
 
     user.value.status = "Aprobado";
     user.value.history.unshift({
@@ -176,27 +288,39 @@ async function handleConfirmApprove() {
 
     toastStore.addToast({
       title: "Cuenta aprobada",
-      message: `La cuenta de ${user.value.business_name} ha sido verificada con éxito.`,
+      message: `La cuenta de ${user.value.business_name || user.value.email} ha sido verificada con éxito.`,
       variant: "success",
     });
 
     isApproveModalOpen.value = false;
+  } catch (err: any) {
+    console.error("Error approving verification request:", err);
+    toastStore.addToast({
+      title: "Error al aprobar",
+      message: err?.message || "No se pudo aprobar la solicitud de verificación.",
+      variant: "error",
+    });
   } finally {
     isSubmitting.value = false;
   }
 }
 
 async function handleConfirmReject() {
+  if (!currentVerificationRequestId.value) {
+    toastStore.addToast({
+      title: "No se puede rechazar",
+      message: "No se encontró una solicitud de verificación activa asociada.",
+      variant: "error",
+    });
+    return;
+  }
+
   isSubmitting.value = true;
   try {
     const fullNotes = `${rejectionReason.value}: ${rejectionNotes.value}`.trim();
-    try {
-      await verificationApi.rejectVerificationRequest(user.value.id, {
-        reviewer_notes: fullNotes,
-      });
-    } catch {
-      // Mock fallback
-    }
+    await verificationApi.rejectVerificationRequest(currentVerificationRequestId.value, {
+      reviewer_notes: fullNotes,
+    });
 
     user.value.status = "Rechazado";
     user.value.history.unshift({
@@ -207,19 +331,40 @@ async function handleConfirmReject() {
 
     toastStore.addToast({
       title: "Cuenta rechazada",
-      message: `Se ha notificado a ${user.value.email} el motivo del rechazo.`,
+      message: `Se ha registrado el rechazo de la solicitud.`,
       variant: "error",
     });
 
     isRejectModalOpen.value = false;
+  } catch (err: any) {
+    console.error("Error rejecting verification request:", err);
+    toastStore.addToast({
+      title: "Error al rechazar",
+      message: err?.message || "No se pudo rechazar la solicitud de verificación.",
+      variant: "error",
+    });
   } finally {
     isSubmitting.value = false;
   }
 }
 
-function openDocPreview(docName: string, filename: string) {
-  previewDoc.value = { name: docName, filename };
+function openDocPreview(docName: string, filename: string, blobId?: string, type?: "pdf" | "image") {
+  previewDoc.value = { name: docName, filename, blobId, type };
+  docBlobUrl.value = null;
   isDocPreviewOpen.value = true;
+  if (blobId) {
+    isLoadingDoc.value = true;
+    verificationDocumentApi.getVerificationDocumentBlob(blobId)
+      .then((blob) => {
+        docBlobUrl.value = URL.createObjectURL(blob);
+      })
+      .catch((err) => {
+        console.warn("Could not fetch verification doc blob:", err);
+      })
+      .finally(() => {
+        isLoadingDoc.value = false;
+      });
+  }
 }
 
 function goBack() {
@@ -555,7 +700,10 @@ onMounted(() => {
               </div>
 
               <!-- Documents List -->
-              <div class="space-y-2.5">
+              <div v-if="user.documents.length === 0" class="py-4 text-center text-xs text-slate-400 italic">
+                No hay documentos adjuntos en esta solicitud.
+              </div>
+              <div v-else class="space-y-2.5">
                 <div
                   v-for="doc in user.documents.slice(0, 2)"
                   :key="doc.id"
@@ -578,7 +726,7 @@ onMounted(() => {
                     </span>
                     <button
                       type="button"
-                      @click="openDocPreview(doc.name, doc.filename)"
+                      @click="openDocPreview(doc.name, doc.filename, doc.blobId, doc.type)"
                       class="inline-flex items-center gap-1 text-xs font-semibold text-[#00a896] hover:underline cursor-pointer"
                     >
                       <i class="fa-regular fa-eye text-xs"></i>
@@ -632,7 +780,13 @@ onMounted(() => {
       <TabsContent value="docs" class="outline-none space-y-4">
         <div class="rounded-2xl border border-slate-100 bg-white p-6 shadow-xs space-y-4">
           <h3 class="text-sm font-bold text-slate-800">Todos los documentos adjuntos</h3>
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div v-if="user.documents.length === 0" class="py-12 text-center text-slate-400">
+            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-2 text-slate-400">
+              <i class="fa-regular fa-folder-open text-xl"></i>
+            </div>
+            <p class="text-xs font-semibold">No se encontraron documentos adjuntos para esta solicitud.</p>
+          </div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div
               v-for="doc in user.documents"
               :key="doc.id"
@@ -655,7 +809,7 @@ onMounted(() => {
               <p class="font-mono text-xs text-slate-600 truncate">{{ doc.filename }}</p>
               <button
                 type="button"
-                @click="openDocPreview(doc.name, doc.filename)"
+                @click="openDocPreview(doc.name, doc.filename, doc.blobId, doc.type)"
                 class="w-full rounded-lg border border-slate-200 bg-white py-1.5 text-xs font-semibold text-[#00a896] hover:bg-slate-50 cursor-pointer"
               >
                 <i class="fa-regular fa-eye mr-1"></i> Visualizar documento
@@ -910,18 +1064,51 @@ onMounted(() => {
             </DialogClose>
           </div>
 
-          <!-- Preview Content Mock -->
-          <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-8 text-center space-y-3">
+          <!-- Real Document Preview Content -->
+          <div v-if="isLoadingDoc" class="py-12 text-center text-slate-500">
+            <i class="fa-solid fa-spinner fa-spin text-2xl text-[#00a896] mb-2"></i>
+            <p class="text-xs font-semibold">Cargando documento...</p>
+          </div>
+
+          <div v-else-if="docBlobUrl" class="space-y-4">
+            <div class="max-h-[60vh] overflow-auto rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-center p-2">
+              <img
+                v-if="previewDoc?.type === 'image'"
+                :src="docBlobUrl"
+                :alt="previewDoc?.name"
+                class="max-h-[55vh] w-auto mx-auto object-contain rounded-lg shadow-sm"
+              />
+              <iframe
+                v-else
+                :src="docBlobUrl"
+                class="w-full h-[55vh] rounded-lg border-0"
+              ></iframe>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <a
+                :href="docBlobUrl"
+                target="_blank"
+                :download="previewDoc?.filename"
+                class="inline-flex items-center gap-1.5 text-xs font-bold text-[#00a896] hover:underline"
+              >
+                <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                <span>Abrir en pestaña nueva / Descargar</span>
+              </a>
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200/50 px-3 py-1 text-xs font-semibold text-[#00a896]">
+                <i class="fa-solid fa-check text-[10px]"></i>
+                Documento adjunto real
+              </span>
+            </div>
+          </div>
+
+          <div v-else class="rounded-xl border border-dashed border-slate-300 bg-slate-50/80 p-8 text-center space-y-3">
             <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-sky-100 text-[#0284c7]">
               <i class="fa-regular fa-file-pdf text-2xl"></i>
             </div>
             <div>
               <p class="font-bold text-slate-800 text-sm">{{ previewDoc?.filename }}</p>
-              <p class="text-xs text-slate-400 mt-1">Vista previa del documento en alta resolución.</p>
-            </div>
-            <div class="inline-flex items-center gap-1.5 rounded-full bg-teal-50 border border-teal-200/50 px-3 py-1 text-xs font-semibold text-[#00a896]">
-              <i class="fa-solid fa-check text-[10px]"></i>
-              Documento validado administrativamente
+              <p class="text-xs text-slate-400 mt-1">No se pudo cargar la vista previa directa del documento.</p>
             </div>
           </div>
 

@@ -2,6 +2,7 @@
 import { defineStore } from "pinia";
 import { ref, computed } from "vue";
 import { useQuoteApi } from "@/api/modules/commerce/quote/useQuoteApi";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import type {
   ShippingMethod,
   PaymentMethod,
@@ -60,11 +61,14 @@ function areSpecsEqual(
 
 export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
   const quoteApi = useQuoteApi();
+  const userContext = useUserContextStore();
 
   // state
   const drafts = ref<Record<string, QuoteDraft>>({});
   const isSubmitting = ref(false);
   const lastCreatedQuotes = ref<QuoteResponse[]>([]);
+
+  const canCreateQuotes = computed(() => userContext.canCreateQuotes);
 
   // helpers
   const getOrCreateDraft = (
@@ -96,6 +100,11 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     input: AddItemInput,
     providerMeta?: { name?: string; logoBlobId?: string | null },
   ): void {
+    if (!userContext.canCreateQuotes) {
+      console.warn("[quoteBuilderStore] Provider context is not allowed to create or add items to quotes.");
+      return;
+    }
+
     const draft = getOrCreateDraft(
       providerId,
       providerMeta?.name,
@@ -258,6 +267,10 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
   async function createQuoteForProvider(
     providerId: string,
   ): Promise<QuoteResponse[]> {
+    if (!userContext.canCreateQuotes) {
+      throw new Error("Las cuentas en contexto de proveedor no pueden crear cotizaciones.");
+    }
+
     const draft = drafts.value[providerId];
     if (!draft) throw new Error(`No draft found for provider ${providerId}`);
     if (draft.items.length === 0) {
@@ -308,6 +321,7 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     isSubmitting,
     lastCreatedQuotes,
     providerIds,
+    canCreateQuotes,
     getDraft,
     getItemCount,
     getTotalUnits,

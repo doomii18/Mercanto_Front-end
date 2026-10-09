@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
+import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
+import { useOrganizationApi } from "@/api/modules/organization/organization/useOrganizationApi";
 import type { AdminUserItem } from "@/api";
 import { useAuthStore } from "@/stores/auth";
 import { useUserContextStore } from "@/stores/auth/userContextStore";
@@ -10,7 +13,10 @@ import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
 import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
+const router = useRouter();
 const identityApi = useIdentityApi();
+const verificationApi = useVerificationRequestApi();
+const organizationApi = useOrganizationApi();
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
 const toastStore = useToastStore();
@@ -23,13 +29,27 @@ const userList = ref<AdminUserItem[]>([]);
 const isLoading = ref(false);
 const selectedUserIds = ref<string[]>([]);
 
-// Tabs: "Todos", "Activos", "Suspendidos"
-const activeTab = ref<"all" | "active" | "suspended">("all");
+// Tabs: "Todos", "Activos", "Suspendidos", "Verificaciones"
+const activeTab = ref<"all" | "active" | "suspended" | "verifications">("all");
 
 // Counters for tabs
 const totalCount = ref<number | null>(null);
 const activeCount = ref<number | null>(null);
 const suspendedCount = ref<number | null>(null);
+const pendingVerificationsCount = ref<number | null>(null);
+
+// Verification requests state
+export interface PendingVerificationItem {
+  id: string;
+  organizationId: string;
+  companyName: string;
+  taxId: string;
+  kind: string;
+  submittedAt: string;
+  status: string;
+}
+const pendingVerifications = ref<PendingVerificationItem[]>([]);
+const isLoadingVerifications = ref(false);
 
 // Search & Filters
 const searchQuery = ref("");
@@ -146,17 +166,56 @@ function getRoleBadge(role: string) {
 // --- Tab Counts in Parallel ---
 async function fetchTabCounts(): Promise<void> {
   try {
-    const [allRes, activeRes, suspendedRes] = await Promise.allSettled([
+    const [allRes, activeRes, suspendedRes, verifRes] = await Promise.allSettled([
       identityApi.listAccounts({ limit: 1 }),
       identityApi.listAccounts({ limit: 1, is_suspended: false }),
       identityApi.listAccounts({ limit: 1, is_suspended: true }),
+      verificationApi.getPendingVerificationRequests({ limit: 1 }),
     ]);
 
     if (allRes.status === "fulfilled") totalCount.value = allRes.value.total;
     if (activeRes.status === "fulfilled") activeCount.value = activeRes.value.total;
     if (suspendedRes.status === "fulfilled") suspendedCount.value = suspendedRes.value.total;
+    if (verifRes.status === "fulfilled") pendingVerificationsCount.value = verifRes.value.total;
   } catch (err) {
     console.warn("Failed to fetch user tab counts:", err);
+  }
+}
+
+// --- Fetch Pending Provider Verifications ---
+async function fetchPendingVerifications(): Promise<void> {
+  isLoadingVerifications.value = true;
+  try {
+    const res = await verificationApi.getPendingVerificationRequests({ limit: 50 });
+    pendingVerificationsCount.value = res.total;
+
+    const enriched = await Promise.all(
+      res.data.map(async (req) => {
+        let companyName = "Organización " + req.organization_id.slice(0, 8);
+        let taxId = "N/A";
+        let kind = "Proveedor";
+        try {
+          const org = await organizationApi.getOrganizationDetails(req.organization_id);
+          companyName = org.company_name;
+          taxId = org.tax_id;
+          kind = org.kind === "wholesaler" ? "Mayorista" : org.kind === "manufacturer" ? "Fabricante" : "Proveedor";
+        } catch {}
+        return {
+          id: req.id,
+          organizationId: req.organization_id,
+          companyName,
+          taxId,
+          kind,
+          submittedAt: req.submitted_at,
+          status: req.status,
+        };
+      })
+    );
+    pendingVerifications.value = enriched;
+  } catch (err) {
+    console.warn("Failed to fetch pending verifications:", err);
+  } finally {
+    isLoadingVerifications.value = false;
   }
 }
 
@@ -239,10 +298,14 @@ watch([searchQuery, selectedRoleFilter, sortSelection], () => {
   }, 350);
 });
 
-watch(activeTab, () => {
-  currentPage.value = 1;
-  selectedUserIds.value = [];
-  fetchUsers();
+watch(activeTab, (tab) => {
+  if (tab === "verifications") {
+    fetchPendingVerifications();
+  } else {
+    currentPage.value = 1;
+    selectedUserIds.value = [];
+    fetchUsers();
+  }
 });
 
 // --- Selection Handlers ---
@@ -342,6 +405,7 @@ onMounted(async () => {
   });
   fetchUsers();
   fetchTabCounts();
+  fetchPendingVerifications();
 });
 </script>
 
@@ -429,10 +493,34 @@ onMounted(async () => {
         <span>Suspendidos</span>
         <span v-if="suspendedCount !== null">({{ suspendedCount }})</span>
       </button>
+
+      <button
+        type="button"
+        @click="activeTab = 'verifications'"
+        :class="[
+          'pb-3 font-semibold text-xs sm:text-sm whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5',
+          activeTab === 'verifications'
+            ? 'text-[#00a896] border-b-2 border-[#00a896] font-bold'
+            : 'text-slate-500 hover:text-slate-700'
+        ]"
+      >
+        <span>Verificación de Proveedores</span>
+        <span
+          v-if="pendingVerificationsCount !== null && pendingVerificationsCount > 0"
+          class="rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-[#ea580c]"
+        >
+          {{ pendingVerificationsCount }}
+        </span>
+        <span v-else-if="pendingVerificationsCount !== null" class="text-slate-400">
+          (0)
+        </span>
+      </button>
     </div>
 
-    <!-- Filters & Search Toolbar -->
-    <div class="flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-3">
+    <!-- Section 1: User Accounts (when activeTab !== 'verifications') -->
+    <div v-if="activeTab !== 'verifications'" class="space-y-6">
+      <!-- Filters & Search Toolbar -->
+      <div class="flex flex-col lg:flex-row items-stretch lg:items-end justify-between gap-3">
       <!-- Search input -->
       <div class="relative flex-1 min-w-[280px]">
         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs pointer-events-none"></i>
@@ -787,6 +875,84 @@ onMounted(async () => {
         <div class="text-slate-400 font-medium self-end sm:self-auto">
           <span>{{ pageSize }} por página</span>
         </div>
+      </div>
+    </div>
+    </div>
+
+    <!-- Section 2: Verification Requests Table (when activeTab === 'verifications') -->
+    <div v-else class="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs">
+      <div v-if="isLoadingVerifications" class="p-12 text-center text-slate-500">
+        <i class="fa-solid fa-spinner fa-spin text-2xl text-[#00a896] mb-2"></i>
+        <p class="text-xs font-semibold">Cargando solicitudes de verificación...</p>
+      </div>
+
+      <div v-else-if="pendingVerifications.length === 0" class="p-12 text-center text-slate-500">
+        <div class="w-12 h-12 rounded-full bg-teal-50 text-[#00a896] flex items-center justify-center mx-auto mb-3">
+          <i class="fa-solid fa-circle-check text-xl"></i>
+        </div>
+        <h4 class="text-sm font-bold text-slate-800">No hay solicitudes pendientes</h4>
+        <p class="text-xs text-slate-400 mt-1">Todas las solicitudes de verificación de proveedores han sido procesadas.</p>
+      </div>
+
+      <div v-else class="overflow-x-auto">
+        <table class="min-w-[850px] w-full text-left text-xs">
+          <thead class="bg-[#f0f6fa] border-b border-slate-100 text-slate-500 font-semibold">
+            <tr>
+              <th scope="col" class="px-5 py-3.5">Organización / Empresa</th>
+              <th scope="col" class="px-4 py-3.5">RUC / Cédula</th>
+              <th scope="col" class="px-4 py-3.5">Tipo</th>
+              <th scope="col" class="px-4 py-3.5">Fecha de Envío</th>
+              <th scope="col" class="px-4 py-3.5">Estado</th>
+              <th scope="col" class="px-5 py-3.5 text-right">Acción</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            <tr
+              v-for="req in pendingVerifications"
+              :key="req.id"
+              class="hover:bg-slate-50/70 transition-colors"
+            >
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <div class="h-9 w-9 shrink-0 flex items-center justify-center rounded-xl bg-teal-50 text-[#00a896] font-bold text-xs border border-teal-100">
+                    <i class="fa-solid fa-building text-sm"></i>
+                  </div>
+                  <div>
+                    <p class="font-bold text-slate-800 text-xs sm:text-sm">{{ req.companyName }}</p>
+                    <p class="font-mono text-[10px] text-slate-400">ID: {{ req.id.slice(0, 8) }}...</p>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-4 font-mono font-medium text-slate-600">
+                {{ req.taxId }}
+              </td>
+              <td class="px-4 py-4">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700">
+                  {{ req.kind }}
+                </span>
+              </td>
+              <td class="px-4 py-4 text-slate-600">
+                {{ formatDate(req.submittedAt) }}
+              </td>
+              <td class="px-4 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-2.5 py-0.5 text-xs font-semibold text-[#ea580c]">
+                  <span class="h-1.5 w-1.5 rounded-full bg-[#ea580c]"></span>
+                  <span>Pendiente</span>
+                </span>
+              </td>
+              <td class="px-5 py-4 text-right whitespace-nowrap">
+                <button
+                  type="button"
+                  @click="router.push({ name: 'admin-user-detail', params: { id: req.id } })"
+                  class="inline-flex items-center gap-1.5 rounded-xl bg-[#00a896] hover:bg-[#008f80] text-white px-3.5 py-2 text-xs font-bold shadow-2xs transition-all cursor-pointer"
+                >
+                  <i class="fa-solid fa-file-circle-check text-xs"></i>
+                  <span>Auditar Documentos</span>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 

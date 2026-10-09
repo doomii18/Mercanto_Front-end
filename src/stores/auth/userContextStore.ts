@@ -55,6 +55,11 @@ export const useUserContextStore = defineStore("userContext", () => {
   const isDraftVerification = computed(() => organizationStatus.value === "draft");
   const canPublishProducts = computed(() => isVerifiedProvider.value);
 
+  // Quote creation permissions: Providers cannot create or request quotes; only buyers can make quotes
+  const canCreateQuotes = computed(() => !isProvider.value);
+  const canMakeQuotes = computed(() => !isProvider.value);
+  const canRequestQuotes = computed(() => !isProvider.value);
+
   // Global staff roles (admin/auditor) belong to the account, not the profile
   const accountRole = computed(() => authStore.accountRole);
   const isAdmin = computed(() => authStore.accountRole === "admin");
@@ -157,6 +162,9 @@ export const useUserContextStore = defineStore("userContext", () => {
     isRejectedVerification,
     isDraftVerification,
     canPublishProducts,
+    canCreateQuotes,
+    canMakeQuotes,
+    canRequestQuotes,
     accountRole,
     isAdmin,
     isAuditor,

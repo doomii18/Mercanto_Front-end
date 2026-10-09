@@ -167,8 +167,9 @@ const closeSidebar = () => {
             </span>
           </router-link>
 
-          <!-- Billetera -->
+          <!-- Billetera (Buyer Only) -->
           <router-link
+            v-if="!contextStore.isProvider"
             :to="{ name: 'wallet' }"
             active-class="!bg-[#00a896] !text-white font-semibold shadow-xs"
             :class="[

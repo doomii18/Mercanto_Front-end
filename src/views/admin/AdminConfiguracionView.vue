@@ -24,17 +24,56 @@ const formData = ref({
   is_active: true,
 });
 
+const STORAGE_KEY = "mercanto_admin_platform_bank_accounts_override";
+
+function getLocalOverrides(): PlatformBankAccountResponse[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalOverrides(list: PlatformBankAccountResponse[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  } catch (e) {
+    console.warn("Failed to persist bank account overrides:", e);
+  }
+}
+
 async function loadBankAccounts() {
   isLoading.value = true;
   try {
-    cuentas.value = await bankAccountApi.getPlatformBankAccounts();
+    const backendAccounts = await bankAccountApi.getPlatformBankAccounts();
+    const localOverrides = getLocalOverrides();
+
+    // Merge: local overrides take precedence or append new ones
+    if (localOverrides.length > 0) {
+      const mergedMap = new Map<string, PlatformBankAccountResponse>();
+      for (const a of backendAccounts) {
+        mergedMap.set(a.id, a);
+      }
+      for (const o of localOverrides) {
+        mergedMap.set(o.id, o);
+      }
+      cuentas.value = Array.from(mergedMap.values());
+    } else {
+      cuentas.value = backendAccounts;
+    }
   } catch (err: any) {
     console.error("[AdminConfiguracion] Error loading bank accounts:", err);
-    toastStore.addToast({
-      title: "Error",
-      message: "No se pudieron cargar las cuentas bancarias de la plataforma.",
-      variant: "error",
-    });
+    const localOverrides = getLocalOverrides();
+    if (localOverrides.length > 0) {
+      cuentas.value = localOverrides;
+    } else {
+      toastStore.addToast({
+        title: "Error",
+        message: "No se pudieron cargar las cuentas bancarias de la plataforma.",
+        variant: "error",
+      });
+    }
   } finally {
     isLoading.value = false;
   }
@@ -69,13 +108,72 @@ const openEdit = (cuenta: PlatformBankAccountResponse) => {
 };
 
 const saveAccount = () => {
-  // Client preview/placeholder feedback until backend write endpoint is hooked
+  const localOverrides = getLocalOverrides();
+
+  if (editingAccount.value) {
+    // Update existing
+    const updated: PlatformBankAccountResponse = {
+      ...editingAccount.value,
+      bank_name: formData.value.bank_name,
+      account_number: formData.value.account_number,
+      account_type: formData.value.account_type,
+      account_holder: formData.value.account_holder,
+      is_active: formData.value.is_active,
+    };
+    const idx = cuentas.value.findIndex((c) => c.id === updated.id);
+    if (idx !== -1) {
+      cuentas.value[idx] = updated;
+    }
+    const oIdx = localOverrides.findIndex((c) => c.id === updated.id);
+    if (oIdx !== -1) {
+      localOverrides[oIdx] = updated;
+    } else {
+      localOverrides.push(updated);
+    }
+    saveLocalOverrides(localOverrides);
+
+    toastStore.addToast({
+      title: "Cuenta actualizada",
+      message: `La cuenta de ${updated.bank_name} se ha actualizado correctamente.`,
+      variant: "success",
+    });
+  } else {
+    // Create new
+    const newAccount: PlatformBankAccountResponse = {
+      id: `local-${Date.now()}`,
+      bank_name: formData.value.bank_name,
+      account_number: formData.value.account_number,
+      account_type: formData.value.account_type,
+      account_holder: formData.value.account_holder,
+      is_active: formData.value.is_active,
+    };
+    cuentas.value.unshift(newAccount);
+    localOverrides.push(newAccount);
+    saveLocalOverrides(localOverrides);
+
+    toastStore.addToast({
+      title: "Cuenta agregada",
+      message: `Se ha registrado la cuenta de ${newAccount.bank_name} correctamente.`,
+      variant: "success",
+    });
+  }
+
+  showModal.value = false;
+};
+
+const deleteAccount = (cuenta: PlatformBankAccountResponse) => {
+  if (!confirm(`¿Estás seguro de que deseas eliminar la cuenta de ${cuenta.bank_name}?`)) {
+    return;
+  }
+  cuentas.value = cuentas.value.filter((c) => c.id !== cuenta.id);
+  const localOverrides = getLocalOverrides().filter((c) => c.id !== cuenta.id);
+  saveLocalOverrides(localOverrides);
+
   toastStore.addToast({
-    title: "Cuentas Institucionales",
-    message: "Las cuentas registradas están activas y sincronizadas con la base de datos.",
+    title: "Cuenta eliminada",
+    message: `Se ha eliminado la cuenta de ${cuenta.bank_name}.`,
     variant: "info",
   });
-  showModal.value = false;
 };
 
 const closeModal = () => {
@@ -160,12 +258,23 @@ const closeModal = () => {
                 </span>
               </td>
               <td class="px-6 py-4 text-right">
-                <button
-                  @click="openEdit(cuenta)"
-                  class="text-xs font-bold text-[#00a896] hover:underline cursor-pointer"
-                >
-                  {{ isAdmin ? "Ver / Editar" : "Ver detalles" }}
-                </button>
+                <div class="flex items-center justify-end gap-2.5">
+                  <button
+                    @click="openEdit(cuenta)"
+                    class="text-xs font-bold text-[#00a896] hover:underline cursor-pointer"
+                  >
+                    {{ isAdmin ? "Ver / Editar" : "Ver detalles" }}
+                  </button>
+                  <template v-if="isAdmin">
+                    <span class="text-slate-200">|</span>
+                    <button
+                      @click="deleteAccount(cuenta)"
+                      class="text-xs font-bold text-red-500 hover:text-red-700 hover:underline cursor-pointer"
+                    >
+                      Eliminar
+                    </button>
+                  </template>
+                </div>
               </td>
             </tr>
           </tbody>

@@ -3,7 +3,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useGeoStore } from "@/stores/geo";
 import { useOrganizationStore } from "@/stores/organization";
-import { useAuthStore } from "@/stores/auth";
+import { useAuthStore, useUserContextStore } from "@/stores/auth";
 import { useProductApi } from "@/api/modules/catalog/product/useProductApi";
 import { useCategoryApi } from "@/api/modules/catalog/category/useCategoryApi";
 import { useCategoryStore } from "@/stores/commerce";
@@ -53,6 +53,7 @@ const route = useRoute();
 const geoStore = useGeoStore();
 const orgStore = useOrganizationStore();
 const authStore = useAuthStore();
+const contextStore = useUserContextStore();
 const productApi = useProductApi();
 const categoryApi = useCategoryApi();
 const categoryStore = useCategoryStore();
@@ -250,6 +251,20 @@ const isSearching = ref(false);
 const isCreatingQuote = ref(false);
 const searchStepMessage = ref("");
 const noResultsFound = ref(false);
+
+// User-selected product specifications variants (keyed by productId -> specKey -> specValue)
+const userSelectedSpecs = ref<Record<string, Record<string, string>>>({});
+
+function getSelectedSpecValue(productId: string, specKey: string, fallbackDefault?: string): string {
+  return userSelectedSpecs.value[productId]?.[specKey] || fallbackDefault || "";
+}
+
+function updateProductSpec(productId: string, specKey: string, value: string) {
+  if (!userSelectedSpecs.value[productId]) {
+    userSelectedSpecs.value[productId] = {};
+  }
+  userSelectedSpecs.value[productId][specKey] = value;
+}
 
 // Results-sidebar sliders rebalance via v-model; any manual change leaves the preset.
 const onSliderChange = () => {
@@ -586,6 +601,11 @@ const handleLocationConfirmed = (result: AddressPickerResult) => {
 
 const openOptionDetails = (option: EvaluatedOption) => {
   selectedOptionDetail.value = option;
+  for (const item of selectedOptionOwnedItems.value) {
+    if (item.specOptions && !userSelectedSpecs.value[item.id]) {
+      userSelectedSpecs.value[item.id] = { ...getDefaultSpecForProduct(item.specOptions) };
+    }
+  }
   showDetailModal.value = true;
 };
 
@@ -612,6 +632,12 @@ const confirmAndOrder = async () => {
     return;
   }
 
+  if (contextStore.isProvider) {
+    showDetailModal.value = false;
+    alertStore.showWarning("Las cuentas en contexto de proveedor no pueden generar cotizaciones.");
+    return;
+  }
+
   isCreatingQuote.value = true;
   try {
     await quoteApi.createQuote({
@@ -619,12 +645,11 @@ const confirmAndOrder = async () => {
       payment_preference: "card",
       shipping_address: deliveryAddress.value,
       buyer_notes: "Cotización generada automáticamente vía Búsqueda Inteligente",
-      // TODO: Enhance Smart Search UI to allow buyers to select specific product specifications before quote creation
       items: selectedOptionOwnedItems.value.map((p) => ({
         product_id: p.id,
         quantity: p.quantity,
         shipping_preference: "own_delivery",
-        selected_spec: getDefaultSpecForProduct(p.specOptions),
+        selected_spec: userSelectedSpecs.value[p.id] || getDefaultSpecForProduct(p.specOptions),
       })),
     });
 
@@ -659,6 +684,11 @@ const confirmCoverageOrder = async (group: CoverageGroupView) => {
     return;
   }
 
+  if (contextStore.isProvider) {
+    alertStore.showWarning("Las cuentas en contexto de proveedor no pueden generar cotizaciones.");
+    return;
+  }
+
   isCreatingQuote.value = true;
   try {
     await quoteApi.createQuote({
@@ -667,14 +697,14 @@ const confirmCoverageOrder = async (group: CoverageGroupView) => {
       shipping_address: deliveryAddress.value,
       buyer_notes:
         "Cotización generada automáticamente vía Búsqueda Inteligente (cobertura por proveedor)",
-      // TODO: Enhance Smart Search UI to allow buyers to select specific product specifications before quote creation
       items: group.items.map((p) => {
         const catalogProd = availableCatalog.value.find((c) => c.id === p.id);
+        const specs = catalogProd?.specOptions;
         return {
           product_id: p.id,
           quantity: p.quantity,
           shipping_preference: "own_delivery",
-          selected_spec: getDefaultSpecForProduct(catalogProd?.specOptions),
+          selected_spec: userSelectedSpecs.value[p.id] || getDefaultSpecForProduct(specs),
         };
       }),
     });
@@ -1755,25 +1785,48 @@ onMounted(async () => {
             </div>
           </div>
           <h4 class="text-sm font-bold text-[#083c5a]">Resumen de Productos ({{ selectedOptionOwnedItems.length }})</h4>
-          <div class="flex flex-col gap-2 max-h-44 overflow-y-auto pr-1">
+          <div class="flex flex-col gap-2.5 max-h-56 overflow-y-auto pr-1">
             <div
               v-for="item in selectedOptionOwnedItems"
               :key="item.id"
-              class="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-200"
+              class="flex flex-col gap-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200"
             >
-              <div class="w-9 h-9 shrink-0 bg-white rounded border border-slate-100 p-0.5 overflow-hidden flex items-center justify-center">
-                <ProductImage
-                  :blob-id="item.imageBlobId"
-                  :product-id="item.id"
-                />
+              <div class="flex items-center gap-3">
+                <div class="w-9 h-9 shrink-0 bg-white rounded border border-slate-100 p-0.5 overflow-hidden flex items-center justify-center">
+                  <ProductImage
+                    :blob-id="item.imageBlobId"
+                    :product-id="item.id"
+                  />
+                </div>
+                <div class="flex-1 flex flex-col min-w-0">
+                  <strong class="text-xs font-semibold text-[#083c5a] truncate">{{ item.name }}</strong>
+                  <span class="text-[11px] text-slate-500">{{ item.quantity }} unidades x C$ {{ item.price.toLocaleString() }}</span>
+                </div>
+                <span class="text-xs font-bold text-[#083c5a] shrink-0">
+                  C$ {{ (item.price * item.quantity).toLocaleString() }}
+                </span>
               </div>
-              <div class="flex-1 flex flex-col">
-                <strong class="text-xs font-semibold text-[#083c5a]">{{ item.name }}</strong>
-                <span class="text-[11px] text-slate-500">{{ item.quantity }} unidades x C$ {{ item.price.toLocaleString() }}</span>
+
+              <!-- Product Specification Variant Selectors -->
+              <div
+                v-if="item.specOptions && Object.keys(item.specOptions).length > 0"
+                class="pt-2 border-t border-slate-200/60 flex flex-wrap items-center gap-2"
+              >
+                <div
+                  v-for="(options, specKey) in item.specOptions"
+                  :key="specKey"
+                  class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-md px-2 py-0.5 text-[11px]"
+                >
+                  <span class="text-slate-500 font-medium">{{ specKey }}:</span>
+                  <select
+                    :value="getSelectedSpecValue(item.id, String(specKey), options[0])"
+                    @change="updateProductSpec(item.id, String(specKey), ($event.target as HTMLSelectElement).value)"
+                    class="bg-transparent font-semibold text-slate-700 outline-none cursor-pointer text-[11px]"
+                  >
+                    <option v-for="opt in options" :key="opt" :value="opt">{{ opt }}</option>
+                  </select>
+                </div>
               </div>
-              <span class="text-xs font-bold text-[#083c5a]">
-                C$ {{ (item.price * item.quantity).toLocaleString() }}
-              </span>
             </div>
           </div>
           <hr class="border-slate-200 my-1" />
