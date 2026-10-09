@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
 import { useUserContextStore } from "@/stores/auth/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
 import AdminUserMenu from "@/components/admin/AdminUserMenu.vue";
 
 const router = useRouter();
+const route = useRoute();
 const authStore = useAuthStore();
 const contextStore = useUserContextStore();
 
@@ -18,12 +19,21 @@ const isMobileMenuOpen = ref(false);
 const navItems = [
   { name: "admin-home", label: "Inicio", icon: "fa-solid fa-house" },
   { name: "admin-payments", label: "Pagos/Recargas", icon: "fa-solid fa-wallet" },
+  { name: "admin-providers", label: "Proveedores", icon: "fa-solid fa-store" },
   { name: "admin-users", label: "Usuarios", icon: "fa-solid fa-user-group" },
   { name: "admin-orders", label: "Pedidos", icon: "fa-solid fa-cart-shopping" },
   { name: "admin-reports", label: "Reportes", icon: "fa-solid fa-chart-simple" },
   { name: "admin-notifications", label: "Notificaciones", icon: "fa-solid fa-bell" },
   { name: "admin-settings", label: "Configuración", icon: "fa-solid fa-gear" },
 ];
+
+function isNavItemActive(itemName: string): boolean {
+  if (route.name === itemName) return true;
+  if (itemName === "admin-providers" && route.name === "admin-provider-detail") return true;
+  if (itemName === "admin-users" && route.name === "admin-user-detail") return true;
+  if (itemName === "admin-payments" && (route.name === "admin-payment-detail" || route.name === "admin-transactions")) return true;
+  return false;
+}
 
 const handleLogout = async () => {
   await authStore.logout();
@@ -75,8 +85,12 @@ const closeMobileMenu = () => {
           :key="item.name"
           :to="{ name: item.name }"
           @click="closeMobileMenu"
-          exact-active-class="!bg-[#00a896] !text-white font-semibold shadow-md shadow-[#00a896]/20"
-          class="group flex items-center gap-3.5 rounded-xl px-4 py-3 text-slate-300 transition-all duration-150 hover:bg-white/10 hover:text-white"
+          :class="[
+            'group flex items-center gap-3.5 rounded-xl px-4 py-3 text-slate-300 transition-all duration-150 hover:bg-white/10 hover:text-white',
+            isNavItemActive(item.name)
+              ? '!bg-[#00a896] !text-white font-semibold shadow-md shadow-[#00a896]/20'
+              : ''
+          ]"
         >
           <i :class="[item.icon, 'w-5 text-center text-base shrink-0']"></i>
           <span class="text-sm font-medium tracking-wide">
