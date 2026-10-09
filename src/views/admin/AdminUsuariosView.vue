@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch } from "vue";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import type { AdminUserItem } from "@/api";
 import { useAuthStore } from "@/stores/auth";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import { useToastStore } from "@/stores/ui";
 import { useGeoStore } from "@/stores/geo";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
@@ -11,8 +12,11 @@ import PhoneDisplay from "@/components/common/PhoneDisplay.vue";
 
 const identityApi = useIdentityApi();
 const authStore = useAuthStore();
+const contextStore = useUserContextStore();
 const toastStore = useToastStore();
 const geoStore = useGeoStore();
+
+const isAdmin = computed(() => contextStore.isAdmin);
 
 // --- State ---
 const userList = ref<AdminUserItem[]>([]);
@@ -503,7 +507,7 @@ onMounted(async () => {
           <!-- Table Header -->
           <thead class="bg-[#f0f6fa] border-b border-slate-100 text-slate-500 font-semibold">
             <tr>
-              <th scope="col" class="py-3.5 pl-4 pr-2 w-10 text-center">
+              <th v-if="isAdmin" scope="col" class="py-3.5 pl-4 pr-2 w-10 text-center">
                 <input
                   type="checkbox"
                   :checked="isAllSelected"
@@ -527,7 +531,7 @@ onMounted(async () => {
             <!-- Loading Skeletons -->
             <template v-if="isLoading">
               <tr v-for="i in 5" :key="i" class="animate-pulse">
-                <td class="py-4 pl-4 pr-2 text-center">
+                <td v-if="isAdmin" class="py-4 pl-4 pr-2 text-center">
                   <div class="h-4 w-4 rounded bg-slate-200 mx-auto"></div>
                 </td>
                 <td class="px-4 py-4">
@@ -551,7 +555,7 @@ onMounted(async () => {
 
             <!-- Empty State -->
             <tr v-else-if="userList.length === 0">
-              <td colspan="9" class="px-6 py-12 text-center text-slate-400">
+              <td :colspan="isAdmin ? 9 : 8" class="px-6 py-12 text-center text-slate-400">
                 <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 text-slate-400 mb-2">
                   <i class="fa-solid fa-users-slash text-xl"></i>
                 </div>
@@ -578,7 +582,7 @@ onMounted(async () => {
               ]"
             >
               <!-- Checkbox -->
-              <td class="py-4 pl-4 pr-2 text-center">
+              <td v-if="isAdmin" class="py-4 pl-4 pr-2 text-center">
                 <input
                   type="checkbox"
                   :checked="selectedUserIds.includes(user.id)"
@@ -691,39 +695,41 @@ onMounted(async () => {
                     <span>Ver</span>
                   </button>
 
-                  <span class="text-slate-300">|</span>
+                  <template v-if="isAdmin">
+                    <span class="text-slate-300">|</span>
 
-                  <!-- Suspender / Reactivar button -->
-                  <button
-                    v-if="user.id === currentUserId"
-                    type="button"
-                    disabled
-                    title="No puedes suspender tu propia cuenta activa"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-slate-300 cursor-not-allowed opacity-60"
-                  >
-                    <i class="fa-solid fa-ban text-xs"></i>
-                    <span>Suspender</span>
-                  </button>
+                    <!-- Suspender / Reactivar button -->
+                    <button
+                      v-if="user.id === currentUserId"
+                      type="button"
+                      disabled
+                      title="No puedes suspender tu propia cuenta activa"
+                      class="inline-flex items-center gap-1 text-xs font-semibold text-slate-300 cursor-not-allowed opacity-60"
+                    >
+                      <i class="fa-solid fa-ban text-xs"></i>
+                      <span>Suspender</span>
+                    </button>
 
-                  <button
-                    v-else-if="user.is_suspended"
-                    type="button"
-                    @click="openConfirmDialog(user)"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors cursor-pointer"
-                  >
-                    <i class="fa-solid fa-user-check text-xs"></i>
-                    <span>Reactivar</span>
-                  </button>
+                    <button
+                      v-else-if="user.is_suspended"
+                      type="button"
+                      @click="openConfirmDialog(user)"
+                      class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline transition-colors cursor-pointer"
+                    >
+                      <i class="fa-solid fa-user-check text-xs"></i>
+                      <span>Reactivar</span>
+                    </button>
 
-                  <button
-                    v-else
-                    type="button"
-                    @click="openConfirmDialog(user)"
-                    class="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 hover:underline transition-colors cursor-pointer"
-                  >
-                    <i class="fa-solid fa-user-slash text-xs"></i>
-                    <span>Suspender</span>
-                  </button>
+                    <button
+                      v-else
+                      type="button"
+                      @click="openConfirmDialog(user)"
+                      class="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 hover:underline transition-colors cursor-pointer"
+                    >
+                      <i class="fa-solid fa-user-slash text-xs"></i>
+                      <span>Suspender</span>
+                    </button>
+                  </template>
                 </div>
               </td>
             </tr>
@@ -914,21 +920,24 @@ onMounted(async () => {
 
         <!-- Modal Footer Actions -->
         <div class="flex items-center justify-between pt-2 border-t border-slate-100">
-          <button
-            v-if="viewedUser.id !== currentUserId"
-            type="button"
-            @click="isDetailModalOpen = false; openConfirmDialog(viewedUser)"
-            :class="[
-              'inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-colors',
-              viewedUser.is_suspended
-                ? 'text-emerald-600 hover:text-emerald-700'
-                : 'text-red-500 hover:text-red-700'
-            ]"
-          >
-            <i :class="['text-xs', viewedUser.is_suspended ? 'fa-solid fa-user-check' : 'fa-solid fa-user-slash']"></i>
-            <span>{{ viewedUser.is_suspended ? 'Reactivar cuenta' : 'Suspender cuenta' }}</span>
-          </button>
-          <span v-else class="text-xs text-slate-400 italic">Tu cuenta activa</span>
+          <template v-if="isAdmin">
+            <button
+              v-if="viewedUser.id !== currentUserId"
+              type="button"
+              @click="isDetailModalOpen = false; openConfirmDialog(viewedUser)"
+              :class="[
+                'inline-flex items-center gap-1.5 text-xs font-bold cursor-pointer transition-colors',
+                viewedUser.is_suspended
+                  ? 'text-emerald-600 hover:text-emerald-700'
+                  : 'text-red-500 hover:text-red-700'
+              ]"
+            >
+              <i :class="['text-xs', viewedUser.is_suspended ? 'fa-solid fa-user-check' : 'fa-solid fa-user-slash']"></i>
+              <span>{{ viewedUser.is_suspended ? 'Reactivar cuenta' : 'Suspender cuenta' }}</span>
+            </button>
+            <span v-else class="text-xs text-slate-400 italic">Tu cuenta activa</span>
+          </template>
+          <div v-else></div>
 
           <button
             type="button"
@@ -943,7 +952,7 @@ onMounted(async () => {
 
     <!-- Confirm Suspend/Unsuspend Modal -->
     <div
-      v-if="isConfirmOpen && targetUser"
+      v-if="isAdmin && isConfirmOpen && targetUser"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-xs transition-opacity"
     >
       <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-150">

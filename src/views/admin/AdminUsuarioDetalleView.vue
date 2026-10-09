@@ -19,6 +19,7 @@ import {
 } from "reka-ui";
 import { useIdentityApi } from "@/api/modules/identity/auth/useIdentityApi";
 import { useVerificationRequestApi } from "@/api/modules/organization/verification_request/useVerificationRequestApi";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import { useToastStore } from "@/stores/ui";
 import ProfileAvatar from "@/components/profile/ProfileAvatar.vue";
 import NationalIdDisplay from "@/components/common/NationalIdDisplay.vue";
@@ -29,7 +30,10 @@ const route = useRoute();
 const router = useRouter();
 const identityApi = useIdentityApi();
 const verificationApi = useVerificationRequestApi();
+const contextStore = useUserContextStore();
 const toastStore = useToastStore();
+
+const isAdmin = computed(() => contextStore.isAdmin);
 
 // --- User & State Data ---
 const userId = computed(() => (route.params.id as string) || "usr-001");
@@ -603,7 +607,7 @@ onMounted(() => {
             </div>
 
             <!-- Bottom Action Buttons (Rechazar / Aprobar) -->
-            <div class="flex items-center gap-3 pt-2">
+            <div v-if="isAdmin" class="flex items-center gap-3 pt-2">
               <button
                 type="button"
                 @click="isRejectModalOpen = true"
@@ -684,7 +688,7 @@ onMounted(() => {
     <!-- ======================================================== -->
     <!-- MODAL 1: APROBAR CUENTA DE IMPORTADOR (Image 2)          -->
     <!-- ======================================================== -->
-    <DialogRoot v-model:open="isApproveModalOpen">
+    <DialogRoot v-if="isAdmin" v-model:open="isApproveModalOpen">
       <DialogPortal>
         <DialogOverlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity" />
         <DialogContent
@@ -787,7 +791,7 @@ onMounted(() => {
     <!-- ======================================================== -->
     <!-- MODAL 2: RECHAZAR CUENTA DE IMPORTADOR (Image 3)         -->
     <!-- ======================================================== -->
-    <DialogRoot v-model:open="isRejectModalOpen">
+    <DialogRoot v-if="isAdmin" v-model:open="isRejectModalOpen">
       <DialogPortal>
         <DialogOverlay class="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs transition-opacity" />
         <DialogContent

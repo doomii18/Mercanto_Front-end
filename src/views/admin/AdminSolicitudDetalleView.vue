@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useDepositApi } from "@/api/modules/wallet/deposit/useDepositApi";
 import { useVoucherApi } from "@/api/modules/wallet/voucher/useVoucherApi";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import { useToastStore } from "@/stores/ui";
 import type { DepositRequestResponse } from "@/api";
 
@@ -10,7 +11,10 @@ const route = useRoute();
 const router = useRouter();
 const depositApi = useDepositApi();
 const voucherApi = useVoucherApi();
+const contextStore = useUserContextStore();
 const toastStore = useToastStore();
+
+const isAdmin = computed(() => contextStore.isAdmin);
 
 const requestId = (route.params.id as string) || "";
 const solicitud = ref<DepositRequestResponse | null>(null);
@@ -372,7 +376,7 @@ const goBack = () => {
           </div>
 
           <!-- Action Buttons -->
-          <div class="pt-6 flex flex-col sm:flex-row gap-3">
+          <div v-if="isAdmin" class="pt-6 flex flex-col sm:flex-row gap-3">
             <button
               @click="openRejectModal"
               :disabled="solicitud.status !== 'pending' || isActionLoading"
@@ -395,7 +399,7 @@ const goBack = () => {
       <!-- MODAL 1: APROBAR RECARGA -->
       <!-- ========================================== -->
       <div
-        v-if="showApproveModal"
+        v-if="isAdmin && showApproveModal"
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4"
         @click.self="showApproveModal = false"
       >
@@ -463,7 +467,7 @@ const goBack = () => {
       <!-- MODAL 2: RECHAZAR RECARGA -->
       <!-- ========================================== -->
       <div
-        v-if="showRejectModal"
+        v-if="isAdmin && showRejectModal"
         class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs p-4"
         @click.self="showRejectModal = false"
       >

@@ -2,10 +2,19 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useDepositApi } from "@/api/modules/wallet/deposit/useDepositApi";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import type { DepositRequestSummaryResponse, FundingMetricsResponse } from "@/api";
 
 const router = useRouter();
 const depositApi = useDepositApi();
+const contextStore = useUserContextStore();
+
+const greetingName = computed(() => {
+  if (contextStore.displayName && contextStore.displayName !== "Usuario") {
+    return contextStore.displayName;
+  }
+  return contextStore.isAuditor ? "Auditor" : "Admin";
+});
 
 const solicitudes = ref<DepositRequestSummaryResponse[]>([]);
 const metrics = ref<FundingMetricsResponse | null>(null);
@@ -166,7 +175,7 @@ onMounted(() => {
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
         <h1 class="font-serif text-2xl sm:text-3xl font-bold text-[#023859]">
-          Hola, Admin
+          Hola, {{ greetingName }}
         </h1>
         <p class="text-xs sm:text-sm text-slate-400 mt-1">
           Bienvenido de vuelta. Aquí está el resumen de las operaciones de hoy.

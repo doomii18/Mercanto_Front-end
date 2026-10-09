@@ -25,6 +25,7 @@ import {
 import { useDepositApi } from "@/api/modules/wallet/deposit/useDepositApi";
 import { useWithdrawalApi } from "@/api/modules/wallet/withdrawal/useWithdrawalApi";
 import { usePlatformBankAccountApi } from "@/api/modules/wallet/platform_bank_account/usePlatformBankAccountApi";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import { useToastStore } from "@/stores/ui";
 import type {
   DepositRequestSummaryResponse,
@@ -40,7 +41,10 @@ const router = useRouter();
 const depositApi = useDepositApi();
 const withdrawalApi = useWithdrawalApi();
 const bankAccountApi = usePlatformBankAccountApi();
+const contextStore = useUserContextStore();
 const toastStore = useToastStore();
+
+const isAdmin = computed(() => contextStore.isAdmin);
 
 type OperationType = "deposits" | "withdrawals";
 const operationType = ref<OperationType>("deposits");
@@ -630,18 +634,21 @@ async function handleRejectWithdrawal() {
               </td>
               <td class="py-4 px-3 text-right">
                 <div v-if="w.status === 'pending'" class="flex items-center justify-end gap-2">
-                  <button
-                    @click="openCompleteModal(w)"
-                    class="px-3 py-1 bg-[#00a896] hover:bg-[#009688] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    Completar
-                  </button>
-                  <button
-                    @click="openRejectModal(w)"
-                    class="px-2.5 py-1 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                  >
-                    Rechazar
-                  </button>
+                  <template v-if="isAdmin">
+                    <button
+                      @click="openCompleteModal(w)"
+                      class="px-3 py-1 bg-[#00a896] hover:bg-[#009688] text-white rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Completar
+                    </button>
+                    <button
+                      @click="openRejectModal(w)"
+                      class="px-2.5 py-1 border border-red-200 text-red-600 hover:bg-red-50 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                    >
+                      Rechazar
+                    </button>
+                  </template>
+                  <span v-else class="text-xs text-amber-600 font-medium">Pendiente</span>
                 </div>
                 <span v-else class="text-xs text-slate-400 italic">Procesada</span>
               </td>
@@ -704,7 +711,7 @@ async function handleRejectWithdrawal() {
 
     <!-- Complete Withdrawal Modal -->
     <div
-      v-if="showCompleteModal && selectedWithdrawal"
+      v-if="isAdmin && showCompleteModal && selectedWithdrawal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in"
       @click.self="showCompleteModal = false"
     >
@@ -780,7 +787,7 @@ async function handleRejectWithdrawal() {
 
     <!-- Reject Withdrawal Modal -->
     <div
-      v-if="showRejectModal && selectedWithdrawal"
+      v-if="isAdmin && showRejectModal && selectedWithdrawal"
       class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4 animate-in fade-in"
       @click.self="showRejectModal = false"
     >

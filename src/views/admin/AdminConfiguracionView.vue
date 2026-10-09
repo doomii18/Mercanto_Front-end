@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { usePlatformBankAccountApi } from "@/api/modules/wallet/platform_bank_account/usePlatformBankAccountApi";
 import type { PlatformBankAccountResponse } from "@/api";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import { useToastStore } from "@/stores/ui";
 
 const bankAccountApi = usePlatformBankAccountApi();
+const contextStore = useUserContextStore();
 const toastStore = useToastStore();
+
+const isAdmin = computed(() => contextStore.isAdmin);
 
 const cuentas = ref<PlatformBankAccountResponse[]>([]);
 const isLoading = ref(false);
@@ -92,6 +96,7 @@ const closeModal = () => {
         </p>
       </div>
       <button
+        v-if="isAdmin"
         @click="openAdd"
         class="self-start sm:self-auto flex items-center gap-2 rounded-xl bg-[#00a896] px-5 py-3 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#009688] shrink-0"
       >
@@ -159,7 +164,7 @@ const closeModal = () => {
                   @click="openEdit(cuenta)"
                   class="text-xs font-bold text-[#00a896] hover:underline cursor-pointer"
                 >
-                  Ver / Editar
+                  {{ isAdmin ? "Ver / Editar" : "Ver detalles" }}
                 </button>
               </td>
             </tr>
@@ -177,7 +182,8 @@ const closeModal = () => {
       <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl space-y-5">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="font-serif text-lg font-bold text-[#023859]">
-            {{ editingAccount ? "Editar cuenta" : "Agregar cuenta" }}
+            <template v-if="!isAdmin">Detalles de cuenta</template>
+            <template v-else>{{ editingAccount ? "Editar cuenta" : "Agregar cuenta" }}</template>
           </h3>
           <button @click="closeModal" class="text-slate-400 hover:text-slate-600 transition-colors">
             <i class="fa-solid fa-xmark text-lg"></i>
@@ -191,15 +197,17 @@ const closeModal = () => {
               v-model="formData.bank_name"
               type="text"
               required
+              :disabled="!isAdmin"
               placeholder="Ej: Banco Lafise Bancentro"
-              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
+              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15 disabled:bg-slate-50 disabled:text-slate-600"
             />
           </div>
           <div>
             <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Tipo de cuenta</label>
             <select
               v-model="formData.account_type"
-              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
+              :disabled="!isAdmin"
+              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15 disabled:bg-slate-50 disabled:text-slate-600"
             >
               <option value="Cuenta de Ahorros">Cuenta de Ahorros</option>
               <option value="Cuenta Corriente">Cuenta Corriente</option>
@@ -211,8 +219,9 @@ const closeModal = () => {
               v-model="formData.account_number"
               type="text"
               required
+              :disabled="!isAdmin"
               placeholder="Ej: 100-2847-1932-XXXX"
-              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-mono focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
+              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-mono focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15 disabled:bg-slate-50 disabled:text-slate-600"
             />
           </div>
           <div>
@@ -221,21 +230,23 @@ const closeModal = () => {
               v-model="formData.account_holder"
               type="text"
               required
+              :disabled="!isAdmin"
               placeholder="Ej: Mercanto Nicaragua S.A."
-              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
+              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15 disabled:bg-slate-50 disabled:text-slate-600"
             />
           </div>
           <div>
             <label class="mb-1.5 block text-xs font-bold text-[#00a896] uppercase tracking-wider">Estado</label>
             <select
               v-model="formData.is_active"
-              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15"
+              :disabled="!isAdmin"
+              class="w-full rounded-xl border border-slate-200 py-2.5 px-4 text-xs text-[#023859] font-medium focus:border-[#00a896] focus:outline-none focus:ring-2 focus:ring-[#00a896]/15 disabled:bg-slate-50 disabled:text-slate-600"
             >
               <option :value="true">Activa</option>
               <option :value="false">Inactiva</option>
             </select>
           </div>
-          <div class="flex gap-3 pt-2">
+          <div v-if="isAdmin" class="flex gap-3 pt-2">
             <button
               type="button"
               @click="closeModal"
@@ -248,6 +259,15 @@ const closeModal = () => {
               class="flex-1 rounded-xl bg-[#00a896] py-2.5 text-xs font-bold text-white hover:bg-[#009688] transition-colors shadow-xs"
             >
               {{ editingAccount ? "Guardar cambios" : "Agregar" }}
+            </button>
+          </div>
+          <div v-else class="flex justify-end pt-2">
+            <button
+              type="button"
+              @click="closeModal"
+              class="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors"
+            >
+              Cerrar
             </button>
           </div>
         </form>

@@ -28,6 +28,29 @@ logs-dev:
 build-image:
     podman build -t mercanto-frontend:prod -f Containerfile .
 
+# Tag production container image for Docker Hub registry
+tag-image tag="prod":
+    podman tag mercanto-frontend:prod docker.io/haterofvectors/mercanto-client:{{tag}}
+
+# Upload production container image to Docker Hub registry using Podman
+upload-image tag="prod":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    target="docker.io/haterofvectors/mercanto-client:{{tag}}"
+    if ! podman image exists "$target" && podman image exists "haterofvectors/mercanto-client:{{tag}}"; then
+        podman tag "haterofvectors/mercanto-client:{{tag}}" "$target"
+    elif ! podman image exists "$target" && podman image exists "mercanto-frontend:prod"; then
+        podman tag "mercanto-frontend:prod" "$target"
+    fi
+    podman push "$target"
+
+alias push-image := upload-image
+alias upload := upload-image
+
+# Pull production container image from Docker Hub registry
+pull-image tag="prod":
+    podman pull docker.io/haterofvectors/mercanto-client:{{tag}}
+
 # Build production static assets directly on host
 build-local:
     npm run build

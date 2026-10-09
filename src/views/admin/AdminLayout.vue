@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useAuthStore } from "@/stores/auth";
+import { useUserContextStore } from "@/stores/auth/userContextStore";
 import AppLogo from "@/components/common/AppLogo.vue";
 import AdminUserMenu from "@/components/admin/AdminUserMenu.vue";
 
 const router = useRouter();
 const authStore = useAuthStore();
+const contextStore = useUserContextStore();
+
+const panelTitle = computed(() => (contextStore.isAuditor ? "Panel Auditoría" : "Panel Admin"));
+const mobileRoleTitle = computed(() => (contextStore.isAuditor ? "Auditor" : "Admin"));
 
 const isMobileMenuOpen = ref(false);
 
@@ -50,7 +55,7 @@ const closeMobileMenu = () => {
       <div class="flex h-20 items-center justify-between px-6 pt-3">
         <div class="flex flex-col items-start">
           <AppLogo variant="imagotipo" class="h-9 shrink-0 brightness-110" />
-          <span class="text-[11px] font-semibold text-slate-300 block pl-1 -mt-0.5">Panel Admin</span>
+          <span class="text-[11px] font-semibold text-slate-300 block pl-1 -mt-0.5">{{ panelTitle }}</span>
         </div>
 
         <!-- Close button on mobile -->
@@ -100,7 +105,7 @@ const closeMobileMenu = () => {
           </button>
           <div class="flex items-center gap-2">
             <AppLogo variant="logo" class="h-8 shrink-0" />
-            <span class="text-xs font-semibold text-slate-500 block">Admin</span>
+            <span class="text-xs font-semibold text-slate-500 block">{{ mobileRoleTitle }}</span>
           </div>
         </div>
 
