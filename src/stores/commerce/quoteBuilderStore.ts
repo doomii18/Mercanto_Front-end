@@ -18,6 +18,7 @@ export interface QuoteItemDraft {
   shippingPreference: ShippingMethod;
   offerId: string | null;
   discountPercentage: number | null;
+  selectedSpec: Record<string, string>;
 }
 
 export interface QuoteDraft {
@@ -39,10 +40,23 @@ export interface AddItemInput {
   shippingPreference?: ShippingMethod;
   offerId?: string | null;
   discountPercentage?: number | null;
+  selectedSpec?: Record<string, string>;
 }
 
 const DEFAULT_SHIPPING: ShippingMethod = "bus";
 const DEFAULT_PAYMENT: PaymentMethod = "virtual_wallet";
+
+function areSpecsEqual(
+  a?: Record<string, string>,
+  b?: Record<string, string>
+): boolean {
+  const objA = a || {};
+  const objB = b || {};
+  const keysA = Object.keys(objA);
+  const keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) return false;
+  return keysA.every((k) => objA[k] === objB[k]);
+}
 
 export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
   const quoteApi = useQuoteApi();
@@ -89,9 +103,13 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     );
 
     const shippingPreference = input.shippingPreference ?? DEFAULT_SHIPPING;
+    const selectedSpec = input.selectedSpec ?? {};
 
     const existing = draft.items.find(
-      (i) => i.productId === input.productId && i.shippingPreference === shippingPreference,
+      (i) =>
+        i.productId === input.productId &&
+        i.shippingPreference === shippingPreference &&
+        areSpecsEqual(i.selectedSpec, selectedSpec),
     );
     if (existing) {
       existing.quantity += input.quantity ?? 1;
@@ -110,6 +128,7 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
       shippingPreference,
       offerId: input.offerId ?? null,
       discountPercentage: input.discountPercentage ?? null,
+      selectedSpec,
     });
   }
 
@@ -117,16 +136,16 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     providerId: string,
     productId: string,
     shippingPreference?: ShippingMethod,
+    selectedSpec?: Record<string, string>,
   ): void {
     const draft = drafts.value[providerId];
     if (!draft) return;
-    if (shippingPreference) {
-      draft.items = draft.items.filter(
-        (i) => !(i.productId === productId && i.shippingPreference === shippingPreference),
-      );
-    } else {
-      draft.items = draft.items.filter((i) => i.productId !== productId);
-    }
+    draft.items = draft.items.filter((i) => {
+      if (i.productId !== productId) return true;
+      if (shippingPreference && i.shippingPreference !== shippingPreference) return true;
+      if (selectedSpec && !areSpecsEqual(i.selectedSpec, selectedSpec)) return true;
+      return false;
+    });
     if (draft.items.length === 0) delete drafts.value[providerId];
   }
 
@@ -135,17 +154,19 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     productId: string,
     quantity: number,
     shippingPreference?: ShippingMethod,
+    selectedSpec?: Record<string, string>,
   ): void {
     const draft = drafts.value[providerId];
     if (!draft) return;
-    const item = shippingPreference
-      ? draft.items.find(
-          (i) => i.productId === productId && i.shippingPreference === shippingPreference,
-        )
-      : draft.items.find((i) => i.productId === productId);
+    const item = draft.items.find((i) => {
+      if (i.productId !== productId) return false;
+      if (shippingPreference && i.shippingPreference !== shippingPreference) return false;
+      if (selectedSpec && !areSpecsEqual(i.selectedSpec, selectedSpec)) return false;
+      return true;
+    });
     if (!item) return;
     if (quantity <= 0) {
-      removeItem(providerId, productId, shippingPreference);
+      removeItem(providerId, productId, shippingPreference, selectedSpec);
       return;
     }
     item.quantity = quantity;
@@ -156,16 +177,24 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
     productId: string,
     method: ShippingMethod,
     oldMethod?: ShippingMethod,
+    selectedSpec?: Record<string, string>,
   ): void {
     const draft = drafts.value[providerId];
     if (!draft) return;
-    const item = oldMethod
-      ? draft.items.find((i) => i.productId === productId && i.shippingPreference === oldMethod)
-      : draft.items.find((i) => i.productId === productId);
+    const item = draft.items.find((i) => {
+      if (i.productId !== productId) return false;
+      if (oldMethod && i.shippingPreference !== oldMethod) return false;
+      if (selectedSpec && !areSpecsEqual(i.selectedSpec, selectedSpec)) return false;
+      return true;
+    });
     if (!item) return;
 
     const target = draft.items.find(
-      (i) => i.productId === productId && i.shippingPreference === method && i !== item,
+      (i) =>
+        i.productId === productId &&
+        i.shippingPreference === method &&
+        areSpecsEqual(i.selectedSpec, item.selectedSpec) &&
+        i !== item,
     );
     if (target) {
       target.quantity += item.quantity;
@@ -242,6 +271,7 @@ export const useQuoteBuilderStore = defineStore("quoteBuilder", () => {
       product_id: i.productId,
       quantity: i.quantity,
       shipping_preference: i.shippingPreference,
+      selected_spec: i.selectedSpec ?? {},
     }));
 
     const payload = {

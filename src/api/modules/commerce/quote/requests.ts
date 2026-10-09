@@ -4,6 +4,7 @@ import {
   ShippingMethodSchema,
   PaymentMethodSchema,
   buyerNotesSchema,
+  QuoteItemSpecSchema,
 } from "./domain";
 
 export { BatchQuoteQuerySchema } from "@/api/modules/shared/schemas";
@@ -13,6 +14,7 @@ export const QuoteItemDtoSchema = z.object({
   product_id: z.string().uuid("ID de producto inválido"),
   quantity: z.number().int().positive("La cantidad debe ser mayor a 0"),
   shipping_preference: ShippingMethodSchema,
+  selected_spec: QuoteItemSpecSchema.default({}),
 });
 
 // CreateQuoteDto | payload to request quotation from a provider

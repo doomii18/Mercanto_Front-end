@@ -180,8 +180,8 @@ onMounted(() => {
       <!-- Products Preview -->
       <div class="flex items-center gap-2.5 shrink-0">
         <div
-          v-for="item in previewItems"
-          :key="item.product_id"
+          v-for="(item, idx) in previewItems"
+          :key="`${item.product_id}-${idx}`"
           class="w-12 h-12 border border-slate-200 rounded-lg bg-white flex items-center justify-center overflow-hidden p-1 shadow-2xs shrink-0"
           :title="item.product_title_snapshot"
         >

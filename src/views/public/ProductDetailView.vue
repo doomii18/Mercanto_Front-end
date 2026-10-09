@@ -330,6 +330,7 @@ const handleAddToQuote = () => {
         shippingPreference: chosenShipping,
         offerId: currentOffer.value?.id ?? null,
         discountPercentage: discountPercentage.value,
+        selectedSpec: { ...selectedOptions.value },
     }, {
         name: product.value.provider.name,
         logoBlobId: product.value.provider.logoBlobId,

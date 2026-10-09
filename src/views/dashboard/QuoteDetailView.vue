@@ -286,7 +286,7 @@ onMounted(() => {
               <tbody class="divide-y divide-neutral-100">
                 <tr
                   v-for="item in quoteAggregate.items"
-                  :key="item.product_id"
+                  :key="`${item.product_id}-${JSON.stringify(item.selected_spec || {})}`"
                 >
                   <td class="py-3 pr-2 align-middle">
                     <div class="flex items-center gap-3">
@@ -298,9 +298,18 @@ onMounted(() => {
                           object-fit="contain"
                         />
                       </div>
-                      <span class="font-semibold text-neutral-900 leading-snug text-xs sm:text-sm">
-                        {{ item.product_title_snapshot }}
-                      </span>
+                      <div class="flex flex-col">
+                        <span class="font-semibold text-neutral-900 leading-snug text-xs sm:text-sm">
+                          {{ item.product_title_snapshot }}
+                        </span>
+                        <!-- TODO: Redesign quote detail line items to provide dedicated spec variant presentation -->
+                        <span
+                          v-if="item.selected_spec && Object.keys(item.selected_spec).length > 0"
+                          class="text-xs text-neutral-500 font-normal mt-0.5"
+                        >
+                          {{ Object.entries(item.selected_spec).map(([k, v]) => `${k}: ${v}`).join(', ') }}
+                        </span>
+                      </div>
                     </div>
                   </td>
                   <td class="py-3 px-2 align-middle font-semibold text-neutral-900 whitespace-nowrap">

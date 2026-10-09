@@ -4,6 +4,7 @@ import {
   QuoteStatusSchema,
   ShippingMethodSchema,
   PaymentMethodSchema,
+  QuoteItemSpecSchema,
 } from "./domain";
 
 // QuoteResponseDto | quotation header details
@@ -29,6 +30,7 @@ export const QuoteItemResponseSchema = z.object({
   product_title_snapshot: z.string(),
   offer_id: z.uuid().nullable(),
   discount_percentage: z.number().int().nullable(),
+  selected_spec: QuoteItemSpecSchema.default({}),
 });
 
 // QuoteAggregateResponse | combined quotation header with its item lines

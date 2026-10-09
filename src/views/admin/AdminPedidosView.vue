@@ -614,9 +614,16 @@ onMounted(() => {
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-100">
-                    <tr v-for="it in selectedOrder.items" :key="it.product_id">
+                    <tr v-for="it in selectedOrder.items" :key="`${it.product_id}-${JSON.stringify(it.selected_spec || {})}`">
                       <td class="py-2.5 px-3 font-medium text-slate-800">
                         {{ it.product_title_snapshot }}
+                        <!-- TODO: Redesign admin order items view to highlight product specification variants -->
+                        <span
+                          v-if="it.selected_spec && Object.keys(it.selected_spec).length > 0"
+                          class="block text-[11px] text-slate-400 font-normal"
+                        >
+                          {{ Object.entries(it.selected_spec).map(([k, v]) => `${k}: ${v}`).join(', ') }}
+                        </span>
                       </td>
                       <td class="py-2.5 px-3 text-center text-slate-600 font-mono">
                         {{ it.quantity }}

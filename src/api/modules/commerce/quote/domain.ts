@@ -29,3 +29,7 @@ export const QuoteSortFieldSchema = z.enum([
   "id",
 ]);
 
+// QuoteItemSpec | snapshot mapping of specification keys to selected option strings
+export const QuoteItemSpecSchema = z.record(z.string(), z.string());
+
+

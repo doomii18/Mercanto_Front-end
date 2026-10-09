@@ -59,6 +59,18 @@ const categoryStore = useCategoryStore();
 const alertStore = useAlertStore();
 const quoteApi = useQuoteApi();
 
+function getDefaultSpecForProduct(specOptions?: Record<string, string[]>): Record<string, string> {
+  const result: Record<string, string> = {};
+  if (specOptions) {
+    for (const [key, values] of Object.entries(specOptions)) {
+      if (Array.isArray(values) && values.length > 0) {
+        result[key] = values[0];
+      }
+    }
+  }
+  return result;
+}
+
 interface CatalogProductItem {
   id: string;
   name: string;
@@ -67,6 +79,7 @@ interface CatalogProductItem {
   imageBlobId: string | null;
   providerId: string;
   providerName: string;
+  specOptions?: Record<string, string[]>;
 }
 
 interface SelectedProductItem {
@@ -78,6 +91,7 @@ interface SelectedProductItem {
   providerId: string;
   providerName?: string;
   categoryName?: string;
+  specOptions?: Record<string, string[]>;
 }
 
 export interface EvaluatedOption {
@@ -352,6 +366,7 @@ const addProductFromCatalog = (product: CatalogProductItem) => {
       providerId: product.providerId,
       providerName: product.providerName,
       categoryName: product.category,
+      specOptions: product.specOptions,
     });
   }
   showProductModal.value = false;
@@ -604,10 +619,12 @@ const confirmAndOrder = async () => {
       payment_preference: "card",
       shipping_address: deliveryAddress.value,
       buyer_notes: "Cotización generada automáticamente vía Búsqueda Inteligente",
+      // TODO: Enhance Smart Search UI to allow buyers to select specific product specifications before quote creation
       items: selectedOptionOwnedItems.value.map((p) => ({
         product_id: p.id,
         quantity: p.quantity,
         shipping_preference: "own_delivery",
+        selected_spec: getDefaultSpecForProduct(p.specOptions),
       })),
     });
 
@@ -650,11 +667,16 @@ const confirmCoverageOrder = async (group: CoverageGroupView) => {
       shipping_address: deliveryAddress.value,
       buyer_notes:
         "Cotización generada automáticamente vía Búsqueda Inteligente (cobertura por proveedor)",
-      items: group.items.map((p) => ({
-        product_id: p.id,
-        quantity: p.quantity,
-        shipping_preference: "own_delivery",
-      })),
+      // TODO: Enhance Smart Search UI to allow buyers to select specific product specifications before quote creation
+      items: group.items.map((p) => {
+        const catalogProd = availableCatalog.value.find((c) => c.id === p.id);
+        return {
+          product_id: p.id,
+          quantity: p.quantity,
+          shipping_preference: "own_delivery",
+          selected_spec: getDefaultSpecForProduct(catalogProd?.specOptions),
+        };
+      }),
     });
 
     alertStore.spawnAlert({
@@ -724,6 +746,7 @@ onMounted(async () => {
             imageBlobId: blobId,
             providerId: p.provider_id,
             providerName: provName,
+            specOptions: p.spec_options || {},
           };
         })
       );

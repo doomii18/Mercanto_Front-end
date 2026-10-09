@@ -146,7 +146,7 @@ const confirmQuote = async () => {
       <div class="flex flex-col gap-4">
         <div
           v-for="item in draftItems"
-          :key="`${item.productId}-${item.shippingPreference}`"
+          :key="`${item.productId}-${item.shippingPreference}-${JSON.stringify(item.selectedSpec || {})}`"
           class="flex items-center gap-4 bg-white p-4 rounded-xl shadow-sm"
         >
           <div
@@ -161,6 +161,13 @@ const confirmQuote = async () => {
             <h4 class="font-semibold text-neutral-900 truncate">
               {{ item.productTitle }}
             </h4>
+            <!-- TODO: Redesign quote draft item interface to display and customize selected specifications -->
+            <p
+              v-if="item.selectedSpec && Object.keys(item.selectedSpec).length > 0"
+              class="text-xs text-neutral-500 mt-0.5 truncate"
+            >
+              {{ Object.entries(item.selectedSpec).map(([k, v]) => `${k}: ${v}`).join(', ') }}
+            </p>
             <div class="flex items-center gap-2 mt-0.5">
               <span
                 class="inline-flex items-center gap-1 rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-medium text-neutral-700"
@@ -213,7 +220,8 @@ const confirmQuote = async () => {
                     providerId,
                     item.productId,
                     item.quantity - 1,
-                    item.shippingPreference
+                    item.shippingPreference,
+                    item.selectedSpec
                   )
                 "
               >
@@ -232,7 +240,8 @@ const confirmQuote = async () => {
                     providerId,
                     item.productId,
                     item.quantity + 1,
-                    item.shippingPreference
+                    item.shippingPreference,
+                    item.selectedSpec
                   )
                 "
               >
@@ -243,7 +252,7 @@ const confirmQuote = async () => {
               type="button"
               class="text-red-500 hover:text-red-700 p-1 cursor-pointer"
               title="Eliminar"
-              @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference)"
+              @click="quoteBuilderStore.removeItem(providerId, item.productId, item.shippingPreference, item.selectedSpec)"
             >
               <i class="fa-solid fa-trash text-sm"></i>
             </button>
