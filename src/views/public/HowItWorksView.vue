@@ -13,6 +13,13 @@ function openTutorial(track: TutorialTrack = "compradores", stepIdx = 0) {
     },
   });
 }
+
+// Extrae el ID de un enlace embed de YouTube y devuelve la URL de su miniatura.
+function getYouTubeThumbnail(videoUrl?: string): string {
+  if (!videoUrl) return "";
+  const match = videoUrl.match(/\/embed\/([^?/]+)/);
+  return match ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : "";
+}
 </script>
 
 <template>
@@ -199,7 +206,20 @@ function openTutorial(track: TutorialTrack = "compradores", stepIdx = 0) {
           >
             <!-- Video Thumbnail Frame matching Mockup -->
             <div class="w-full aspect-[16/9] rounded-lg bg-[#fdf1e8] flex items-center justify-center relative overflow-hidden group-hover:bg-[#fedec7] transition-colors">
-              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white shadow-md group-hover:scale-110 transition-transform">
+              <!-- Miniatura real de YouTube (si el paso tiene video) -->
+              <img
+                v-if="getYouTubeThumbnail(step.videoUrl)"
+                :src="getYouTubeThumbnail(step.videoUrl)"
+                :alt="step.cardTitle"
+                loading="lazy"
+                class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div
+                v-if="getYouTubeThumbnail(step.videoUrl)"
+                class="absolute inset-0 bg-black/15 group-hover:bg-black/30 transition-colors"
+              ></div>
+              <!-- Botón de reproducción -->
+              <div class="relative flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white shadow-md group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-play text-sm ml-0.5"></i>
               </div>
             </div>
@@ -246,7 +266,20 @@ function openTutorial(track: TutorialTrack = "compradores", stepIdx = 0) {
           >
             <!-- Video Thumbnail Frame matching Mockup -->
             <div class="w-full aspect-[16/9] rounded-lg bg-[#fdf1e8] flex items-center justify-center relative overflow-hidden group-hover:bg-[#fedec7] transition-colors">
-              <div class="flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white shadow-md group-hover:scale-110 transition-transform">
+              <!-- Miniatura real de YouTube (si el paso tiene video) -->
+              <img
+                v-if="getYouTubeThumbnail(step.videoUrl)"
+                :src="getYouTubeThumbnail(step.videoUrl)"
+                :alt="step.cardTitle"
+                loading="lazy"
+                class="absolute inset-0 h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div
+                v-if="getYouTubeThumbnail(step.videoUrl)"
+                class="absolute inset-0 bg-black/15 group-hover:bg-black/30 transition-colors"
+              ></div>
+              <!-- Botón de reproducción -->
+              <div class="relative flex h-11 w-11 items-center justify-center rounded-full bg-accent text-white shadow-md group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-play text-sm ml-0.5"></i>
               </div>
             </div>
