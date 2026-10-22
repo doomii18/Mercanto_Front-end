@@ -26,6 +26,8 @@ export const OrganizationFiltersRequestSchema = z.object({
   sort_dir: SortDirectionSchema.optional(),
   lat: z.number().optional(),
   lng: z.number().optional(),
+  created_after: z.string().optional(),
+  created_before: z.string().optional(),
 });
 
 

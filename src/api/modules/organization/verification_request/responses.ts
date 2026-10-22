@@ -37,3 +37,9 @@ export const VerificationRequestAggregateResponseSchema = z.object({
 export const PaginatedVerificationRequestResponseSchema = PaginatedResponseSchema(
   VerificationRequestResponseSchema,
 );
+
+// BatchVerificationRequestsResponseSchema | map of provider_id to VerificationRequestResponseDto
+export const BatchVerificationRequestsResponseSchema = z.record(
+  z.string().uuid(),
+  VerificationRequestResponseSchema
+);

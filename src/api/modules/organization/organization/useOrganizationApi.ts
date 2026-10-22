@@ -100,6 +100,10 @@ export const useOrganizationApi = () => {
       queryParams.append("lat", params.lat.toString());
     if (params?.lng !== undefined)
       queryParams.append("lng", params.lng.toString());
+    if (params?.created_after)
+      queryParams.append("created_after", params.created_after);
+    if (params?.created_before)
+      queryParams.append("created_before", params.created_before);
 
     const queryString = queryParams.toString();
     const endpoint = `/admin/organizations${queryString ? `?${queryString}` : ""}`;

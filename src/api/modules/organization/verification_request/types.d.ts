@@ -16,6 +16,7 @@ import type {
   VerificationRequestDocumentResponseSchema,
   VerificationRequestAggregateResponseSchema,
   PaginatedVerificationRequestResponseSchema,
+  BatchVerificationRequestsResponseSchema,
 } from "./responses";
 
 // Domain types
@@ -37,3 +38,4 @@ export type VerificationRequestResponse = z.infer<typeof VerificationRequestResp
 export type VerificationRequestDocumentResponse = z.infer<typeof VerificationRequestDocumentResponseSchema>;
 export type VerificationRequestAggregateResponse = z.infer<typeof VerificationRequestAggregateResponseSchema>;
 export type PaginatedVerificationRequestResponse = z.infer<typeof PaginatedVerificationRequestResponseSchema>;
+export type BatchVerificationRequestsResponse = z.infer<typeof BatchVerificationRequestsResponseSchema>;

@@ -1,4 +1,6 @@
 import { useApiFetch } from "@/api/useApiFetch";
+import { BatchProviderQuerySchema } from "@/api/modules/shared/schemas";
+import type { BatchProviderQuery } from "@/api/modules/shared/types";
 import {
   CreateVerificationRequestSchema,
   SubmitVerificationRequestSchema,
@@ -11,11 +13,13 @@ import {
   VerificationRequestResponseSchema,
   VerificationRequestAggregateResponseSchema,
   PaginatedVerificationRequestResponseSchema,
+  BatchVerificationRequestsResponseSchema,
 } from "./responses";
 import type {
   VerificationRequestResponse,
   VerificationRequestAggregateResponse,
   PaginatedVerificationRequestResponse,
+  BatchVerificationRequestsResponse,
   CreateVerificationRequest,
   SubmitVerificationRequest,
   ApproveVerificationRequest,
@@ -157,6 +161,21 @@ export const useVerificationRequestApi = () => {
     }
   }
 
+  // POST /verification-requests/batch
+  // Admin/Auditor view: resolves the active verification request for a set of provider organizations.
+  async function getVerificationRequestsBatch(
+    payload: BatchProviderQuery
+  ): Promise<BatchVerificationRequestsResponse> {
+    const validated = BatchProviderQuerySchema.parse(payload);
+    const { data, error } = await useApiFetch("/verification-requests/batch")
+      .post(validated)
+      .json();
+    if (error.value || !data.value) {
+      throw error.value || new Error("Failed to batch fetch verification requests");
+    }
+    return BatchVerificationRequestsResponseSchema.parse(data.value);
+  }
+
   return {
     createVerificationRequest,
     submitVerificationRequest,
@@ -166,5 +185,6 @@ export const useVerificationRequestApi = () => {
     getVerificationRequest,
     getOrganizationVerificationRequests,
     getPendingVerificationRequests,
+    getVerificationRequestsBatch,
   };
 };
